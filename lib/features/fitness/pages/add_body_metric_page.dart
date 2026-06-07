@@ -1,0 +1,364 @@
+import 'package:drift/drift.dart' hide Column;
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../core/database/app_database.dart';
+import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/fitness_provider.dart';
+
+/// 记录身体数据页面（褐色渐变风格）
+class AddBodyMetricPage extends ConsumerStatefulWidget {
+  const AddBodyMetricPage({super.key});
+
+  @override
+  ConsumerState<AddBodyMetricPage> createState() => _AddBodyMetricPageState();
+}
+
+class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
+  final _weightController = TextEditingController();
+  final _bodyFatController = TextEditingController();
+  final _chestController = TextEditingController();
+  final _waistController = TextEditingController();
+  final _hipController = TextEditingController();
+  final _armController = TextEditingController();
+  final _thighController = TextEditingController();
+  final _noteController = TextEditingController();
+
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _weightController.dispose();
+    _bodyFatController.dispose();
+    _chestController.dispose();
+    _waistController.dispose();
+    _hipController.dispose();
+    _armController.dispose();
+    _thighController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  double? _parseDouble(String text) {
+    if (text.trim().isEmpty) return null;
+    return double.tryParse(text.trim());
+  }
+
+  Future<void> _save() async {
+    // 至少要填写一项数据
+    if (_weightController.text.trim().isEmpty &&
+        _bodyFatController.text.trim().isEmpty &&
+        _chestController.text.trim().isEmpty &&
+        _waistController.text.trim().isEmpty &&
+        _hipController.text.trim().isEmpty &&
+        _armController.text.trim().isEmpty &&
+        _thighController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('请至少填写一项数据')),
+      );
+      return;
+    }
+
+    setState(() => _saving = true);
+
+    try {
+      final now = DateTime.now();
+      final dateStr =
+          '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+      final companion = BodyMetricsCompanion(
+        recordDate: Value(dateStr),
+        weight: Value(_parseDouble(_weightController.text)),
+        bodyFat: Value(_parseDouble(_bodyFatController.text)),
+        chest: Value(_parseDouble(_chestController.text)),
+        waist: Value(_parseDouble(_waistController.text)),
+        hip: Value(_parseDouble(_hipController.text)),
+        arm: Value(_parseDouble(_armController.text)),
+        thigh: Value(_parseDouble(_thighController.text)),
+        note: Value(
+          _noteController.text.trim().isEmpty
+              ? null
+              : _noteController.text.trim(),
+        ),
+        createdAt: Value(now.millisecondsSinceEpoch),
+      );
+
+      final db = ref.read(databaseProvider);
+      await db.into(db.bodyMetrics).insert(companion);
+
+      // 刷新数据
+      ref.invalidate(allBodyMetricsProvider);
+      ref.invalidate(recentBodyMetricsProvider);
+      ref.invalidate(latestBodyMetricProvider);
+      ref.invalidate(bodyMetricsTrendProvider);
+
+      if (mounted) {
+        HapticFeedback.lightImpact();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('身体数据已保存'),
+            backgroundColor: Color(0xFF35C976),
+          ),
+        );
+        context.pop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('保存失败: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFFDF5E1),
+      appBar: AppBar(
+        title: const Text(
+          '记录身体数据',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF5C3D2E),
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+          color: const Color(0xFF5C3D2E),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── 基本数据 ──
+            _buildSectionTitle('基本数据'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricField(
+                    controller: _weightController,
+                    label: '体重',
+                    unit: 'kg',
+                    icon: Icons.monitor_weight_outlined,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildMetricField(
+                    controller: _bodyFatController,
+                    label: '体脂率',
+                    unit: '%',
+                    icon: Icons.water_drop_outlined,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // ── 围度数据 ──
+            _buildSectionTitle('围度数据（cm）'),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricField(
+                    controller: _chestController,
+                    label: '胸围',
+                    unit: 'cm',
+                    icon: Icons.straighten,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildMetricField(
+                    controller: _waistController,
+                    label: '腰围',
+                    unit: 'cm',
+                    icon: Icons.straighten,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMetricField(
+                    controller: _hipController,
+                    label: '臀围',
+                    unit: 'cm',
+                    icon: Icons.straighten,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildMetricField(
+                    controller: _armController,
+                    label: '臂围',
+                    unit: 'cm',
+                    icon: Icons.straighten,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildMetricField(
+              controller: _thighController,
+              label: '大腿围',
+              unit: 'cm',
+              icon: Icons.straighten,
+            ),
+            const SizedBox(height: 24),
+
+            // ── 备注 ──
+            _buildSectionTitle('备注（可选）'),
+            const SizedBox(height: 12),
+            _buildNoteField(),
+            const SizedBox(height: 32),
+
+            // ── 保存按钮 ──
+            _buildSaveButton(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF8B6F5E),
+      ),
+    );
+  }
+
+  Widget _buildMetricField({
+    required TextEditingController controller,
+    required String label,
+    required String unit,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
+        ),
+      ),
+      child: TextField(
+        controller: controller,
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        inputFormatters: [
+          FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')),
+        ],
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: const TextStyle(
+            fontSize: 13,
+            color: Color(0xFFB0A09A),
+          ),
+          suffixText: unit,
+          suffixStyle: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFFB0A09A),
+          ),
+          prefixIcon: Icon(icon, size: 18, color: const Color(0xFFD4A574)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          isDense: true,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNoteField() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
+        ),
+      ),
+      child: TextField(
+        controller: _noteController,
+        maxLines: 3,
+        decoration: InputDecoration(
+          hintText: '记录今天的感受...',
+          hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
+          prefixIcon: const Padding(
+            padding: EdgeInsets.only(bottom: 48),
+            child: Icon(Icons.note_outlined, size: 18, color: Color(0xFFD4A574)),
+          ),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return GestureDetector(
+      onTap: _saving ? null : _save,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          gradient: _saving
+              ? null
+              : const LinearGradient(
+                  colors: [Color(0xFFD4A574), Color(0xFFE8C9A0)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+          color: _saving ? const Color(0xFFE8C9A0) : null,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: _saving
+              ? null
+              : [
+                  BoxShadow(
+                    color: const Color(0xFFD4A574).withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+        ),
+        child: Center(
+          child: _saving
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text(
+                  '保存身体数据',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+        ),
+      ),
+    );
+  }
+}

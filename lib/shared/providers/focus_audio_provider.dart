@@ -1,0 +1,86 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../features/focus/services/focus_audio_service.dart';
+
+final focusAudioServiceProvider = Provider<FocusAudioService>((ref) {
+  final service = FocusAudioService();
+  FocusAudioService.initBackground();
+  ref.onDispose(() => service.dispose());
+  return service;
+});
+
+class FocusAudioState {
+  final String? currentSoundType;
+  final double volume;
+  final bool isPlaying;
+
+  const FocusAudioState({
+    this.currentSoundType,
+    this.volume = 0.6,
+    this.isPlaying = false,
+  });
+
+  FocusAudioState copyWith({
+    String? currentSoundType,
+    double? volume,
+    bool? isPlaying,
+  }) {
+    return FocusAudioState(
+      currentSoundType: currentSoundType ?? this.currentSoundType,
+      volume: volume ?? this.volume,
+      isPlaying: isPlaying ?? this.isPlaying,
+    );
+  }
+}
+
+final focusAudioStateProvider = StateNotifierProvider<FocusAudioStateNotifier, FocusAudioState>((ref) {
+  return FocusAudioStateNotifier(ref);
+});
+
+class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
+  final Ref _ref;
+
+  FocusAudioStateNotifier(this._ref) : super(const FocusAudioState());
+
+  Future<void> startNoise(String soundType) async {
+    final service = _ref.read(focusAudioServiceProvider);
+    await service.playNoise(soundType, volume: state.volume);
+    state = state.copyWith(currentSoundType: soundType, isPlaying: true);
+  }
+
+  Future<void> pauseNoise() async {
+    final service = _ref.read(focusAudioServiceProvider);
+    await service.pauseNoise();
+    state = state.copyWith(isPlaying: false);
+  }
+
+  Future<void> resumeNoise() async {
+    final service = _ref.read(focusAudioServiceProvider);
+    await service.resumeNoise();
+    state = state.copyWith(isPlaying: true);
+  }
+
+  Future<void> stopNoise() async {
+    final service = _ref.read(focusAudioServiceProvider);
+    await service.stopNoise();
+    state = state.copyWith(currentSoundType: null, isPlaying: false);
+  }
+
+  Future<void> setVolume(double volume) async {
+    final service = _ref.read(focusAudioServiceProvider);
+    await service.setVolume(volume);
+    state = state.copyWith(volume: volume);
+  }
+
+  Future<void> playBell(String bellType) async {
+    final service = _ref.read(focusAudioServiceProvider);
+    await service.playBell(bellType);
+  }
+
+  Future<void> changeSound(String soundType) async {
+    final service = _ref.read(focusAudioServiceProvider);
+    await service.stopNoise();
+    await service.playNoise(soundType, volume: state.volume);
+    state = state.copyWith(currentSoundType: soundType, isPlaying: true);
+  }
+}
