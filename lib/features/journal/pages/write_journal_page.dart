@@ -821,33 +821,6 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 完成按钮
-  // ---------------------------------------------------------------------------
-
-  Widget _buildDoneButton() {
-    return GestureDetector(
-      onTap: _saving ? null : () => context.pop(),
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: JournalColors.pinkBorder),
-        ),
-        child: const Center(
-          child: Text(
-            '完成',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: JournalColors.pinkMain,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // =============================================================================
@@ -864,7 +837,13 @@ class _TiantianCompanionSection extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: JournalColors.companionGradient,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: JournalColors.pinkBorder),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.shadow,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -936,55 +915,6 @@ class _TiantianCompanionSection extends StatelessWidget {
                     color: JournalColors.pinkSoft.withValues(alpha: 0.5)),
               ),
             ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// 写作小结迷你卡片
-// =============================================================================
-
-class _SummaryMiniCard extends StatelessWidget {
-  const _SummaryMiniCard({
-    required this.icon,
-    required this.value,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String value;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
-      decoration: BoxDecoration(
-        color: JournalColors.pinkBg,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        children: [
-          Icon(icon, size: 20, color: JournalColors.pinkSoft),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: JournalColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: JournalColors.textSecondary,
-            ),
           ),
         ],
       ),
