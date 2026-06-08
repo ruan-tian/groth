@@ -1,7 +1,4 @@
-import 'dart:async';
 import 'dart:convert';
-import 'dart:math';
-import 'dart:ui';
 
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
@@ -12,27 +9,16 @@ import 'package:go_router/go_router.dart';
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
 import '../../core/repositories/journal_repository.dart';
+import '../../pet/utils/pet_assets.dart';
 import '../../shared/providers/dashboard_provider.dart';
 import '../../shared/providers/journal_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/sort_button.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
 import '../pet/models/pet_scene_model.dart';
-import '../pet/widgets/pet_scene_banner.dart';
-import '../statistics/widgets/heatmap_calendar.dart';
-import 'utils/journal_constants.dart';
-
-// =============================================================================
-// Design Tokens (journal-local)
-// =============================================================================
-
-const _kJournalBg = Color(0xFFFFF8F5);
-const _kJournalText = Color(0xFF5C3D2E);
-const _kJournalTextSecondary = Color(0xFF8B6F5E);
-const _kJournalTextMuted = Color(0xFFB0A09A);
-const _kWarmOrange = Color(0xFFFF8A3D);
-const _kCardRadius = 20.0;
-const _kChipRadius = 12.0;
+import '../utils/journal_constants.dart';
+import '../widgets/journal_colors.dart';
+import '../widgets/heatmap_calendar.dart';
 
 // =============================================================================
 // New Providers
@@ -88,12 +74,18 @@ final monthlyJournalCountProvider = FutureProvider<int>((ref) async {
   return journals.length;
 });
 
-/// 日记热力图数据
+/// 选中的热力图年份
+final selectedHeatmapYearProvider = StateProvider<int>(
+  (ref) => DateTime.now().year,
+);
+
+/// 日记热力图数据（按年份）
 final journalHeatmapProvider = FutureProvider<Map<DateTime, int>>((ref) async {
+  final year = ref.watch(selectedHeatmapYearProvider);
   final repo = ref.watch(journalRepositoryProvider);
-  final now = DateTime.now();
-  final start = DateTime(now.year, now.month - 2, 1);
-  final journals = await repo.getJournalsByRange(start, now);
+  final start = DateTime(year, 1, 1);
+  final end = DateTime(year, 12, 31);
+  final journals = await repo.getJournalsByRange(start, end);
   final data = <DateTime, int>{};
   for (final j in journals) {
     try {
@@ -109,7 +101,6 @@ final journalHeatmapProvider = FutureProvider<Map<DateTime, int>>((ref) async {
 // JournalPage
 // =============================================================================
 
-/// 日记首页 — warm, inviting, Day One + Bear inspired
 class JournalPage extends ConsumerStatefulWidget {
   const JournalPage({super.key, this.isEmbedded = false});
 
@@ -128,17 +119,14 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     final allTags = ref.watch(allJournalTagsProvider);
     final todayCount = ref.watch(todayJournalCountProvider);
     final streak = ref.watch(journalStreakProvider);
-    final onThisDay = ref.watch(onThisDayProvider);
     final totalCount = ref.watch(totalJournalCountProvider);
     final monthlyCount = ref.watch(monthlyJournalCountProvider);
     final heatmapData = ref.watch(journalHeatmapProvider);
 
-    // 根据选中标签决定数据源
     final source = _selectedTag == null
         ? recentJournals
         : ref.watch(journalsByTagProvider(_selectedTag!));
 
-    // 排序
     final sort = ref.watch(journalSortProvider);
     final journals = source.whenData((items) {
       final sorted = List<DailyJournal>.from(items);
@@ -157,7 +145,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     });
 
     return Scaffold(
-      backgroundColor: _kJournalBg,
+      backgroundColor: JournalColors.bg,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
@@ -166,7 +154,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: _kJournalText,
+                  color: JournalColors.textDark,
                 ),
               ),
               centerTitle: true,
@@ -175,7 +163,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                color: _kJournalText,
+                color: JournalColors.textDark,
                 onPressed: () => Navigator.pop(context),
               ),
               actions: [
@@ -188,13 +176,12 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               ],
             ),
       body: RefreshIndicator(
-        color: AppColors.journal,
+        color: JournalColors.pinkMain,
         onRefresh: () async {
           ref.invalidate(recentJournalsProvider);
           ref.invalidate(allJournalTagsProvider);
           ref.invalidate(todayJournalCountProvider);
           ref.invalidate(journalStreakProvider);
-          ref.invalidate(onThisDayProvider);
           ref.invalidate(totalJournalCountProvider);
           ref.invalidate(monthlyJournalCountProvider);
           ref.invalidate(journalHeatmapProvider);
@@ -210,71 +197,31 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ── 0. 宠物提示条 ──
-              PetSceneBanner(
-                module: PetModuleType.journal,
-                hasRecords: (todayCount.whenOrNull(data: (c) => c) ?? 0) > 0,
-                onTap: () => context.push('/pet-center'),
-              ),
+              // ── 1. 甜甜陪伴卡 ──
+              const _TiantianCompanionCard(),
               const SizedBox(height: 16),
 
-              // ── 1. Streak Banner ──
-              streak.when(
-                data: (s) => s > 0
-                    ? Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _StreakBanner(streak: s),
-                      )
-                    : const SizedBox.shrink(),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-
-              // ── 2. Writing Prompt Card ──
-              const _WritingPromptCard(),
-              const SizedBox(height: 16),
-
-              // ── 3. Today Record Card ──
+              // ── 2. 今日记录 Hero ──
               _buildTodayRecordCard(context, todayCount),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
-              // ── 4. On This Day ──
-              onThisDay.when(
-                data: (journals) => journals.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.only(bottom: 16),
-                        child: _OnThisDayCard(journals: journals),
-                      )
-                    : const SizedBox.shrink(),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-
-              // ── 5. Tag Filter ──
+              // ── 3. 标签筛选 ──
               _buildTagFilter(allTags),
               const SizedBox(height: 20),
 
-              // ── 6. Stats Overview Row ──
-              _StatsOverviewRow(
+              // ── 4. 统计卡片 ──
+              _StatsRow(
                 monthlyCount: monthlyCount,
                 totalCount: totalCount,
                 streak: streak,
               ),
               const SizedBox(height: 20),
 
-              // ── 7. Heatmap Calendar ──
-              heatmapData.when(
-                data: (data) => data.isNotEmpty
-                    ? Padding(
-                        padding: const EdgeInsets.only(bottom: 20),
-                        child: _HeatmapSection(data: data),
-                      )
-                    : const SizedBox.shrink(),
-                loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
+              // ── 5. 写作热力图 ──
+              _buildHeatmapSection(heatmapData),
+              const SizedBox(height: 20),
 
-              // ── 8. Recent Journals List ──
+              // ── 6. 最近日记列表 ──
               _buildSectionTitle('最近日记'),
               const SizedBox(height: 12),
               journals.when(
@@ -318,7 +265,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                   padding: EdgeInsets.all(40),
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: AppColors.journal,
+                      color: JournalColors.pinkMain,
                       strokeWidth: 2.5,
                     ),
                   ),
@@ -329,7 +276,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                     child: Text(
                       '加载失败: $e',
                       style: const TextStyle(
-                        color: _kJournalTextMuted,
+                        color: JournalColors.textMuted,
                         fontSize: 13,
                       ),
                     ),
@@ -340,13 +287,31 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/plan/journal/write'),
-        backgroundColor: AppColors.journal,
-        foregroundColor: Colors.white,
-        elevation: 4,
-        shape: const CircleBorder(),
-        child: const Icon(Icons.edit_rounded, size: 24),
+      floatingActionButton: Container(
+        width: 64,
+        height: 64,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [JournalColors.pinkSoft, JournalColors.pinkMain],
+          ),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: JournalColors.shadow,
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: FloatingActionButton(
+          onPressed: () => context.push('/plan/journal/write'),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          shape: const CircleBorder(),
+          child: const Icon(Icons.edit_rounded, color: Colors.white, size: 24),
+        ),
       ),
     );
   }
@@ -357,7 +322,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       style: const TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: _kJournalText,
+        color: JournalColors.textDark,
       ),
     );
   }
@@ -375,20 +340,13 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              AppColors.journal,
-              AppColors.journal.withValues(alpha: 0.75),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(_kCardRadius),
+          gradient: JournalColors.heroGradient,
+          borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
-              color: AppColors.journal.withValues(alpha: 0.3),
-              blurRadius: 16,
-              offset: const Offset(0, 6),
+              color: JournalColors.shadow,
+              blurRadius: 20,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -399,7 +357,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    '📝 今日记录',
+                    '今日记录',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -416,8 +374,8 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                   ),
                   const SizedBox(height: 14),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 9),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.22),
                       borderRadius: BorderRadius.circular(10),
@@ -447,9 +405,11 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 ],
               ),
             ),
-            Text(
-              '🐱',
-              style: TextStyle(fontSize: 52),
+            Image.asset(
+              PetAssets.journalWriting,
+              width: 80,
+              height: 80,
+              fit: BoxFit.contain,
             ),
           ],
         ),
@@ -499,15 +459,144 @@ class _JournalPageState extends ConsumerState<JournalPage> {
   }
 
   // ---------------------------------------------------------------------------
+  // Heatmap Section
+  // ---------------------------------------------------------------------------
+
+  Widget _buildHeatmapSection(AsyncValue<Map<DateTime, int>> heatmapData) {
+    return heatmapData.when(
+      data: (data) {
+        final selectedYear = ref.watch(selectedHeatmapYearProvider);
+        final currentYear = DateTime.now().year;
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: JournalColors.pinkBorder, width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header with year selector
+              Row(
+                children: [
+                  const Text(
+                    '写作热力图',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: JournalColors.textDark,
+                    ),
+                  ),
+                  const Spacer(),
+                  _YearSelector(
+                    year: selectedYear,
+                    canGoBack: selectedYear > 2020,
+                    canGoForward: selectedYear < currentYear,
+                    onBack: () {
+                      ref.read(selectedHeatmapYearProvider.notifier).state--;
+                    },
+                    onForward: () {
+                      ref.read(selectedHeatmapYearProvider.notifier).state++;
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // Heatmap
+              if (data.isNotEmpty)
+                HeatmapCalendar(
+                  data: data,
+                  monthsToShow: 12,
+                  baseColor: JournalColors.heat0,
+                  maxColor: JournalColors.heat4,
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      '$selectedYear 年暂无写作记录',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: JournalColors.textMuted,
+                      ),
+                    ),
+                  ),
+                ),
+              // Legend
+              if (data.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const Text(
+                      '少',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: JournalColors.textMuted,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    ...JournalColors.heatColors.map(
+                      (c) => Container(
+                        width: 12,
+                        height: 12,
+                        margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                        decoration: BoxDecoration(
+                          color: c,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Text(
+                      '多',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: JournalColors.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
   // Empty State
   // ---------------------------------------------------------------------------
 
   Widget _buildEmptyState() {
-    return EmptyStateWidget(
-      icon: Icons.edit_note_rounded,
-      title: '还没有日记',
-      subtitle: '点击右下角按钮开始记录你的成长故事',
-      accentColor: AppColors.journal,
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 40),
+      child: Center(
+        child: Column(
+          children: [
+            Image.asset(
+              PetAssets.journalBook,
+              width: 120,
+              height: 120,
+              fit: BoxFit.contain,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              '还没有日记，写下今天的第一句话吧',
+              style: TextStyle(
+                fontSize: 14,
+                color: JournalColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -524,7 +613,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(_kCardRadius),
+          borderRadius: BorderRadius.circular(20),
         ),
         title: const Text('删除日记'),
         content: Text('确定要删除「${journal.title}」吗？'),
@@ -572,254 +661,168 @@ class _JournalPageState extends ConsumerState<JournalPage> {
 }
 
 // =============================================================================
-// _StreakBanner
+// _TiantianCompanionCard
 // =============================================================================
 
-class _StreakBanner extends StatelessWidget {
-  const _StreakBanner({required this.streak});
-
-  final int streak;
+class _TiantianCompanionCard extends StatelessWidget {
+  const _TiantianCompanionCard();
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            _kWarmOrange.withValues(alpha: 0.12),
-            _kWarmOrange.withValues(alpha: 0.06),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _kWarmOrange.withValues(alpha: 0.18),
-        ),
+        gradient: JournalColors.companionGradient,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: JournalColors.pinkBorder, width: 1),
       ),
       child: Row(
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 20)),
-          const SizedBox(width: 10),
-          Text(
-            '连续写作 $streak 天',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: _kWarmOrange,
-            ),
+          Image.asset(
+            PetAssets.journalWriting,
+            width: 100,
+            height: 100,
+            fit: BoxFit.contain,
           ),
-          const Spacer(),
-          if (streak >= 7)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: _kWarmOrange.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                streak >= 30 ? '月度坚持！' : '一周达成！',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                  color: _kWarmOrange.withValues(alpha: 0.8),
+          const SizedBox(width: 16),
+          Expanded(
+            child: CustomPaint(
+              painter: _BubblePainter(),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '甜甜',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: JournalColors.textDark,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '记录一下今天的成长吧！',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: JournalColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
+          ),
         ],
       ),
     );
   }
 }
 
-// =============================================================================
-// _WritingPromptCard — with floating animation
-// =============================================================================
+/// 语音气泡尾巴画笔 — 在白色容器左侧绘制小三角
+class _BubblePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
 
-class _WritingPromptCard extends ConsumerStatefulWidget {
-  const _WritingPromptCard();
+    final path = Path()
+      ..moveTo(-8, 20)
+      ..lineTo(0, 26)
+      ..lineTo(0, 14)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
 
   @override
-  ConsumerState<_WritingPromptCard> createState() => _WritingPromptCardState();
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-class _WritingPromptCardState extends ConsumerState<_WritingPromptCard>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _floatController;
-  late final Animation<double> _floatAnimation;
-  late WritingPrompt _prompt;
+// =============================================================================
+// _YearSelector
+// =============================================================================
 
-  @override
-  void initState() {
-    super.initState();
-    _prompt = getRandomPrompt();
-    _floatController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
-    _floatAnimation = Tween<double>(begin: -3, end: 3).animate(
-      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
-    );
-  }
+class _YearSelector extends StatelessWidget {
+  const _YearSelector({
+    required this.year,
+    required this.canGoBack,
+    required this.canGoForward,
+    required this.onBack,
+    required this.onForward,
+  });
 
-  @override
-  void dispose() {
-    _floatController.dispose();
-    super.dispose();
-  }
+  final int year;
+  final bool canGoBack;
+  final bool canGoForward;
+  final VoidCallback onBack;
+  final VoidCallback onForward;
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _floatAnimation,
-      builder: (context, child) {
-        return Transform.translate(
-          offset: Offset(0, _floatAnimation.value),
-          child: child,
-        );
-      },
-      child: GestureDetector(
-        onTap: () => context.push('/plan/journal/write'),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                AppColors.journal.withValues(alpha: 0.12),
-                AppColors.journal.withValues(alpha: 0.05),
-              ],
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _ArrowButton(
+          icon: Icons.chevron_left_rounded,
+          enabled: canGoBack,
+          onTap: onBack,
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: Text(
+            '$year年',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: JournalColors.textDark,
             ),
-            borderRadius: BorderRadius.circular(_kCardRadius),
-            border: Border.all(
-              color: AppColors.journal.withValues(alpha: 0.15),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: AppColors.journal.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Center(
-                      child: Text('💡', style: TextStyle(fontSize: 16)),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '"${_prompt.text}"',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: _kJournalText,
-                        height: 1.4,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    '开始写 →',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.journal,
-                    ),
-                  ),
-                ],
-              ),
-            ],
           ),
         ),
-      ),
+        _ArrowButton(
+          icon: Icons.chevron_right_rounded,
+          enabled: canGoForward,
+          onTap: onForward,
+        ),
+      ],
     );
   }
 }
 
-// =============================================================================
-// _OnThisDayCard
-// =============================================================================
+class _ArrowButton extends StatelessWidget {
+  const _ArrowButton({
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
 
-class _OnThisDayCard extends StatelessWidget {
-  const _OnThisDayCard({required this.journals});
-
-  final List<DailyJournal> journals;
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final journal = journals.first;
-    final preview = journal.content.length > 60
-        ? '${journal.content.substring(0, 60)}...'
-        : journal.content;
-
     return GestureDetector(
-      onTap: () => context.push('/plan/journal/detail/${journal.id}'),
+      onTap: enabled ? onTap : null,
       child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.all(18),
+        width: 28,
+        height: 28,
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF0E8),
-          borderRadius: BorderRadius.circular(_kCardRadius),
-          border: Border.all(
-            color: _kWarmOrange.withValues(alpha: 0.12),
-          ),
+          color: enabled
+              ? JournalColors.pinkBg
+              : JournalColors.pinkBg.withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text('📅', style: TextStyle(fontSize: 18)),
-                const SizedBox(width: 8),
-                const Text(
-                  '去年的今天',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: _kWarmOrange,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(
-              '"$preview"',
-              style: const TextStyle(
-                fontSize: 13,
-                color: _kJournalTextSecondary,
-                height: 1.5,
-                fontStyle: FontStyle.italic,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Text(
-                  '查看回忆 →',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: _kWarmOrange.withValues(alpha: 0.7),
-                  ),
-                ),
-              ],
-            ),
-          ],
+        child: Icon(
+          icon,
+          size: 18,
+          color: enabled ? JournalColors.textDark : JournalColors.textMuted,
         ),
       ),
     );
@@ -827,11 +830,11 @@ class _OnThisDayCard extends StatelessWidget {
 }
 
 // =============================================================================
-// _StatsOverviewRow
+// _StatsRow
 // =============================================================================
 
-class _StatsOverviewRow extends StatelessWidget {
-  const _StatsOverviewRow({
+class _StatsRow extends StatelessWidget {
+  const _StatsRow({
     required this.monthlyCount,
     required this.totalCount,
     required this.streak,
@@ -846,29 +849,26 @@ class _StatsOverviewRow extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _MiniStatCard(
-            emoji: '📊',
+          child: _StatsCard(
+            icon: Icons.bar_chart_rounded,
             label: '本月',
             value: monthlyCount.whenOrNull(data: (c) => c) ?? 0,
-            unit: '篇',
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _MiniStatCard(
-            emoji: '📅',
+          child: _StatsCard(
+            icon: Icons.calendar_month_rounded,
             label: '总计',
             value: totalCount.whenOrNull(data: (c) => c) ?? 0,
-            unit: '篇',
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _MiniStatCard(
-            emoji: '✍️',
+          child: _StatsCard(
+            icon: Icons.local_fire_department_rounded,
             label: '连续',
             value: streak.whenOrNull(data: (s) => s) ?? 0,
-            unit: '天',
           ),
         ),
       ],
@@ -876,113 +876,60 @@ class _StatsOverviewRow extends StatelessWidget {
   }
 }
 
-class _MiniStatCard extends StatelessWidget {
-  const _MiniStatCard({
-    required this.emoji,
+class _StatsCard extends StatelessWidget {
+  const _StatsCard({
+    required this.icon,
     required this.label,
     required this.value,
-    required this.unit,
   });
 
-  final String emoji;
+  final IconData icon;
   final String label;
   final int value;
-  final String unit;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.journal.withValues(alpha: 0.08),
-        ),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.shadow,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 20)),
-          const SizedBox(height: 6),
-          RichText(
-            text: TextSpan(
-              children: [
-                TextSpan(
-                  text: '$value',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: _kJournalText,
-                  ),
-                ),
-                TextSpan(
-                  text: ' $unit',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: _kJournalTextMuted,
-                  ),
-                ),
-              ],
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: JournalColors.pinkBg,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: JournalColors.pinkMain),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '$value',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w700,
+              color: JournalColors.textDark,
+              height: 1.1,
             ),
           ),
           const SizedBox(height: 2),
           Text(
             label,
             style: const TextStyle(
-              fontSize: 11,
-              color: _kJournalTextMuted,
+              fontSize: 12,
+              color: JournalColors.textSecondary,
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// _HeatmapSection
-// =============================================================================
-
-class _HeatmapSection extends StatelessWidget {
-  const _HeatmapSection({required this.data});
-
-  final Map<DateTime, int> data;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(_kCardRadius),
-        border: Border.all(
-          color: AppColors.journal.withValues(alpha: 0.08),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Text('📅', style: TextStyle(fontSize: 16)),
-              SizedBox(width: 8),
-              Text(
-                '写作热力图',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: _kJournalText,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          HeatmapCalendar(
-            data: data,
-            monthsToShow: 3,
-            baseColor: AppColors.journal.withValues(alpha: 0.06),
-            maxColor: AppColors.journal,
           ),
         ],
       ),
@@ -1017,29 +964,20 @@ class _TagChip extends StatelessWidget {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.journal : Colors.white,
-          borderRadius: BorderRadius.circular(_kChipRadius),
+          color: selected ? JournalColors.pinkSoft : Colors.white,
+          borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? AppColors.journal
-                : AppColors.journal.withValues(alpha: 0.2),
+                ? JournalColors.pinkSoft
+                : JournalColors.pinkBorder,
           ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: AppColors.journal.withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
             fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-            color: selected ? Colors.white : _kJournalTextSecondary,
+            color: selected ? Colors.white : JournalColors.textSecondary,
           ),
         ),
       ),
@@ -1048,7 +986,7 @@ class _TagChip extends StatelessWidget {
 }
 
 // =============================================================================
-// _JournalListItem — premium card with photo, mood emoji, tags
+// _JournalListItem
 // =============================================================================
 
 class _JournalListItem extends StatelessWidget {
@@ -1074,106 +1012,123 @@ class _JournalListItem extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.journal.withValues(alpha: 0.08),
+            color: JournalColors.pinkBorder.withValues(alpha: 0.4),
           ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: JournalColors.shadow,
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header row: mood + title + date ──
-            Row(
-              children: [
-                // Mood emoji
-                Text(moodEmoji, style: const TextStyle(fontSize: 20)),
-                const SizedBox(width: 10),
-                // Title
-                Expanded(
-                  child: Text(
+            // ── Left icon ──
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: JournalColors.pinkBg,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.article_rounded,
+                size: 20,
+                color: JournalColors.pinkMain,
+              ),
+            ),
+            const SizedBox(width: 12),
+
+            // ── Content ──
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Text(
                     journal.title,
                     style: const TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: _kJournalText,
+                      fontWeight: FontWeight.w500,
+                      color: JournalColors.textDark,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  dateStr,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: _kJournalTextMuted,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
+                  const SizedBox(height: 4),
 
-            // ── Content preview ──
-            Text(
-              journal.content,
-              style: const TextStyle(
-                fontSize: 13,
-                color: _kJournalTextSecondary,
-                height: 1.5,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-            const SizedBox(height: 12),
-
-            // ── Bottom row: photo + tags + stats ──
-            Row(
-              children: [
-                // Photo thumbnail (if exists)
-                _AssetThumbnail(journalId: journal.id),
-
-                // Tags
-                if (journal.tags != null) ...[
-                  _buildTagsPreview(journal.tags!),
-                  const Spacer(),
-                ] else
-                  const Spacer(),
-
-                // Word count
-                Text(
-                  '${journal.wordCount}字',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: _kJournalTextMuted,
-                  ),
-                ),
-                const SizedBox(width: 8),
-
-                // EXP badge
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: AppColors.journal.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    '+${journal.expGained} EXP',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.journal,
+                  // Preview
+                  Text(
+                    journal.content,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: JournalColors.textSecondary,
+                      height: 1.4,
                     ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+
+                  // Bottom row: mood + tags + word count + EXP
+                  Row(
+                    children: [
+                      // Mood emoji
+                      Text(moodEmoji, style: const TextStyle(fontSize: 14)),
+                      const SizedBox(width: 6),
+
+                      // Tags
+                      if (journal.tags != null) ...[
+                        _buildTagsPreview(journal.tags!),
+                      ],
+
+                      const Spacer(),
+
+                      // Word count
+                      Text(
+                        '${journal.wordCount}字',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: JournalColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+
+                      // EXP badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: JournalColors.pinkBg,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '+${journal.expGained} EXP',
+                          style: const TextStyle(
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                            color: JournalColors.pinkMain,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // ── Chevron ──
+            const Padding(
+              padding: EdgeInsets.only(left: 8, top: 4),
+              child: Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: JournalColors.textMuted,
+              ),
             ),
           ],
         ),
@@ -1201,59 +1156,19 @@ class _JournalListItem extends StatelessWidget {
           margin: const EdgeInsets.only(right: 6),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: AppColors.journal.withValues(alpha: 0.06),
+            color: JournalColors.pinkBg,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
             '#$tag',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: AppColors.journal.withValues(alpha: 0.7),
+              color: JournalColors.pinkMain,
             ),
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-// =============================================================================
-// _AssetThumbnail — loads first photo from journal_assets
-// =============================================================================
-
-class _AssetThumbnail extends ConsumerWidget {
-  const _AssetThumbnail({required this.journalId});
-
-  final int journalId;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final repo = ref.watch(journalRepositoryProvider);
-
-    return FutureBuilder<List<JournalAsset>>(
-      future: repo.getJournalAssets(journalId),
-      builder: (context, snapshot) {
-        final assets = snapshot.data;
-        if (assets == null || assets.isEmpty) {
-          return const SizedBox.shrink();
-        }
-
-        final firstAsset = assets.first;
-        return Padding(
-          padding: const EdgeInsets.only(right: 10),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              firstAsset.localPath,
-              width: 40,
-              height: 40,
-              fit: BoxFit.cover,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-          ),
-        );
-      },
     );
   }
 }

@@ -9,32 +9,15 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/journal_provider.dart';
+import '../../../shared/providers/service_providers.dart';
 import '../../pet/models/pet_event.dart';
 import '../../pet/services/pet_event_bus.dart';
+import '../../pet/utils/pet_assets.dart';
+import '../utils/journal_constants.dart';
+import '../widgets/journal_colors.dart';
 import 'quill_editor_page.dart';
 
-/// 心情选项
-const _moods = [
-  _MoodOption(key: 'happy', emoji: '😊', label: '开心'),
-  _MoodOption(key: 'neutral', emoji: '😐', label: '平静'),
-  _MoodOption(key: 'sad', emoji: '😢', label: '难过'),
-  _MoodOption(key: 'angry', emoji: '😡', label: '生气'),
-  _MoodOption(key: 'thinking', emoji: '🤔', label: '思考'),
-];
-
-/// 预设标签
-const _presetTags = [
-  '学习',
-  '健身',
-  '情绪',
-  '反思',
-  '感恩',
-  '目标',
-  '阅读',
-  '工作',
-];
-
-/// 引导问题
+/// 引导问题（固定 3 条）
 const _guidedQuestions = [
   '今天完成了什么？',
   '今天哪里做得不好？',
@@ -72,6 +55,10 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     _contentController.dispose();
     super.dispose();
   }
+
+  // ===========================================================================
+  // _save() — 业务逻辑，不可改动
+  // ===========================================================================
 
   Future<void> _save() async {
     if (_titleController.text.trim().isEmpty) {
@@ -219,395 +206,9 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         .trim();
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFFF5F5),
-      appBar: AppBar(
-        title: const Text(
-          '写日记',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF5C3D2E),
-          ),
-        ),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: const Color(0xFF5C3D2E),
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // ── 标题 ──
-            _buildSectionTitle('标题'),
-            const SizedBox(height: 8),
-            _buildTitleField(),
-            const SizedBox(height: 24),
-
-            // ── 心情选择 ──
-            _buildSectionTitle('今天心情'),
-            const SizedBox(height: 12),
-            _buildMoodSelector(),
-            const SizedBox(height: 24),
-
-            // ── 标签选择 ──
-            _buildSectionTitle('标签'),
-            const SizedBox(height: 12),
-            _buildTagSelector(),
-            const SizedBox(height: 24),
-
-            // ── 引导问题 ──
-            _buildGuidedQuestions(),
-            const SizedBox(height: 24),
-
-            // ── 正文 ──
-            _buildSectionTitle('正文'),
-            const SizedBox(height: 8),
-            _buildContentField(),
-            const SizedBox(height: 32),
-
-            // ── 保存按钮 ──
-            _buildSaveButton(),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontSize: 14,
-        fontWeight: FontWeight.w500,
-        color: Color(0xFF8B6F5E),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 标题输入框
-  // ---------------------------------------------------------------------------
-
-  Widget _buildTitleField() {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE8A0BF).withValues(alpha: 0.3),
-        ),
-      ),
-      child: TextField(
-        controller: _titleController,
-        decoration: InputDecoration(
-          hintText: '例如：充实的一天',
-          hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
-          prefixIcon: const Icon(
-            Icons.title_rounded,
-            size: 20,
-            color: Color(0xFFE8A0BF),
-          ),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 心情选择器
-  // ---------------------------------------------------------------------------
-
-  Widget _buildMoodSelector() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: _moods.map((mood) {
-        final isSelected = _selectedMood == mood.key;
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() {
-              _selectedMood = (_selectedMood == mood.key) ? null : mood.key;
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFFFF0F5) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? const Color(0xFFE8A0BF)
-                    : const Color(0xFFE8A0BF).withValues(alpha: 0.2),
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(mood.emoji, style: const TextStyle(fontSize: 28)),
-                const SizedBox(height: 4),
-                Text(
-                  mood.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? const Color(0xFFE8A0BF) : const Color(0xFF8B6F5E),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 标签选择器
-  // ---------------------------------------------------------------------------
-
-  Widget _buildTagSelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _presetTags.map((tag) {
-        final isSelected = _selectedTags.contains(tag);
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() {
-              if (_selectedTags.contains(tag)) {
-                _selectedTags.remove(tag);
-              } else {
-                _selectedTags.add(tag);
-              }
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? const Color(0xFFE8A0BF) : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected
-                    ? const Color(0xFFE8A0BF)
-                    : const Color(0xFFE8A0BF).withValues(alpha: 0.3),
-              ),
-            ),
-            child: Text(
-              '#$tag',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                color: isSelected ? Colors.white : const Color(0xFF8B6F5E),
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 引导问题
-  // ---------------------------------------------------------------------------
-
-  Widget _buildGuidedQuestions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () {
-            setState(() => _showGuidedQuestions = !_showGuidedQuestions);
-          },
-          child: Row(
-            children: [
-              const Text(
-                '引导问题',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF8B6F5E),
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                _showGuidedQuestions
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: const Color(0xFFB0A09A),
-              ),
-            ],
-          ),
-        ),
-        if (_showGuidedQuestions) ...[
-          const SizedBox(height: 12),
-          ..._guidedQuestions.map((question) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: GestureDetector(
-                onTap: () {
-                  final current = _contentController.text;
-                  final prefix = current.isEmpty ? '' : '\n\n';
-                  _contentController.text = '$current【$question】\n';
-                  _contentController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: _contentController.text.length),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF0F5),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFFE8A0BF).withValues(alpha: 0.2),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.lightbulb_outline_rounded,
-                        size: 16,
-                        color: Color(0xFFE8A0BF),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          question,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF8B6F5E),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          }),
-        ],
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 正文输入框
-  // ---------------------------------------------------------------------------
-
-  Widget _buildContentField() {
-    return Column(
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: const Color(0xFFE8A0BF).withValues(alpha: 0.3),
-            ),
-          ),
-          child: TextField(
-            controller: _contentController,
-            maxLines: 12,
-            minLines: 6,
-            decoration: InputDecoration(
-              hintText: '写下今天的复盘...',
-              hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
-              border: InputBorder.none,
-              contentPadding: const EdgeInsets.all(16),
-            ),
-          ),
-        ),
-        const SizedBox(height: 12),
-        // ── 图片导入 + 全屏书写 ──
-        Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: _pickingImage ? null : _pickImageInline,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF0F5),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: const Color(0xFFE8A0BF).withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.image_outlined, size: 18, color: Color(0xFFE8A0BF)),
-                      SizedBox(width: 6),
-                      Text(
-                        '图片导入',
-                        style: TextStyle(fontSize: 13, color: Color(0xFF8B6F5E)),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: GestureDetector(
-                onTap: _openFullScreenEditor,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFFE8A0BF), Color(0xFFF0C4D4)],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFFE8A0BF).withValues(alpha: 0.3),
-                        blurRadius: 6,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.fullscreen_rounded, size: 18, color: Colors.white),
-                      SizedBox(width: 6),
-                      Text(
-                        '全屏书写',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // 全屏编辑器
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   void _openFullScreenEditor() {
     Navigator.of(context, rootNavigator: true).push(
@@ -628,9 +229,9 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // 图片选取（正文页内）
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   Future<void> _pickImageInline() async {
     if (_pickingImage) return;
@@ -666,6 +267,497 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     }
   }
 
+  // ===========================================================================
+  // Build
+  // ===========================================================================
+
+  @override
+  Widget build(BuildContext context) {
+    final wordCount = _contentController.text.trim().length;
+    final expService = ref.read(expServiceProvider);
+    final estimatedExp = wordCount > 0
+        ? expService.calculateJournalExp(wordCount: wordCount)
+        : 0;
+
+    return Scaffold(
+      backgroundColor: JournalColors.bg,
+      appBar: _buildAppBar(),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // ── 甜甜陪伴 ──
+            const _TiantianCompanionSection(),
+            const SizedBox(height: 24),
+
+            // ── 标题 ──
+            _buildLabel('标题'),
+            const SizedBox(height: 8),
+            _buildTitleField(),
+            const SizedBox(height: 24),
+
+            // ── 心情选择 ──
+            _buildLabel('今天心情'),
+            const SizedBox(height: 12),
+            _buildMoodSelector(),
+            const SizedBox(height: 24),
+
+            // ── 标签选择 ──
+            _buildLabel('标签'),
+            const SizedBox(height: 12),
+            _buildTagSelector(),
+            const SizedBox(height: 24),
+
+            // ── 引导问题 ──
+            _buildGuidedQuestions(),
+            const SizedBox(height: 24),
+
+            // ── 正文 ──
+            _buildLabel('正文'),
+            const SizedBox(height: 8),
+            _buildContentField(),
+            const SizedBox(height: 20),
+
+            // ── 工具按钮 ──
+            _buildToolButtons(),
+            const SizedBox(height: 24),
+
+            // ── 写作小结（内容非空时显示）──
+            if (wordCount > 0) ...[
+              _buildWritingSummary(wordCount, estimatedExp),
+              const SizedBox(height: 24),
+            ],
+
+            // ── 底部操作按钮 ──
+            _buildSaveButton(),
+            const SizedBox(height: 12),
+            _buildDoneButton(),
+            const SizedBox(height: 40),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // AppBar
+  // ---------------------------------------------------------------------------
+
+  PreferredSizeWidget _buildAppBar() {
+    return AppBar(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
+        color: JournalColors.textDark,
+        onPressed: () => context.pop(),
+      ),
+      title: const Text(
+        '写日记',
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          color: JournalColors.textDark,
+        ),
+      ),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.check_circle_outline_rounded, size: 24),
+          color: JournalColors.pinkMain,
+          onPressed: _saving ? null : _save,
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Label helper
+  // ---------------------------------------------------------------------------
+
+  Widget _buildLabel(String text) {
+    return Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: JournalColors.textSecondary,
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 标题输入框
+  // ---------------------------------------------------------------------------
+
+  Widget _buildTitleField() {
+    return TextField(
+      controller: _titleController,
+      decoration: InputDecoration(
+        hintText: '例如：充实的一天',
+        hintStyle: const TextStyle(color: JournalColors.textMuted),
+        prefixIcon: const Icon(
+          Icons.title_rounded,
+          size: 20,
+          color: JournalColors.pinkSoft,
+        ),
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: JournalColors.pinkBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: JournalColors.pinkBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(18),
+          borderSide: const BorderSide(color: JournalColors.pinkMain, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 心情选择器
+  // ---------------------------------------------------------------------------
+
+  Widget _buildMoodSelector() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceAround,
+      children: moodOptions.map((mood) {
+        final isSelected = _selectedMood == mood.key;
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() {
+              _selectedMood = (_selectedMood == mood.key) ? null : mood.key;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: isSelected ? JournalColors.pinkBg : Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: isSelected
+                    ? JournalColors.pinkMain
+                    : JournalColors.pinkBorder,
+                width: isSelected ? 1.5 : 1,
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(mood.emoji, style: const TextStyle(fontSize: 28)),
+                const SizedBox(height: 4),
+                Text(
+                  mood.label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? JournalColors.pinkMain
+                        : JournalColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 标签选择器
+  // ---------------------------------------------------------------------------
+
+  Widget _buildTagSelector() {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: presetTags.map((tag) {
+        final isSelected = _selectedTags.contains(tag);
+        return GestureDetector(
+          onTap: () {
+            HapticFeedback.lightImpact();
+            setState(() {
+              if (_selectedTags.contains(tag)) {
+                _selectedTags.remove(tag);
+              } else {
+                _selectedTags.add(tag);
+              }
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? JournalColors.pinkBg : Colors.white,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(
+                color: isSelected
+                    ? JournalColors.pinkMain
+                    : JournalColors.pinkBorder,
+              ),
+            ),
+            child: Text(
+              '#$tag',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
+                color: isSelected
+                    ? JournalColors.pinkMain
+                    : JournalColors.textSecondary,
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 引导问题
+  // ---------------------------------------------------------------------------
+
+  Widget _buildGuidedQuestions() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () {
+            setState(() => _showGuidedQuestions = !_showGuidedQuestions);
+          },
+          child: Row(
+            children: [
+              const Text(
+                '引导问题',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: JournalColors.textSecondary,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                _showGuidedQuestions
+                    ? Icons.keyboard_arrow_up_rounded
+                    : Icons.keyboard_arrow_down_rounded,
+                size: 18,
+                color: JournalColors.textMuted,
+              ),
+            ],
+          ),
+        ),
+        if (_showGuidedQuestions) ...[
+          const SizedBox(height: 12),
+          ..._guidedQuestions.map((question) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: GestureDetector(
+                onTap: () {
+                  final current = _contentController.text;
+                  final prefix = current.isEmpty ? '' : '\n\n';
+                  _contentController.text = '$current【$question】\n';
+                  _contentController.selection = TextSelection.fromPosition(
+                    TextPosition(offset: _contentController.text.length),
+                  );
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: JournalColors.pinkBg,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.lightbulb_outline_rounded,
+                        size: 18,
+                        color: JournalColors.pinkSoft,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          question,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: JournalColors.textDark,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+        ],
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 正文输入框
+  // ---------------------------------------------------------------------------
+
+  Widget _buildContentField() {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 220),
+      child: TextField(
+        controller: _contentController,
+        maxLines: null,
+        minLines: 8,
+        onChanged: (_) => setState(() {}),
+        decoration: InputDecoration(
+          hintText: '写下今天的复盘...',
+          hintStyle: const TextStyle(color: JournalColors.textMuted),
+          filled: true,
+          fillColor: Colors.white,
+          contentPadding: const EdgeInsets.all(16),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: JournalColors.pinkBorder),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide: const BorderSide(color: JournalColors.pinkBorder),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(18),
+            borderSide:
+                const BorderSide(color: JournalColors.pinkMain, width: 1.5),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 工具按钮
+  // ---------------------------------------------------------------------------
+
+  Widget _buildToolButtons() {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: _pickingImage ? null : _pickImageInline,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: JournalColors.pinkBorder),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.image_outlined, size: 18, color: JournalColors.textDark),
+                  SizedBox(width: 6),
+                  Text(
+                    '图片导入',
+                    style: TextStyle(fontSize: 13, color: JournalColors.textDark),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: GestureDetector(
+            onTap: _openFullScreenEditor,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: JournalColors.pinkBorder),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.edit_note_rounded, size: 18, color: JournalColors.textDark),
+                  SizedBox(width: 6),
+                  Text(
+                    '全屏书写',
+                    style: TextStyle(fontSize: 13, color: JournalColors.textDark),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 写作小结卡片
+  // ---------------------------------------------------------------------------
+
+  Widget _buildWritingSummary(int wordCount, int estimatedExp) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: JournalColors.pinkBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '今日写作小结',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: JournalColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryMiniCard(
+                  icon: Icons.short_text_rounded,
+                  value: '$wordCount',
+                  label: '本次字数',
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SummaryMiniCard(
+                  icon: Icons.auto_awesome_rounded,
+                  value: '+$estimatedExp',
+                  label: '获得经验',
+                ),
+              ),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: _SummaryMiniCard(
+                  icon: Icons.local_fire_department_rounded,
+                  value: '—',
+                  label: '连续天数',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // 保存按钮
   // ---------------------------------------------------------------------------
@@ -674,24 +766,18 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     return GestureDetector(
       onTap: _saving ? null : _save,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        height: 52,
         decoration: BoxDecoration(
-          gradient: _saving
-              ? null
-              : const LinearGradient(
-                  colors: [Color(0xFFE8A0BF), Color(0xFFF0C4D4)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          color: _saving ? const Color(0xFFF0C4D4) : null,
-          borderRadius: BorderRadius.circular(12),
+          gradient: _saving ? null : JournalColors.heroGradient,
+          color: _saving ? JournalColors.pinkSoft : null,
+          borderRadius: BorderRadius.circular(14),
           boxShadow: _saving
               ? null
               : [
                   BoxShadow(
-                    color: const Color(0xFFE8A0BF).withValues(alpha: 0.3),
+                    color: JournalColors.pinkMain.withValues(alpha: 0.25),
                     blurRadius: 8,
-                    offset: const Offset(0, 2),
+                    offset: const Offset(0, 3),
                   ),
                 ],
         ),
@@ -717,20 +803,159 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       ),
     );
   }
+
+  // ---------------------------------------------------------------------------
+  // 完成按钮
+  // ---------------------------------------------------------------------------
+
+  Widget _buildDoneButton() {
+    return GestureDetector(
+      onTap: _saving ? null : () => context.pop(),
+      child: Container(
+        height: 52,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: JournalColors.pinkBorder),
+        ),
+        child: const Center(
+          child: Text(
+            '完成',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: JournalColors.pinkMain,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 // =============================================================================
-// 心情选项模型
+// 甜甜陪伴区域
 // =============================================================================
 
-class _MoodOption {
-  const _MoodOption({
-    required this.key,
-    required this.emoji,
+class _TiantianCompanionSection extends StatelessWidget {
+  const _TiantianCompanionSection();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: JournalColors.companionGradient,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: JournalColors.pinkBorder),
+      ),
+      child: Row(
+        children: [
+          // 甜甜 PNG
+          Image.asset(
+            PetAssets.journalWriting,
+            width: 80,
+            height: 80,
+            fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => const SizedBox(
+              width: 80,
+              height: 80,
+              child: Center(
+                child: Icon(Icons.pets_rounded,
+                    size: 40, color: JournalColors.pinkSoft),
+              ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // 语音气泡
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: JournalColors.pinkMain.withValues(alpha: 0.06),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '甜甜在这里陪着你 ✨',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: JournalColors.textDark,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    '今天也要好好记录自己的小美好哦～',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: JournalColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// 写作小结迷你卡片
+// =============================================================================
+
+class _SummaryMiniCard extends StatelessWidget {
+  const _SummaryMiniCard({
+    required this.icon,
+    required this.value,
     required this.label,
   });
 
-  final String key;
-  final String emoji;
+  final IconData icon;
+  final String value;
   final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 10),
+      decoration: BoxDecoration(
+        color: JournalColors.pinkBg,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, size: 20, color: JournalColors.pinkSoft),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: JournalColors.textDark,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: JournalColors.textSecondary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
