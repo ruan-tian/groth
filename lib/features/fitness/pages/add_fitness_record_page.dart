@@ -709,6 +709,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       ref.invalidate(todayFitnessMinutesProvider);
       ref.invalidate(weeklyFitnessCountProvider);
       ref.invalidate(dashboardProvider);
+      ref.invalidate(fitnessChartDataProvider(7));
+      ref.invalidate(fitnessChartDataProvider(30));
+      ref.invalidate(fitnessChartDataProvider(365));
 
       if (mounted) {
         // 发送宠物事件

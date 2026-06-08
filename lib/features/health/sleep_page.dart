@@ -1329,7 +1329,9 @@ class _SleepCombinedChartState extends State<_SleepCombinedChart> {
       weeks.add({
         'date': startDate,
         'endDate': endDate,
-        'duration': durValues.isNotEmpty ? durValues.reduce((a, b) => a + b) : 0.0,
+        'duration': durValues.isNotEmpty
+            ? durValues.reduce((a, b) => a + b) / durValues.length
+            : 0.0,
         'quality': qualValues.isNotEmpty
             ? qualValues.reduce((a, b) => a + b) / qualValues.length
             : null,
@@ -1364,7 +1366,9 @@ class _SleepCombinedChartState extends State<_SleepCombinedChart> {
           .toList();
       return {
         'date': key,
-        'duration': durValues.isNotEmpty ? durValues.reduce((a, b) => a + b) : 0.0,
+        'duration': durValues.isNotEmpty
+            ? durValues.reduce((a, b) => a + b) / durValues.length
+            : 0.0,
         'quality': qualValues.isNotEmpty
             ? qualValues.reduce((a, b) => a + b) / qualValues.length
             : null,

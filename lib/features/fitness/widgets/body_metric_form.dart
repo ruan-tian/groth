@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/fitness_provider.dart';
 
 /// 身体数据记录表单
 ///
@@ -83,6 +84,15 @@ class _BodyMetricFormState extends ConsumerState<BodyMetricForm> {
 
       final db = ref.read(databaseProvider);
       await db.into(db.bodyMetrics).insert(companion);
+
+      // 刷新数据
+      ref.invalidate(allBodyMetricsProvider);
+      ref.invalidate(recentBodyMetricsProvider);
+      ref.invalidate(latestBodyMetricProvider);
+      ref.invalidate(bodyMetricsTrendProvider);
+      ref.invalidate(fitnessChartDataProvider(7));
+      ref.invalidate(fitnessChartDataProvider(30));
+      ref.invalidate(fitnessChartDataProvider(365));
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

@@ -77,6 +77,9 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       ref.invalidate(todayDietCountProvider);
       ref.invalidate(todayAvgHealthScoreProvider);
       ref.invalidate(dashboardProvider);
+      ref.invalidate(dailyCalorieWaterProvider(7));
+      ref.invalidate(dailyCalorieWaterProvider(30));
+      ref.invalidate(dailyCalorieWaterProvider(365));
 
       if (mounted) {
         // 发送宠物事件

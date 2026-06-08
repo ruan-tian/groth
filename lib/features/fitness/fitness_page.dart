@@ -69,6 +69,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
           ref.invalidate(todayFitnessMinutesProvider);
           ref.invalidate(weeklyFitnessCountProvider);
           ref.invalidate(recentFitnessRecordsProvider);
+          ref.invalidate(fitnessChartDataProvider(7));
+          ref.invalidate(fitnessChartDataProvider(30));
+          ref.invalidate(fitnessChartDataProvider(365));
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppSpacing.lg),

@@ -93,6 +93,9 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
       ref.invalidate(recentBodyMetricsProvider);
       ref.invalidate(latestBodyMetricProvider);
       ref.invalidate(bodyMetricsTrendProvider);
+      ref.invalidate(fitnessChartDataProvider(7));
+      ref.invalidate(fitnessChartDataProvider(30));
+      ref.invalidate(fitnessChartDataProvider(365));
 
       if (mounted) {
         HapticFeedback.lightImpact();

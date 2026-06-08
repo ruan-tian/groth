@@ -84,6 +84,9 @@ class _DietPageState extends ConsumerState<DietPage> {
           ref.invalidate(todayDietCountProvider);
           ref.invalidate(todayAvgHealthScoreProvider);
           ref.invalidate(recentDietRecordsProvider(10));
+          ref.invalidate(dailyCalorieWaterProvider(7));
+          ref.invalidate(dailyCalorieWaterProvider(30));
+          ref.invalidate(dailyCalorieWaterProvider(365));
         },
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -357,6 +360,9 @@ class _DietPageState extends ConsumerState<DietPage> {
         ref.invalidate(todayDietCountProvider);
         ref.invalidate(todayAvgHealthScoreProvider);
         ref.invalidate(dashboardProvider);
+        ref.invalidate(dailyCalorieWaterProvider(7));
+        ref.invalidate(dailyCalorieWaterProvider(30));
+        ref.invalidate(dailyCalorieWaterProvider(365));
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('已删除')),
