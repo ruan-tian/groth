@@ -877,8 +877,4 @@ class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSec
       ),
     );
   }
-        ],
-      ),
-    );
-  }
 }
