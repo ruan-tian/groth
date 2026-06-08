@@ -11,10 +11,8 @@ class FocusAssets {
   static const bgSessionLandscape =
       '$_root/backgrounds/bg_focus_session_landscape.webp';
 
-  static const deskPortrait =
-      '$_root/foregrounds/fg_focus_desk_portrait.png';
-  static const deskLandscape =
-      '$_root/foregrounds/fg_focus_desk_landscape.png';
+  static const deskPortrait = '$_root/foregrounds/fg_focus_desk_portrait.png';
+  static const deskLandscape = '$_root/foregrounds/fg_focus_desk_landscape.png';
 
   static const catIdle = '$_root/cats/focus_cat_idle.png';
   static const catReading = '$_root/cats/focus_cat_reading.png';
@@ -39,8 +37,7 @@ class FocusAssets {
   static const ringGlow = '$_root/lights/light_focus_ring_glow.png';
   static const restGlow = '$_root/lights/light_focus_rest_glow.png';
 
-  static const particleSparkle =
-      '$_root/particles/particle_focus_sparkle.png';
+  static const particleSparkle = '$_root/particles/particle_focus_sparkle.png';
   static const particleLeaf = '$_root/particles/particle_focus_leaf.png';
   static const particleHeart = '$_root/particles/particle_focus_heart.png';
   static const particleTomato = '$_root/particles/particle_focus_tomato.png';
@@ -49,8 +46,7 @@ class FocusAssets {
 
   static const successBadge = '$_root/status/focus_success_badge.png';
   static const breakCup = '$_root/status/focus_break_cup.png';
-  static const interruptWarning =
-      '$_root/status/focus_interrupt_warning.png';
+  static const interruptWarning = '$_root/status/focus_interrupt_warning.png';
   static const expReward = '$_root/status/focus_exp_reward.png';
 
   static const all = <String>[

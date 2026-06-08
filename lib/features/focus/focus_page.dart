@@ -11,7 +11,6 @@ import 'widgets/sound_selector.dart';
 const _focusMint = Color(0xFF4CBDAE);
 const _focusMintDark = Color(0xFF188C83);
 const _focusInk = Color(0xFF2D3333);
-const _focusPaper = Color(0xFFFFFBF4);
 const _focusLine = Color(0xFFE8DDD1);
 
 const _presetSubjects = [
@@ -66,7 +65,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
             builder: (context, constraints) {
               final isLandscape =
                   constraints.maxWidth >= constraints.maxHeight &&
-                      constraints.maxWidth >= 900;
+                  constraints.maxWidth >= 900;
               if (isLandscape) {
                 return _LandscapeFocusSetup(
                   setup: setup,
@@ -102,9 +101,9 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     final subject = setup.subject ?? _subjectController.text.trim();
 
     if (duration <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入有效的专注时长')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入有效的专注时长')));
       return;
     }
 
@@ -380,10 +379,7 @@ class _RailItem extends StatelessWidget {
 }
 
 class _TodayFocusCard extends StatelessWidget {
-  const _TodayFocusCard({
-    required this.todayMinutes,
-    required this.compact,
-  });
+  const _TodayFocusCard({required this.todayMinutes, required this.compact});
 
   final AsyncValue<int> todayMinutes;
   final bool compact;
@@ -392,7 +388,12 @@ class _TodayFocusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: compact ? 190 : 176,
-      padding: EdgeInsets.fromLTRB(compact ? 32 : 24, 22, compact ? 28 : 18, 18),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 32 : 24,
+        22,
+        compact ? 28 : 18,
+        18,
+      ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: const Color(0xFFD8EEE8)),
@@ -416,7 +417,11 @@ class _TodayFocusCard extends StatelessWidget {
               children: [
                 Row(
                   children: const [
-                    Icon(Icons.schedule_rounded, color: _focusMintDark, size: 22),
+                    Icon(
+                      Icons.schedule_rounded,
+                      color: _focusMintDark,
+                      size: 22,
+                    ),
                     SizedBox(width: 8),
                     Text(
                       '今日累计专注时长',
@@ -450,7 +455,8 @@ class _TodayFocusCard extends StatelessWidget {
               ],
             ),
           ),
-          if (!compact) Image.asset(FocusAssets.catIdle, width: 118, height: 118),
+          if (!compact)
+            Image.asset(FocusAssets.catIdle, width: 118, height: 118),
         ],
       ),
     );
@@ -539,18 +545,20 @@ class _SetupForm extends ConsumerWidget {
         Wrap(
           spacing: compact ? 10 : 12,
           runSpacing: compact ? 10 : 12,
-          children: _presetSubjects.map((subject) {
-            return _PillButton(
-              label: subject,
-              selected: setup.subject == subject,
-              minWidth: compact ? 72 : 86,
-              onTap: () {
-                ref.read(focusSetupProvider.notifier).state =
-                    setup.copyWith(subject: subject);
-                subjectController.text = subject;
-              },
-            );
-          }).toList(growable: false),
+          children: _presetSubjects
+              .map((subject) {
+                return _PillButton(
+                  label: subject,
+                  selected: setup.subject == subject,
+                  minWidth: compact ? 72 : 86,
+                  onTap: () {
+                    ref.read(focusSetupProvider.notifier).state = setup
+                        .copyWith(subject: subject);
+                    subjectController.text = subject;
+                  },
+                );
+              })
+              .toList(growable: false),
         ),
         const SizedBox(height: 12),
         _SoftInput(
@@ -573,26 +581,29 @@ class _SetupForm extends ConsumerWidget {
             return Wrap(
               spacing: 12,
               runSpacing: 12,
-              children: focusPresetOptions.map((preset) {
-                return SizedBox(
-                  width: twoColumns
-                      ? (constraints.maxWidth - 12) / 2
-                      : (constraints.maxWidth - 36) / 4,
-                  child: _PresetCard(
-                    preset: preset,
-                    selected: setup.type == preset.type,
-                    onTap: () {
-                      ref.read(focusSetupProvider.notifier).state =
-                          setup.copyWith(
-                        type: preset.type,
-                        durationMinutes: preset.type == 'custom'
-                            ? (int.tryParse(customController.text) ?? 30)
-                            : preset.minutes,
-                      );
-                    },
-                  ),
-                );
-              }).toList(growable: false),
+              children: focusPresetOptions
+                  .map((preset) {
+                    return SizedBox(
+                      width: twoColumns
+                          ? (constraints.maxWidth - 12) / 2
+                          : (constraints.maxWidth - 36) / 4,
+                      child: _PresetCard(
+                        preset: preset,
+                        selected: setup.type == preset.type,
+                        onTap: () {
+                          ref
+                              .read(focusSetupProvider.notifier)
+                              .state = setup.copyWith(
+                            type: preset.type,
+                            durationMinutes: preset.type == 'custom'
+                                ? (int.tryParse(customController.text) ?? 30)
+                                : preset.minutes,
+                          );
+                        },
+                      ),
+                    );
+                  })
+                  .toList(growable: false),
             );
           },
         ),
@@ -615,21 +626,23 @@ class _SetupForm extends ConsumerWidget {
         _SectionTitle(icon: Icons.refresh_rounded, title: '专注轮次'),
         const SizedBox(height: 12),
         Row(
-          children: [1, 2, 3, 4].map((rounds) {
-            return Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _PillButton(
-                  label: '$rounds轮',
-                  selected: setup.totalRounds == rounds,
-                  onTap: () {
-                    ref.read(focusSetupProvider.notifier).state =
-                        setup.copyWith(totalRounds: rounds);
-                  },
-                ),
-              ),
-            );
-          }).toList(growable: false),
+          children: [1, 2, 3, 4]
+              .map((rounds) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    child: _PillButton(
+                      label: '$rounds轮',
+                      selected: setup.totalRounds == rounds,
+                      onTap: () {
+                        ref.read(focusSetupProvider.notifier).state = setup
+                            .copyWith(totalRounds: rounds);
+                      },
+                    ),
+                  ),
+                );
+              })
+              .toList(growable: false),
         ),
         const SizedBox(height: 22),
         _SectionTitle(icon: Icons.draw_rounded, title: '专注标题'),
@@ -769,7 +782,11 @@ class _PresetCard extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle_rounded, color: _focusMint, size: 22),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: _focusMint,
+                size: 22,
+              ),
           ],
         ),
       ),
@@ -850,8 +867,10 @@ class _SoftInput extends StatelessWidget {
         prefixIcon: Icon(icon, color: const Color(0xFFA3B6B2)),
         filled: true,
         fillColor: Colors.white.withValues(alpha: 0.76),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 13,
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: const BorderSide(color: Color(0xFFD4ECE7)),
@@ -914,10 +933,7 @@ class _StartButton extends StatelessWidget {
 }
 
 class _RecentFocusList extends StatelessWidget {
-  const _RecentFocusList({
-    required this.recentSessions,
-    required this.compact,
-  });
+  const _RecentFocusList({required this.recentSessions, required this.compact});
 
   final AsyncValue<List<FocusSession>> recentSessions;
   final bool compact;
@@ -958,11 +974,11 @@ class _RecentFocusList extends StatelessWidget {
                 ),
               )
             else
-              ...sessions.take(compact ? 5 : 3).map(
-                    (session) => _RecentTile(
-                      session: session,
-                      compact: compact,
-                    ),
+              ...sessions
+                  .take(compact ? 5 : 3)
+                  .map(
+                    (session) =>
+                        _RecentTile(session: session, compact: compact),
                   ),
           ],
         );
@@ -986,18 +1002,20 @@ class _RecentTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: interrupted
-            ? const Color(0xFFFFF7F3)
-            : const Color(0xFFFAFFF9),
+        color: interrupted ? const Color(0xFFFFF7F3) : const Color(0xFFFAFFF9),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: interrupted ? const Color(0xFFFFD1C8) : const Color(0xFFD8EBDC),
+          color: interrupted
+              ? const Color(0xFFFFD1C8)
+              : const Color(0xFFD8EBDC),
         ),
       ),
       child: Row(
         children: [
           Image.asset(
-            interrupted ? FocusAssets.interruptWarning : FocusAssets.successBadge,
+            interrupted
+                ? FocusAssets.interruptWarning
+                : FocusAssets.successBadge,
             width: compact ? 42 : 38,
             height: compact ? 42 : 38,
           ),
@@ -1007,7 +1025,7 @@ class _RecentTile extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  session.title ?? '专注',
+                  session.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(

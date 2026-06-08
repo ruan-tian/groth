@@ -31,9 +31,7 @@ class FocusSoundPanel extends ConsumerWidget {
             : Colors.white.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: dark
-              ? const Color(0x66F5D9AC)
-              : const Color(0xFFE8DDD1),
+          color: dark ? const Color(0x66F5D9AC) : const Color(0xFFE8DDD1),
         ),
         boxShadow: [
           BoxShadow(
@@ -75,26 +73,30 @@ class FocusSoundPanel extends ConsumerWidget {
           Wrap(
             spacing: compact ? 8 : 10,
             runSpacing: compact ? 8 : 10,
-            children: focusSoundOptions.map((sound) {
-              final selected = current == sound.value ||
-                  (sound.value == 'none' && audioState.currentSoundType == null);
-              return _SessionSoundTile(
-                label: sound.label,
-                asset: sound.asset,
-                selected: selected,
-                compact: compact,
-                dark: dark,
-                onTap: () {
-                  if (sound.value == 'none') {
-                    ref.read(focusAudioStateProvider.notifier).stopNoise();
-                  } else {
-                    ref
-                        .read(focusAudioStateProvider.notifier)
-                        .changeSound(sound.value);
-                  }
-                },
-              );
-            }).toList(growable: false),
+            children: focusSoundOptions
+                .map((sound) {
+                  final selected =
+                      current == sound.value ||
+                      (sound.value == 'none' &&
+                          audioState.currentSoundType == null);
+                  return _SessionSoundTile(
+                    label: sound.label,
+                    asset: sound.asset,
+                    selected: selected,
+                    compact: compact,
+                    dark: dark,
+                    onTap: () {
+                      if (sound.value == 'none') {
+                        ref.read(focusAudioStateProvider.notifier).stopNoise();
+                      } else {
+                        ref
+                            .read(focusAudioStateProvider.notifier)
+                            .changeSound(sound.value);
+                      }
+                    },
+                  );
+                })
+                .toList(growable: false),
           ),
           const SizedBox(height: 14),
           Row(
@@ -159,12 +161,14 @@ class _SessionSoundTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final selectedColor = dark ? const Color(0xFFBDF5E5) : const Color(0xFF3EB3A7);
+    final selectedColor = dark
+        ? const Color(0xFFBDF5E5)
+        : const Color(0xFF3EB3A7);
     final textColor = selected
         ? selectedColor
         : dark
-            ? const Color(0xFFEBDCC2)
-            : const Color(0xFF5D6765);
+        ? const Color(0xFFEBDCC2)
+        : const Color(0xFF5D6765);
 
     return GestureDetector(
       onTap: onTap,
@@ -179,8 +183,8 @@ class _SessionSoundTile extends StatelessWidget {
           color: selected
               ? selectedColor.withValues(alpha: dark ? 0.16 : 0.12)
               : (dark
-                  ? Colors.white.withValues(alpha: 0.04)
-                  : Colors.white.withValues(alpha: 0.72)),
+                    ? Colors.white.withValues(alpha: 0.04)
+                    : Colors.white.withValues(alpha: 0.72)),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: selected
@@ -192,7 +196,11 @@ class _SessionSoundTile extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Image.asset(asset, width: compact ? 32 : 38, height: compact ? 32 : 38),
+            Image.asset(
+              asset,
+              width: compact ? 32 : 38,
+              height: compact ? 32 : 38,
+            ),
             const SizedBox(height: 5),
             Text(
               label,

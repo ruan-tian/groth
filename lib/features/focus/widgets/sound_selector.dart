@@ -20,16 +20,18 @@ class SoundSelector extends StatelessWidget {
     return Wrap(
       spacing: compact ? 8 : 12,
       runSpacing: compact ? 8 : 12,
-      children: focusSoundOptions.map((sound) {
-        final isSelected = selected == sound.value;
-        return _SoundChip(
-          label: sound.label,
-          asset: sound.asset,
-          selected: isSelected,
-          compact: compact,
-          onTap: () => onSoundChanged(sound.value),
-        );
-      }).toList(growable: false),
+      children: focusSoundOptions
+          .map((sound) {
+            final isSelected = selected == sound.value;
+            return _SoundChip(
+              label: sound.label,
+              asset: sound.asset,
+              selected: isSelected,
+              compact: compact,
+              onTap: () => onSoundChanged(sound.value),
+            );
+          })
+          .toList(growable: false),
     );
   }
 }
@@ -92,7 +94,9 @@ class _SoundChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: selected ? const Color(0xFF178F85) : const Color(0xFF5E6666),
+                  color: selected
+                      ? const Color(0xFF178F85)
+                      : const Color(0xFF5E6666),
                   fontSize: compact ? 12 : 14,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                 ),

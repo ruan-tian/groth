@@ -721,7 +721,28 @@ class _TiantianCompanionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _buildPetImage(PetAssets.journalWriting, 100),
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: JournalColors.shadow,
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(12),
+                child: Image.asset(
+                  PetAssets.journalWriting,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                      const Text('🐱', style: TextStyle(fontSize: 40)),
+                ),
+              ),
               const SizedBox(width: 16),
               Expanded(
                 child: CustomPaint(

@@ -7,7 +7,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart'
-    hide expRepositoryProvider, focusRepositoryProvider, studyRepositoryProvider;
+    hide
+        expRepositoryProvider,
+        focusRepositoryProvider,
+        studyRepositoryProvider;
 import '../../../shared/providers/focus_audio_provider.dart';
 import '../../../shared/providers/focus_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
@@ -58,7 +61,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    ref.read(focusCycleProvider.notifier).start(
+    ref
+        .read(focusCycleProvider.notifier)
+        .start(
           focusMinutes: widget.durationMinutes,
           totalRounds: widget.totalRounds,
           type: widget.type,
@@ -135,7 +140,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
         ),
       );
 
-      final completed = ref.read(focusCycleProvider.notifier).advanceToNextPhase();
+      final completed = ref
+          .read(focusCycleProvider.notifier)
+          .advanceToNextPhase();
       _phaseCompletionHandled = false;
       if (!completed) {
         _showStatusDialog(
@@ -151,7 +158,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
 
     ref.read(focusAudioStateProvider.notifier).playBell('gentle_bell');
     ref.read(focusAudioStateProvider.notifier).stopNoise();
-    final completed = ref.read(focusCycleProvider.notifier).advanceToNextPhase();
+    final completed = ref
+        .read(focusCycleProvider.notifier)
+        .advanceToNextPhase();
     if (completed) {
       _showCompletionDialog();
     } else {
@@ -168,8 +177,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     final focusRepo = ref.read(focusRepositoryProvider);
     final studyRepo = ref.read(studyRepositoryProvider);
     final now = DateTime.now().millisecondsSinceEpoch;
-    final phaseStartMs =
-        cycleState.phaseStartAt?.millisecondsSinceEpoch ?? now;
+    final phaseStartMs = cycleState.phaseStartAt?.millisecondsSinceEpoch ?? now;
     final actualDuration = completed
         ? widget.durationMinutes
         : ((cycleState.focusSeconds - cycleState.remainingSeconds) / 60).ceil();
@@ -340,7 +348,8 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
       }
     });
 
-    final isCycleDone = !cycleState.isRunning &&
+    final isCycleDone =
+        !cycleState.isRunning &&
         cycleState.phase == FocusPhase.longBreak &&
         cycleState.remainingSeconds <= 0;
 
@@ -439,11 +448,7 @@ class _PortraitSession extends StatelessWidget {
           ListView(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
             children: [
-              _SessionTopBar(
-                title: '番茄专注',
-                onBack: onCancel,
-                centered: true,
-              ),
+              _SessionTopBar(title: '番茄专注', onBack: onCancel, centered: true),
               const SizedBox(height: 14),
               _RoundStepper(cycleState: cycleState, dark: true),
               const SizedBox(height: 22),
@@ -456,7 +461,8 @@ class _PortraitSession extends StatelessWidget {
                   isBreak: cycleState.isBreak,
                   size: timerSize,
                   dark: true,
-                  roundLabel: '第 ${cycleState.currentRound} / ${cycleState.totalRounds} 轮',
+                  roundLabel:
+                      '第 ${cycleState.currentRound} / ${cycleState.totalRounds} 轮',
                   catAsset: FocusAssets.catForCycle(cycleState),
                 ),
               ),
@@ -546,8 +552,9 @@ class _LandscapeSession extends StatelessWidget {
                             ),
                             const SizedBox(height: 14),
                             TimerDisplay(
-                              remaining:
-                                  Duration(seconds: cycleState.remainingSeconds),
+                              remaining: Duration(
+                                seconds: cycleState.remainingSeconds,
+                              ),
                               total: _totalFor(cycleState),
                               isBreak: cycleState.isBreak,
                               size: timerSize,
@@ -670,7 +677,8 @@ class _RoundStepper extends StatelessWidget {
       children: List.generate(cycleState.totalRounds, (index) {
         final round = index + 1;
         final active = round == cycleState.currentRound && !cycleState.isBreak;
-        final done = round < cycleState.currentRound ||
+        final done =
+            round < cycleState.currentRound ||
             (round == cycleState.currentRound && cycleState.isBreak);
         return Row(
           children: [
@@ -725,11 +733,12 @@ class _SessionTitleBlock extends StatelessWidget {
     final title = cycleState.isBreak
         ? (cycleState.phase == FocusPhase.longBreak ? '长休息' : '短休息')
         : (cycleState.title.isEmpty
-            ? '${focusTypeLabel(cycleState.type)}专注'
-            : cycleState.title);
+              ? '${focusTypeLabel(cycleState.type)}专注'
+              : cycleState.title);
     return Column(
-      crossAxisAlignment:
-          centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+      crossAxisAlignment: centered
+          ? CrossAxisAlignment.center
+          : CrossAxisAlignment.start,
       children: [
         Text(
           title,
@@ -801,7 +810,9 @@ class _SessionControls extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         _ControlColumn(
-          icon: cycleState.isBreak ? Icons.skip_next_rounded : Icons.close_rounded,
+          icon: cycleState.isBreak
+              ? Icons.skip_next_rounded
+              : Icons.close_rounded,
           label: cycleState.isBreak ? '跳过' : '取消',
           onTap: cycleState.isBreak ? onSkipBreak : onCancel,
           danger: !cycleState.isBreak,
@@ -873,9 +884,7 @@ class _RoundIconButton extends StatelessWidget {
         height: 54,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: danger
-              ? const Color(0x331A0E0A)
-              : const Color(0x220D3540),
+          color: danger ? const Color(0x331A0E0A) : const Color(0x220D3540),
           border: Border.all(color: _sessionCream.withValues(alpha: 0.72)),
         ),
         child: Icon(icon, color: _sessionCream, size: 26),
@@ -947,13 +956,13 @@ class _NextPhaseCard extends StatelessWidget {
     final nextTitle = cycleState.isBreak
         ? '下一阶段：专注'
         : cycleState.isLastRound
-            ? '下一阶段：长休息'
-            : '下一阶段：短休息';
+        ? '下一阶段：长休息'
+        : '下一阶段：短休息';
     final nextTime = cycleState.isBreak
         ? '${cycleState.focusSeconds ~/ 60}:00'
         : cycleState.isLastRound
-            ? '${cycleState.longBreakSeconds ~/ 60}:00'
-            : '${cycleState.shortBreakSeconds ~/ 60}:00';
+        ? '${cycleState.longBreakSeconds ~/ 60}:00'
+        : '${cycleState.shortBreakSeconds ~/ 60}:00';
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
@@ -964,7 +973,9 @@ class _NextPhaseCard extends StatelessWidget {
       child: Row(
         children: [
           Image.asset(
-            cycleState.isBreak ? FocusAssets.iconPomodoro : FocusAssets.breakCup,
+            cycleState.isBreak
+                ? FocusAssets.iconPomodoro
+                : FocusAssets.breakCup,
             width: compact ? 48 : 56,
             height: compact ? 48 : 56,
           ),

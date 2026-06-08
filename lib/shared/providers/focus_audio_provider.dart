@@ -37,9 +37,10 @@ class FocusAudioState {
 
 const Object _sentinel = Object();
 
-final focusAudioStateProvider = StateNotifierProvider<FocusAudioStateNotifier, FocusAudioState>((ref) {
-  return FocusAudioStateNotifier(ref);
-});
+final focusAudioStateProvider =
+    StateNotifierProvider<FocusAudioStateNotifier, FocusAudioState>((ref) {
+      return FocusAudioStateNotifier(ref);
+    });
 
 class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
   final Ref _ref;

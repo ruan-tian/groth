@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
@@ -76,9 +75,11 @@ class _TimerDisplayState extends State<TimerDisplay>
     final accent = widget.isBreak
         ? const Color(0xFF9DEECF)
         : progress > 0.25
-            ? const Color(0xFF9DEBD8)
-            : const Color(0xFFFF8D76);
-    final textColor = widget.dark ? const Color(0xFFF8E8C8) : const Color(0xFF2C3938);
+        ? const Color(0xFF9DEBD8)
+        : const Color(0xFFFF8D76);
+    final textColor = widget.dark
+        ? const Color(0xFFF8E8C8)
+        : const Color(0xFF2C3938);
 
     final content = SizedBox(
       width: widget.size,
@@ -244,7 +245,7 @@ class _TimerRingPainter extends CustomPainter {
     canvas.drawArc(
       Rect.fromCircle(center: center, radius: radius),
       -math.pi / 2,
-      math.tau * progress,
+      math.pi * 2 * progress,
       false,
       progressPaint,
     );

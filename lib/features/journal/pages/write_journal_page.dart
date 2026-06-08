@@ -720,62 +720,6 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
   }
 
   // ---------------------------------------------------------------------------
-  // 写作小结卡片
-  // ---------------------------------------------------------------------------
-
-  Widget _buildWritingSummary(int wordCount, int estimatedExp) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: JournalColors.pinkBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '今日写作小结',
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: JournalColors.textDark,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: _SummaryMiniCard(
-                  icon: Icons.short_text_rounded,
-                  value: '$wordCount',
-                  label: '本次字数',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _SummaryMiniCard(
-                  icon: Icons.auto_awesome_rounded,
-                  value: '+$estimatedExp',
-                  label: '获得经验',
-                ),
-              ),
-              const SizedBox(width: 10),
-              const Expanded(
-                child: _SummaryMiniCard(
-                  icon: Icons.local_fire_department_rounded,
-                  value: '—',
-                  label: '连续天数',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
   // 保存按钮
   // ---------------------------------------------------------------------------
 

@@ -60,36 +60,20 @@ const focusPresetOptions = <FocusPresetOption>[
 ];
 
 const focusSoundOptions = <FocusSoundOption>[
-  FocusSoundOption(
-    value: 'rain',
-    label: '雨声',
-    asset: FocusAssets.soundRain,
-  ),
-  FocusSoundOption(
-    value: 'ocean',
-    label: '海浪',
-    asset: FocusAssets.soundOcean,
-  ),
+  FocusSoundOption(value: 'rain', label: '雨声', asset: FocusAssets.soundRain),
+  FocusSoundOption(value: 'ocean', label: '海浪', asset: FocusAssets.soundOcean),
   FocusSoundOption(
     value: 'forest',
     label: '森林',
     asset: FocusAssets.soundForest,
   ),
-  FocusSoundOption(
-    value: 'cafe',
-    label: '咖啡馆',
-    asset: FocusAssets.soundCafe,
-  ),
+  FocusSoundOption(value: 'cafe', label: '咖啡馆', asset: FocusAssets.soundCafe),
   FocusSoundOption(
     value: 'white_noise',
     label: '白噪声',
     asset: FocusAssets.soundWhiteNoise,
   ),
-  FocusSoundOption(
-    value: 'none',
-    label: '无',
-    asset: FocusAssets.soundNone,
-  ),
+  FocusSoundOption(value: 'none', label: '无', asset: FocusAssets.soundNone),
 ];
 
 String focusTypeLabel(String type) {

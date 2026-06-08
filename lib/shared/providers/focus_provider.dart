@@ -76,8 +76,9 @@ class FocusSetupState {
       durationMinutes: durationMinutes ?? this.durationMinutes,
       title: title ?? this.title,
       subject: subject == _focusSetupUnset ? this.subject : subject as String?,
-      soundType:
-          soundType == _focusSetupUnset ? this.soundType : soundType as String?,
+      soundType: soundType == _focusSetupUnset
+          ? this.soundType
+          : soundType as String?,
       totalRounds: totalRounds ?? this.totalRounds,
     );
   }
@@ -95,11 +96,7 @@ final focusSetupProvider = StateProvider<FocusSetupState>((ref) {
 // =============================================================================
 
 /// 专注阶段
-enum FocusPhase {
-  focus,
-  shortBreak,
-  longBreak,
-}
+enum FocusPhase { focus, shortBreak, longBreak }
 
 /// 专注循环状态
 class FocusCycleState {
@@ -151,8 +148,8 @@ class FocusCycleState {
     final total = phase == FocusPhase.focus
         ? focusSeconds
         : phase == FocusPhase.shortBreak
-            ? shortBreakSeconds
-            : longBreakSeconds;
+        ? shortBreakSeconds
+        : longBreakSeconds;
     return total > 0 ? (remainingSeconds / total).clamp(0.0, 1.0) : 0.0;
   }
 
@@ -196,23 +193,23 @@ class FocusCycleState {
 
   /// 序列化为 JSON（用于持久化恢复）
   Map<String, dynamic> toJson() => {
-        'sessionGroupId': sessionGroupId,
-        'currentRound': currentRound,
-        'totalRounds': totalRounds,
-        'phase': phase.index,
-        'phaseStartAt': phaseStartAt?.millisecondsSinceEpoch,
-        'phaseEndAt': phaseEndAt?.millisecondsSinceEpoch,
-        'remainingSeconds': remainingSeconds,
-        'isRunning': isRunning,
-        'autoStartNextRound': autoStartNextRound,
-        'focusSeconds': focusSeconds,
-        'shortBreakSeconds': shortBreakSeconds,
-        'longBreakSeconds': longBreakSeconds,
-        'title': title,
-        'subject': subject,
-        'soundType': soundType,
-        'type': type,
-      };
+    'sessionGroupId': sessionGroupId,
+    'currentRound': currentRound,
+    'totalRounds': totalRounds,
+    'phase': phase.index,
+    'phaseStartAt': phaseStartAt?.millisecondsSinceEpoch,
+    'phaseEndAt': phaseEndAt?.millisecondsSinceEpoch,
+    'remainingSeconds': remainingSeconds,
+    'isRunning': isRunning,
+    'autoStartNextRound': autoStartNextRound,
+    'focusSeconds': focusSeconds,
+    'shortBreakSeconds': shortBreakSeconds,
+    'longBreakSeconds': longBreakSeconds,
+    'title': title,
+    'subject': subject,
+    'soundType': soundType,
+    'type': type,
+  };
 
   /// 从 JSON 反序列化
   factory FocusCycleState.fromJson(Map<String, dynamic> json) {
@@ -405,8 +402,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
   void _onTick() {
     if (!state.isRunning || state.phaseEndAt == null) return;
 
-    final remaining =
-        state.phaseEndAt!.difference(DateTime.now()).inSeconds;
+    final remaining = state.phaseEndAt!.difference(DateTime.now()).inSeconds;
 
     if (remaining <= 0) {
       // 阶段结束
@@ -421,8 +417,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
   /// App 从后台恢复时调用，重算 remainingSeconds
   void recalculate() {
     if (state.phaseEndAt == null) return;
-    final remaining =
-        state.phaseEndAt!.difference(DateTime.now()).inSeconds;
+    final remaining = state.phaseEndAt!.difference(DateTime.now()).inSeconds;
     if (remaining <= 0) {
       state = state.copyWith(remainingSeconds: 0);
     } else {
@@ -491,5 +486,5 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
 /// 专注循环 Provider
 final focusCycleProvider =
     StateNotifierProvider<FocusCycleNotifier, FocusCycleState>((ref) {
-  return FocusCycleNotifier();
-});
+      return FocusCycleNotifier();
+    });
