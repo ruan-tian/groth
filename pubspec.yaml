@@ -120,6 +120,10 @@ flutter:
     - assets/images/focus/lights/
     - assets/images/focus/particles/
     - assets/images/focus/status/
+    - assets/images/journal/backgrounds/
+    - assets/images/journal/cats/
+    - assets/images/journal/decor/
+    - assets/images/journal/status/
     - assets/journal/banners/
 
   # To add assets to your application, add an assets section, like this:

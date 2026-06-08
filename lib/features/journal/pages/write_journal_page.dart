@@ -9,24 +9,14 @@ import 'package:go_router/go_router.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/journal_provider.dart';
-import '../../../shared/providers/service_providers.dart';
 import '../../pet/models/pet_event.dart';
-import '../../pet/models/pet_scene_model.dart';
 import '../../pet/services/pet_event_bus.dart';
-import '../../pet/utils/pet_assets.dart';
-import '../../../shared/providers/pet_scene_provider.dart';
+import '../providers/journal_stats_provider.dart';
+import '../utils/journal_assets.dart' as journal_images;
 import '../utils/journal_constants.dart';
 import '../widgets/journal_colors.dart';
 import 'quill_editor_page.dart';
 
-/// 引导问题（固定 3 条）
-const _guidedQuestions = [
-  '今天完成了什么？',
-  '今天哪里做得不好？',
-  '明天最重要的一件事是什么？',
-];
-
-/// 写日记页面（淡粉色风格）
 class WriteJournalPage extends ConsumerStatefulWidget {
   const WriteJournalPage({super.key});
 
@@ -38,41 +28,44 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
 
-  String? _selectedMood;
+  String? _selectedMood = 'happy';
   final Set<String> _selectedTags = {};
-  bool _showGuidedQuestions = true;
   bool _saving = false;
   bool _pickingImage = false;
-
-  /// Image paths picked from the full-screen editor or inline picker,
-  /// to be persisted to journal_assets on save.
   final List<String> _pendingImagePaths = [];
-
-  /// Quill delta JSON from the rich text editor
   String? _quillDeltaJson;
 
   @override
+  void initState() {
+    super.initState();
+    _titleController.addListener(_rebuild);
+    _contentController.addListener(_rebuild);
+  }
+
+  @override
   void dispose() {
+    _titleController.removeListener(_rebuild);
+    _contentController.removeListener(_rebuild);
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
 
-  // ===========================================================================
-  // _save() — 业务逻辑，不可改动
-  // ===========================================================================
+  void _rebuild() {
+    if (mounted) setState(() {});
+  }
 
   Future<void> _save() async {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入标题')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入标题')));
       return;
     }
     if (_contentController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入正文')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入正文')));
       return;
     }
 
@@ -83,15 +76,12 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       final nowMs = now.millisecondsSinceEpoch;
       final content = _contentController.text.trim();
       final wordCount = content.length;
-
-      // 生成纯文本（去除 Markdown 标记）
       final plainText = _stripMarkdown(content);
-
-      // Determine content type
       final contentType = _quillDeltaJson != null ? 'quill' : 'markdown';
 
       final expService = ref.read(expServiceProvider);
       final exp = expService.calculateJournalExp(wordCount: wordCount);
+      final journalRepo = ref.read(journalRepositoryProvider);
 
       final companion = DailyJournalsCompanion.insert(
         journalDate: _formatDate(now),
@@ -111,21 +101,17 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         updatedAt: nowMs,
       );
 
-      final journalRepo = ref.read(journalRepositoryProvider);
       final journalId = await journalRepo.insertJournal(companion);
 
-      // Persist picked images to journal_assets
-      if (_pendingImagePaths.isNotEmpty) {
-        for (var i = 0; i < _pendingImagePaths.length; i++) {
-          await journalRepo.insertJournalAsset(
-            JournalAssetsCompanion.insert(
-              journalId: journalId,
-              localPath: _pendingImagePaths[i],
-              sortOrder: Value(i),
-              createdAt: nowMs,
-            ),
-          );
-        }
+      for (var i = 0; i < _pendingImagePaths.length; i++) {
+        await journalRepo.insertJournalAsset(
+          JournalAssetsCompanion.insert(
+            journalId: journalId,
+            localPath: _pendingImagePaths[i],
+            sortOrder: Value(i),
+            createdAt: nowMs,
+          ),
+        );
       }
 
       final expRepo = ref.read(expRepositoryProvider);
@@ -141,42 +127,40 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         ),
       );
 
-      final newTotal = oldTotal + exp;
-      final newLevel = expService.calculateLevel(newTotal);
+      final newLevel = expService.calculateLevel(oldTotal + exp);
       if (newLevel > oldLevel) {
-        PetEventBus.instance.emit(PetEvent.levelUp(
-          oldLevel: oldLevel,
-          newLevel: newLevel,
-        ));
+        PetEventBus.instance.emit(
+          PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
+        );
       }
 
       ref.invalidate(recentJournalsProvider);
       ref.invalidate(todayJournalCountProvider);
+      ref.invalidate(allJournalTagsProvider);
+      ref.invalidate(journalStreakProvider);
       ref.invalidate(dashboardProvider);
 
-      if (mounted) {
-        // 发送宠物事件
-        final eventId = 'journal_${DateTime.now().millisecondsSinceEpoch}';
-        PetEventBus.instance.emit(PetEvent.moduleCompleted(
-          eventId: eventId,
+      if (!mounted) return;
+      PetEventBus.instance.emit(
+        PetEvent.moduleCompleted(
+          eventId: 'journal_${DateTime.now().millisecondsSinceEpoch}',
           type: PetEventType.journalCompleted,
           module: 'journal',
-        ));
-
-        HapticFeedback.lightImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('已保存，获得 $exp EXP'),
-            backgroundColor: const Color(0xFF35C976),
-          ),
-        );
-        context.pop();
-      }
+        ),
+      );
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('已保存，获得 $exp EXP'),
+          backgroundColor: const Color(0xFF35C976),
+        ),
+      );
+      context.pop();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -187,41 +171,37 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 
-  /// 移除 Markdown 标记，返回纯文本。
   String _stripMarkdown(String text) {
     return text
-        .replaceAll(RegExp(r'^#{1,6}\s+', multiLine: true), '') // 标题
-        .replaceAll(RegExp(r'\*\*(.+?)\*\*'), r'$1') // 粗体
-        .replaceAll(RegExp(r'\*(.+?)\*'), r'$1') // 斜体
-        .replaceAll(RegExp(r'__(.+?)__'), r'$1') // 粗体
-        .replaceAll(RegExp(r'_(.+?)_'), r'$1') // 斜体
-        .replaceAll(RegExp(r'~~(.+?)~~'), r'$1') // 删除线
-        .replaceAll(RegExp(r'^>\s+', multiLine: true), '') // 引用
-        .replaceAll(RegExp(r'^[-*+]\s+', multiLine: true), '') // 无序列表
-        .replaceAll(RegExp(r'^\d+\.\s+', multiLine: true), '') // 有序列表
-        .replaceAll(RegExp(r'\[(.+?)\]\(.+?\)'), r'$1') // 链接
-        .replaceAll(RegExp(r'!\[.*?\]\(.+?\)'), '') // 图片
-        .replaceAll(RegExp(r'`(.+?)`'), r'$1') // 行内代码
-        .replaceAll(RegExp(r'```[\s\S]*?```'), '') // 代码块
-        .replaceAll(RegExp(r'---+'), '') // 分割线
-        .replaceAll(RegExp(r'\n{3,}'), '\n\n') // 多余空行
+        .replaceAll(RegExp(r'^#{1,6}\s+', multiLine: true), '')
+        .replaceAll(RegExp(r'\*\*(.+?)\*\*'), r'$1')
+        .replaceAll(RegExp(r'\*(.+?)\*'), r'$1')
+        .replaceAll(RegExp(r'__(.+?)__'), r'$1')
+        .replaceAll(RegExp(r'_(.+?)_'), r'$1')
+        .replaceAll(RegExp(r'~~(.+?)~~'), r'$1')
+        .replaceAll(RegExp(r'^>\s+', multiLine: true), '')
+        .replaceAll(RegExp(r'^[-*+]\s+', multiLine: true), '')
+        .replaceAll(RegExp(r'^\d+\.\s+', multiLine: true), '')
+        .replaceAll(RegExp(r'\[(.+?)\]\(.+?\)'), r'$1')
+        .replaceAll(RegExp(r'!\[.*?\]\(.+?\)'), '')
+        .replaceAll(RegExp(r'`(.+?)`'), r'$1')
+        .replaceAll(RegExp(r'```[\s\S]*?```'), '')
+        .replaceAll(RegExp(r'---+'), '')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n')
         .trim();
   }
-
-  // ===========================================================================
-  // 全屏编辑器
-  // ===========================================================================
 
   void _openFullScreenEditor() {
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (context) => QuillEditorPage(
           initialTitle: _titleController.text,
+          initialPlainText: _contentController.text,
           initialDeltaJson: _quillDeltaJson,
           onSave: (title, deltaJson, plainText, wordCount, imagePaths) {
             setState(() {
               _titleController.text = title;
-              _contentController.text = plainText;
+              _contentController.text = plainText.trim();
               _quillDeltaJson = deltaJson;
               _pendingImagePaths.addAll(imagePaths);
             });
@@ -231,10 +211,6 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     );
   }
 
-  // ===========================================================================
-  // 图片选取（正文页内）
-  // ===========================================================================
-
   Future<void> _pickImageInline() async {
     if (_pickingImage) return;
     setState(() => _pickingImage = true);
@@ -242,613 +218,958 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
     try {
       final imageService = ref.read(imageServiceProvider);
       final path = await imageService.pickAndSaveImage();
-      if (path == null) return; // user cancelled
+      if (path == null) return;
 
       setState(() {
         _pendingImagePaths.add(path);
+        final current = _contentController.text;
+        final prefix = current.isEmpty ? '' : '\n';
+        _contentController.text = '$current$prefix![image]($path)\n';
+        _contentController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _contentController.text.length),
+        );
       });
 
-      // Insert markdown image syntax at end of content
-      final current = _contentController.text;
-      final prefix = current.isEmpty ? '' : '\n';
-      _contentController.text = '$current$prefix![image]($path)\n';
-      _contentController.selection = TextSelection.fromPosition(
-        TextPosition(offset: _contentController.text.length),
-      );
-
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('图片已添加'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('图片已添加')));
       }
     } finally {
       if (mounted) setState(() => _pickingImage = false);
     }
   }
 
-  // ===========================================================================
-  // Build
-  // ===========================================================================
+  void _insertPrompt() {
+    final prompt = getRandomPrompt().text;
+    final current = _contentController.text;
+    final prefix = current.trim().isEmpty ? '' : '\n\n';
+    _contentController.text = '$current$prefix$prompt\n';
+    _contentController.selection = TextSelection.fromPosition(
+      TextPosition(offset: _contentController.text.length),
+    );
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: JournalColors.bg,
-      appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+  void _showWordStats() {
+    final content = _contentController.text.trim();
+    final lineCount = content.isEmpty ? 0 : content.split('\n').length;
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _SoftSheet(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── 甜甜陪伴 ──
-            const _TiantianCompanionSection(),
-            const SizedBox(height: 24),
-
-            // ── 标题 ──
-            _buildLabel('标题'),
-            const SizedBox(height: 8),
-            _buildTitleField(),
-            const SizedBox(height: 24),
-
-            // ── 心情选择 ──
-            _buildLabel('今天心情'),
-            const SizedBox(height: 12),
-            _buildMoodSelector(),
-            const SizedBox(height: 24),
-
-            // ── 标签选择 ──
-            _buildLabel('标签'),
-            const SizedBox(height: 12),
-            _buildTagSelector(),
-            const SizedBox(height: 24),
-
-            // ── 引导问题 ──
-            _buildGuidedQuestions(),
-            const SizedBox(height: 24),
-
-            // ── 正文 ──
-            _buildLabel('正文'),
-            const SizedBox(height: 8),
-            _buildContentField(),
-            const SizedBox(height: 20),
-
-            // ── 工具按钮 ──
-            _buildToolButtons(),
-            const SizedBox(height: 24),
-
-            // ── 底部操作按钮 ──
-            _buildSaveButton(),
-            const SizedBox(height: 40),
+            const Text(
+              '字数统计',
+              style: TextStyle(
+                color: JournalColors.textDark,
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _MetricTile(value: '$wordCount', label: '本次字数'),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _MetricTile(value: '$lineCount', label: '段落行数'),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // AppBar
-  // ---------------------------------------------------------------------------
+  int get wordCount => _contentController.text.trim().length;
 
-  PreferredSizeWidget _buildAppBar() {
-    return AppBar(
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-        color: JournalColors.textDark,
-        onPressed: () => context.pop(),
-      ),
-      title: const Text(
-        '写日记',
-        style: TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-          color: JournalColors.textDark,
-        ),
-      ),
-      centerTitle: true,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.save_rounded, size: 24),
-          color: JournalColors.pinkMain,
-          onPressed: _saving ? null : _save,
-        ),
-      ],
-    );
+  int get estimatedExp {
+    return ref
+        .read(expServiceProvider)
+        .calculateJournalExp(wordCount: wordCount);
   }
 
-  // ---------------------------------------------------------------------------
-  // Label helper
-  // ---------------------------------------------------------------------------
+  @override
+  Widget build(BuildContext context) {
+    final streak =
+        ref.watch(journalStreakProvider).whenOrNull(data: (v) => v) ?? 0;
 
-  Widget _buildLabel(String text) {
-    return Text(
-      text,
-      style: const TextStyle(
-        fontSize: 13,
-        fontWeight: FontWeight.w500,
-        color: JournalColors.textSecondary,
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 标题输入框
-  // ---------------------------------------------------------------------------
-
-  Widget _buildTitleField() {
-    return TextField(
-      controller: _titleController,
-      decoration: InputDecoration(
-        hintText: '例如：充实的一天',
-        hintStyle: const TextStyle(color: JournalColors.textMuted),
-        prefixIcon: Container(
-          width: 32,
-          height: 32,
-          margin: const EdgeInsets.only(right: 8),
-          decoration: BoxDecoration(
-            color: JournalColors.pinkBg,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: const Center(
-            child: Text('T', style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: JournalColors.pinkMain,
-            )),
-          ),
-        ),
-        prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 40),
-        filled: true,
-        fillColor: Colors.white,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: JournalColors.pinkBorder),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: JournalColors.pinkBorder),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: JournalColors.pinkMain, width: 1.5),
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 心情选择器
-  // ---------------------------------------------------------------------------
-
-  Widget _buildMoodSelector() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: moodOptions.map((mood) {
-        final isSelected = _selectedMood == mood.key;
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() {
-              _selectedMood = (_selectedMood == mood.key) ? null : mood.key;
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            width: 62,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? JournalColors.pinkBg : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: isSelected
-                    ? JournalColors.pinkMain
-                    : JournalColors.pinkBorder,
-                width: isSelected ? 1.5 : 1,
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(mood.emoji, style: const TextStyle(fontSize: 28)),
-                const SizedBox(height: 4),
-                Text(
-                  mood.label,
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected
-                        ? JournalColors.pinkMain
-                        : JournalColors.textSecondary,
+    return Scaffold(
+      backgroundColor: JournalColors.bg,
+      body: SafeArea(
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final wide = constraints.maxWidth > 760;
+            return Center(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: wide ? 720 : 520),
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    wide ? 28 : 20,
+                    12,
+                    wide ? 28 : 20,
+                    28,
                   ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 标签选择器
-  // ---------------------------------------------------------------------------
-
-  Widget _buildTagSelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: presetTags.map((tag) {
-        final isSelected = _selectedTags.contains(tag);
-        return GestureDetector(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            setState(() {
-              if (_selectedTags.contains(tag)) {
-                _selectedTags.remove(tag);
-              } else {
-                _selectedTags.add(tag);
-              }
-            });
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? JournalColors.pinkBg : const Color(0xFFF5F5F5),
-              borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: isSelected
-                    ? JournalColors.pinkMain
-                    : JournalColors.pinkBorder,
-              ),
-            ),
-            child: Text(
-              '#$tag',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                color: isSelected
-                    ? JournalColors.pinkMain
-                    : JournalColors.textSecondary,
-              ),
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 引导问题
-  // ---------------------------------------------------------------------------
-
-  Widget _buildGuidedQuestions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () {
-            setState(() => _showGuidedQuestions = !_showGuidedQuestions);
-          },
-          child: Row(
-            children: [
-              const Text(
-                '引导问题',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: JournalColors.textSecondary,
-                ),
-              ),
-              const SizedBox(width: 4),
-              Icon(
-                _showGuidedQuestions
-                    ? Icons.keyboard_arrow_up_rounded
-                    : Icons.keyboard_arrow_down_rounded,
-                size: 18,
-                color: JournalColors.textMuted,
-              ),
-            ],
-          ),
-        ),
-        if (_showGuidedQuestions) ...[
-          const SizedBox(height: 12),
-          ..._guidedQuestions.map((question) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: GestureDetector(
-                onTap: () {
-                  final current = _contentController.text;
-                  final prefix = current.isEmpty ? '' : '\n\n';
-                  _contentController.text = '$current【$question】\n';
-                  _contentController.selection = TextSelection.fromPosition(
-                    TextPosition(offset: _contentController.text.length),
-                  );
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 14,
-                  ),
-                  decoration: BoxDecoration(
-                    color: JournalColors.pinkBg,
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(
-                        Icons.push_pin_rounded,
-                        size: 18,
-                        color: JournalColors.pinkSoft,
+                      _TopBar(
+                        onBack: () => context.pop(),
+                        onSave: _saving ? null : _save,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          question,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: JournalColors.textDark,
-                          ),
-                        ),
+                      const SizedBox(height: 22),
+                      _MoodCard(
+                        selectedMood: _selectedMood,
+                        onSelected: (mood) {
+                          HapticFeedback.selectionClick();
+                          setState(() {
+                            _selectedMood = _selectedMood == mood ? null : mood;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      _JournalPaperCard(
+                        titleController: _titleController,
+                        contentController: _contentController,
+                        wordCount: wordCount,
+                        onOpenEditor: _openFullScreenEditor,
+                      ),
+                      const SizedBox(height: 18),
+                      _ToolGrid(
+                        pickingImage: _pickingImage,
+                        onPrompt: _insertPrompt,
+                        onStats: _showWordStats,
+                        onImage: _pickImageInline,
+                        onMood: () => _showMoodSheet(),
+                      ),
+                      const SizedBox(height: 18),
+                      _TagSection(
+                        selectedTags: _selectedTags,
+                        onToggle: (tag) {
+                          setState(() {
+                            _selectedTags.contains(tag)
+                                ? _selectedTags.remove(tag)
+                                : _selectedTags.add(tag);
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 18),
+                      _WritingSummary(
+                        wordCount: wordCount,
+                        exp: estimatedExp,
+                        streak: streak,
+                      ),
+                      const SizedBox(height: 24),
+                      _BottomActions(
+                        saving: _saving,
+                        onSave: _save,
+                        onDone: _save,
                       ),
                     ],
                   ),
                 ),
               ),
             );
-          }),
-        ],
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 正文输入框
-  // ---------------------------------------------------------------------------
-
-  Widget _buildContentField() {
-    return Stack(
-      children: [
-        ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 220),
-          child: TextField(
-            controller: _contentController,
-            maxLines: null,
-            minLines: 8,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(
-              hintText: '写下今天的复盘...',
-              hintStyle: const TextStyle(color: JournalColors.textMuted),
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.all(16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: JournalColors.pinkBorder),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: JournalColors.pinkBorder),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide:
-                    const BorderSide(color: JournalColors.pinkMain, width: 1.5),
-              ),
-            ),
-          ),
-        ),
-        Positioned(
-          right: 8,
-          bottom: 8,
-          child: Opacity(
-            opacity: 0.45,
-            child: Image.asset(
-              PetAssets.journalWriting,
-              width: 72,
-              height: 72,
-              fit: BoxFit.contain,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 工具按钮
-  // ---------------------------------------------------------------------------
-
-  Widget _buildToolButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: _pickingImage ? null : _pickImageInline,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: JournalColors.pinkBorder),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.image_outlined, size: 18, color: JournalColors.textDark),
-                  SizedBox(width: 6),
-                  Text(
-                    '📷 图片导入',
-                    style: TextStyle(fontSize: 13, color: JournalColors.textDark),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: GestureDetector(
-            onTap: _openFullScreenEditor,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: JournalColors.pinkBorder),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.edit_note_rounded, size: 18, color: JournalColors.textDark),
-                  SizedBox(width: 6),
-                  Text(
-                    '🔲 全屏书写',
-                    style: TextStyle(fontSize: 13, color: JournalColors.textDark),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 保存按钮
-  // ---------------------------------------------------------------------------
-
-  Widget _buildSaveButton() {
-    return GestureDetector(
-      onTap: _saving ? null : _save,
-      child: Container(
-        height: 52,
-        decoration: BoxDecoration(
-          gradient: _saving ? null : JournalColors.heroGradient,
-          color: _saving ? JournalColors.pinkSoft : null,
-          borderRadius: BorderRadius.circular(999),
-          boxShadow: _saving
-              ? null
-              : [
-                  BoxShadow(
-                    color: JournalColors.pinkMain.withValues(alpha: 0.25),
-                    blurRadius: 8,
-                    offset: const Offset(0, 3),
-                  ),
-                ],
-        ),
-        child: Center(
-          child: _saving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text(
-                  '✓ 保存日记',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
+          },
         ),
       ),
     );
   }
 
-}
-
-// =============================================================================
-// 甜甜陪伴区域
-// =============================================================================
-
-class _TiantianCompanionSection extends ConsumerStatefulWidget {
-  const _TiantianCompanionSection();
-
-  @override
-  ConsumerState<_TiantianCompanionSection> createState() => _TiantianCompanionSectionState();
-}
-
-class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSection> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(petSceneProvider(PetModuleType.journal).notifier).initScene(hasRecords: false);
-    });
+  void _showMoodSheet() {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _SoftSheet(
+        child: _MoodCard(
+          selectedMood: _selectedMood,
+          compact: true,
+          onSelected: (mood) {
+            setState(() => _selectedMood = mood);
+            Navigator.pop(context);
+          },
+        ),
+      ),
+    );
   }
+}
+
+class _TopBar extends StatelessWidget {
+  const _TopBar({required this.onBack, required this.onSave});
+
+  final VoidCallback onBack;
+  final VoidCallback? onSave;
 
   @override
   Widget build(BuildContext context) {
-    final sceneState = ref.watch(petSceneProvider(PetModuleType.journal));
-    final bannerPath = sceneState.config.state.bannerPath;
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: JournalColors.pinkBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: JournalColors.shadow,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+    return SizedBox(
+      height: 68,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Align(
+            alignment: Alignment.centerLeft,
+            child: _SquareIconButton(
+              icon: Icons.chevron_left_rounded,
+              onTap: onBack,
+              color: JournalColors.textDark,
+            ),
+          ),
+          const Text(
+            '写日记',
+            style: TextStyle(
+              color: JournalColors.textDark,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              letterSpacing: 0,
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: _SquareIconButton(
+              icon: Icons.save_rounded,
+              onTap: onSave,
+              color: JournalColors.pinkMain,
+            ),
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 600),
-          child: Stack(
-            key: ValueKey(bannerPath),
+    );
+  }
+}
+
+class _MoodCard extends StatelessWidget {
+  const _MoodCard({
+    required this.selectedMood,
+    required this.onSelected,
+    this.compact = false,
+  });
+
+  final String? selectedMood;
+  final ValueChanged<String> onSelected;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SoftCard(
+      padding: EdgeInsets.fromLTRB(20, compact ? 18 : 22, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '今天的心情是？',
+            style: TextStyle(color: JournalColors.textDark, fontSize: 15),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: moodOptions.map((mood) {
+              final selected = selectedMood == mood.key;
+              return Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: GestureDetector(
+                    onTap: () => onSelected(mood.key),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      height: compact ? 82 : 92,
+                      decoration: BoxDecoration(
+                        color: selected ? JournalColors.pinkBg : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: selected
+                              ? JournalColors.pinkSoft
+                              : JournalColors.pinkBorder,
+                          width: selected ? 1.4 : 1,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            mood.emoji,
+                            style: const TextStyle(fontSize: 30),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            mood.label,
+                            style: TextStyle(
+                              color: selected
+                                  ? JournalColors.pinkMain
+                                  : JournalColors.textSecondary,
+                              fontSize: 13,
+                              fontWeight: selected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _JournalPaperCard extends StatelessWidget {
+  const _JournalPaperCard({
+    required this.titleController,
+    required this.contentController,
+    required this.wordCount,
+    required this.onOpenEditor,
+  });
+
+  final TextEditingController titleController;
+  final TextEditingController contentController;
+  final int wordCount;
+  final VoidCallback onOpenEditor;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SoftCard(
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 18),
+      child: Column(
+        children: [
+          Row(
             children: [
-              // 第1层：完整底图
               Image.asset(
-                bannerPath,
-                width: double.infinity,
-                fit: BoxFit.fitWidth,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 180,
-                  color: JournalColors.companionGradient.colors.first,
+                journal_images.JournalAssets.pencil,
+                width: 28,
+                height: 28,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.edit_rounded,
+                  color: JournalColors.pinkMain,
                 ),
               ),
-              // 第2层：文字（右侧留白区）
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: titleController,
+                  style: const TextStyle(
+                    color: JournalColors.textDark,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: '今天的小确幸',
+                    hintStyle: TextStyle(color: JournalColors.textMuted),
+                    border: InputBorder.none,
+                    isDense: true,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              _DateChip(date: DateTime.now()),
+            ],
+          ),
+          const Divider(color: JournalColors.pinkBorder, height: 28),
+          Stack(
+            children: [
+              CustomPaint(
+                painter: _PaperLinesPainter(),
+                child: TextField(
+                  controller: contentController,
+                  minLines: 12,
+                  maxLines: null,
+                  keyboardType: TextInputType.multiline,
+                  style: const TextStyle(
+                    color: JournalColors.textDark,
+                    fontSize: 18,
+                    height: 2.05,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: '今天阳光特别好，记录一点平凡的小美好吧...',
+                    hintStyle: TextStyle(
+                      color: JournalColors.textMuted,
+                      fontSize: 17,
+                    ),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.fromLTRB(2, 4, 2, 112),
+                  ),
+                ),
+              ),
               Positioned(
-                right: 16,
-                bottom: 20,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '甜甜在这里陪着你',
-                      style: TextStyle(
-                        fontFamily: JournalColors.fontFamily,
-                        fontSize: 15,
-                        color: JournalColors.textDark,
-                      ),
+                right: -8,
+                bottom: -4,
+                child: IgnorePointer(
+                  child: Opacity(
+                    opacity: 0.9,
+                    child: Image.asset(
+                      journal_images.JournalAssets.catWriting,
+                      width: 148,
+                      height: 148,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '今天也要好好记录自己的小美好哦～',
-                      style: TextStyle(
-                        fontFamily: JournalColors.fontFamily,
-                        fontSize: 11,
-                        color: JournalColors.textSecondary,
+                  ),
+                ),
+              ),
+              Positioned(
+                right: 0,
+                top: 0,
+                child: _TinyActionButton(
+                  icon: Icons.open_in_full_rounded,
+                  onTap: onOpenEditor,
+                  tooltip: '全屏书写',
+                ),
+              ),
+              Positioned(
+                left: 0,
+                bottom: 8,
+                child: Text(
+                  '$wordCount 字',
+                  style: const TextStyle(
+                    color: JournalColors.pinkMain,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ToolGrid extends StatelessWidget {
+  const _ToolGrid({
+    required this.pickingImage,
+    required this.onPrompt,
+    required this.onStats,
+    required this.onImage,
+    required this.onMood,
+  });
+
+  final bool pickingImage;
+  final VoidCallback onPrompt;
+  final VoidCallback onStats;
+  final VoidCallback onImage;
+  final VoidCallback onMood;
+
+  @override
+  Widget build(BuildContext context) {
+    final tools = [
+      _ToolAction(Icons.lightbulb_rounded, '灵感提示', onPrompt),
+      _ToolAction(Icons.pin_rounded, '字数统计', onStats),
+      _ToolAction(
+        Icons.image_rounded,
+        pickingImage ? '选择中...' : '插入图片',
+        onImage,
+      ),
+      _ToolAction(Icons.favorite_rounded, '记录心情', onMood),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final itemWidth = (constraints.maxWidth - 30) / 4;
+        return Wrap(
+          spacing: 10,
+          runSpacing: 10,
+          children: tools.map((tool) {
+            return SizedBox(
+              width: itemWidth < 118
+                  ? (constraints.maxWidth - 10) / 2
+                  : itemWidth,
+              child: _ToolButton(action: tool),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
+}
+
+class _TagSection extends StatelessWidget {
+  const _TagSection({required this.selectedTags, required this.onToggle});
+
+  final Set<String> selectedTags;
+  final ValueChanged<String> onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: presetTags.map((tag) {
+        final selected = selectedTags.contains(tag);
+        return FilterChip(
+          label: Text(tag),
+          selected: selected,
+          onSelected: (_) => onToggle(tag),
+          backgroundColor: Colors.white,
+          selectedColor: JournalColors.pinkBg,
+          checkmarkColor: JournalColors.pinkMain,
+          side: BorderSide(
+            color: selected ? JournalColors.pinkSoft : JournalColors.pinkBorder,
+          ),
+          labelStyle: TextStyle(
+            color: selected
+                ? JournalColors.pinkMain
+                : JournalColors.textSecondary,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _WritingSummary extends StatelessWidget {
+  const _WritingSummary({
+    required this.wordCount,
+    required this.exp,
+    required this.streak,
+  });
+
+  final int wordCount;
+  final int exp;
+  final int streak;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SoftCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '今日写作小结',
+            style: TextStyle(
+              color: JournalColors.textDark,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _SummaryTile(
+                  icon: Icons.text_fields_rounded,
+                  value: '$wordCount 字',
+                  label: '本次字数',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SummaryTile(
+                  icon: Icons.star_rounded,
+                  value: '+$exp EXP',
+                  label: '获得经验',
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SummaryTile(
+                  icon: Icons.local_fire_department_rounded,
+                  value: '连续 $streak 天',
+                  label: '写作打卡',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomActions extends StatelessWidget {
+  const _BottomActions({
+    required this.saving,
+    required this.onSave,
+    required this.onDone,
+  });
+
+  final bool saving;
+  final VoidCallback onSave;
+  final VoidCallback onDone;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: GestureDetector(
+            onTap: saving ? null : onSave,
+            child: Container(
+              height: 58,
+              decoration: BoxDecoration(
+                gradient: saving ? null : JournalColors.heroGradient,
+                color: saving ? JournalColors.pinkSoft : null,
+                borderRadius: BorderRadius.circular(999),
+                boxShadow: [
+                  BoxShadow(
+                    color: JournalColors.pinkMain.withValues(alpha: 0.22),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: saving
+                    ? const SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.check_circle_rounded, color: Colors.white),
+                          SizedBox(width: 10),
+                          Text(
+                            '保存日记',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 18),
+        Expanded(
+          flex: 2,
+          child: OutlinedButton(
+            onPressed: saving ? null : onDone,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(58),
+              foregroundColor: JournalColors.pinkMain,
+              side: const BorderSide(color: JournalColors.pinkBorder),
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            child: const Text('完成'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SoftCard extends StatelessWidget {
+  const _SoftCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(20),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.74),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: JournalColors.pinkBorder),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.pinkMain.withValues(alpha: 0.06),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
+}
+
+class _SoftSheet extends StatelessWidget {
+  const _SoftSheet({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: JournalColors.bg,
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: JournalColors.pinkBorder),
+        ),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _SummaryTile extends StatelessWidget {
+  const _SummaryTile({
+    required this.icon,
+    required this.value,
+    required this.label,
+  });
+
+  final IconData icon;
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.76),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: JournalColors.pinkBorder),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: JournalColors.pinkBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 20, color: JournalColors.pinkMain),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: JournalColors.textDark,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: JournalColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricTile extends StatelessWidget {
+  const _MetricTile({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: JournalColors.pinkBorder),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: const TextStyle(
+              color: JournalColors.pinkMain,
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: const TextStyle(color: JournalColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateChip extends StatelessWidget {
+  const _DateChip({required this.date});
+
+  final DateTime date;
+
+  @override
+  Widget build(BuildContext context) {
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final text = '${date.month}月${date.day}日 ${weekdays[date.weekday - 1]}';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: JournalColors.pinkBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.calendar_month_rounded,
+            size: 16,
+            color: JournalColors.pinkMain,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: const TextStyle(
+              color: JournalColors.textDark,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SquareIconButton extends StatelessWidget {
+  const _SquareIconButton({
+    required this.icon,
+    required this.onTap,
+    required this.color,
+  });
+
+  final IconData icon;
+  final VoidCallback? onTap;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.8),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: Icon(
+            icon,
+            color: onTap == null ? JournalColors.textMuted : color,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TinyActionButton extends StatelessWidget {
+  const _TinyActionButton({
+    required this.icon,
+    required this.onTap,
+    required this.tooltip,
+  });
+
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: SizedBox(
+            width: 38,
+            height: 38,
+            child: Icon(icon, size: 18, color: JournalColors.pinkMain),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToolAction {
+  const _ToolAction(this.icon, this.label, this.onTap);
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+}
+
+class _ToolButton extends StatelessWidget {
+  const _ToolButton({required this.action});
+
+  final _ToolAction action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.78),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: action.onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          height: 58,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: JournalColors.pinkBorder),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(action.icon, size: 20, color: JournalColors.pinkMain),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  action.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: JournalColors.textDark,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ],
@@ -857,4 +1178,19 @@ class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSec
       ),
     );
   }
+}
+
+class _PaperLinesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = JournalColors.pinkBorder.withValues(alpha: 0.64)
+      ..strokeWidth = 1;
+    for (var y = 42.0; y < size.height - 34; y += 42) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

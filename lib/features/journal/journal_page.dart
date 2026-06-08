@@ -8,11 +8,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
-import '../../core/repositories/journal_repository.dart';
 import '../pet/utils/pet_assets.dart';
 import '../../shared/providers/dashboard_provider.dart';
 import '../../shared/providers/journal_provider.dart';
-import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/sort_button.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
 import '../pet/models/pet_scene_model.dart';
@@ -333,7 +331,9 @@ class _JournalPageState extends ConsumerState<JournalPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildTodayRecordCard(
-      BuildContext context, AsyncValue<int> todayCount) {
+    BuildContext context,
+    AsyncValue<int> todayCount,
+  ) {
     final count = todayCount.whenOrNull(data: (c) => c) ?? 0;
 
     return GestureDetector(
@@ -361,15 +361,17 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 fit: BoxFit.fitWidth,
                 errorBuilder: (_, __, ___) => Container(
                   height: 180,
-                  decoration: BoxDecoration(gradient: JournalColors.heroGradient),
+                  decoration: BoxDecoration(
+                    gradient: JournalColors.heroGradient,
+                  ),
                 ),
               ),
-              // 第2层：文字覆盖（右侧）
+              // 第2层：文字覆盖（左侧，人物在右）
               Positioned(
-                right: 20,
+                left: 20,
                 bottom: 20,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Row(
@@ -423,7 +425,9 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                             'assets/images/pet_center/deco/deco_pencil.png',
                             width: 14,
                             height: 14,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.edit_rounded, size: 14, color: Colors.white),
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.edit_rounded,
+                                    size: 14, color: Colors.white),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -464,8 +468,9 @@ class _JournalPageState extends ConsumerState<JournalPage> {
             itemBuilder: (context, index) {
               final tag = visibleTags[index];
               final isAll = tag == '全部';
-              final selected =
-                  isAll ? _selectedTag == null : _selectedTag == tag;
+              final selected = isAll
+                  ? _selectedTag == null
+                  : _selectedTag == tag;
               return _TagChip(
                 label: tag,
                 selected: selected,
@@ -576,7 +581,13 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text('→', style: TextStyle(fontSize: 10, color: JournalColors.textMuted)),
+                      child: Text(
+                        '→',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: JournalColors.textMuted,
+                        ),
+                      ),
                     ),
                     ...JournalColors.heatColors.map(
                       (c) => Container(
@@ -591,7 +602,13 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                     ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text('→', style: TextStyle(fontSize: 10, color: JournalColors.textMuted)),
+                      child: Text(
+                        '→',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: JournalColors.textMuted,
+                        ),
+                      ),
                     ),
                     const Text(
                       '多',
@@ -654,9 +671,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('删除日记'),
         content: Text('确定要删除「${journal.title}」吗？'),
         actions: [
@@ -666,9 +681,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.danger,
-            ),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('删除'),
           ),
         ],
@@ -687,15 +700,15 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         ref.invalidate(monthlyJournalCountProvider);
         ref.invalidate(journalHeatmapProvider);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已删除')));
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
         }
       }
     }
@@ -710,16 +723,37 @@ class _TiantianCompanionCard extends ConsumerStatefulWidget {
   const _TiantianCompanionCard();
 
   @override
-  ConsumerState<_TiantianCompanionCard> createState() => _TiantianCompanionCardState();
+  ConsumerState<_TiantianCompanionCard> createState() =>
+      _TiantianCompanionCardState();
 }
 
-class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> {
+class _TiantianCompanionCardState
+    extends ConsumerState<_TiantianCompanionCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _floatController;
+  late Animation<double> _floatAnimation;
+
   @override
   void initState() {
     super.initState();
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+    _floatAnimation = Tween<double>(begin: -4, end: 4).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
+    );
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(petSceneProvider(PetModuleType.journal).notifier).initScene(hasRecords: false);
+      ref
+          .read(petSceneProvider(PetModuleType.journal).notifier)
+          .initScene(hasRecords: false);
     });
+  }
+
+  @override
+  void dispose() {
+    _floatController.dispose();
+    super.dispose();
   }
 
   @override
@@ -727,64 +761,75 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> 
     final sceneState = ref.watch(petSceneProvider(PetModuleType.journal));
     final bannerPath = sceneState.config.state.bannerPath;
 
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: JournalColors.pinkBorder, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: JournalColors.shadow,
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 600),
-          child: Stack(
-            key: ValueKey(bannerPath),
-            children: [
-              // 第1层：完整底图
-              Image.asset(
-                bannerPath,
-                width: double.infinity,
-                fit: BoxFit.fitWidth,
-                errorBuilder: (_, __, ___) => Container(
-                  height: 180,
-                  color: JournalColors.companionGradient.colors.first,
+    return AnimatedBuilder(
+      animation: _floatAnimation,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _floatAnimation.value),
+          child: child,
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: JournalColors.pinkBorder, width: 1),
+          boxShadow: [
+            BoxShadow(
+              color: JournalColors.shadow,
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 800),
+            switchInCurve: Curves.easeIn,
+            switchOutCurve: Curves.easeOut,
+            child: Stack(
+              key: ValueKey(bannerPath),
+              children: [
+                // 第1层：完整底图
+                Image.asset(
+                  bannerPath,
+                  width: double.infinity,
+                  fit: BoxFit.fitWidth,
+                  errorBuilder: (_, __, ___) => Container(
+                    height: 180,
+                    color: JournalColors.companionGradient.colors.first,
+                  ),
                 ),
-              ),
-              // 第2层：文字（右侧留白区）
-              Positioned(
-                right: 20,
-                bottom: 24,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '甜甜',
-                      style: TextStyle(
-                        fontFamily: JournalColors.fontFamily,
-                        fontSize: 20,
-                        color: JournalColors.textDark,
+                // 第2层：文字（右侧留白区）
+                Positioned(
+                  right: 20,
+                  bottom: 24,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '甜甜',
+                        style: TextStyle(
+                          fontFamily: JournalColors.fontFamily,
+                          fontSize: 20,
+                          color: JournalColors.textDark,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '记录一下今天的成长吧！',
-                      style: TextStyle(
-                        fontFamily: JournalColors.fontFamily,
-                        fontSize: 12,
-                        color: JournalColors.textSecondary,
+                      const SizedBox(height: 4),
+                      Text(
+                        '记录一下今天的成长吧！',
+                        style: TextStyle(
+                          fontFamily: JournalColors.fontFamily,
+                          fontSize: 12,
+                          color: JournalColors.textSecondary,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -1037,9 +1082,7 @@ class _TagChip extends StatelessWidget {
           color: selected ? JournalColors.pinkMain : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: selected
-                ? JournalColors.pinkMain
-                : JournalColors.pinkBorder,
+            color: selected ? JournalColors.pinkMain : JournalColors.pinkBorder,
           ),
         ),
         child: Text(
@@ -1060,19 +1103,13 @@ class _TagChip extends StatelessWidget {
 // =============================================================================
 
 class _JournalListItem extends StatelessWidget {
-  const _JournalListItem({
-    required this.journal,
-    required this.onTap,
-  });
+  const _JournalListItem({required this.journal, required this.onTap});
 
   final DailyJournal journal;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final date = DateTime.fromMillisecondsSinceEpoch(journal.createdAt);
-    final dateStr =
-        '${date.month}/${date.day} ${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
     final moodEmoji = getMoodEmoji(journal.mood);
 
     return GestureDetector(
@@ -1177,7 +1214,9 @@ class _JournalListItem extends StatelessWidget {
                       // EXP badge
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 7, vertical: 3),
+                          horizontal: 7,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: JournalColors.pinkBg,
                           borderRadius: BorderRadius.circular(6),

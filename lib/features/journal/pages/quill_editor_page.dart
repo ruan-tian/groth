@@ -1,34 +1,14 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
 import '../../../core/services/image_service.dart';
-import '../../pet/utils/pet_assets.dart';
+import '../utils/journal_assets.dart' as journal_images;
 import '../widgets/journal_colors.dart';
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Constants
-// ──────────────────────────────────────────────────────────────────────────────
-
-const _kBg = Color(0xFFFFF8F6);
-const _kInk = Color(0xFF5D4037);
-const _kSecondary = Color(0xFFA1887F);
-const _kHint = Color(0xFFC7B5AE);
-const _kBorder = Color(0xFFF7D6E0);
-const _kIcon = Color(0xFFA1887F);
-const _kAccent = Color(0xFFF56F9C);
-const _kAccentBg = Color(0xFFFFF1F5);
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Panel enum
-// ──────────────────────────────────────────────────────────────────────────────
-
 enum _ToolbarPanel { none, font, list, more, paragraph }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Page
-// ──────────────────────────────────────────────────────────────────────────────
 
 class QuillEditorPage extends StatefulWidget {
   const QuillEditorPage({
@@ -36,9 +16,11 @@ class QuillEditorPage extends StatefulWidget {
     required this.initialTitle,
     required this.initialDeltaJson,
     required this.onSave,
+    this.initialPlainText = '',
   });
 
   final String initialTitle;
+  final String initialPlainText;
   final String? initialDeltaJson;
   final void Function(
     String title,
@@ -46,21 +28,20 @@ class QuillEditorPage extends StatefulWidget {
     String plainText,
     int wordCount,
     List<String> imagePaths,
-  ) onSave;
+  )
+  onSave;
 
   @override
   State<QuillEditorPage> createState() => _QuillEditorPageState();
 }
 
 class _QuillEditorPageState extends State<QuillEditorPage> {
-  // ── Controllers ──
   late final TextEditingController _titleController;
-  late QuillController _quillController;
+  late final QuillController _quillController;
   final FocusNode _editorFocus = FocusNode();
   final ScrollController _scrollController = ScrollController();
   final ImageService _imageService = ImageService();
 
-  // ── State ──
   final List<String> _pickedImagePaths = [];
   _ToolbarPanel _activePanel = _ToolbarPanel.none;
   bool _pickingImage = false;
@@ -68,15 +49,13 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
   bool _hasRedo = false;
   int _wordCount = 0;
 
-  // ── Lifecycle ──
-
   @override
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle);
     _quillController = _createQuillController();
     _quillController.addListener(_onQuillChanged);
-    _wordCount = _countWords(_quillController.document.toPlainText());
+    _wordCount = _countWords(_plainText);
   }
 
   @override
@@ -89,26 +68,35 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     super.dispose();
   }
 
-  // ── Quill helpers ──
-
   QuillController _createQuillController() {
-    if (widget.initialDeltaJson != null && widget.initialDeltaJson!.isNotEmpty) {
+    if (widget.initialDeltaJson != null &&
+        widget.initialDeltaJson!.isNotEmpty) {
       try {
         final delta = jsonDecode(widget.initialDeltaJson!);
         return QuillController(
           document: Document.fromJson(delta),
           selection: const TextSelection.collapsed(offset: 0),
         );
-      } catch (_) {}
+      } catch (_) {
+        // Fall back to plain text below.
+      }
+    }
+
+    final document = Document();
+    final plainText = widget.initialPlainText.trim();
+    if (plainText.isNotEmpty) {
+      document.insert(0, plainText);
     }
     return QuillController(
-      document: Document(),
-      selection: const TextSelection.collapsed(offset: 0),
+      document: document,
+      selection: TextSelection.collapsed(offset: document.length - 1),
     );
   }
 
+  String get _plainText => _quillController.document.toPlainText().trim();
+
   void _onQuillChanged() {
-    final newCount = _countWords(_quillController.document.toPlainText());
+    final newCount = _countWords(_plainText);
     final hasUndo = _quillController.hasUndo;
     final hasRedo = _quillController.hasRedo;
     if (newCount != _wordCount || hasUndo != _hasUndo || hasRedo != _hasRedo) {
@@ -117,10 +105,9 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
         _hasUndo = hasUndo;
         _hasRedo = hasRedo;
       });
-    } else {
-      // Selection-only change — rebuild for format indicators.
-      setState(() {});
+      return;
     }
+    setState(() {});
   }
 
   int _countWords(String text) {
@@ -129,37 +116,42 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     final english = text
         .replaceAll(RegExp(r'[\u4e00-\u9fa5]'), ' ')
         .split(RegExp(r'\s+'))
-        .where((w) => w.isNotEmpty)
+        .where((word) => word.isNotEmpty)
         .length;
     return chinese + english;
   }
 
-  // ── Actions ──
+  int _selectionOffset() {
+    final offset = _quillController.selection.baseOffset;
+    if (offset < 0) return math.max(0, _quillController.document.length - 1);
+    return offset;
+  }
 
   void _handleSave() {
     final deltaJson = jsonEncode(_quillController.document.toDelta().toJson());
-    final plainText = _quillController.document.toPlainText();
+    final plainText = _plainText;
     widget.onSave(
       _titleController.text.trim(),
       deltaJson,
       plainText,
       _countWords(plainText),
-      _pickedImagePaths,
+      List<String>.from(_pickedImagePaths),
     );
     Navigator.pop(context);
   }
 
   void _handleBack() {
-    final hasContent = _quillController.document.toPlainText().trim().isNotEmpty ||
-        _titleController.text.isNotEmpty;
+    final hasContent =
+        _plainText.isNotEmpty || _titleController.text.trim().isNotEmpty;
     if (!hasContent) {
       Navigator.pop(context);
       return;
     }
-    showDialog(
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('保存本次书写？'),
+        title: const Text('保存本次书写吗？'),
+        content: const Text('离开前可以先保存到日记草稿页。'),
         actions: [
           TextButton(
             onPressed: () {
@@ -185,21 +177,20 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     _pickingImage = true;
     try {
       final path = await _imageService.pickAndSaveImage();
-      if (path != null && mounted) {
-        _pickedImagePaths.add(path);
-        final index = _quillController.selection.baseOffset;
-        _quillController.replaceText(
-          index,
-          0,
-          BlockEmbed.image(path),
-          TextSelection.collapsed(offset: index + 1),
-        );
-      }
+      if (path == null || !mounted) return;
+      _pickedImagePaths.add(path);
+      final index = _selectionOffset();
+      _quillController.replaceText(
+        index,
+        0,
+        BlockEmbed.image(path),
+        TextSelection.collapsed(offset: index + 1),
+      );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('选择图片失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('选择图片失败: $e')));
       }
     } finally {
       _pickingImage = false;
@@ -212,12 +203,10 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     });
   }
 
-  // ── Format helpers ──
-
-  void _toggleAttribute(Attribute attr) {
+  void _toggleAttribute(Attribute<dynamic> attr) {
     final attrs = _quillController.getSelectionStyle();
     if (attrs.containsKey(attr.key)) {
-      _quillController.formatSelection(Attribute.clone(attr, null) as Attribute<dynamic>);
+      _quillController.formatSelection(Attribute.clone(attr, null));
     } else {
       _quillController.formatSelection(attr);
     }
@@ -249,16 +238,14 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
       Attribute.h3,
     ];
     for (final attr in attrs) {
-      _quillController.formatSelection(
-        Attribute.clone(attr, null) as Attribute<dynamic>,
-      );
+      _quillController.formatSelection(Attribute.clone(attr, null));
     }
   }
 
   void _insertLink() {
-    final urlCtrl = TextEditingController();
     final textCtrl = TextEditingController();
-    showDialog(
+    final urlCtrl = TextEditingController();
+    showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('插入链接'),
@@ -267,25 +254,32 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
           children: [
             TextField(
               controller: textCtrl,
-              decoration: const InputDecoration(labelText: '链接文字', hintText: '显示的文字'),
+              decoration: const InputDecoration(labelText: '链接文字'),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: urlCtrl,
-              decoration: const InputDecoration(labelText: 'URL', hintText: 'https://example.com'),
+              decoration: const InputDecoration(labelText: 'URL'),
             ),
           ],
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('取消')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('取消'),
+          ),
           FilledButton(
             onPressed: () {
-              final text = textCtrl.text;
-              final url = urlCtrl.text;
+              final text = textCtrl.text.trim();
+              final url = urlCtrl.text.trim();
               if (text.isNotEmpty && url.isNotEmpty) {
-                final index = _quillController.selection.baseOffset;
+                final index = _selectionOffset();
                 _quillController.document.insert(index, text);
-                _quillController.formatText(index, text.length, LinkAttribute(url));
+                _quillController.formatText(
+                  index,
+                  text.length,
+                  LinkAttribute(url),
+                );
                 _quillController.updateSelection(
                   TextSelection.collapsed(offset: index + text.length),
                   ChangeSource.local,
@@ -300,10 +294,6 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────────
-  // Build
-  // ────────────────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -312,122 +302,44 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
 
     return Scaffold(
-      backgroundColor: _kBg,
+      backgroundColor: JournalColors.bg,
       body: SafeArea(
-        child: Column(
-          children: [
-            // ── Top bar ──
-            _TopBar(onBack: _handleBack, onSave: _handleSave),
-
-            // ── Title + meta ──
-            _TitleSection(
-              titleController: _titleController,
-              dateStr: dateStr,
-              wordCount: _wordCount,
-            ),
-
-            // ── Editor ──
-            Expanded(
-              child: Stack(
-                children: [
-                  Container(
-                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
-                    decoration: BoxDecoration(
-                      color: _kAccentBg,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _kBorder, width: 1.5),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: QuillEditor(
-                        controller: _quillController,
-                        scrollController: _scrollController,
-                        focusNode: _editorFocus,
-                        config: const QuillEditorConfig(
-                          placeholder: '开始书写吧...',
-                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
-                      ),
-                    ),
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 900),
+            child: Column(
+              children: [
+                _TopBar(onBack: _handleBack, onSave: _handleSave),
+                _TitleSection(
+                  titleController: _titleController,
+                  dateStr: dateStr,
+                  wordCount: _wordCount,
+                ),
+                Expanded(
+                  child: _PaperEditorSurface(
+                    controller: _quillController,
+                    scrollController: _scrollController,
+                    focusNode: _editorFocus,
                   ),
-                  // 浮动甜甜猫
-                  Positioned(
-                    right: 24,
-                    bottom: 16,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        // Speech bubble
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: [
-                              BoxShadow(
-                                color: _kAccent.withValues(alpha: 0.1),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('甜甜陪你', style: TextStyle(
-                                fontSize: 11, fontWeight: FontWeight.w600, color: _kAccent,
-                              )),
-                              Text('记录每一天~', style: TextStyle(
-                                fontSize: 10, color: _kSecondary,
-                              )),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // Hearts
-                        Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.favorite, size: 10, color: _kAccent.withValues(alpha: 0.35)),
-                            const SizedBox(width: 4),
-                            Icon(Icons.favorite, size: 8, color: _kAccent.withValues(alpha: 0.25)),
-                          ],
-                        ),
-                        const SizedBox(height: 2),
-                        // Cat image
-                        Image.asset(
-                          PetAssets.journalWriting,
-                          width: 80,
-                          height: 80,
-                          fit: BoxFit.contain,
-                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.topCenter,
+                  child: _buildActivePanel(),
+                ),
+                _KeyboardToolbar(
+                  activePanel: _activePanel,
+                  onPickImage: _pickImage,
+                  onTask: () => _toggleAttribute(Attribute.unchecked),
+                  onList: () => _togglePanel(_ToolbarPanel.list),
+                  onQuote: () => _toggleAttribute(Attribute.blockQuote),
+                  onFont: () => _togglePanel(_ToolbarPanel.font),
+                  onMore: () => _togglePanel(_ToolbarPanel.more),
+                ),
+              ],
             ),
-
-            // ── Panel (animated) ──
-            AnimatedSize(
-              duration: Duration(milliseconds: 200),
-              curve: Curves.easeInOut,
-              alignment: Alignment.topCenter,
-              child: _buildActivePanel(),
-            ),
-
-            // ── Keyboard toolbar ──
-            _KeyboardToolbar(
-              activePanel: _activePanel,
-              onPickImage: _pickImage,
-              onTask: () => _quillController.formatSelection(Attribute.unchecked),
-              onList: () => _togglePanel(_ToolbarPanel.list),
-              onQuote: () => _toggleAttribute(Attribute.blockQuote),
-              onFont: () => _togglePanel(_ToolbarPanel.font),
-              onMore: () => _togglePanel(_ToolbarPanel.more),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -443,20 +355,11 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
         return _ListPanel(controller: _quillController, onToggle: _toggleList);
       case _ToolbarPanel.more:
         return _MorePanel(
-          controller: _quillController,
           onInsertLink: _insertLink,
           onCodeBlock: () => _toggleAttribute(Attribute.codeBlock),
-          onDivider: () {
-            final idx = _quillController.selection.baseOffset;
-            _quillController.document.insert(idx, '\n────────────────────\n');
-            _quillController.updateSelection(
-              TextSelection.collapsed(offset: idx + 23),
-              ChangeSource.local,
-            );
-          },
-          onUndo: _hasUndo ? () => _quillController.undo() : null,
-          onRedo: _hasRedo ? () => _quillController.redo() : null,
-          onDismissKeyboard: () => _editorFocus.unfocus(),
+          onUndo: _hasUndo ? _quillController.undo : null,
+          onRedo: _hasRedo ? _quillController.redo : null,
+          onDismissKeyboard: _editorFocus.unfocus,
           onParagraph: () => _togglePanel(_ToolbarPanel.paragraph),
         );
       case _ToolbarPanel.paragraph:
@@ -464,10 +367,6 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     }
   }
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Top Bar
-// ──────────────────────────────────────────────────────────────────────────────
 
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.onBack, required this.onSave});
@@ -477,36 +376,20 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(22, 10, 22, 4),
       child: Row(
         children: [
-          GestureDetector(
-            onTap: onBack,
-            behavior: HitTestBehavior.opaque,
-            child: const SizedBox(
-              width: 40,
-              height: 40,
-              child: Icon(Icons.arrow_back_ios_new_rounded, size: 24, color: _kInk),
-            ),
-          ),
+          _TopIconButton(icon: Icons.chevron_left_rounded, onTap: onBack),
           const Spacer(),
-          GestureDetector(
-            onTap: onSave,
-            behavior: HitTestBehavior.opaque,
-            child: const SizedBox(
-              height: 40,
-              child: Center(
-                child: Text(
-                  '完成',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: _kAccent,
-                  ),
-                ),
-              ),
+          TextButton(
+            onPressed: onSave,
+            style: TextButton.styleFrom(
+              foregroundColor: JournalColors.pinkMain,
+            ),
+            child: const Text(
+              '完成',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
           ),
         ],
@@ -514,10 +397,6 @@ class _TopBar extends StatelessWidget {
     );
   }
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Title + Meta
-// ──────────────────────────────────────────────────────────────────────────────
 
 class _TitleSection extends StatelessWidget {
   const _TitleSection({
@@ -533,41 +412,125 @@ class _TitleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-      child: Container(
-        decoration: const BoxDecoration(
-          border: Border(
-            left: BorderSide(color: _kAccent, width: 3),
-          ),
-        ),
-        padding: const EdgeInsets.only(left: 12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: titleController,
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w700,
-                color: _kAccent,
-                height: 1.2,
-              ),
-              decoration: const InputDecoration(
-                hintText: '标题',
-                hintStyle: TextStyle(color: _kHint),
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-                isDense: true,
-                filled: false,
-              ),
-              maxLines: null,
+      padding: const EdgeInsets.fromLTRB(30, 16, 30, 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(width: 4, color: JournalColors.pinkMain),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextField(
+                    controller: titleController,
+                    style: const TextStyle(
+                      color: JournalColors.pinkMain,
+                      fontSize: 38,
+                      fontWeight: FontWeight.w900,
+                      height: 1.1,
+                    ),
+                    decoration: const InputDecoration(
+                      hintText: '标题',
+                      hintStyle: TextStyle(color: JournalColors.pinkSoft),
+                      border: InputBorder.none,
+                      isDense: true,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              '$dateStr · $wordCount 字',
-              style: const TextStyle(fontSize: 13, color: _kSecondary),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '$dateStr  ·  $wordCount字',
+            style: const TextStyle(
+              color: JournalColors.textSecondary,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaperEditorSurface extends StatelessWidget {
+  const _PaperEditorSurface({
+    required this.controller,
+    required this.scrollController,
+    required this.focusNode,
+  });
+
+  final QuillController controller;
+  final ScrollController scrollController;
+  final FocusNode focusNode;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.fromLTRB(26, 0, 26, 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.56),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: JournalColors.pinkBorder),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Stack(
+          children: [
+            Positioned.fill(child: CustomPaint(painter: _EditorLinesPainter())),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 22, 20, 110),
+              child: QuillEditor(
+                controller: controller,
+                scrollController: scrollController,
+                focusNode: focusNode,
+                config: const QuillEditorConfig(
+                  placeholder: '开始书写吧...',
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+            Positioned(
+              right: 18,
+              bottom: 18,
+              child: IgnorePointer(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(color: JournalColors.pinkBorder),
+                      ),
+                      child: const Text(
+                        '甜甜陪你\n记录每一天~',
+                        style: TextStyle(
+                          color: JournalColors.textSecondary,
+                          fontSize: 13,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Image.asset(
+                      journal_images.JournalAssets.catWriting,
+                      width: 120,
+                      height: 120,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
@@ -575,10 +538,6 @@ class _TitleSection extends StatelessWidget {
     );
   }
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Keyboard Toolbar
-// ──────────────────────────────────────────────────────────────────────────────
 
 class _KeyboardToolbar extends StatelessWidget {
   const _KeyboardToolbar({
@@ -601,67 +560,56 @@ class _KeyboardToolbar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 52,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _kBorder, width: 0.6)),
-      ),
-      child: Row(
-        children: [
-          _ToolbarBtn(icon: Icons.image_outlined, label: '图片', active: false, onTap: onPickImage),
-          _ToolbarBtn(icon: Icons.check_box_outlined, label: '任务', active: false, onTap: onTask),
-          _ToolbarBtn(icon: Icons.format_list_bulleted, label: '列表', active: activePanel == _ToolbarPanel.list, onTap: onList),
-          _ToolbarBtn(icon: Icons.format_quote, label: '引用', active: false, onTap: onQuote),
-          _ToolbarBtn(icon: Icons.font_download_outlined, label: '字体', active: activePanel == _ToolbarPanel.font, onTap: onFont),
-          _ToolbarBtn(icon: Icons.more_horiz, label: '更多', active: activePanel == _ToolbarPanel.more, onTap: onMore),
-        ],
-      ),
-    );
-  }
-}
-
-class _ToolbarBtn extends StatelessWidget {
-  const _ToolbarBtn({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 36,
-              height: 30,
-              decoration: active
-                  ? BoxDecoration(
-                      color: _kAccentBg,
-                      borderRadius: BorderRadius.circular(6),
-                    )
-                  : null,
-              child: Icon(icon, size: 22, color: active ? _kAccent : _kIcon),
+    return SafeArea(
+      top: false,
+      child: Container(
+        margin: const EdgeInsets.fromLTRB(18, 0, 18, 12),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.84),
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: JournalColors.pinkMain.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, -4),
             ),
-            const SizedBox(height: 1),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 10,
-                color: active ? _kAccent : _kSecondary,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-              ),
+          ],
+        ),
+        child: Row(
+          children: [
+            _ToolbarItem(
+              icon: Icons.image_outlined,
+              label: '图片',
+              onTap: onPickImage,
+            ),
+            _ToolbarItem(
+              icon: Icons.check_box_outlined,
+              label: '任务',
+              onTap: onTask,
+            ),
+            _ToolbarItem(
+              icon: Icons.format_list_bulleted_rounded,
+              label: '列表',
+              active: activePanel == _ToolbarPanel.list,
+              onTap: onList,
+            ),
+            _ToolbarItem(
+              icon: Icons.format_quote_rounded,
+              label: '引用',
+              onTap: onQuote,
+            ),
+            _ToolbarItem(
+              icon: Icons.text_fields_rounded,
+              label: '字体',
+              active: activePanel == _ToolbarPanel.font,
+              onTap: onFont,
+            ),
+            _ToolbarItem(
+              icon: Icons.more_horiz_rounded,
+              label: '更多',
+              active: activePanel == _ToolbarPanel.more,
+              onTap: onMore,
             ),
           ],
         ),
@@ -670,9 +618,57 @@ class _ToolbarBtn extends StatelessWidget {
   }
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
-// Font Panel
-// ──────────────────────────────────────────────────────────────────────────────
+class _ToolbarItem extends StatelessWidget {
+  const _ToolbarItem({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 25,
+                color: active
+                    ? JournalColors.pinkMain
+                    : JournalColors.textSecondary,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: active
+                      ? JournalColors.pinkMain
+                      : JournalColors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _FontPanel extends StatelessWidget {
   const _FontPanel({required this.controller, required this.onClear});
@@ -683,86 +679,65 @@ class _FontPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = controller.getSelectionStyle();
-    final isBold = style.containsKey(Attribute.bold.key);
-    final isItalic = style.containsKey(Attribute.italic.key);
-    final isUnderline = style.containsKey(Attribute.underline.key);
-    final isStrike = style.containsKey(Attribute.strikeThrough.key);
-    final isHighlight = style.containsKey(Attribute.background.key);
-
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _kBorder, width: 0.6)),
-      ),
+    return _PanelShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Font sizes
-          Row(
-            children: [
-              const Text('字号', style: TextStyle(fontSize: 13, color: _kSecondary)),
-              const SizedBox(width: 16),
-              ..._fontSizes.map((size) {
-                final currentSize = controller.getSelectionStyle().attributes[Attribute.size.key];
-                final selected = currentSize?.value == size.toString();
-                final displaySize = size > 18 ? 18.0 : size.toDouble();
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [14, 16, 18, 20, 24].map((size) {
+                final current = style.attributes[Attribute.size.key];
+                final selected = current?.value == size.toString();
                 return Padding(
                   padding: const EdgeInsets.only(right: 10),
-                  child: GestureDetector(
-                    onTap: () => controller.formatSelection(SizeAttribute(size.toString())),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-                      decoration: BoxDecoration(
-                        color: selected ? _kAccentBg : Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: selected ? _kAccent : _kBorder),
-                      ),
-                      child: Text(
-                        '$size',
-                        style: TextStyle(
-                          fontSize: displaySize,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                          color: selected ? _kAccent : _kInk,
-                        ),
-                      ),
+                  child: _ChipButton(
+                    label: '$size',
+                    active: selected,
+                    onTap: () => controller.formatSelection(
+                      SizeAttribute(size.toString()),
                     ),
                   ),
                 );
-              }),
-            ],
+              }).toList(),
+            ),
           ),
-          const SizedBox(height: 14),
-          // Style buttons
+          const SizedBox(height: 12),
           Row(
             children: [
-              _StyleBtn(label: 'B', active: isBold, onTap: () => _toggle(controller, Attribute.bold)),
-              const SizedBox(width: 10),
-              _StyleBtn(label: 'I', italic: true, active: isItalic, onTap: () => _toggle(controller, Attribute.italic)),
-              const SizedBox(width: 10),
-              _StyleBtn(label: 'U', active: isUnderline, onTap: () => _toggle(controller, Attribute.underline)),
-              const SizedBox(width: 10),
-              _StyleBtn(label: 'S', active: isStrike, onTap: () => _toggle(controller, Attribute.strikeThrough)),
-              const SizedBox(width: 10),
-              _StyleBtn(label: '高亮', active: isHighlight, onTap: () {
-                if (isHighlight) {
-                  controller.formatSelection(Attribute.clone(Attribute.background, null) as Attribute<dynamic>);
-                } else {
-                  controller.formatSelection(BackgroundAttribute('#FFF8DC'));
-                }
-              }),
-              const Spacer(),
-              GestureDetector(
-                onTap: onClear,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: _kBorder),
-                  ),
-                  child: const Text('清除', style: TextStyle(fontSize: 12, color: _kSecondary)),
-                ),
+              _ChipButton(
+                label: 'B',
+                active: style.containsKey(Attribute.bold.key),
+                onTap: () => _toggle(controller, Attribute.bold),
               ),
+              const SizedBox(width: 8),
+              _ChipButton(
+                label: 'I',
+                active: style.containsKey(Attribute.italic.key),
+                onTap: () => _toggle(controller, Attribute.italic),
+              ),
+              const SizedBox(width: 8),
+              _ChipButton(
+                label: 'U',
+                active: style.containsKey(Attribute.underline.key),
+                onTap: () => _toggle(controller, Attribute.underline),
+              ),
+              const SizedBox(width: 8),
+              _ChipButton(
+                label: '高亮',
+                active: style.containsKey(Attribute.background.key),
+                onTap: () {
+                  if (style.containsKey(Attribute.background.key)) {
+                    controller.formatSelection(
+                      Attribute.clone(Attribute.background, null),
+                    );
+                  } else {
+                    controller.formatSelection(BackgroundAttribute('#FFF1F5'));
+                  }
+                },
+              ),
+              const Spacer(),
+              _ChipButton(label: '清除', active: false, onTap: onClear),
             ],
           ),
         ],
@@ -770,160 +745,66 @@ class _FontPanel extends StatelessWidget {
     );
   }
 
-  static const _fontSizes = [14, 16, 18, 20, 24];
-
-  static void _toggle(QuillController c, Attribute attr) {
-    final attrs = c.getSelectionStyle();
-    if (attrs.containsKey(attr.key)) {
-      c.formatSelection(Attribute.clone(attr, null) as Attribute<dynamic>);
-    } else {
-      c.formatSelection(attr);
-    }
-  }
-}
-
-class _StyleBtn extends StatelessWidget {
-  const _StyleBtn({
-    required this.label,
-    required this.active,
-    required this.onTap,
-    this.italic = false,
-  });
-
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-  final bool italic;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 38,
-        height: 38,
-        decoration: BoxDecoration(
-          color: active ? _kAccent : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: active ? _kAccent : _kBorder),
-        ),
-        child: Center(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              fontStyle: italic ? FontStyle.italic : FontStyle.normal,
-              color: active ? Colors.white : _kInk,
-            ),
-          ),
-        ),
-      ),
+  static void _toggle(QuillController controller, Attribute<dynamic> attr) {
+    final attrs = controller.getSelectionStyle();
+    controller.formatSelection(
+      attrs.containsKey(attr.key) ? Attribute.clone(attr, null) : attr,
     );
   }
 }
-
-// ──────────────────────────────────────────────────────────────────────────────
-// List Panel
-// ──────────────────────────────────────────────────────────────────────────────
 
 class _ListPanel extends StatelessWidget {
   const _ListPanel({required this.controller, required this.onToggle});
 
   final QuillController controller;
-  final void Function(String type) onToggle;
+  final ValueChanged<String> onToggle;
 
   @override
   Widget build(BuildContext context) {
     final style = controller.getSelectionStyle();
-    final isUl = style.containsKey(Attribute.ul.key);
-    final isOl = style.containsKey(Attribute.ol.key);
-    final isCheck = style.containsKey(Attribute.unchecked.key) ||
-        style.containsKey(Attribute.checked.key);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _kBorder, width: 0.6)),
-      ),
+    return _PanelShell(
       child: Row(
         children: [
-          _ListTypeBtn(icon: Icons.format_list_bulleted, label: '无序', active: isUl, onTap: () => onToggle('ul')),
-          const SizedBox(width: 16),
-          _ListTypeBtn(icon: Icons.format_list_numbered, label: '有序', active: isOl, onTap: () => onToggle('ol')),
-          const SizedBox(width: 16),
-          _ListTypeBtn(icon: Icons.check_box_outlined, label: '任务', active: isCheck, onTap: () => onToggle('check')),
+          _PanelIconButton(
+            icon: Icons.format_list_bulleted,
+            label: '无序',
+            active: style.containsKey(Attribute.ul.key),
+            onTap: () => onToggle('ul'),
+          ),
+          const SizedBox(width: 12),
+          _PanelIconButton(
+            icon: Icons.format_list_numbered,
+            label: '有序',
+            active: style.containsKey(Attribute.ol.key),
+            onTap: () => onToggle('ol'),
+          ),
+          const SizedBox(width: 12),
+          _PanelIconButton(
+            icon: Icons.check_box_outlined,
+            label: '任务',
+            active:
+                style.containsKey(Attribute.checked.key) ||
+                style.containsKey(Attribute.unchecked.key),
+            onTap: () => onToggle('check'),
+          ),
         ],
       ),
     );
   }
 }
 
-class _ListTypeBtn extends StatelessWidget {
-  const _ListTypeBtn({
-    required this.icon,
-    required this.label,
-    required this.active,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool active;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 9),
-        decoration: BoxDecoration(
-          color: active ? _kAccentBg : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: active ? _kAccent : _kBorder),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: active ? _kAccent : _kIcon),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                color: active ? _kAccent : _kInk,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// More Panel
-// ──────────────────────────────────────────────────────────────────────────────
-
 class _MorePanel extends StatelessWidget {
   const _MorePanel({
-    required this.controller,
     required this.onInsertLink,
     required this.onCodeBlock,
-    required this.onDivider,
     required this.onUndo,
     required this.onRedo,
     required this.onDismissKeyboard,
     required this.onParagraph,
   });
 
-  final QuillController controller;
   final VoidCallback onInsertLink;
   final VoidCallback onCodeBlock;
-  final VoidCallback onDivider;
   final VoidCallback? onUndo;
   final VoidCallback? onRedo;
   final VoidCallback onDismissKeyboard;
@@ -931,85 +812,26 @@ class _MorePanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _kBorder, width: 0.6)),
-      ),
+    return _PanelShell(
       child: Wrap(
-        spacing: 6,
-        runSpacing: 6,
+        spacing: 8,
+        runSpacing: 8,
         children: [
-          _MoreBtn(icon: Icons.horizontal_rule, label: '分割线', onTap: onDivider),
-          _MoreBtn(icon: Icons.notes, label: '段落', onTap: onParagraph),
-          _MoreBtn(icon: Icons.code, label: '代码块', onTap: onCodeBlock),
-          _MoreBtn(icon: Icons.link, label: '链接', onTap: onInsertLink),
-          _MoreBtn(
-            icon: Icons.undo,
-            label: '撤销',
-            onTap: onUndo,
-            disabled: onUndo == null,
+          _PanelIconButton(icon: Icons.notes, label: '段落', onTap: onParagraph),
+          _PanelIconButton(icon: Icons.code, label: '代码', onTap: onCodeBlock),
+          _PanelIconButton(icon: Icons.link, label: '链接', onTap: onInsertLink),
+          _PanelIconButton(icon: Icons.undo, label: '撤销', onTap: onUndo),
+          _PanelIconButton(icon: Icons.redo, label: '重做', onTap: onRedo),
+          _PanelIconButton(
+            icon: Icons.keyboard_hide_outlined,
+            label: '收起键盘',
+            onTap: onDismissKeyboard,
           ),
-          _MoreBtn(
-            icon: Icons.redo,
-            label: '重做',
-            onTap: onRedo,
-            disabled: onRedo == null,
-          ),
-          _MoreBtn(icon: Icons.keyboard_hide_outlined, label: '收起键盘', onTap: onDismissKeyboard),
         ],
       ),
     );
   }
 }
-
-class _MoreBtn extends StatelessWidget {
-  const _MoreBtn({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.disabled = false,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final bool disabled;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: disabled ? null : onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: disabled ? _kBorder.withAlpha(128) : _kBorder),
-          color: Colors.white,
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 18, color: disabled ? _kBorder : _kIcon),
-            const SizedBox(width: 5),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 12,
-                color: disabled ? _kBorder : _kSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────────
-// Paragraph Panel
-// ──────────────────────────────────────────────────────────────────────────────
 
 class _ParagraphPanel extends StatelessWidget {
   const _ParagraphPanel({required this.controller});
@@ -1019,51 +841,47 @@ class _ParagraphPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = controller.getSelectionStyle();
-    final isH1 = style.containsKey(Attribute.h1.key);
-    final isH2 = style.containsKey(Attribute.h2.key);
-    final isH3 = style.containsKey(Attribute.h3.key);
-    final isBody = !isH1 && !isH2 && !isH3;
-    final isLeft = !style.containsKey(Attribute.centerAlignment.key) &&
-        !style.containsKey(Attribute.rightAlignment.key);
-    final isCenter = style.containsKey(Attribute.centerAlignment.key);
-    final isRight = style.containsKey(Attribute.rightAlignment.key);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _kBorder, width: 0.6)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return _PanelShell(
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: [
-          // Heading levels
-          Row(
-            children: [
-              _HeadingChip(label: '正文', active: isBody, onTap: () {
-                controller.formatSelection(Attribute.clone(Attribute.h1, null) as Attribute<dynamic>);
-                controller.formatSelection(Attribute.clone(Attribute.h2, null) as Attribute<dynamic>);
-                controller.formatSelection(Attribute.clone(Attribute.h3, null) as Attribute<dynamic>);
-              }),
-              const SizedBox(width: 10),
-              _HeadingChip(label: 'H1', active: isH1, onTap: () => controller.formatSelection(Attribute.h1)),
-              const SizedBox(width: 10),
-              _HeadingChip(label: 'H2', active: isH2, onTap: () => controller.formatSelection(Attribute.h2)),
-              const SizedBox(width: 10),
-              _HeadingChip(label: 'H3', active: isH3, onTap: () => controller.formatSelection(Attribute.h3)),
-            ],
+          _ChipButton(
+            label: '正文',
+            active:
+                !style.containsKey(Attribute.h1.key) &&
+                !style.containsKey(Attribute.h2.key) &&
+                !style.containsKey(Attribute.h3.key),
+            onTap: () {
+              controller.formatSelection(Attribute.clone(Attribute.h1, null));
+              controller.formatSelection(Attribute.clone(Attribute.h2, null));
+              controller.formatSelection(Attribute.clone(Attribute.h3, null));
+            },
           ),
-          const SizedBox(height: 14),
-          // Alignment
-          Row(
-            children: [
-              _AlignBtn(icon: Icons.format_align_left, active: isLeft, onTap: () => controller.formatSelection(Attribute.leftAlignment)),
-              const SizedBox(width: 10),
-              _AlignBtn(icon: Icons.format_align_center, active: isCenter, onTap: () => controller.formatSelection(Attribute.centerAlignment)),
-              const SizedBox(width: 10),
-              _AlignBtn(icon: Icons.format_align_right, active: isRight, onTap: () => controller.formatSelection(Attribute.rightAlignment)),
-            ],
+          _ChipButton(
+            label: 'H1',
+            active: style.containsKey(Attribute.h1.key),
+            onTap: () => controller.formatSelection(Attribute.h1),
+          ),
+          _ChipButton(
+            label: 'H2',
+            active: style.containsKey(Attribute.h2.key),
+            onTap: () => controller.formatSelection(Attribute.h2),
+          ),
+          _ChipButton(
+            label: 'H3',
+            active: style.containsKey(Attribute.h3.key),
+            onTap: () => controller.formatSelection(Attribute.h3),
+          ),
+          _PanelIconButton(
+            icon: Icons.format_align_left,
+            label: '左对齐',
+            onTap: () => controller.formatSelection(Attribute.leftAlignment),
+          ),
+          _PanelIconButton(
+            icon: Icons.format_align_center,
+            label: '居中',
+            onTap: () => controller.formatSelection(Attribute.centerAlignment),
           ),
         ],
       ),
@@ -1071,8 +889,87 @@ class _ParagraphPanel extends StatelessWidget {
   }
 }
 
-class _HeadingChip extends StatelessWidget {
-  const _HeadingChip({
+class _PanelShell extends StatelessWidget {
+  const _PanelShell({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(18, 0, 18, 8),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: JournalColors.pinkBorder),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _PanelIconButton extends StatelessWidget {
+  const _PanelIconButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.active = false,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+          decoration: BoxDecoration(
+            color: active ? JournalColors.pinkBg : Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: active ? JournalColors.pinkSoft : JournalColors.pinkBorder,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: active
+                    ? JournalColors.pinkMain
+                    : JournalColors.textSecondary,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  color: active
+                      ? JournalColors.pinkMain
+                      : JournalColors.textSecondary,
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ChipButton extends StatelessWidget {
+  const _ChipButton({
     required this.label,
     required this.active,
     required this.onTap,
@@ -1084,21 +981,23 @@ class _HeadingChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: active ? _kAccentBg : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: active ? _kAccent : _kBorder),
+          color: active ? JournalColors.pinkMain : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: active ? JournalColors.pinkMain : JournalColors.pinkBorder,
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13,
-            fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-            color: active ? _kAccent : _kInk,
+            color: active ? Colors.white : JournalColors.textDark,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ),
@@ -1106,31 +1005,41 @@ class _HeadingChip extends StatelessWidget {
   }
 }
 
-class _AlignBtn extends StatelessWidget {
-  const _AlignBtn({
-    required this.icon,
-    required this.active,
-    required this.onTap,
-  });
+class _TopIconButton extends StatelessWidget {
+  const _TopIconButton({required this.icon, required this.onTap});
 
   final IconData icon;
-  final bool active;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        decoration: BoxDecoration(
-          color: active ? _kAccentBg : Colors.white,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: active ? _kAccent : _kBorder),
+    return Material(
+      color: Colors.white.withValues(alpha: 0.8),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: SizedBox(
+          width: 52,
+          height: 52,
+          child: Icon(icon, color: JournalColors.textDark),
         ),
-        child: Icon(icon, size: 20, color: active ? _kAccent : _kIcon),
       ),
     );
   }
+}
+
+class _EditorLinesPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = JournalColors.pinkBorder.withValues(alpha: 0.52)
+      ..strokeWidth = 1;
+    for (var y = 52.0; y < size.height - 20; y += 48) {
+      canvas.drawLine(Offset(22, y), Offset(size.width - 22, y), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
