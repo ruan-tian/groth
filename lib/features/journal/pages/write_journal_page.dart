@@ -823,54 +823,39 @@ class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSec
                 ),
               ),
             ),
-            // 第2层：代码气泡
+            // 第2层：文字直接写在底图上（右侧留白区）
             Positioned(
-              right: 16,
-              top: 20,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                constraints: const BoxConstraints(maxWidth: 200),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: JournalColors.pinkMain.withValues(alpha: 0.06),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
+              right: 20,
+              top: 24,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '甜甜在这里陪着你 ✨',
+                    style: TextStyle(
+                      fontFamily: JournalColors.fontFamily,
+                      fontSize: 16,
+                      color: Colors.white,
+                      shadows: const [
+                        Shadow(blurRadius: 4, color: Colors.black26, offset: Offset(1, 1)),
+                      ],
                     ),
-                  ],
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      '甜甜在这里陪着你 ✨',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: JournalColors.textDark,
-                      ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '今天也要好好记录自己的小美好哦～',
+                    style: TextStyle(
+                      fontFamily: JournalColors.fontFamily,
+                      fontSize: 12,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      shadows: const [
+                        Shadow(blurRadius: 3, color: Colors.black26),
+                      ],
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      '今天也要好好记录自己的小美好哦～',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: JournalColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-            ),
-            // 第3层：爱心装饰
-            Positioned(
-              top: 10,
-              left: 16,
-              child: Icon(Icons.favorite, size: 14,
-                  color: JournalColors.pinkMain.withValues(alpha: 0.4)),
             ),
           ],
         ),

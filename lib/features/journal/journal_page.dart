@@ -339,7 +339,8 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     return GestureDetector(
       onTap: () => context.push('/plan/journal/write'),
       child: Container(
-        height: 180,
+        width: double.infinity,
+        constraints: const BoxConstraints(minHeight: 160, maxHeight: 220),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
@@ -358,33 +359,55 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               // 第1层：完整底图
               Image.asset(
                 PetAssets.journalTodayRecordBg,
-                fit: BoxFit.cover,
+                fit: BoxFit.fitWidth,
                 errorBuilder: (_, __, ___) => Container(
                   decoration: BoxDecoration(gradient: JournalColors.heroGradient),
                 ),
               ),
-              // 第2层：代码文字覆盖（左侧）
+              // 第2层：代码文字覆盖（右侧，人物在左）
               Positioned(
-                left: 20,
-                top: 24,
+                right: 24,
+                top: 28,
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
-                      '✏️ 今日记录 ✨',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                        shadows: [
-                          Shadow(blurRadius: 4, color: Colors.black26),
-                        ],
-                      ),
+                    // 标题行：铅笔图标 + 文字 + 星星图标
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Image.asset(
+                          'assets/images/pet_center/deco/deco_pencil.png',
+                          width: 18,
+                          height: 18,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.edit_rounded, size: 18, color: Colors.white),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          '今日记录',
+                          style: TextStyle(
+                            fontFamily: JournalColors.fontFamily,
+                            fontSize: 20,
+                            color: Colors.white,
+                            shadows: const [
+                              Shadow(blurRadius: 4, color: Colors.black26, offset: Offset(1, 1)),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Image.asset(
+                          'assets/images/pet_center/deco/deco_star.png',
+                          width: 16,
+                          height: 16,
+                          errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 16, color: Colors.white),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: 8),
                     Text(
                       count > 0 ? '已记录 $count 篇' : '开始记录今天的成长',
                       style: TextStyle(
+                        fontFamily: JournalColors.fontFamily,
                         fontSize: 13,
                         color: Colors.white.withValues(alpha: 0.9),
                         shadows: const [
@@ -400,23 +423,36 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
-                            Icons.edit_rounded,
-                            size: 15,
-                            color: JournalColors.pinkMain,
+                          Image.asset(
+                            'assets/images/pet_center/deco/deco_pencil.png',
+                            width: 14,
+                            height: 14,
+                            errorBuilder: (_, __, ___) => const Icon(Icons.edit_rounded, size: 14, color: JournalColors.pinkMain),
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
                             '开始写日记',
                             style: TextStyle(
+                              fontFamily: JournalColors.fontFamily,
                               fontSize: 13,
-                              fontWeight: FontWeight.w500,
                               color: JournalColors.pinkMain,
                             ),
                           ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
                         ],
                       ),
                     ),
@@ -736,92 +772,48 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> 
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
                   color: JournalColors.companionGradient.colors.first,
-                  child: const Center(child: Text('🐱', style: TextStyle(fontSize: 40))),
                 ),
               ),
             ),
-            // 第2层：代码气泡（白色容器 + 三角尾巴）
+            // 第2层：文字直接写在底图上（右侧留白区）
             Positioned(
-              right: 20,
-              top: 28,
-              child: CustomPaint(
-                painter: _BubblePainter(),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                  constraints: const BoxConstraints(maxWidth: 180),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(16),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '甜甜',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: JournalColors.textDark,
-                        ),
-                      ),
-                      SizedBox(height: 4),
-                      Text(
-                        '记录一下今天的成长吧！',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: JournalColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            // 第3层：爱心装饰
-            Positioned(
-              top: 12,
-              right: 12,
-              child: Icon(Icons.favorite, size: 14, color: JournalColors.pinkMain.withValues(alpha: 0.35)),
-            ),
-            Positioned(
+              right: 24,
               top: 32,
-              right: 220,
-              child: Icon(Icons.favorite, size: 10, color: JournalColors.pinkSoft.withValues(alpha: 0.45)),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '甜甜',
+                    style: TextStyle(
+                      fontFamily: JournalColors.fontFamily,
+                      fontSize: 22,
+                      color: Colors.white,
+                      shadows: const [
+                        Shadow(blurRadius: 4, color: Colors.black26, offset: Offset(1, 1)),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '记录一下今天的成长吧！',
+                    style: TextStyle(
+                      fontFamily: JournalColors.fontFamily,
+                      fontSize: 13,
+                      color: Colors.white.withValues(alpha: 0.9),
+                      shadows: const [
+                        Shadow(blurRadius: 3, color: Colors.black26),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
     );
   }
-}
-
-/// 语音气泡尾巴画笔 — 在白色容器左侧绘制小三角
-class _BubblePainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.fill;
-
-    final path = Path()
-      ..moveTo(-8, 20)
-      ..lineTo(0, 26)
-      ..lineTo(0, 14)
-      ..close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 // =============================================================================

@@ -7,6 +7,9 @@ import 'package:flutter/material.dart';
 class JournalColors {
   JournalColors._();
 
+  // ── 字体 ──
+  static const fontFamily = 'CuteFont';
+
   // ── 页面背景 ──
   static const bg = Color(0xFFFFF8F6);
 
