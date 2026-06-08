@@ -18,6 +18,7 @@ import '../features/journal/pages/journal_detail_page.dart';
 import '../features/journal/pages/write_journal_page.dart';
 import '../features/journal/pages/edit_journal_page.dart';
 import '../features/pet/pages/pet_center_page.dart';
+import '../features/pet/pages/pet_diary_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/settings/pages/profile_page.dart';
 import '../features/settings/pages/backup_page.dart';
@@ -70,11 +71,14 @@ CustomTransitionPage<void> buildSlideTransition(
         position: Tween<Offset>(
           begin: const Offset(1.0, 0.0),
           end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeInOut,
-        )),
-        child: child,
+        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut)),
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(-0.15, 0.0),
+            end: Offset.zero,
+          ).animate(CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeInOut)),
+          child: child,
+        ),
       );
     },
   );
@@ -120,267 +124,261 @@ final goRouter = GoRouter(
       },
       branches: [
         // ── 首页 ──
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: RoutePaths.dashboard,
-            name: RouteNames.dashboard,
-            builder: (_, _) => const DashboardPage(),
-          ),
-        ]),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RoutePaths.dashboard,
+              name: RouteNames.dashboard,
+              builder: (_, _) => const DashboardPage(),
+            ),
+          ],
+        ),
 
         // ── 计划（学习/健身/日记/饮食/睡眠）──
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: RoutePaths.plan,
-            name: RouteNames.plan,
-            builder: (_, _) => const PlanPage(),
-            routes: [
-              // 学习相关
-              GoRoute(
-                path: 'study/add',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AddStudyRecordPage(),
-                ),
-              ),
-              GoRoute(
-                path: 'study/detail/:id',
-                pageBuilder: (context, state) {
-                  final id = int.parse(state.pathParameters['id']!);
-                  return buildSlideTransition(
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RoutePaths.plan,
+              name: RouteNames.plan,
+              builder: (_, _) => const PlanPage(),
+              routes: [
+                // 学习相关
+                GoRoute(
+                  path: 'study/add',
+                  pageBuilder: (context, state) => buildSlideTransition(
                     context,
                     state,
-                    StudyRecordDetailPage(recordId: id),
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'study/recent',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const RecentRecordsPage(),
+                    const AddStudyRecordPage(),
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'study/subjects',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const SubjectDistributionPage(),
+                GoRoute(
+                  path: 'study/detail/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.parse(state.pathParameters['id']!);
+                    return buildSlideTransition(
+                      context,
+                      state,
+                      StudyRecordDetailPage(recordId: id),
+                    );
+                  },
                 ),
-              ),
-              // 健身相关
-              GoRoute(
-                path: 'fitness/add',
-                pageBuilder: (context, state) {
-                  final mode = state.uri.queryParameters['mode'] ?? 'simple';
-                  return buildSlideTransition(
+                GoRoute(
+                  path: 'study/recent',
+                  pageBuilder: (context, state) => buildSlideTransition(
                     context,
                     state,
-                    AddFitnessRecordPage(initialMode: mode),
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'fitness/detail/:id',
-                pageBuilder: (context, state) {
-                  final id = int.parse(state.pathParameters['id']!);
-                  return buildSlideTransition(
+                    const RecentRecordsPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/subjects',
+                  pageBuilder: (context, state) => buildSlideTransition(
                     context,
                     state,
-                    FitnessRecordDetailPage(recordId: id),
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'fitness/body-metric/add',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AddBodyMetricPage(),
+                    const SubjectDistributionPage(),
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'fitness/body-metric/detail',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const BodyMetricDetailPage(),
+                // 健身相关
+                GoRoute(
+                  path: 'fitness/add',
+                  pageBuilder: (context, state) {
+                    final mode = state.uri.queryParameters['mode'] ?? 'simple';
+                    return buildSlideTransition(
+                      context,
+                      state,
+                      AddFitnessRecordPage(initialMode: mode),
+                    );
+                  },
                 ),
-              ),
-              GoRoute(
-                path: 'fitness/weekly',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const WeeklyFitnessPage(),
+                GoRoute(
+                  path: 'fitness/detail/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.parse(state.pathParameters['id']!);
+                    return buildSlideTransition(
+                      context,
+                      state,
+                      FitnessRecordDetailPage(recordId: id),
+                    );
+                  },
                 ),
-              ),
-              GoRoute(
-                path: 'fitness/records',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AllFitnessRecordsPage(),
-                ),
-              ),
-              // 日记相关
-              GoRoute(
-                path: 'journal/write',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const WriteJournalPage(),
-                ),
-              ),
-              GoRoute(
-                path: 'journal/detail/:id',
-                pageBuilder: (context, state) {
-                  final id = int.parse(state.pathParameters['id']!);
-                  return buildSlideTransition(
+                GoRoute(
+                  path: 'fitness/body-metric/add',
+                  pageBuilder: (context, state) => buildSlideTransition(
                     context,
                     state,
-                    JournalDetailPage(journalId: id),
-                  );
-                },
-              ),
-              GoRoute(
-                path: 'journal/edit/:id',
-                pageBuilder: (context, state) {
-                  final id = int.parse(state.pathParameters['id']!);
-                  return buildSlideTransition(
+                    const AddBodyMetricPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'fitness/body-metric/detail',
+                  pageBuilder: (context, state) => buildSlideTransition(
                     context,
                     state,
-                    EditJournalPage(journalId: id),
-                  );
-                },
-              ),
-              // 饮食相关
-              GoRoute(
-                path: 'diet/add',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AddDietRecordPage(),
+                    const BodyMetricDetailPage(),
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'diet/records',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AllDietRecordsPage(),
+                GoRoute(
+                  path: 'fitness/weekly',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const WeeklyFitnessPage(),
+                  ),
                 ),
-              ),
-              // 睡眠相关
-              GoRoute(
-                path: 'sleep/add',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AddSleepRecordPage(),
+                GoRoute(
+                  path: 'fitness/records',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const AllFitnessRecordsPage(),
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'sleep/history',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const SleepHistoryPage(),
+                // 日记相关
+                GoRoute(
+                  path: 'journal/write',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const WriteJournalPage(),
+                  ),
                 ),
-              ),
-              // AI 分析
-              GoRoute(
-                path: 'ai-analysis',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AiAnalysisPage(),
+                GoRoute(
+                  path: 'journal/detail/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.parse(state.pathParameters['id']!);
+                    return buildSlideTransition(
+                      context,
+                      state,
+                      JournalDetailPage(journalId: id),
+                    );
+                  },
                 ),
-              ),
-            ],
-          ),
-        ]),
+                GoRoute(
+                  path: 'journal/edit/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.parse(state.pathParameters['id']!);
+                    return buildSlideTransition(
+                      context,
+                      state,
+                      EditJournalPage(journalId: id),
+                    );
+                  },
+                ),
+                // 饮食相关
+                GoRoute(
+                  path: 'diet/add',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const AddDietRecordPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'diet/records',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const AllDietRecordsPage(),
+                  ),
+                ),
+                // 睡眠相关
+                GoRoute(
+                  path: 'sleep/add',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const AddSleepRecordPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'sleep/history',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const SleepHistoryPage(),
+                  ),
+                ),
+                // AI 分析
+                GoRoute(
+                  path: 'ai-analysis',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const AiAnalysisPage(),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
 
         // ── 我的 ──
-        StatefulShellBranch(routes: [
-          GoRoute(
-            path: RoutePaths.settings,
-            name: RouteNames.settings,
-            builder: (_, _) => const SettingsPage(),
-            routes: [
-              GoRoute(
-                path: 'profile',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const ProfilePage(),
+        StatefulShellBranch(
+          routes: [
+            GoRoute(
+              path: RoutePaths.settings,
+              name: RouteNames.settings,
+              builder: (_, _) => const SettingsPage(),
+              routes: [
+                GoRoute(
+                  path: 'profile',
+                  pageBuilder: (context, state) =>
+                      buildSlideTransition(context, state, const ProfilePage()),
                 ),
-              ),
-              GoRoute(
-                path: 'ai-config',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AiConfigPage(),
+                GoRoute(
+                  path: 'ai-config',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const AiConfigPage(),
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'ai-analysis',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const AiAnalysisPage(),
+                GoRoute(
+                  path: 'ai-analysis',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const AiAnalysisPage(),
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'pet-ai-analysis',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const PetAIAnalysisPage(),
+                GoRoute(
+                  path: 'pet-ai-analysis',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const PetAIAnalysisPage(),
+                  ),
                 ),
-              ),
-              GoRoute(
-                path: 'backup',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const BackupPage(),
+                GoRoute(
+                  path: 'backup',
+                  pageBuilder: (context, state) =>
+                      buildSlideTransition(context, state, const BackupPage()),
                 ),
-              ),
-              GoRoute(
-                path: 'restore',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const RestorePage(),
+                GoRoute(
+                  path: 'restore',
+                  pageBuilder: (context, state) =>
+                      buildSlideTransition(context, state, const RestorePage()),
                 ),
-              ),
-              GoRoute(
-                path: 'weather',
-                pageBuilder: (context, state) => buildSlideTransition(
-                  context,
-                  state,
-                  const WeatherSettingsPage(),
+                GoRoute(
+                  path: 'weather',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const WeatherSettingsPage(),
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ]),
+              ],
+            ),
+          ],
+        ),
       ],
     ),
     // ── Focus routes (full-screen, outside shell) ──────────────────────────
     GoRoute(
       path: RoutePaths.focus,
       name: RouteNames.focus,
-      pageBuilder: (context, state) => buildSlideTransition(
-        context,
-        state,
-        const FocusPage(),
-      ),
+      pageBuilder: (context, state) =>
+          buildSlideTransition(context, state, const FocusPage()),
       routes: [
         GoRoute(
           path: 'session',
@@ -404,20 +402,19 @@ final goRouter = GoRouter(
     // ── Task history (full-screen, outside shell) ──────────────────────────
     GoRoute(
       path: '/task-history',
-      pageBuilder: (context, state) => buildSlideTransition(
-        context,
-        state,
-        const TaskHistoryPage(),
-      ),
+      pageBuilder: (context, state) =>
+          buildSlideTransition(context, state, const TaskHistoryPage()),
     ),
     // ── Pet center (full-screen, outside shell) ────────────────────────────
     GoRoute(
       path: '/pet-center',
-      pageBuilder: (context, state) => buildSlideTransition(
-        context,
-        state,
-        const PetCenterPage(),
-      ),
+      pageBuilder: (context, state) =>
+          buildSlideTransition(context, state, const PetCenterPage()),
+    ),
+    GoRoute(
+      path: '/pet-diary',
+      pageBuilder: (context, state) =>
+          buildSlideTransition(context, state, const PetDiaryPage()),
     ),
   ],
 );

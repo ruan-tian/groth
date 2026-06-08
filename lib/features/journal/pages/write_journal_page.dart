@@ -138,6 +138,8 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       }
 
       final expRepo = ref.read(expRepositoryProvider);
+      final oldTotal = await expRepo.getTotalExp();
+      final oldLevel = expService.calculateLevel(oldTotal);
       await expRepo.insertExpLog(
         GrowthExpLogsCompanion.insert(
           sourceType: 'journal',
@@ -148,16 +150,26 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         ),
       );
 
+      final newTotal = oldTotal + exp;
+      final newLevel = expService.calculateLevel(newTotal);
+      if (newLevel > oldLevel) {
+        PetEventBus.instance.emit(PetEvent.levelUp(
+          oldLevel: oldLevel,
+          newLevel: newLevel,
+        ));
+      }
+
       ref.invalidate(recentJournalsProvider);
       ref.invalidate(todayJournalCountProvider);
       ref.invalidate(dashboardProvider);
 
       if (mounted) {
         // 发送宠物事件
-        PetEventBus.instance.emit(PetEvent(
+        final eventId = 'journal_${DateTime.now().millisecondsSinceEpoch}';
+        PetEventBus.instance.emit(PetEvent.moduleCompleted(
+          eventId: eventId,
           type: PetEventType.journalCompleted,
           module: 'journal',
-          createdAt: DateTime.now(),
         ));
 
         HapticFeedback.lightImpact();

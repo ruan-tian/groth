@@ -3,17 +3,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/services/statistics_service.dart';
+import '../../../core/utils/stats_formatters.dart';
 import '../../../shared/providers/service_providers.dart';
-import '../widgets/stats_chart.dart';
+import '../widgets/stats_skeleton.dart';
+import '../../../shared/widgets/common/duration_line_chart.dart';
+import '../../../shared/widgets/common/stats_summary_card.dart';
 
 // =============================================================================
 // Providers
 // =============================================================================
 
-/// 最近 7 天每日统计 Provider
+/// 周偏移量 Provider：0 = 本周, -1 = 上周, -2 = 两周前
+final weekOffsetProvider = StateProvider<int>((ref) => 0);
+
+/// 指定周的每日统计 Provider
 final weeklyStatsProvider = FutureProvider<List<DailyStats>>((ref) async {
   final statsService = ref.watch(statisticsServiceProvider);
-  return statsService.getWeeklyStats();
+  final offset = ref.watch(weekOffsetProvider);
+  final now = DateTime.now();
+  final end = now.subtract(Duration(days: offset * 7));
+  final start = end.subtract(const Duration(days: 6));
+  return statsService.getDailyStatsRange(start, end);
 });
 
 // =============================================================================
@@ -23,8 +33,9 @@ final weeklyStatsProvider = FutureProvider<List<DailyStats>>((ref) async {
 /// 周统计页面
 ///
 /// 展示最近 7 天的成长趋势：
-/// - 折线图（学习/健身/经验）
+/// - 折线图（学习/健身时长）
 /// - 汇总卡片（总学习、总健身、总经验）
+/// - 周导航（上一周/下一周/回到本周）
 class WeeklyStatsPage extends ConsumerWidget {
   const WeeklyStatsPage({super.key});
 
@@ -33,7 +44,7 @@ class WeeklyStatsPage extends ConsumerWidget {
     final weeklyStats = ref.watch(weeklyStatsProvider);
 
     return weeklyStats.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const StatsSkeleton(),
       error: (error, stack) => _ErrorView(
         message: '加载失败: $error',
         onRetry: () => ref.invalidate(weeklyStatsProvider),
@@ -47,40 +58,77 @@ class WeeklyStatsPage extends ConsumerWidget {
 // Content
 // =============================================================================
 
-class _WeeklyStatsContent extends StatelessWidget {
+class _WeeklyStatsContent extends ConsumerWidget {
   const _WeeklyStatsContent({required this.stats});
 
   final List<DailyStats> stats;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final offset = ref.watch(weekOffsetProvider);
+
     // 计算汇总
     final totalStudy = stats.fold<int>(0, (sum, d) => sum + d.studyMinutes);
     final totalFitness = stats.fold<int>(0, (sum, d) => sum + d.fitnessMinutes);
     final totalExp = stats.fold<int>(0, (sum, d) => sum + d.expGained);
 
+    // 计算周范围
+    final now = DateTime.now();
+    final end = now.subtract(Duration(days: offset * 7));
+    final start = end.subtract(const Duration(days: 6));
+
     return ListView(
       padding: const EdgeInsets.all(AppTheme.spaceMd),
       children: [
-        // ── 时间范围标题 ──
-        _WeekRangeHeader(),
-        const SizedBox(height: AppTheme.spaceLg),
-
-        // ── 汇总卡片 ──
-        _SummaryCards(
-          totalStudy: totalStudy,
-          totalFitness: totalFitness,
-          totalExp: totalExp,
+        // ── 周导航 ──
+        _WeekNavigator(
+          start: start,
+          end: end,
+          offset: offset,
         ),
         const SizedBox(height: AppTheme.spaceLg),
 
-        // ── 趋势折线图 ──
-        StatsChart(
-          data: stats,
-          showStudy: true,
-          showFitness: true,
-          showExp: true,
-          height: 220,
+        // ── 汇总卡片 ──
+        Row(
+          children: [
+            Expanded(
+              child: StatsSummaryCard(
+                icon: Icons.menu_book_rounded,
+                label: '总学习',
+                value: formatMinutesShort(totalStudy),
+                color: GrowthColors.studyPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: StatsSummaryCard(
+                icon: Icons.fitness_center_rounded,
+                label: '总健身',
+                value: formatMinutesShort(totalFitness),
+                color: GrowthColors.fitnessPrimary,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: StatsSummaryCard(
+                icon: Icons.star_rounded,
+                label: '总经验',
+                value: formatExp(totalExp),
+                color: GrowthColors.expFill,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppTheme.spaceLg),
+
+        // ── 时长趋势折线图（学习+健身） ──
+        DurationLineChart(
+          valuesInMinutes: stats
+              .map((d) => d.studyMinutes + d.fitnessMinutes)
+              .toList(),
+          labels: stats.map((d) => '${d.date.month}/${d.date.day}').toList(),
+          lineColor: GrowthColors.studyPrimary,
+          height: 200,
         ),
         const SizedBox(height: AppTheme.spaceLg),
 
@@ -92,139 +140,76 @@ class _WeeklyStatsContent extends StatelessWidget {
 }
 
 // =============================================================================
-// 时间范围标题
+// 周导航
 // =============================================================================
 
-class _WeekRangeHeader extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final now = DateTime.now();
-    final start = now.subtract(const Duration(days: 6));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '周统计',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: AppTheme.spaceXs),
-        Text(
-          '${start.month}/${start.day} — ${now.month}/${now.day} · 最近 7 天',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-// =============================================================================
-// 汇总卡片
-// =============================================================================
-
-class _SummaryCards extends StatelessWidget {
-  const _SummaryCards({
-    required this.totalStudy,
-    required this.totalFitness,
-    required this.totalExp,
+class _WeekNavigator extends ConsumerWidget {
+  const _WeekNavigator({
+    required this.start,
+    required this.end,
+    required this.offset,
   });
 
-  final int totalStudy;
-  final int totalFitness;
-  final int totalExp;
+  final DateTime start;
+  final DateTime end;
+  final int offset;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final isCurrentWeek = offset == 0;
+
     return Row(
       children: [
+        // 左箭头（更早一周）
+        IconButton(
+          icon: const Icon(Icons.chevron_left_rounded),
+          onPressed: () {
+            ref.read(weekOffsetProvider.notifier).state = offset - 1;
+          },
+        ),
+
+        // 日期范围
         Expanded(
-          child: _SummaryCard(
-            icon: Icons.menu_book_rounded,
-            label: '总学习',
-            value: _formatHours(totalStudy),
-            color: GrowthColors.studyPrimary,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                '周统计',
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: AppTheme.spaceXs),
+              Text(
+                '${formatWeekRange(start, end)} · ${isCurrentWeek ? '最近7天' : ''}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: AppTheme.spaceSm),
-        Expanded(
-          child: _SummaryCard(
-            icon: Icons.fitness_center_rounded,
-            label: '总健身',
-            value: _formatHours(totalFitness),
-            color: GrowthColors.fitnessPrimary,
-          ),
+
+        // 右箭头（更近一周，本周时禁用）
+        IconButton(
+          icon: const Icon(Icons.chevron_right_rounded),
+          onPressed: isCurrentWeek
+              ? null
+              : () {
+                  ref.read(weekOffsetProvider.notifier).state = offset + 1;
+                },
         ),
-        const SizedBox(width: AppTheme.spaceSm),
-        Expanded(
-          child: _SummaryCard(
-            icon: Icons.star_rounded,
-            label: '总经验',
-            value: '$totalExp',
-            color: GrowthColors.expFill,
+
+        // "本周"按钮（非本周时显示）
+        if (!isCurrentWeek)
+          TextButton(
+            onPressed: () {
+              ref.read(weekOffsetProvider.notifier).state = 0;
+            },
+            child: const Text('本周'),
           ),
-        ),
       ],
-    );
-  }
-
-  /// 将分钟格式化为小时（保留一位小数）
-  static String _formatHours(int minutes) {
-    if (minutes < 60) return '${minutes}m';
-    final hours = minutes / 60;
-    return '${hours.toStringAsFixed(1)}h';
-  }
-}
-
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spaceSm,
-          vertical: AppTheme.spaceMd,
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 20),
-            const SizedBox(height: AppTheme.spaceSm),
-            Text(
-              value,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: AppTheme.spaceXs),
-            Text(
-              label,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }
@@ -301,7 +286,7 @@ class _DailyBreakdown extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          '+${day.expGained}',
+                          '+${formatExp(day.expGained)}',
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: GrowthColors.expFill,
                             fontWeight: FontWeight.w600,

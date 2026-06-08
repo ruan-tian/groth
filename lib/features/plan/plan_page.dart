@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design/design.dart';
+import '../../features/pet/models/pet_event.dart';
+import '../../features/pet/services/pet_event_bus.dart';
 import '../study/study_page.dart';
 import '../fitness/fitness_page.dart';
 import '../journal/journal_page.dart';
@@ -45,6 +47,10 @@ class _PlanPageState extends ConsumerState<PlanPage> {
 
   void _onPageChanged(int index) {
     setState(() => _currentIndex = index);
+    final modules = ['study', 'fitness', 'journal', 'diet', 'sleep'];
+    if (index >= 0 && index < modules.length) {
+      PetEventBus.instance.emit(PetEvent.pageEntered(module: modules[index]));
+    }
   }
 
   void _onTabTapped(int index) {

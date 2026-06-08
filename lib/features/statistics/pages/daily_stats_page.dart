@@ -3,16 +3,34 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme.dart';
 import '../../../core/services/statistics_service.dart';
+import '../../../core/utils/stats_formatters.dart';
 import '../../../shared/providers/service_providers.dart';
+import '../widgets/stats_skeleton.dart';
 
 // =============================================================================
 // Providers
 // =============================================================================
 
-/// 今日统计数据 Provider
-final todayStatsProvider = FutureProvider<TodayStats>((ref) async {
+/// 当前选中的日期
+final selectedDateProvider = StateProvider<DateTime>((ref) => DateTime.now());
+
+/// 每日统计数据 Provider（根据选中日期自动刷新）
+final todayStatsProvider = FutureProvider<DailyStats>((ref) async {
   final statsService = ref.watch(statisticsServiceProvider);
-  return statsService.getTodayStats();
+  final date = ref.watch(selectedDateProvider);
+  final range = await statsService.getDailyStatsRange(date, date);
+  return range.isNotEmpty ? range.first : DailyStats.empty(date);
+});
+
+/// 当前连续打卡天数（基于最近 90 天数据）
+final currentStreakProvider = FutureProvider<int>((ref) async {
+  final statsService = ref.watch(statisticsServiceProvider);
+  final now = DateTime.now();
+  final stats = await statsService.getDailyStatsRange(
+    now.subtract(const Duration(days: 90)),
+    now,
+  );
+  return statsService.calculateStreak(stats);
 });
 
 // =============================================================================
@@ -21,8 +39,8 @@ final todayStatsProvider = FutureProvider<TodayStats>((ref) async {
 
 /// 日统计页面
 ///
-/// 展示今日学习时长、健身时长、日记篇数、获得经验值。
-/// 使用卡片布局，每个指标一张卡片。
+/// 展示指定日期的学习时长、健身时长、日记篇数、饮食记录、睡眠时长、专注时长。
+/// 顶部日期导航可切换前后天，卡片网格展示 6 项核心指标。
 class DailyStatsPage extends ConsumerWidget {
   const DailyStatsPage({super.key});
 
@@ -31,7 +49,7 @@ class DailyStatsPage extends ConsumerWidget {
     final todayStats = ref.watch(todayStatsProvider);
 
     return todayStats.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => const StatsSkeleton(),
       error: (error, stack) => _ErrorView(
         message: '加载失败: $error',
         onRetry: () => ref.invalidate(todayStatsProvider),
@@ -48,7 +66,7 @@ class DailyStatsPage extends ConsumerWidget {
 class _DailyStatsContent extends StatelessWidget {
   const _DailyStatsContent({required this.stats});
 
-  final TodayStats stats;
+  final DailyStats stats;
 
   @override
   Widget build(BuildContext context) {
@@ -59,8 +77,12 @@ class _DailyStatsContent extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.all(AppTheme.spaceMd),
         children: [
-          // ── 日期标题 ──
-          _DateHeader(),
+          // ── 日期导航 ──
+          _DateNavigator(),
+          const SizedBox(height: AppTheme.spaceMd),
+
+          // ── 连续打卡 ──
+          const _StreakBanner(),
           const SizedBox(height: AppTheme.spaceLg),
 
           // ── 统计卡片网格 ──
@@ -76,96 +98,174 @@ class _DailyStatsContent extends StatelessWidget {
 }
 
 // =============================================================================
-// 日期标题
+// 日期导航
 // =============================================================================
 
-class _DateHeader extends StatelessWidget {
+class _DateNavigator extends ConsumerWidget {
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final date = ref.watch(selectedDateProvider);
     final now = DateTime.now();
-    final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final isToday =
+        date.year == now.year && date.month == now.month && date.day == now.day;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text(
-          '${now.month} 月 ${now.day} 日',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.bold,
+        // 左箭头 — 前一天
+        IconButton(
+          onPressed: () {
+            ref.read(selectedDateProvider.notifier).state =
+                date.subtract(const Duration(days: 1));
+          },
+          icon: const Icon(Icons.chevron_left_rounded),
+          tooltip: '前一天',
+        ),
+
+        // 日期显示 "6月8日 · 周日"
+        Expanded(
+          child: Text(
+            formatFullDate(date),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+            textAlign: TextAlign.center,
           ),
         ),
-        const SizedBox(height: AppTheme.spaceXs),
-        Text(
-          '${weekdays[now.weekday - 1]} · ${now.year}',
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
+
+        // 右箭头 — 后一天（今天时禁用）
+        IconButton(
+          onPressed: isToday
+              ? null
+              : () {
+                  ref.read(selectedDateProvider.notifier).state =
+                      date.add(const Duration(days: 1));
+                },
+          icon: const Icon(Icons.chevron_right_rounded),
+          tooltip: '后一天',
         ),
+
+        // 今天按钮（仅非今天时显示）
+        if (!isToday)
+          TextButton(
+            onPressed: () {
+              ref.read(selectedDateProvider.notifier).state = DateTime.now();
+            },
+            child: const Text('今天'),
+          ),
       ],
     );
   }
 }
 
 // =============================================================================
-// 统计卡片网格
+// 连续打卡横幅
+// =============================================================================
+
+class _StreakBanner extends ConsumerWidget {
+  const _StreakBanner();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final streakAsync = ref.watch(currentStreakProvider);
+    final theme = Theme.of(context);
+
+    return streakAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+      data: (streak) {
+        if (streak <= 0) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceXs),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text('🔥', style: TextStyle(fontSize: 16)),
+              const SizedBox(width: AppTheme.spaceSm),
+              Text(
+                '连续打卡 $streak 天',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFFFF7D00),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// =============================================================================
+// 统计卡片网格 (6 模块 × 3 列)
 // =============================================================================
 
 class _StatsGrid extends StatelessWidget {
   const _StatsGrid({required this.stats});
 
-  final TodayStats stats;
+  final DailyStats stats;
 
   @override
   Widget build(BuildContext context) {
     return GridView.count(
-      crossAxisCount: 2,
+      crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: AppTheme.spaceSm,
       crossAxisSpacing: AppTheme.spaceSm,
-      childAspectRatio: 1.3,
+      childAspectRatio: 1.2,
       children: [
+        // 学习时长 (blue)
         _StatCard(
           icon: Icons.menu_book_rounded,
           label: '学习时长',
-          value: _formatMinutes(stats.studyMinutes),
+          value: formatMinutes(stats.studyMinutes),
           color: GrowthColors.studyPrimary,
           backgroundColor: GrowthColors.studyLight,
         ),
+        // 健身时长 (orange)
         _StatCard(
           icon: Icons.fitness_center_rounded,
           label: '健身时长',
-          value: _formatMinutes(stats.fitnessMinutes),
-          color: GrowthColors.fitnessPrimary,
-          backgroundColor: GrowthColors.fitnessLight,
+          value: formatMinutes(stats.fitnessMinutes),
+          color: const Color(0xFFFF7D00),
+          backgroundColor: const Color(0xFFFFF7E6),
         ),
+        // 日记篇数 (pink)
         _StatCard(
           icon: Icons.edit_note_rounded,
           label: '日记篇数',
-          value: '${stats.journalCount}',
-          unit: '篇',
-          color: GrowthColors.journalPrimary,
-          backgroundColor: GrowthColors.journalLight,
+          value: '${stats.journalCount}篇',
+          color: const Color(0xFFEB2F96),
+          backgroundColor: const Color(0xFFFFF0F6),
         ),
+        // 饮食记录 (green)
         _StatCard(
-          icon: Icons.star_rounded,
-          label: '获得经验',
-          value: '${stats.totalExp}',
-          unit: 'EXP',
-          color: GrowthColors.expFill,
-          backgroundColor: GrowthColors.expBackground,
+          icon: Icons.restaurant_rounded,
+          label: '饮食记录',
+          value: '${stats.dietCount}次',
+          color: GrowthColors.success,
+          backgroundColor: const Color(0xFFF6FFED),
+        ),
+        // 睡眠时长 (purple)
+        _StatCard(
+          icon: Icons.bedtime_rounded,
+          label: '睡眠时长',
+          value: formatMinutes(stats.sleepMinutes),
+          color: GrowthColors.sleepPrimary,
+          backgroundColor: GrowthColors.sleepLight,
+        ),
+        // 专注时长 (teal)
+        _StatCard(
+          icon: Icons.timer_rounded,
+          label: '专注时长',
+          value: formatMinutes(stats.focusMinutes),
+          color: GrowthColors.fitnessPrimary,
+          backgroundColor: GrowthColors.fitnessLight,
         ),
       ],
     );
-  }
-
-  /// 将分钟格式化为 "Xmin" 或 "Xh Ym"
-  static String _formatMinutes(int minutes) {
-    if (minutes < 60) return '${minutes}min';
-    final h = minutes ~/ 60;
-    final m = minutes % 60;
-    return m > 0 ? '${h}h${m}m' : '${h}h';
   }
 }
 
@@ -216,11 +316,15 @@ class _StatCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
-                Text(
-                  value,
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
+                Flexible(
+                  child: Text(
+                    value,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (unit != null) ...[
@@ -256,23 +360,31 @@ class _StatCard extends StatelessWidget {
 class _DailySummary extends StatelessWidget {
   const _DailySummary({required this.stats});
 
-  final TodayStats stats;
+  final DailyStats stats;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final totalMinutes = stats.studyMinutes + stats.fitnessMinutes;
 
-    String summary;
-    if (totalMinutes == 0 && stats.journalCount == 0) {
-      summary = '今天还没有记录，开始你的成长之旅吧！';
-    } else if (totalMinutes >= 120) {
-      summary = '今天投入了 ${_formatMinutes(totalMinutes)}，表现优秀！继续保持！';
-    } else if (totalMinutes >= 60) {
-      summary = '今天活跃了 ${_formatMinutes(totalMinutes)}，不错的开始！';
-    } else {
-      summary = '今天活跃了 ${_formatMinutes(totalMinutes)}，加油！';
+    // 总活跃时长 = 学习 + 健身 + 专注
+    final totalMinutes =
+        stats.studyMinutes + stats.fitnessMinutes + stats.focusMinutes;
+
+    // 拼接总结各段
+    final parts = <String>[];
+    if (totalMinutes > 0) {
+      parts.add('活跃 ${formatMinutes(totalMinutes)}');
     }
+    if (stats.expGained > 0) {
+      parts.add('获得 ${formatExp(stats.expGained)} EXP');
+    }
+    if (stats.taskTotal > 0) {
+      parts.add('任务完成 ${stats.taskCompleted}/${stats.taskTotal}');
+    }
+
+    final summary = parts.isEmpty
+        ? '今天还没有记录，开始你的成长之旅吧！'
+        : parts.join(' · ');
 
     return Card(
       child: Padding(
@@ -302,13 +414,6 @@ class _DailySummary extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  static String _formatMinutes(int minutes) {
-    if (minutes < 60) return '$minutes 分钟';
-    final h = minutes ~/ 60;
-    final m = minutes % 60;
-    return m > 0 ? '$h 小时 $m 分钟' : '$h 小时';
   }
 }
 

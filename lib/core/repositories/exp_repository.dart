@@ -87,4 +87,20 @@ class ExpRepository {
     final end = DateTime(date.year, date.month, date.day, 23, 59, 59, 999);
     return (start.millisecondsSinceEpoch, end.millisecondsSinceEpoch);
   }
+
+  /// 获取最近连续活跃天数（从昨天开始往前数，直到中断）
+  Future<int> getConsecutiveActiveDays() async {
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    int count = 0;
+    for (int i = 0; i < 365; i++) {
+      final date = yesterday.subtract(Duration(days: i));
+      final total = await getTotalExpByDate(date);
+      if (total > 0) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }
 }

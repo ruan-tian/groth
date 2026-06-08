@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../features/pet/utils/pet_assets.dart';
+
 import '../../../app/design/design.dart';
 import 'growth_card.dart';
 
@@ -10,7 +12,7 @@ class ModuleHero extends StatelessWidget {
     required this.subtitle,
     required this.icon,
     required this.color,
-    this.asset = 'assets/pet/pet_idle.png',
+    this.asset = PetAssets.commonFallback,
     this.trailing,
   });
 

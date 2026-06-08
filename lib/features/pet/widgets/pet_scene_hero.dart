@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../utils/pet_assets.dart';
 import 'particle_burst.dart';
 
 // =============================================================================
@@ -47,16 +48,16 @@ const List<Color> kNightGradient = [
 // -- Pet image assets per time-of-day ----------------------------------------
 
 /// Morning pet image path.
-const String kPetImageMorning = 'assets/pet/emotions/打招呼.png';
+const String kPetImageMorning = PetAssets.heroMorning;
 
 /// Afternoon pet image path.
-const String kPetImageAfternoon = 'assets/pet/life/敲键盘.png';
+const String kPetImageAfternoon = PetAssets.heroAfternoon;
 
 /// Evening pet image path.
-const String kPetImageEvening = 'assets/pet/life/听音乐.png';
+const String kPetImageEvening = PetAssets.heroEvening;
 
 /// Night pet image path.
-const String kPetImageNight = 'assets/pet/emotions/好困.png';
+const String kPetImageNight = PetAssets.heroNight;
 
 // -- Pet image dimensions ----------------------------------------------------
 

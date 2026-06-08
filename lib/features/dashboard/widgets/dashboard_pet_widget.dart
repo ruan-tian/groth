@@ -5,7 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/providers/pet_orchestrator_v2_provider.dart';
+import '../../pet/utils/pet_assets.dart';
+import '../../../shared/providers/pet_orchestrator_provider.dart';
+import '../../../shared/providers/pet_projection_provider.dart';
 
 /// Dashboard 顶部宠物组件
 ///
@@ -50,6 +52,7 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
   @override
   Widget build(BuildContext context) {
     final intentAsync = ref.watch(dashboardPetIntentProvider);
+    final projection = ref.watch(dashboardPetViewProvider);
 
     return GestureDetector(
       onTap: () => context.push('/pet-center'),
@@ -57,16 +60,16 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
         child: intentAsync.when(
           loading: () => _buildContent(
-            imagePath: 'assets/pet/common/common_happy.png',
+            imagePath: PetAssets.commonHappy,
             message: '甜甜在这里陪你～',
           ),
           error: (_, __) => _buildContent(
-            imagePath: 'assets/pet/common/common_happy.png',
+            imagePath: PetAssets.commonHappy,
             message: '甜甜在这里陪你～',
           ),
           data: (intent) => _buildContent(
             imagePath: intent.imagePath,
-            message: intent.displayMessage,
+            message: projection?.bubbleText ?? intent.displayMessage,
             fallbackEmoji: '🐱',
           ),
         ),

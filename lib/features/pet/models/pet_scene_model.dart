@@ -2,6 +2,8 @@
 ///
 /// 定义模块类型、场景状态、装饰元素等数据结构。
 
+import '../utils/pet_assets.dart';
+
 // =============================================================================
 // 模块类型
 // =============================================================================
@@ -166,56 +168,56 @@ extension PetSceneStateTypeX on PetSceneStateType {
   String get assetPath {
     switch (this) {
       case PetSceneStateType.studyReading:
-        return 'assets/pet/study/study_reading.png';
+        return PetAssets.studyReading;
       case PetSceneStateType.studyWriting:
-        return 'assets/pet/study/study_writing.png';
+        return PetAssets.studyWriting;
       case PetSceneStateType.studyFocus:
-        return 'assets/pet/study/study_focus.png';
+        return PetAssets.studyFocus;
       case PetSceneStateType.studyDone:
-        return 'assets/pet/study/study_done.png';
+        return PetAssets.studyDone;
       case PetSceneStateType.fitnessLifting:
-        return 'assets/pet/fitness/fitness_lifting.png';
+        return PetAssets.fitnessLifting;
       case PetSceneStateType.fitnessStretch:
-        return 'assets/pet/fitness/fitness_stretch.png';
+        return PetAssets.fitnessStretch;
       case PetSceneStateType.fitnessDrink:
-        return 'assets/pet/fitness/fitness_drink.png';
+        return PetAssets.fitnessDrink;
       case PetSceneStateType.fitnessDone:
-        return 'assets/pet/fitness/fitness_done.png';
+        return PetAssets.fitnessDone;
       case PetSceneStateType.journalWriting:
-        return 'assets/pet/journal/journal_writing.png';
+        return PetAssets.journalWriting;
       case PetSceneStateType.journalThinking:
-        return 'assets/pet/journal/journal_thinking.png';
+        return PetAssets.journalThinking;
       case PetSceneStateType.journalBook:
-        return 'assets/pet/journal/journal_book.png';
+        return PetAssets.journalBook;
       case PetSceneStateType.journalDone:
-        return 'assets/pet/journal/journal_done.png';
+        return PetAssets.journalDone;
       case PetSceneStateType.dietEating:
-        return 'assets/pet/diet/diet_eating.png';
+        return PetAssets.dietEating;
       case PetSceneStateType.dietDrink:
-        return 'assets/pet/diet/diet_drink.png';
+        return PetAssets.dietDrink;
       case PetSceneStateType.dietPlate:
-        return 'assets/pet/diet/diet_plate.png';
+        return PetAssets.dietPlate;
       case PetSceneStateType.dietDone:
-        return 'assets/pet/diet/diet_done.png';
+        return PetAssets.dietDone;
       case PetSceneStateType.sleepYawn:
-        return 'assets/pet/sleep/sleep_yawn.png';
+        return PetAssets.sleepYawn;
       case PetSceneStateType.sleepSleeping:
-        return 'assets/pet/sleep/sleep_sleeping.png';
+        return PetAssets.sleepSleeping;
       case PetSceneStateType.sleepStretch:
-        return 'assets/pet/sleep/sleep_stretch.png';
+        return PetAssets.sleepStretch;
       case PetSceneStateType.sleepDone:
-        return 'assets/pet/sleep/sleep_done.png';
+        return PetAssets.sleepDone;
       case PetSceneStateType.thinking:
-        return 'assets/pet/common/thinking.png';
+        return PetAssets.commonThinking;
       case PetSceneStateType.report:
-        return 'assets/pet/common/report.png';
+        return PetAssets.commonReport;
       case PetSceneStateType.error:
-        return 'assets/pet/common/error.png';
+        return PetAssets.commonError;
     }
   }
 
   /// fallback 资源路径（使用现有 pet_idle.png）
-  String get fallbackAssetPath => 'assets/pet/pet_idle.png';
+  String get fallbackAssetPath => PetAssets.commonFallback;
 
   /// 所属模块
   PetModuleType get module {

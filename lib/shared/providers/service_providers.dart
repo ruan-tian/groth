@@ -4,7 +4,9 @@ import '../../core/services/ai_service.dart';
 import '../../core/services/backup_service.dart';
 import '../../core/services/exp_service.dart';
 import '../../core/services/statistics_service.dart';
+import '../../features/pet/services/pet_diary_service.dart';
 import 'database_provider.dart';
+import 'repository_providers.dart';
 
 /// AI 服务 Provider。
 final aiServiceProvider = Provider<AiService>((ref) {
@@ -28,4 +30,16 @@ final statisticsServiceProvider = Provider<StatisticsService>((ref) {
 final backupServiceProvider = Provider<BackupService>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return BackupService(db);
+});
+
+/// Pet diary generation service Provider.
+final petDiaryServiceProvider = Provider<PetDiaryService>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return PetDiaryService(
+    db: db,
+    diaryRepository: ref.watch(petDiaryRepositoryProvider),
+    aiConfigRepository: ref.watch(aiConfigRepositoryProvider),
+    settingRepository: ref.watch(settingRepositoryProvider),
+    aiService: ref.watch(aiServiceProvider),
+  );
 });

@@ -7,6 +7,7 @@ import '../../core/repositories/exp_repository.dart';
 import '../../core/repositories/fitness_repository.dart';
 import '../../core/repositories/focus_repository.dart';
 import '../../core/repositories/journal_repository.dart';
+import '../../core/repositories/pet_diary_repository.dart';
 import '../../core/repositories/setting_repository.dart';
 import '../../core/repositories/sleep_repository.dart';
 import '../../core/repositories/study_repository.dart';
@@ -30,6 +31,12 @@ final fitnessRepositoryProvider = Provider<FitnessRepository>((ref) {
 final journalRepositoryProvider = Provider<JournalRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return JournalRepository(db);
+});
+
+/// Pet diary repository Provider.
+final petDiaryRepositoryProvider = Provider<PetDiaryRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return PetDiaryRepository(db);
 });
 
 /// 经验值仓库 Provider。
@@ -81,7 +88,8 @@ final apiConfigRepositoryProvider = Provider<ApiConfigRepository>((ref) {
 });
 
 /// 天气城市搜索历史仓库 Provider。
-final weatherSearchHistoryRepositoryProvider = Provider<WeatherSearchHistoryRepository>((ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return WeatherSearchHistoryRepository(db);
-});
+final weatherSearchHistoryRepositoryProvider =
+    Provider<WeatherSearchHistoryRepository>((ref) {
+      final db = ref.watch(appDatabaseProvider);
+      return WeatherSearchHistoryRepository(db);
+    });

@@ -683,6 +683,8 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
       // 插入经验日志
       final expRepo = ref.read(expRepositoryProvider);
+      final oldTotal = await expRepo.getTotalExp();
+      final oldLevel = expService.calculateLevel(oldTotal);
       await expRepo.insertExpLog(
         GrowthExpLogsCompanion.insert(
           sourceType: 'fitness',
@@ -693,6 +695,15 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         ),
       );
 
+      final newTotal = oldTotal + exp;
+      final newLevel = expService.calculateLevel(newTotal);
+      if (newLevel > oldLevel) {
+        PetEventBus.instance.emit(PetEvent.levelUp(
+          oldLevel: oldLevel,
+          newLevel: newLevel,
+        ));
+      }
+
       // 刷新数据
       ref.invalidate(recentFitnessRecordsProvider);
       ref.invalidate(todayFitnessMinutesProvider);
@@ -701,10 +712,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
       if (mounted) {
         // 发送宠物事件
-        PetEventBus.instance.emit(PetEvent(
+        final eventId = 'fitness_${DateTime.now().millisecondsSinceEpoch}';
+        PetEventBus.instance.emit(PetEvent.moduleCompleted(
+          eventId: eventId,
           type: PetEventType.fitnessCompleted,
           module: 'fitness',
-          createdAt: DateTime.now(),
         ));
 
         ScaffoldMessenger.of(context).showSnackBar(

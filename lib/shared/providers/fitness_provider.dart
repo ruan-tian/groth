@@ -172,8 +172,8 @@ final fitnessChartDataProvider =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 
     final existing = dateMap[key];
-    final minutes = existing?.minutes ?? 0 + r.durationMinutes;
-    final calories = existing?.calories ?? 0 + (r.durationMinutes * 7.5).toInt();
+    final minutes = (existing?.minutes ?? 0) + r.durationMinutes;
+    final calories = (existing?.calories ?? 0) + (r.durationMinutes * 7.5).toInt();
 
     dateMap[key] = FitnessChartData(
       date: DateTime(date.year, date.month, date.day),

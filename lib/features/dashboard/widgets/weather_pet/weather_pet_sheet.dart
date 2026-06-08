@@ -20,10 +20,7 @@ class WeatherPetSheet extends StatelessWidget {
         );
         return FadeTransition(
           opacity: curved,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
-            child: child,
-          ),
+          child: child,
         );
       },
     );

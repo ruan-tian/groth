@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
+import '../../features/pet/utils/pet_assets.dart';
 import 'dashboard_provider.dart';
 
 // =============================================================================
@@ -183,13 +184,13 @@ String getPetLevelName(int level) {
 String getPetImagePath(PetStateType state) {
   switch (state) {
     case PetStateType.idle:
-      return 'assets/pet/pet_idle.png';
+      return PetAssets.petIdle;
     case PetStateType.peek:
-      return 'assets/pet/pet_peek.png';
+      return PetAssets.petPeek;
     case PetStateType.happy:
-      return 'assets/pet/pet_happy.png';
+      return PetAssets.petHappy;
     case PetStateType.sleepy:
-      return 'assets/pet/pet_sleepy.png';
+      return PetAssets.petSleepy;
   }
 }
 

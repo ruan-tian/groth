@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/pet_projection_provider.dart';
 import '../../../shared/providers/pet_provider.dart';
 import '../widgets/pet_scene_hero.dart';
 import '../widgets/today_growth_card.dart';

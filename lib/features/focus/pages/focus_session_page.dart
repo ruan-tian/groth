@@ -210,6 +210,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
     if (completed) {
       final expValue = _calculateFocusExp(widget.durationMinutes);
       final expRepo = ref.read(expRepositoryProvider);
+      final expService = ref.read(expServiceProvider);
+      final oldTotal = await expRepo.getTotalExp();
+      final oldLevel = expService.calculateLevel(oldTotal);
       await expRepo.insertExpLog(
         GrowthExpLogsCompanion(
           sourceType: const drift.Value('focus'),
@@ -221,6 +224,14 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
           createdAt: drift.Value(now),
         ),
       );
+      final newTotal = oldTotal + expValue;
+      final newLevel = expService.calculateLevel(newTotal);
+      if (newLevel > oldLevel) {
+        PetEventBus.instance.emit(PetEvent.levelUp(
+          oldLevel: oldLevel,
+          newLevel: newLevel,
+        ));
+      }
     }
 
     // 自动归档到学习记录
@@ -261,10 +272,10 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
 
     if (mounted) {
       // 发送宠物事件（专注完成或中断都算学习完成）
-      PetEventBus.instance.emit(PetEvent(
+      PetEventBus.instance.emit(PetEvent.moduleCompleted(
+        eventId: 'focus_${DateTime.now().millisecondsSinceEpoch}',
         type: PetEventType.studyCompleted,
         module: 'study',
-        createdAt: DateTime.now(),
       ));
     }
 

@@ -7,53 +7,99 @@ import '../../../core/utils/stats_formatters.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../widgets/stats_skeleton.dart';
 import '../../../shared/widgets/common/stats_summary_card.dart';
-import '../../../shared/widgets/common/duration_line_chart.dart';
+import '../../../shared/widgets/common/duration_bar_chart.dart';
+import '../widgets/exp_chart.dart';
 import '../widgets/heatmap_calendar.dart';
 
 // =============================================================================
 // Providers
 // =============================================================================
 
-/// 月份偏移量 Provider（0 = 当月，1 = 上月，…）
-final monthOffsetProvider = StateProvider<int>((ref) => 0);
+/// 年份偏移量 Provider（0 = 今年，1 = 去年，…）
+final yearOffsetProvider = StateProvider<int>((ref) => 0);
 
-/// 目标月份的每日统计 Provider
-final monthlyStatsProvider = FutureProvider<List<DailyStats>>((ref) async {
+/// 目标年份的月度聚合统计 Provider
+///
+/// 使用 [StatisticsService.getDailyStatsRange] 获取整年每日数据后
+/// 在 Dart 层按月聚合为 [MonthlyAggregate]。
+final yearlyStatsProvider = FutureProvider<List<MonthlyAggregate>>((ref) async {
   final statsService = ref.watch(statisticsServiceProvider);
-  final offset = ref.watch(monthOffsetProvider);
+  final offset = ref.watch(yearOffsetProvider);
   final now = DateTime.now();
-  final targetMonth = DateTime(now.year, now.month - offset, 1);
-  final start = targetMonth;
-  final end = DateTime(targetMonth.year, targetMonth.month + 1, 0);
+  final year = now.year - offset;
+  final start = DateTime(year, 1, 1);
+  final end = DateTime(year, 12, 31);
+  final dailyList = await statsService.getDailyStatsRange(start, end);
+
+  // 按月聚合
+  final monthMap = <String, List<DailyStats>>{};
+  for (final d in dailyList) {
+    final key = '${d.date.year}-${d.date.month.toString().padLeft(2, '0')}';
+    (monthMap[key] ??= []).add(d);
+  }
+
+  // 生成 12 个月的标签（保证顺序）
+  final months = List.generate(
+    12,
+    (i) => '$year-${(i + 1).toString().padLeft(2, '0')}',
+  );
+
+  return months.map((m) {
+    final days = monthMap[m] ?? [];
+    return MonthlyAggregate(
+      month: m,
+      studyMinutes: days.fold(0, (s, d) => s + d.studyMinutes),
+      fitnessMinutes: days.fold(0, (s, d) => s + d.fitnessMinutes),
+      journalCount: days.fold(0, (s, d) => s + d.journalCount),
+      dietCount: days.fold(0, (s, d) => s + d.dietCount),
+      sleepMinutes: days.fold(0, (s, d) => s + d.sleepMinutes),
+      focusMinutes: days.fold(0, (s, d) => s + d.focusMinutes),
+      expGained: days.fold(0, (s, d) => s + d.expGained),
+      activeDays: days.where((d) => d.isActiveDay).length,
+      taskTotal: days.fold(0, (s, d) => s + d.taskTotal),
+      taskCompleted: days.fold(0, (s, d) => s + d.taskCompleted),
+    );
+  }).toList();
+});
+
+/// 目标年份的每日统计 Provider（用于热力图）
+final yearlyDailyStatsProvider = FutureProvider<List<DailyStats>>((ref) async {
+  final statsService = ref.watch(statisticsServiceProvider);
+  final offset = ref.watch(yearOffsetProvider);
+  final now = DateTime.now();
+  final year = now.year - offset;
+  final start = DateTime(year, 1, 1);
+  final end = DateTime(year, 12, 31);
   return statsService.getDailyStatsRange(start, end);
 });
 
 // =============================================================================
-// MonthlyStatsPage
+// YearlyStatsPage
 // =============================================================================
 
-/// 月统计页面
+/// 年统计页面
 ///
-/// 展示指定月份的成长趋势：
-/// - 月份导航（前进/后退 + 回到本月）
+/// 最全面的统计视图，展示整年成长数据：
+/// - 年份导航（前进/后退 + 回到今年）
 /// - 汇总卡片（总学习、总健身、总经验）
-/// - 折线图（学习+健身时长趋势）
-/// - 热力图日历（Phase 5 占位）
-/// - 每日明细列表
-class MonthlyStatsPage extends ConsumerWidget {
-  const MonthlyStatsPage({super.key});
+/// - 月度趋势柱状图（12 个月）
+/// - 成长热力图（GitHub 风格）
+/// - EXP 趋势占位（Phase 5）
+/// - 月度明细列表
+class YearlyStatsPage extends ConsumerWidget {
+  const YearlyStatsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final monthlyStats = ref.watch(monthlyStatsProvider);
+    final yearlyStats = ref.watch(yearlyStatsProvider);
 
-    return monthlyStats.when(
+    return yearlyStats.when(
       loading: () => const StatsSkeleton(),
       error: (error, stack) => _ErrorView(
         message: '加载失败: $error',
-        onRetry: () => ref.invalidate(monthlyStatsProvider),
+        onRetry: () => ref.invalidate(yearlyStatsProvider),
       ),
-      data: (stats) => _MonthlyContent(stats: stats),
+      data: (stats) => _YearlyContent(monthlyStats: stats),
     );
   }
 }
@@ -62,23 +108,26 @@ class MonthlyStatsPage extends ConsumerWidget {
 // Content
 // =============================================================================
 
-class _MonthlyContent extends ConsumerWidget {
-  const _MonthlyContent({required this.stats});
+class _YearlyContent extends ConsumerWidget {
+  const _YearlyContent({required this.monthlyStats});
 
-  final List<DailyStats> stats;
+  final List<MonthlyAggregate> monthlyStats;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // 计算汇总
-    final totalStudy = stats.fold<int>(0, (sum, d) => sum + d.studyMinutes);
-    final totalFitness = stats.fold<int>(0, (sum, d) => sum + d.fitnessMinutes);
-    final totalExp = stats.fold<int>(0, (sum, d) => sum + d.expGained);
+    final dailyStats = ref.watch(yearlyDailyStatsProvider);
+
+    // 计算年度汇总
+    final totalStudy = monthlyStats.fold<int>(0, (s, m) => s + m.studyMinutes);
+    final totalFitness =
+        monthlyStats.fold<int>(0, (s, m) => s + m.fitnessMinutes);
+    final totalExp = monthlyStats.fold<int>(0, (s, m) => s + m.expGained);
 
     return ListView(
       padding: const EdgeInsets.all(AppTheme.spaceMd),
       children: [
-        // ── 月份导航 ──
-        const _MonthNavigator(),
+        // ── 年份导航 ──
+        const _YearNavigator(),
         const SizedBox(height: AppTheme.spaceLg),
 
         // ── 汇总卡片 ──
@@ -89,83 +138,87 @@ class _MonthlyContent extends ConsumerWidget {
         ),
         const SizedBox(height: AppTheme.spaceLg),
 
-        // ── 趋势折线图 ──
-        _TrendChart(stats: stats),
+        // ── 月度趋势柱状图 ──
+        _MonthlyTrendChart(monthlyStats: monthlyStats),
         const SizedBox(height: AppTheme.spaceLg),
 
-        // ── 热力图日历 ──
-        _HeatmapPlaceholder(stats: stats),
+        // ── 成长热力图 ──
+        _HeatmapSection(dailyStats: dailyStats),
         const SizedBox(height: AppTheme.spaceLg),
 
-        // ── 每日明细 ──
-        _DailyBreakdown(stats: stats),
+        // ── EXP 趋势图 ──
+        _ExpTrendPlaceholder(monthlyStats: monthlyStats),
+        const SizedBox(height: AppTheme.spaceLg),
+
+        // ── 月度明细 ──
+        _MonthlyBreakdown(monthlyStats: monthlyStats),
       ],
     );
   }
 }
 
 // =============================================================================
-// 月份导航
+// 年份导航
 // =============================================================================
 
-/// 月份导航组件
+/// 年份导航组件
 ///
-/// 显示格式：`←  2026年6月  →` + `[本月]` 按钮
-class _MonthNavigator extends ConsumerWidget {
-  const _MonthNavigator();
+/// 显示格式：`←  2026年度  →` + `[今年]` 按钮
+class _YearNavigator extends ConsumerWidget {
+  const _YearNavigator();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final offset = ref.watch(monthOffsetProvider);
+    final offset = ref.watch(yearOffsetProvider);
     final now = DateTime.now();
-    final targetMonth = DateTime(now.year, now.month - offset, 1);
+    final year = now.year - offset;
 
     return Column(
       children: [
-        // ── 月份标题 + 左右箭头 ──
+        // ── 年份标题 + 左右箭头 ──
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // 左箭头
             IconButton(
               onPressed: () {
-                ref.read(monthOffsetProvider.notifier).state++;
+                ref.read(yearOffsetProvider.notifier).state++;
               },
               icon: const Icon(Icons.chevron_left_rounded),
-              tooltip: '上个月',
+              tooltip: '上一年',
             ),
             const SizedBox(width: AppTheme.spaceSm),
-            // 月份文字
+            // 年份文字
             Text(
-              formatMonth(targetMonth),
+              formatYear(year),
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: AppTheme.spaceSm),
-            // 右箭头（禁用当已是当月）
+            // 右箭头（禁用当已是今年）
             IconButton(
               onPressed: offset == 0
                   ? null
                   : () {
-                      ref.read(monthOffsetProvider.notifier).state--;
+                      ref.read(yearOffsetProvider.notifier).state--;
                     },
               icon: const Icon(Icons.chevron_right_rounded),
-              tooltip: '下个月',
+              tooltip: '下一年',
             ),
           ],
         ),
         const SizedBox(height: AppTheme.spaceSm),
 
-        // ── 回到本月按钮（仅在非当月时显示） ──
+        // ── 回到今年按钮（仅在非今年时显示） ──
         if (offset != 0)
           TextButton.icon(
             onPressed: () {
-              ref.read(monthOffsetProvider.notifier).state = 0;
+              ref.read(yearOffsetProvider.notifier).state = 0;
             },
             icon: const Icon(Icons.today_rounded, size: 16),
-            label: const Text('本月'),
+            label: const Text('今年'),
           ),
       ],
     );
@@ -223,26 +276,18 @@ class _SummaryCards extends StatelessWidget {
 }
 
 // =============================================================================
-// 趋势折线图
+// 月度趋势柱状图
 // =============================================================================
 
-/// 学习+健身时长趋势折线图
-class _TrendChart extends StatelessWidget {
-  const _TrendChart({required this.stats});
+/// 12 个月的学习+健身时长柱状图
+class _MonthlyTrendChart extends StatelessWidget {
+  const _MonthlyTrendChart({required this.monthlyStats});
 
-  final List<DailyStats> stats;
+  final List<MonthlyAggregate> monthlyStats;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    // 合并学习 + 健身分钟数
-    final values = stats
-        .map<num>((d) => d.studyMinutes + d.fitnessMinutes)
-        .toList();
-
-    // 标签：每隔 N 天显示一个日期（避免重叠）
-    final labels = _buildLabels(stats);
 
     return Card(
       child: Padding(
@@ -251,7 +296,7 @@ class _TrendChart extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '每日活动趋势',
+              '月度趋势',
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
@@ -264,10 +309,14 @@ class _TrendChart extends StatelessWidget {
               ),
             ),
             const SizedBox(height: AppTheme.spaceMd),
-            DurationLineChart(
-              valuesInMinutes: values,
-              labels: labels,
-              lineColor: GrowthColors.primary,
+            DurationBarChart(
+              valuesInMinutes: monthlyStats
+                  .map((m) => m.studyMinutes + m.fitnessMinutes)
+                  .toList(),
+              labels: monthlyStats
+                  .map((m) => '${int.parse(m.month.split('-')[1])}月')
+                  .toList(),
+              barColor: GrowthColors.studyPrimary,
               height: 200,
             ),
           ],
@@ -275,50 +324,21 @@ class _TrendChart extends StatelessWidget {
       ),
     );
   }
-
-  /// 生成底部标签（每隔几天显示一次，避免标签重叠）
-  List<String> _buildLabels(List<DailyStats> stats) {
-    if (stats.isEmpty) return [];
-
-    // 根据数据量决定间隔
-    final int interval;
-    if (stats.length <= 10) {
-      interval = 1;
-    } else if (stats.length <= 20) {
-      interval = 3;
-    } else {
-      interval = 5;
-    }
-
-    return List.generate(stats.length, (i) {
-      if (i % interval == 0) {
-        return '${stats[i].date.month}/${stats[i].date.day}';
-      }
-      return '';
-    });
-  }
 }
 
 // =============================================================================
-// 热力图日历（Phase 5 占位）
+// 成长热力图
 // =============================================================================
 
-class _HeatmapPlaceholder extends StatelessWidget {
-  const _HeatmapPlaceholder({required this.stats});
+/// 热力图区域 — 将每日统计转换为热力图格式
+class _HeatmapSection extends StatelessWidget {
+  const _HeatmapSection({required this.dailyStats});
 
-  final List<DailyStats> stats;
+  final AsyncValue<List<DailyStats>> dailyStats;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    // Build heatmap data from daily stats
-    final heatmapData = <DateTime, int>{};
-    for (final stat in stats) {
-      if (stat.isActiveDay) {
-        heatmapData[stat.date] = stat.activeModules;
-      }
-    }
 
     return Card(
       child: Padding(
@@ -331,11 +351,11 @@ class _HeatmapPlaceholder extends StatelessWidget {
                 Icon(
                   Icons.grid_view_rounded,
                   size: 18,
-                  color: GrowthColors.expFill,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: AppTheme.spaceSm),
                 Text(
-                  '活跃热力图',
+                  '成长热力图',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w600,
                   ),
@@ -343,23 +363,40 @@ class _HeatmapPlaceholder extends StatelessWidget {
               ],
             ),
             const SizedBox(height: AppTheme.spaceMd),
-            if (heatmapData.isEmpty)
-              Container(
-                height: 80,
-                alignment: Alignment.center,
-                child: Text(
-                  '暂无数据',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
+            dailyStats.when(
+              loading: () => const SizedBox(
+                height: 120,
+                child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+              ),
+              error: (_, __) => SizedBox(
+                height: 120,
+                child: Center(
+                  child: Text(
+                    '热力图加载失败',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                   ),
                 ),
-              )
-            else
-              HeatmapCalendar(
-                data: heatmapData,
-                monthsToShow: 1,
-                showLegend: true,
               ),
+              data: (stats) {
+                final heatmapData = <DateTime, int>{};
+                for (final stat in stats) {
+                  if (stat.isActiveDay) {
+                    heatmapData[DateTime(
+                      stat.date.year,
+                      stat.date.month,
+                      stat.date.day,
+                    )] = stat.activeModules;
+                  }
+                }
+                return HeatmapCalendar(
+                  data: heatmapData,
+                  monthsToShow: 12,
+                  showLegend: true,
+                );
+              },
+            ),
           ],
         ),
       ),
@@ -368,74 +405,106 @@ class _HeatmapPlaceholder extends StatelessWidget {
 }
 
 // =============================================================================
-// 每日明细列表
+// EXP 趋势图
 // =============================================================================
 
-class _DailyBreakdown extends StatelessWidget {
-  const _DailyBreakdown({required this.stats});
+class _ExpTrendPlaceholder extends StatelessWidget {
+  const _ExpTrendPlaceholder({required this.monthlyStats});
 
-  final List<DailyStats> stats;
+  final List<MonthlyAggregate> monthlyStats;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // 过滤掉无数据的天（全为 0），按日期倒序
-    final activeStats = stats
-        .where((d) => d.studyMinutes + d.fitnessMinutes + d.expGained > 0)
-        .toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.trending_up_rounded,
+                  size: 18,
+                  color: GrowthColors.expFill,
+                ),
+                const SizedBox(width: AppTheme.spaceSm),
+                Text(
+                  'EXP 趋势',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppTheme.spaceMd),
+            ExpChart(
+              values: monthlyStats.map((m) => m.expGained).toList(),
+              labels: monthlyStats.map((m) {
+                final month = int.parse(m.month.split('-')[1]);
+                return '$month月';
+              }).toList(),
+              height: 200,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// 月度明细列表
+// =============================================================================
+
+class _MonthlyBreakdown extends StatelessWidget {
+  const _MonthlyBreakdown({required this.monthlyStats});
+
+  final List<MonthlyAggregate> monthlyStats;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // 计算最大月度分钟数（用于进度条比例）
+    final maxMinutes = monthlyStats
+        .map((m) => m.studyMinutes + m.fitnessMinutes)
+        .reduce((a, b) => a > b ? a : b)
+        .clamp(1, 99999);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('每日明细', style: theme.textTheme.titleMedium),
+        Text('月度明细', style: theme.textTheme.titleMedium),
         const SizedBox(height: AppTheme.spaceSm),
-        if (activeStats.isEmpty)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceXl),
-            child: Center(
-              child: Text(
-                '本月暂无活动记录',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          )
-        else
-          ...activeStats.map(
-            (day) => _DailyBreakdownItem(day: day, maxMinutes: _maxDayMinutes),
+        ...monthlyStats.map(
+          (month) => _MonthlyBreakdownItem(
+            month: month,
+            maxMinutes: maxMinutes,
           ),
+        ),
       ],
     );
   }
-
-  /// 所有天中单日最大总分钟数（用于进度条比例）
-  int get _maxDayMinutes {
-    if (stats.isEmpty) return 1;
-    return stats
-        .map((d) => d.studyMinutes + d.fitnessMinutes)
-        .reduce((a, b) => a > b ? a : b)
-        .clamp(1, 9999);
-  }
 }
 
-/// 单日明细项
-class _DailyBreakdownItem extends StatelessWidget {
-  const _DailyBreakdownItem({
-    required this.day,
+/// 单月明细项
+class _MonthlyBreakdownItem extends StatelessWidget {
+  const _MonthlyBreakdownItem({
+    required this.month,
     required this.maxMinutes,
   });
 
-  final DailyStats day;
+  final MonthlyAggregate month;
   final int maxMinutes;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dateStr = formatDateChinese(day.date);
-    final weekday = formatWeekday(day.date);
+    final monthNum = int.parse(month.month.split('-')[1]);
+    final label = '$monthNum月';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: AppTheme.spaceSm),
@@ -443,39 +512,41 @@ class _DailyBreakdownItem extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.symmetric(
             horizontal: AppTheme.spaceMd,
-            vertical: AppTheme.spaceSm,
+            vertical: AppTheme.spaceSm + 2,
           ),
           child: Row(
             children: [
-              // ── 日期 ──
+              // ── 月份标签 ──
               SizedBox(
-                width: 72,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      weekday,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    Text(
-                      dateStr,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                width: 48,
+                child: Text(
+                  label,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               const SizedBox(width: AppTheme.spaceSm),
 
-              // ── 数据条 ──
+              // ── 学习+健身迷你条 ──
               Expanded(
-                child: _MiniBar(
-                  studyMinutes: day.studyMinutes,
-                  fitnessMinutes: day.fitnessMinutes,
+                child: _MonthlyMiniBar(
+                  studyMinutes: month.studyMinutes,
+                  fitnessMinutes: month.fitnessMinutes,
                   maxMinutes: maxMinutes,
+                ),
+              ),
+              const SizedBox(width: AppTheme.spaceSm),
+
+              // ── 活跃天数 ──
+              SizedBox(
+                width: 48,
+                child: Text(
+                  '${month.activeDays}天',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
               ),
               const SizedBox(width: AppTheme.spaceSm),
@@ -485,7 +556,7 @@ class _DailyBreakdownItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '+${formatExp(day.expGained)}',
+                    '+${formatExp(month.expGained)}',
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: GrowthColors.expFill,
                       fontWeight: FontWeight.w600,
@@ -507,9 +578,9 @@ class _DailyBreakdownItem extends StatelessWidget {
   }
 }
 
-/// 迷你进度条：学习 + 健身
-class _MiniBar extends StatelessWidget {
-  const _MiniBar({
+/// 月度迷你进度条：学习（蓝）+ 健身（绿）
+class _MonthlyMiniBar extends StatelessWidget {
+  const _MonthlyMiniBar({
     required this.studyMinutes,
     required this.fitnessMinutes,
     required this.maxMinutes,
@@ -538,11 +609,11 @@ class _MiniBar extends StatelessWidget {
                 child: Row(
                   children: [
                     Expanded(
-                      flex: studyMinutes.clamp(1, 9999),
+                      flex: studyMinutes.clamp(1, 99999),
                       child: Container(color: GrowthColors.studyPrimary),
                     ),
                     Expanded(
-                      flex: fitnessMinutes.clamp(1, 9999),
+                      flex: fitnessMinutes.clamp(1, 99999),
                       child: Container(color: GrowthColors.fitnessPrimary),
                     ),
                   ],

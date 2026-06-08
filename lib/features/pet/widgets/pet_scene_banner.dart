@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/pet_ai_result_provider.dart';
-import '../../../shared/providers/pet_orchestrator_v2_provider.dart';
+import '../../../shared/providers/pet_orchestrator_provider.dart';
+import '../../../shared/providers/pet_projection_provider.dart';
 import '../../../shared/providers/pet_scene_provider.dart';
 import '../models/pet_ai_result.dart';
 import '../models/pet_scene_model.dart';
+import '../utils/pet_assets.dart';
 
 /// 宠物场景画框组件
 ///
@@ -64,7 +66,7 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
 
     // Register module ambient with v2 orchestrator
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(petOrchestratorV2Provider.notifier).setModuleAmbient(
+      ref.read(petOrchestratorProvider.notifier).setModuleAmbient(
         widget.module.name,
         _getDefaultImagePath(widget.module.name),
         _getDefaultMessages(widget.module.name),
@@ -81,6 +83,7 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
   @override
   Widget build(BuildContext context) {
     final intent = ref.watch(currentPetIntentProvider);
+    final projection = ref.watch(modulePetViewProvider(widget.module.name));
     final latestAnalysis = ref.watch(latestPetAnalysisProvider(widget.module.name));
 
     // 解析颜色
@@ -89,9 +92,9 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
     final primaryColor = _parseColor(widget.module.primaryColorHex);
 
     final imagePath = (intent?.module == null || intent?.module == widget.module.name)
-        ? (intent?.imagePath ?? _getDefaultImagePath(widget.module.name))
+        ? (intent?.imagePath ?? projection?.imagePath ?? _getDefaultImagePath(widget.module.name))
         : _getDefaultImagePath(widget.module.name);
-    final defaultMessage = intent?.displayMessage ?? _getDefaultMessages(widget.module.name).first;
+    final defaultMessage = intent?.displayMessage ?? projection?.bubbleText ?? _getDefaultMessages(widget.module.name).first;
     // Prefer latest analysis petMessage over default
     final message = latestAnalysis.valueOrNull?.petMessage ?? defaultMessage;
 
@@ -250,7 +253,7 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
 
   /// 带 fallback 的图片加载
   Widget _buildImageWithFallback(String assetPath) {
-    const fallbackPath = 'assets/pet/pet_idle.png';
+    const fallbackPath = PetAssets.commonFallback;
 
     if (_imageExists) {
       return Image.asset(
@@ -430,17 +433,17 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
   String _getDefaultImagePath(String module) {
     switch (module) {
       case 'study':
-        return 'assets/pet/study/study_reading.png';
+        return PetAssets.moduleDefaultStudy;
       case 'fitness':
-        return 'assets/pet/fitness/fitness_lifting.png';
+        return PetAssets.moduleDefaultFitness;
       case 'journal':
-        return 'assets/pet/journal/journal_writing.png';
+        return PetAssets.moduleDefaultJournal;
       case 'diet':
-        return 'assets/pet/diet/diet_eating.png';
+        return PetAssets.moduleDefaultDiet;
       case 'sleep':
-        return 'assets/pet/sleep/sleep_yawn.png';
+        return PetAssets.moduleDefaultSleep;
       default:
-        return 'assets/pet/legacy/pet_idle.png';
+        return PetAssets.commonFallback;
     }
   }
 

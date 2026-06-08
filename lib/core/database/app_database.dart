@@ -9,32 +9,34 @@ import 'pet_messages.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [
-  StudyRecords,
-  FitnessRecords,
-  FitnessExercises,
-  BodyMetrics,
-  DailyJournals,
-  FocusSessions,
-  GrowthExpLogs,
-  AppSettings,
-  AiConfigs,
-  BackupRecords,
-  DailyTasks,
-  TaskTemplates,
-  DietRecords,
-  SleepRecords,
-  PetProfiles,
-  PetStates,
-  JournalAssets,
-  PetMessages,
-  DailyWeatherTable,
-  ApiConfigs,
-  WeatherSearchHistoryTable,
-])
+@DriftDatabase(
+  tables: [
+    StudyRecords,
+    FitnessRecords,
+    FitnessExercises,
+    BodyMetrics,
+    DailyJournals,
+    FocusSessions,
+    GrowthExpLogs,
+    AppSettings,
+    AiConfigs,
+    BackupRecords,
+    DailyTasks,
+    TaskTemplates,
+    DietRecords,
+    SleepRecords,
+    PetProfiles,
+    PetStates,
+    PetDiaries,
+    JournalAssets,
+    PetMessages,
+    DailyWeatherTable,
+    ApiConfigs,
+    WeatherSearchHistoryTable,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? executor])
-      : super(executor ?? _openConnection());
+  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
 
   static QueryExecutor _openConnection() {
     return driftDatabase(
@@ -46,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration {
@@ -103,6 +105,9 @@ class AppDatabase extends _$AppDatabase {
         if (from < 13) {
           // 为每日任务表添加优先级列
           await m.addColumn(dailyTasks, dailyTasks.priority);
+        }
+        if (from < 14) {
+          await m.createTable(petDiaries);
         }
       },
     );

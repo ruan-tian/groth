@@ -140,6 +140,10 @@ class HeatmapCalendar extends StatelessWidget {
         final intensity = (data[normalized] ?? 0).clamp(0, 4);
         final color = _colorForIntensity(intensity);
 
+        final isToday = date.year == DateTime.now().year &&
+            date.month == DateTime.now().month &&
+            date.day == DateTime.now().day;
+
         return GestureDetector(
           onTap: onDayTap != null ? () => onDayTap!(date) : null,
           child: Tooltip(
@@ -151,6 +155,13 @@ class HeatmapCalendar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+                border: isToday ? Border.all(color: Colors.white, width: 2) : null,
+                boxShadow: isToday ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.3),
+                    blurRadius: 4,
+                  ),
+                ] : null,
               ),
             ),
           ),
@@ -225,6 +236,19 @@ class HeatmapCalendar extends StatelessWidget {
   static bool _isSameDay(DateTime a, DateTime b) {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
+
+  /// 从 DailyStats 列表生成热力图数据
+  static Map<DateTime, int> fromDailyStats(List<dynamic> stats) {
+    final data = <DateTime, int>{};
+    for (final stat in stats) {
+      // Use activeModules as intensity (0-6)
+      final intensity = stat.activeModules as int;
+      if (intensity > 0) {
+        data[stat.date as DateTime] = intensity;
+      }
+    }
+    return data;
+  }
 }
 
 // =============================================================================
@@ -259,8 +283,8 @@ class _MonthLabels extends StatelessWidget {
       // 只在每月第一周显示月份标签
       if (firstDate.day <= 7) {
         final monthNames = [
-          '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-          'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+          '', '1月', '2月', '3月', '4月', '5月', '6月',
+          '7月', '8月', '9月', '10月', '11月', '12月',
         ];
         labels.add(
           Positioned(

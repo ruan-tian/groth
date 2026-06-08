@@ -6,10 +6,12 @@ import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../models/pet_ai_result.dart';
+import '../models/pet_event.dart';
 import '../utils/pet_data_collector.dart';
 import '../utils/pet_prompt_builder.dart';
 import '../utils/pet_ai_result_parser.dart';
 import 'pet_ai_privacy_guard.dart';
+import 'pet_event_bus.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/providers/pet_ai_result_provider.dart';
 
@@ -51,6 +53,13 @@ class PetAINotifier extends StateNotifier<PetAIState> {
   /// 执行 AI 分析
   Future<void> analyze(PetAIAnalysisType type) async {
     state = PetAIState(isLoading: true, analysisType: type);
+    final moduleName = _getSourceType(type);
+    PetEventBus.instance.emit(PetEvent(
+      eventId: 'ai_start_${DateTime.now().millisecondsSinceEpoch}',
+      source: PetEventSource.ai,
+      type: PetEventType.aiAnalysisStarted,
+      module: moduleName,
+    ));
 
     try {
       // 获取 AI 配置
@@ -128,8 +137,20 @@ class PetAINotifier extends StateNotifier<PetAIState> {
       _ref.invalidate(latestPetAnalysisProvider(_getSourceType(type)));
 
       state = PetAIState(result: result, analysisType: type);
+      PetEventBus.instance.emit(PetEvent.aiCompleted(
+        eventId: 'ai_done_${DateTime.now().millisecondsSinceEpoch}',
+        module: moduleName,
+        shortMessage: result.petMessage,
+      ));
     } catch (e) {
       state = PetAIState(error: '分析失败: $e', analysisType: type);
+      PetEventBus.instance.emit(PetEvent(
+        eventId: 'ai_fail_${DateTime.now().millisecondsSinceEpoch}',
+        source: PetEventSource.ai,
+        type: PetEventType.aiAnalysisFailed,
+        module: moduleName,
+        payload: {'error': e.toString()},
+      ));
     }
   }
 

@@ -10,6 +10,7 @@ import '../../app/design/design.dart';
 import '../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
 import '../../shared/providers/repository_providers.dart';
+import '../../shared/providers/pet_diary_provider.dart';
 import '../../shared/providers/settings_provider.dart';
 
 // =============================================================================
@@ -60,6 +61,7 @@ class SettingsPage extends ConsumerWidget {
     // 初始化 AI 分析 & 日记上传 Provider
     ref.watch(autoAiAnalysisInitProvider);
     ref.watch(journalUploadInitProvider);
+    ref.watch(petDiaryAutoEnabledInitProvider);
 
     return Scaffold(
       backgroundColor: AppColors.softGold,
@@ -108,7 +110,11 @@ class SettingsPage extends ConsumerWidget {
   // 用户信息卡片（大卡片）
   // ---------------------------------------------------------------------------
 
-  Widget _buildProfileCard(BuildContext context, WidgetRef ref, AsyncValue<DashboardData> dashboard) {
+  Widget _buildProfileCard(
+    BuildContext context,
+    WidgetRef ref,
+    AsyncValue<DashboardData> dashboard,
+  ) {
     final nickname = ref.watch(userNicknameProvider);
     final avatarPath = ref.watch(userAvatarPathProvider);
 
@@ -118,11 +124,7 @@ class SettingsPage extends ConsumerWidget {
         gradient: const LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF5C3D2E),
-            Color(0xFF8B6F5E),
-            Color(0xFFD4A574),
-          ],
+          colors: [Color(0xFF5C3D2E), Color(0xFF8B6F5E), Color(0xFFD4A574)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
@@ -188,7 +190,10 @@ class SettingsPage extends ConsumerWidget {
                         data: (data) => GestureDetector(
                           onTap: () => _showLevelDetailSheet(context, data),
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(8),
@@ -235,7 +240,8 @@ class SettingsPage extends ConsumerWidget {
           // 经验条
           dashboard.when(
             data: (data) {
-              final progress = data.expProgress / (_calcNextLevelExp(data.currentLevel));
+              final progress =
+                  data.expProgress / (_calcNextLevelExp(data.currentLevel));
               return Column(
                 children: [
                   Row(
@@ -264,7 +270,9 @@ class SettingsPage extends ConsumerWidget {
                       value: progress.clamp(0.0, 1.0),
                       minHeight: 6,
                       backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        Colors.white,
+                      ),
                     ),
                   ),
                 ],
@@ -479,6 +487,16 @@ class SettingsPage extends ConsumerWidget {
           ),
           _buildDivider(),
           _buildSettingTile(
+            icon: Icons.menu_book_rounded,
+            iconColor: const Color(0xFFE889B5),
+            title: '甜甜自动写日记',
+            subtitle: ref.watch(petDiaryAutoEnabledProvider)
+                ? '已开启，仅发送摘要'
+                : '已关闭',
+            onTap: () => _showPetDiaryAutoToggle(context, ref),
+          ),
+          _buildDivider(),
+          _buildSettingTile(
             icon: Icons.restore_outlined,
             iconColor: const Color(0xFF35C976),
             title: '数据恢复',
@@ -627,7 +645,9 @@ class SettingsPage extends ConsumerWidget {
     if (current) {
       // 关闭
       ref.read(autoAiAnalysisProvider.notifier).state = false;
-      ref.read(settingRepositoryProvider).setSetting('auto_ai_analysis', 'false');
+      ref
+          .read(settingRepositoryProvider)
+          .setSetting('auto_ai_analysis', 'false');
       // 同时关闭日记上传
       ref.read(journalUploadProvider.notifier).state = false;
       ref.read(settingRepositoryProvider).setSetting('journal_upload', 'false');
@@ -636,12 +656,15 @@ class SettingsPage extends ConsumerWidget {
       _showPrivacyDialog(
         context,
         title: '🤖 开启 AI 自动分析',
-        content: '开启后，每次打开 app 会自动分析你的学习、健身、饮食、睡眠数据。\n\n'
+        content:
+            '开启后，每次打开 app 会自动分析你的学习、健身、饮食、睡眠数据。\n\n'
             '⚠️ 数据将会发送到你配置的 AI 服务商服务器（如 DeepSeek、OpenAI 等）。\n\n'
             '📝 日记内容默认不会被上传。如需上传日记，请在开启后单独设置。',
         onConfirm: () {
           ref.read(autoAiAnalysisProvider.notifier).state = true;
-          ref.read(settingRepositoryProvider).setSetting('auto_ai_analysis', 'true');
+          ref
+              .read(settingRepositoryProvider)
+              .setSetting('auto_ai_analysis', 'true');
         },
       );
     }
@@ -659,15 +682,41 @@ class SettingsPage extends ConsumerWidget {
       _showPrivacyDialog(
         context,
         title: '📔 开启日记上传分析',
-        content: '开启后，AI 会分析你的日记内容，为你提供更个性化的成长建议。\n\n'
+        content:
+            '开启后，AI 会分析你的日记内容，为你提供更个性化的成长建议。\n\n'
             '⚠️ 日记内容将会发送到你配置的 AI 服务商服务器。请确保你信任该服务商。\n\n'
             '💡 建议：不要在日记中记录密码、银行卡等敏感信息。',
         onConfirm: () {
           ref.read(journalUploadProvider.notifier).state = true;
-          ref.read(settingRepositoryProvider).setSetting('journal_upload', 'true');
+          ref
+              .read(settingRepositoryProvider)
+              .setSetting('journal_upload', 'true');
         },
       );
     }
+  }
+
+  /// 甜甜自动写日记开关。
+  void _showPetDiaryAutoToggle(BuildContext context, WidgetRef ref) {
+    final current = ref.read(petDiaryAutoEnabledProvider);
+    if (current) {
+      savePetDiaryAutoEnabled(ref, false);
+      return;
+    }
+
+    _showPrivacyDialog(
+      context,
+      title: '开启甜甜自动写日记',
+      content:
+          '开启后，每天早上 6 点后首次打开 App 时，甜甜会检查今天是否已有小日记。\n\n'
+          '只会发送昨天的本地统计摘要，例如学习时长、健身时长、睡眠/饮食摘要、经验变化、任务完成情况、天气和日期。\n\n'
+          '不会发送你的完整日记正文，也不会把小猫日记计入成长经验。',
+      onConfirm: () async {
+        final service = ref.read(petDiaryServiceProvider);
+        await service.markPrivacyConfirmed();
+        await savePetDiaryAutoEnabled(ref, true);
+      },
+    );
   }
 
   /// 隐私提醒弹窗
@@ -681,8 +730,14 @@ class SettingsPage extends ConsumerWidget {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-        content: Text(content, style: const TextStyle(fontSize: 14, height: 1.5)),
+        title: Text(
+          title,
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          content,
+          style: const TextStyle(fontSize: 14, height: 1.5),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
@@ -695,7 +750,9 @@ class SettingsPage extends ConsumerWidget {
             },
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFFD4A574),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             child: const Text('确认开启'),
           ),
@@ -746,7 +803,8 @@ class SettingsPage extends ConsumerWidget {
               ),
               const SizedBox(height: 20),
               _buildThemeOption(
-                ctx, ref,
+                ctx,
+                ref,
                 icon: Icons.light_mode_rounded,
                 label: '亮色模式',
                 description: '使用明亮清新的界面',
@@ -755,7 +813,8 @@ class SettingsPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               _buildThemeOption(
-                ctx, ref,
+                ctx,
+                ref,
                 icon: Icons.dark_mode_rounded,
                 label: '暗色模式',
                 description: '使用低亮度护眼界面',
@@ -764,7 +823,8 @@ class SettingsPage extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               _buildThemeOption(
-                ctx, ref,
+                ctx,
+                ref,
                 icon: Icons.settings_brightness_rounded,
                 label: '跟随系统',
                 description: '与系统外观保持一致',
@@ -799,12 +859,20 @@ class SettingsPage extends ConsumerWidget {
           color: isSelected ? const Color(0xFFFFF1DF) : const Color(0xFFF8F8F8),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: isSelected ? const Color(0xFFD4A574) : const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+            color: isSelected
+                ? const Color(0xFFD4A574)
+                : const Color(0xFFE8C9A0).withValues(alpha: 0.3),
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? const Color(0xFFD4A574) : const Color(0xFF8B6F5E), size: 24),
+            Icon(
+              icon,
+              color: isSelected
+                  ? const Color(0xFFD4A574)
+                  : const Color(0xFF8B6F5E),
+              size: 24,
+            ),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -815,7 +883,9 @@ class SettingsPage extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: isSelected ? const Color(0xFF5C3D2E) : const Color(0xFF8B6F5E),
+                      color: isSelected
+                          ? const Color(0xFF5C3D2E)
+                          : const Color(0xFF8B6F5E),
                     ),
                   ),
                   Text(
@@ -829,7 +899,11 @@ class SettingsPage extends ConsumerWidget {
               ),
             ),
             if (isSelected)
-              const Icon(Icons.check_circle_rounded, color: Color(0xFFD4A574), size: 20),
+              const Icon(
+                Icons.check_circle_rounded,
+                color: Color(0xFFD4A574),
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -849,23 +923,23 @@ class SettingsPage extends ConsumerWidget {
           key: g.name == '学习'
               ? 'daily_study_goal'
               : g.name == '健身'
-                  ? 'daily_fitness_goal'
-                  : 'daily_journal_goal',
+              ? 'daily_fitness_goal'
+              : 'daily_journal_goal',
           label: g.name == '学习'
               ? '每日学习时长'
               : g.name == '健身'
-                  ? '每日健身时长'
-                  : '每日日记篇数',
+              ? '每日健身时长'
+              : '每日日记篇数',
           icon: g.name == '学习'
               ? Icons.menu_book_rounded
               : g.name == '健身'
-                  ? Icons.fitness_center_rounded
-                  : Icons.edit_note_rounded,
+              ? Icons.fitness_center_rounded
+              : Icons.edit_note_rounded,
           color: g.name == '学习'
               ? const Color(0xFF5D68F2)
               : g.name == '健身'
-                  ? const Color(0xFF35C976)
-                  : const Color(0xFFFF8A3D),
+              ? const Color(0xFF35C976)
+              : const Color(0xFFFF8A3D),
           value: g.target,
           unit: g.unit,
         ),
@@ -970,7 +1044,9 @@ class SettingsPage extends ConsumerWidget {
     }
 
     // Weekly fitness goal
-    final weeklyItem = updatedGoals.where((g) => g.key == 'weekly_fitness_goal').firstOrNull;
+    final weeklyItem = updatedGoals
+        .where((g) => g.key == 'weekly_fitness_goal')
+        .firstOrNull;
     if (weeklyItem != null) {
       ref.read(weeklyFitnessGoalProvider.notifier).state = weeklyItem.value;
       await repo.setSetting('weekly_fitness_goal', weeklyItem.value.toString());
@@ -1020,19 +1096,12 @@ class SettingsPage extends ConsumerWidget {
         ),
         content: const Text(
           'Growth OS 是一款陪伴你持续成长的操作系统。\n\n通过数据记录、智能分析与温暖陪伴，帮你把每一天都活成进步的版本。',
-          style: TextStyle(
-            fontSize: 14,
-            color: Color(0xFF8B6F5E),
-            height: 1.5,
-          ),
+          style: TextStyle(fontSize: 14, color: Color(0xFF8B6F5E), height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
-              '确定',
-              style: TextStyle(color: Color(0xFFD4A574)),
-            ),
+            child: const Text('确定', style: TextStyle(color: Color(0xFFD4A574))),
           ),
         ],
       ),
@@ -1081,14 +1150,14 @@ class _GoalItem {
   final String unit;
 
   _GoalItem copy() => _GoalItem(
-        category: category,
-        key: key,
-        label: label,
-        icon: icon,
-        color: color,
-        value: value,
-        unit: unit,
-      );
+    category: category,
+    key: key,
+    label: label,
+    icon: icon,
+    color: color,
+    value: value,
+    unit: unit,
+  );
 }
 
 // =============================================================================
@@ -1457,7 +1526,9 @@ class _LevelDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final nextLevelExp = currentLevel * currentLevel * 100;
-    final progress = nextLevelExp > 0 ? (expProgress / nextLevelExp).clamp(0.0, 1.0) : 0.0;
+    final progress = nextLevelExp > 0
+        ? (expProgress / nextLevelExp).clamp(0.0, 1.0)
+        : 0.0;
 
     return Container(
       constraints: BoxConstraints(
@@ -1487,15 +1558,17 @@ class _LevelDetailSheet extends StatelessWidget {
           const SizedBox(height: 24),
 
           // 等级梯队
-          Expanded(
-            child: _buildLevelTiers(),
-          ),
+          Expanded(child: _buildLevelTiers()),
         ],
       ),
     );
   }
 
-  Widget _buildCurrentLevel(BuildContext context, double progress, int nextLevelExp) {
+  Widget _buildCurrentLevel(
+    BuildContext context,
+    double progress,
+    int nextLevelExp,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
@@ -1546,10 +1619,7 @@ class _LevelDetailSheet extends StatelessWidget {
           // 经验值
           Text(
             'EXP $totalExp / $nextLevelExp',
-            style: const TextStyle(
-              fontSize: 14,
-              color: Color(0xFF8B6F5E),
-            ),
+            style: const TextStyle(fontSize: 14, color: Color(0xFF8B6F5E)),
           ),
           const SizedBox(height: 12),
 
@@ -1560,7 +1630,9 @@ class _LevelDetailSheet extends StatelessWidget {
               value: progress,
               minHeight: 8,
               backgroundColor: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFD4A574)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFFD4A574),
+              ),
             ),
           ),
           const SizedBox(height: 8),
@@ -1568,10 +1640,7 @@ class _LevelDetailSheet extends StatelessWidget {
           // 距下一级
           Text(
             '距下一级还需 ${nextLevelExp - expProgress} EXP',
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFFB0A09A),
-            ),
+            style: const TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
           ),
         ],
       ),
@@ -1580,15 +1649,60 @@ class _LevelDetailSheet extends StatelessWidget {
 
   Widget _buildLevelTiers() {
     final tiers = [
-      _LevelTier(level: 1, name: '萌新', minExp: 0, color: const Color(0xFF9E9E9E)),
-      _LevelTier(level: 5, name: '探索者', minExp: 1600, color: const Color(0xFF4CAF50)),
-      _LevelTier(level: 10, name: '实践者', minExp: 8100, color: const Color(0xFF2196F3)),
-      _LevelTier(level: 15, name: '进阶者', minExp: 20000, color: const Color(0xFF9C27B0)),
-      _LevelTier(level: 20, name: '精英', minExp: 38000, color: const Color(0xFFFF9800)),
-      _LevelTier(level: 30, name: '大师', minExp: 85000, color: const Color(0xFFE91E63)),
-      _LevelTier(level: 50, name: '传奇', minExp: 250000, color: const Color(0xFFFF5722)),
-      _LevelTier(level: 80, name: '神话', minExp: 640000, color: const Color(0xFF673AB7)),
-      _LevelTier(level: 100, name: '永恒', minExp: 1000000, color: const Color(0xFF1A237E)),
+      _LevelTier(
+        level: 1,
+        name: '萌新',
+        minExp: 0,
+        color: const Color(0xFF9E9E9E),
+      ),
+      _LevelTier(
+        level: 5,
+        name: '探索者',
+        minExp: 1600,
+        color: const Color(0xFF4CAF50),
+      ),
+      _LevelTier(
+        level: 10,
+        name: '实践者',
+        minExp: 8100,
+        color: const Color(0xFF2196F3),
+      ),
+      _LevelTier(
+        level: 15,
+        name: '进阶者',
+        minExp: 20000,
+        color: const Color(0xFF9C27B0),
+      ),
+      _LevelTier(
+        level: 20,
+        name: '精英',
+        minExp: 38000,
+        color: const Color(0xFFFF9800),
+      ),
+      _LevelTier(
+        level: 30,
+        name: '大师',
+        minExp: 85000,
+        color: const Color(0xFFE91E63),
+      ),
+      _LevelTier(
+        level: 50,
+        name: '传奇',
+        minExp: 250000,
+        color: const Color(0xFFFF5722),
+      ),
+      _LevelTier(
+        level: 80,
+        name: '神话',
+        minExp: 640000,
+        color: const Color(0xFF673AB7),
+      ),
+      _LevelTier(
+        level: 100,
+        name: '永恒',
+        minExp: 1000000,
+        color: const Color(0xFF1A237E),
+      ),
     ];
 
     return ListView.builder(
@@ -1597,8 +1711,10 @@ class _LevelDetailSheet extends StatelessWidget {
       itemBuilder: (context, index) {
         final tier = tiers[index];
         final isUnlocked = currentLevel >= tier.level;
-        final isCurrent = currentLevel >= tier.level &&
-            (index == tiers.length - 1 || currentLevel < tiers[index + 1].level);
+        final isCurrent =
+            currentLevel >= tier.level &&
+            (index == tiers.length - 1 ||
+                currentLevel < tiers[index + 1].level);
 
         return _buildTierItem(tier, isUnlocked, isCurrent);
       },
@@ -1690,11 +1806,7 @@ class _LevelDetailSheet extends StatelessWidget {
               ),
             )
           else if (isUnlocked)
-            Icon(
-              Icons.check_circle_rounded,
-              size: 20,
-              color: tier.color,
-            )
+            Icon(Icons.check_circle_rounded, size: 20, color: tier.color)
           else
             Icon(
               Icons.lock_outline_rounded,

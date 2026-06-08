@@ -58,7 +58,7 @@ final monthlyDailyStudyProvider = FutureProvider<List<DailyStats>>((ref) {
 });
 
 /// 最近 12 个月月度统计
-final yearlyMonthlyStudyProvider = FutureProvider<List<MonthlyStats>>((ref) {
+final yearlyMonthlyStudyProvider = FutureProvider<List<MonthlyAggregate>>((ref) {
   final statsService = ref.watch(statisticsServiceProvider);
   return statsService.getYearlyStats();
 });

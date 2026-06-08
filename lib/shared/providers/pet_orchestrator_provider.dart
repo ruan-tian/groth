@@ -4,12 +4,12 @@ import '../../features/pet/models/pet_display_intent.dart';
 import '../../features/pet/models/pet_priority.dart';
 import '../../features/pet/models/pet_runtime_state.dart';
 import '../../features/pet/services/life_session_manager.dart';
-import '../../features/pet/services/pet_orchestrator_v2.dart';
+import '../../features/pet/services/pet_orchestrator.dart';
 
-/// 宠物 Orchestrator V2 Provider（自动初始化）
-final petOrchestratorV2Provider =
-    StateNotifierProvider<PetOrchestratorV2, PetRuntimeState>((ref) {
-  final orchestrator = PetOrchestratorV2(ref);
+/// 宠物 Orchestrator Provider（自动初始化）
+final petOrchestratorProvider =
+    StateNotifierProvider<PetOrchestrator, PetRuntimeState>((ref) {
+  final orchestrator = PetOrchestrator(ref);
   orchestrator.init();
   ref.onDispose(() => orchestrator.dispose());
   return orchestrator;
@@ -17,7 +17,7 @@ final petOrchestratorV2Provider =
 
 /// 当前应显示的 Intent Provider
 final currentPetIntentProvider = Provider<PetDisplayIntent?>((ref) {
-  final state = ref.watch(petOrchestratorV2Provider);
+  final state = ref.watch(petOrchestratorProvider);
   return state.effectiveIntent;
 });
 
@@ -39,7 +39,7 @@ final dashboardPetIntentProvider = FutureProvider<PetDisplayIntent>((ref) async 
   );
 
   // 设置为 baseIntent
-  ref.read(petOrchestratorV2Provider.notifier).setBaseIntent(intent);
+  ref.read(petOrchestratorProvider.notifier).setBaseIntent(intent);
 
   return intent;
 });

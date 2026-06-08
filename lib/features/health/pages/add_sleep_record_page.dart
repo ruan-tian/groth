@@ -126,10 +126,11 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
         ref.invalidate(recentSleepRecordsProvider);
 
         // 发送宠物事件
-        PetEventBus.instance.emit(PetEvent(
+        final eventId = 'sleep_${DateTime.now().millisecondsSinceEpoch}';
+        PetEventBus.instance.emit(PetEvent.moduleCompleted(
+          eventId: eventId,
           type: PetEventType.sleepCompleted,
           module: 'sleep',
-          createdAt: DateTime.now(),
         ));
 
         ScaffoldMessenger.of(context).showSnackBar(

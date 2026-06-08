@@ -30,11 +30,8 @@ DashboardData _mockDashboardData({
         weeklyStats ??
         List.generate(
           7,
-          (i) => DailyStats(
-            date: DateTime(2026, 6, 1).add(Duration(days: i)),
-            studyMinutes: 60 + i * 10,
-            fitnessMinutes: 20 + i * 5,
-            expGained: 10 + i * 2,
+          (i) => DailyStats.empty(
+            DateTime(2026, 6, 1).add(Duration(days: i)),
           ),
         ),
   );

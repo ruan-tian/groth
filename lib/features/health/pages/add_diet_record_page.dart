@@ -80,10 +80,11 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
       if (mounted) {
         // 发送宠物事件
-        PetEventBus.instance.emit(PetEvent(
+        final eventId = 'diet_${DateTime.now().millisecondsSinceEpoch}';
+        PetEventBus.instance.emit(PetEvent.moduleCompleted(
+          eventId: eventId,
           type: PetEventType.dietCompleted,
           module: 'diet',
-          createdAt: DateTime.now(),
         ));
 
         HapticFeedback.lightImpact();

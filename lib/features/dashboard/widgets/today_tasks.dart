@@ -8,6 +8,8 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/task_provider.dart';
+import '../../pet/models/pet_event.dart';
+import '../../pet/services/pet_event_bus.dart';
 
 // =============================================================================
 // TaskPriority - 优先级枚举
@@ -498,6 +500,10 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
 
     // 检查是否全部完成
     if (newCompleted) {
+      PetEventBus.instance.emit(PetEvent.taskCompleted(
+        eventId: 'task_${task.id}_${DateTime.now().millisecondsSinceEpoch}',
+        module: 'task',
+      ));
       final tasks = await repo.getTodayTasks();
       if (tasks.isNotEmpty && tasks.every((t) => t.isCompleted)) {
         _confettiController.play();
