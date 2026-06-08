@@ -339,9 +339,9 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     return GestureDetector(
       onTap: () => context.push('/plan/journal/write'),
       child: Container(
+        height: 180,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          gradient: JournalColors.heroGradient,
           border: Border.all(color: JournalColors.pinkBorder, width: 1),
           boxShadow: [
             BoxShadow(
@@ -354,20 +354,31 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              // 第1层：完整底图
+              // 第1层：底图（cover 填满容器）
               Image.asset(
                 PetAssets.journalTodayRecordBg,
-                width: double.infinity,
-                fit: BoxFit.fitWidth,
+                fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Container(
-                  height: 180,
-                  decoration: BoxDecoration(
-                    gradient: JournalColors.heroGradient,
+                  color: JournalColors.pinkBg,
+                ),
+              ),
+              // 第2层：渐变遮罩（右→左，右侧透明显示人物，左侧半透明白覆盖文字区）
+              const DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerRight,
+                    end: Alignment.centerLeft,
+                    colors: [
+                      Color(0x00FFFFFF), // 右侧透明
+                      Color(0xD9FFFFFF), // 左侧半透明白 (85%)
+                    ],
+                    stops: [0.3, 0.6],
                   ),
                 ),
               ),
-              // 第2层：文字覆盖（左侧，人物在右）
+              // 第3层：文字覆盖（左侧1/3区域）
               Positioned(
                 left: 20,
                 bottom: 20,
@@ -390,6 +401,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                           style: TextStyle(
                             fontFamily: JournalColors.fontFamily,
                             fontSize: 18,
+                            fontWeight: FontWeight.w600,
                             color: JournalColors.textDark,
                           ),
                         ),
@@ -771,9 +783,9 @@ class _TiantianCompanionCardState
         );
       },
       child: Container(
+        height: 180,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          gradient: JournalColors.companionGradient,
           border: Border.all(color: JournalColors.pinkBorder, width: 1),
           boxShadow: [
             BoxShadow(
@@ -791,15 +803,31 @@ class _TiantianCompanionCardState
             switchOutCurve: Curves.easeOut,
             child: Stack(
               key: ValueKey(bannerPath),
+              fit: StackFit.expand,
               children: [
-                // 第1层：完整底图
+                // 第1层：底图（cover 填满容器）
                 Image.asset(
                   bannerPath,
-                  width: double.infinity,
-                  fit: BoxFit.fitWidth,
-                  errorBuilder: (_, __, ___) => const SizedBox(height: 180),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    color: JournalColors.pinkBg,
+                  ),
                 ),
-                // 第2层：文字（右侧2/3区域）
+                // 第2层：渐变遮罩（左→右，左侧透明显示人物，右侧半透明白覆盖文字区）
+                const DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Color(0x00FFFFFF), // 左侧透明
+                        Color(0xD9FFFFFF), // 右侧半透明白 (85%)
+                      ],
+                      stops: [0.3, 0.6],
+                    ),
+                  ),
+                ),
+                // 第3层：文字（右侧2/3区域）
                 Positioned(
                   right: 24,
                   top: 0,
@@ -814,6 +842,7 @@ class _TiantianCompanionCardState
                           style: TextStyle(
                             fontFamily: JournalColors.fontFamily,
                             fontSize: 20,
+                            fontWeight: FontWeight.w600,
                             color: JournalColors.textDark,
                           ),
                         ),
