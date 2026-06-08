@@ -13,6 +13,7 @@ class GrowthOSApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(themeInitProvider); // 从数据库加载已保存的主题
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(

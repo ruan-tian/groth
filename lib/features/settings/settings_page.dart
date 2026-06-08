@@ -851,6 +851,7 @@ class SettingsPage extends ConsumerWidget {
       onTap: () {
         HapticFeedback.lightImpact();
         ref.read(themeModeProvider.notifier).state = mode;
+        ref.read(settingRepositoryProvider).setSetting('theme_mode', mode.name);
         Navigator.pop(context);
       },
       child: Container(

@@ -40,6 +40,7 @@ dependencies:
   json_annotation: ^4.9.0
   fl_chart: ^0.70.2
   flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.1
   shared_preferences: ^2.3.4
   path_provider: ^2.1.5
   path: ^1.9.0
@@ -124,6 +125,16 @@ flutter:
     - assets/images/journal/cats/
     - assets/images/journal/decor/
     - assets/images/journal/status/
+    - assets/images/plan_modules/study/hero/
+    - assets/images/plan_modules/study/timer/
+    - assets/images/plan_modules/fitness/hero/
+    - assets/images/plan_modules/fitness/timer/
+    - assets/images/plan_modules/journal/hero/
+    - assets/images/plan_modules/journal/timer/
+    - assets/images/plan_modules/diet/hero/
+    - assets/images/plan_modules/diet/timer/
+    - assets/images/plan_modules/sleep/hero/
+    - assets/images/plan_modules/sleep/timer/
     - assets/journal/banners/
 
   # To add assets to your application, add an assets section, like this:
