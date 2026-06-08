@@ -112,6 +112,14 @@ flutter:
     - assets/images/pet_center/deco/
     - assets/images/pet_center/particles/
     - assets/images/pet_center/effects/
+    - assets/images/focus/backgrounds/
+    - assets/images/focus/foregrounds/
+    - assets/images/focus/cats/
+    - assets/images/focus/icons/
+    - assets/images/focus/sounds/
+    - assets/images/focus/lights/
+    - assets/images/focus/particles/
+    - assets/images/focus/status/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

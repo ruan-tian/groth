@@ -222,7 +222,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               const SizedBox(height: 20),
 
               // ── 6. 最近日记列表 ──
-              _buildSectionTitle('最近日记'),
+              _buildSectionTitle('最近日记 ✨'),
               const SizedBox(height: 12),
               journals.when(
                 data: (list) {
@@ -357,7 +357,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    '今日记录',
+                    '✏️ 今日记录 ✨',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -375,28 +375,26 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                   const SizedBox(height: 14),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 14, vertical: 9),
+                        horizontal: 16, vertical: 10),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.22),
-                      borderRadius: BorderRadius.circular(10),
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          count > 0
-                              ? Icons.arrow_forward_rounded
-                              : Icons.edit_rounded,
-                          color: Colors.white,
+                          Icons.edit_rounded,
                           size: 15,
+                          color: JournalColors.pinkMain,
                         ),
-                        const SizedBox(width: 6),
+                        SizedBox(width: 6),
                         Text(
-                          count > 0 ? '继续写 →' : '开始写日记',
-                          style: const TextStyle(
+                          '开始写日记',
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                            color: JournalColors.pinkMain,
                           ),
                         ),
                       ],
@@ -497,7 +495,13 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: JournalColors.pinkBorder, width: 1),
+            boxShadow: [
+              BoxShadow(
+                color: JournalColors.shadow,
+                blurRadius: 16,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -506,7 +510,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               Row(
                 children: [
                   const Text(
-                    '写作热力图',
+                    '📅 写作热力图',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
@@ -562,7 +566,10 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                         color: JournalColors.textMuted,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text('→', style: TextStyle(fontSize: 10, color: JournalColors.textMuted)),
+                    ),
                     ...JournalColors.heatColors.map(
                       (c) => Container(
                         width: 12,
@@ -574,7 +581,10 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text('→', style: TextStyle(fontSize: 10, color: JournalColors.textMuted)),
+                    ),
                     const Text(
                       '多',
                       style: TextStyle(
@@ -698,44 +708,71 @@ class _TiantianCompanionCard extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: JournalColors.companionGradient,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: JournalColors.pinkBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.shadow,
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: Row(
-          children: [
-            _buildPetImage(PetAssets.journalWriting, 100),
-            const SizedBox(width: 16),
-          Expanded(
-            child: CustomPaint(
-              painter: _BubblePainter(),
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '甜甜',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: JournalColors.textDark,
-                      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Row(
+            children: [
+              _buildPetImage(PetAssets.journalWriting, 100),
+              const SizedBox(width: 16),
+              Expanded(
+                child: CustomPaint(
+                  painter: _BubblePainter(),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    SizedBox(height: 4),
-                    Text(
-                      '记录一下今天的成长吧！',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: JournalColors.textSecondary,
-                      ),
+                    child: const Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '甜甜',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: JournalColors.textDark,
+                          ),
+                        ),
+                        SizedBox(height: 4),
+                        Text(
+                          '记录一下今天的成长吧！',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: JournalColors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
-            ),
+            ],
+          ),
+          // ❤️ 装饰爱心
+          Positioned(
+            top: -4,
+            right: 30,
+            child: Icon(Icons.favorite, size: 14, color: JournalColors.pinkMain.withValues(alpha: 0.35)),
+          ),
+          Positioned(
+            top: 16,
+            right: 8,
+            child: Icon(Icons.favorite, size: 10, color: JournalColors.pinkSoft.withValues(alpha: 0.45)),
+          ),
+          Positioned(
+            bottom: 8,
+            right: 50,
+            child: Icon(Icons.favorite, size: 12, color: JournalColors.pinkMain.withValues(alpha: 0.25)),
           ),
         ],
       ),
@@ -872,6 +909,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.bar_chart_rounded,
             label: '本月',
             value: monthlyCount.whenOrNull(data: (c) => c) ?? 0,
+            unit: '篇',
           ),
         ),
         const SizedBox(width: 10),
@@ -880,6 +918,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.calendar_month_rounded,
             label: '总计',
             value: totalCount.whenOrNull(data: (c) => c) ?? 0,
+            unit: '篇',
           ),
         ),
         const SizedBox(width: 10),
@@ -888,6 +927,7 @@ class _StatsRow extends StatelessWidget {
             icon: Icons.local_fire_department_rounded,
             label: '连续',
             value: streak.whenOrNull(data: (s) => s) ?? 0,
+            unit: '天',
           ),
         ),
       ],
@@ -900,11 +940,13 @@ class _StatsCard extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.value,
+    this.unit = '',
   });
 
   final IconData icon;
   final String label;
   final int value;
+  final String unit;
 
   @override
   Widget build(BuildContext context) {
@@ -933,14 +975,32 @@ class _StatsCard extends StatelessWidget {
             child: Icon(icon, size: 20, color: JournalColors.pinkMain),
           ),
           const SizedBox(height: 10),
-          Text(
-            '$value',
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: JournalColors.textDark,
-              height: 1.1,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '$value',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: JournalColors.textDark,
+                  height: 1.1,
+                ),
+              ),
+              if (unit.isNotEmpty) ...[
+                const SizedBox(width: 2),
+                Text(
+                  unit,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: JournalColors.textSecondary,
+                  ),
+                ),
+              ],
+            ],
           ),
           const SizedBox(height: 2),
           Text(
@@ -983,11 +1043,11 @@ class _TagChip extends StatelessWidget {
         curve: Curves.easeOutCubic,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? JournalColors.pinkSoft : Colors.white,
+          color: selected ? JournalColors.pinkMain : Colors.white,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: selected
-                ? JournalColors.pinkSoft
+                ? JournalColors.pinkMain
                 : JournalColors.pinkBorder,
           ),
         ),
@@ -1032,9 +1092,6 @@ class _JournalListItem extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: JournalColors.pinkBorder.withValues(alpha: 0.4),
-          ),
           boxShadow: [
             BoxShadow(
               color: JournalColors.shadow,
@@ -1054,10 +1111,19 @@ class _JournalListItem extends StatelessWidget {
                 color: JournalColors.pinkBg,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
-                Icons.article_rounded,
-                size: 20,
-                color: JournalColors.pinkMain,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset(
+                  PetAssets.journalBook,
+                  width: 28,
+                  height: 28,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(
+                    Icons.pets_rounded,
+                    size: 20,
+                    color: JournalColors.pinkMain,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 12),

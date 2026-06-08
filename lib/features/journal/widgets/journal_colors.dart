@@ -8,7 +8,7 @@ class JournalColors {
   JournalColors._();
 
   // ── 页面背景 ──
-  static const bg = Color(0xFFFFF9F8);
+  static const bg = Color(0xFFFFF8F6);
 
   // ── 卡片白 ──
   static const card = Color(0xFFFFFFFF);

@@ -4,19 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
 import '../../../core/services/image_service.dart';
+import '../../pet/utils/pet_assets.dart';
+import '../widgets/journal_colors.dart';
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Constants
 // ──────────────────────────────────────────────────────────────────────────────
 
-const _kBg = Color(0xFFFFFFFF);
-const _kInk = Color(0xFF111827);
-const _kSecondary = Color(0xFF8B92A3);
-const _kHint = Color(0xFFB8BECC);
-const _kBorder = Color(0xFFE5E7EB);
-const _kIcon = Color(0xFF6B7280);
-const _kAccent = Color(0xFF6C63FF);
-const _kAccentBg = Color(0xFFF0EFFF);
+const _kBg = Color(0xFFFFF8F6);
+const _kInk = Color(0xFF5D4037);
+const _kSecondary = Color(0xFFA1887F);
+const _kHint = Color(0xFFC7B5AE);
+const _kBorder = Color(0xFFF7D6E0);
+const _kIcon = Color(0xFFA1887F);
+const _kAccent = Color(0xFFF56F9C);
+const _kAccentBg = Color(0xFFFFF1F5);
 
 // ──────────────────────────────────────────────────────────────────────────────
 // Panel enum
@@ -326,14 +328,84 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
 
             // ── Editor ──
             Expanded(
-              child: QuillEditor(
-                controller: _quillController,
-                scrollController: _scrollController,
-                focusNode: _editorFocus,
-                config: const QuillEditorConfig(
-                  placeholder: '开始书写吧...',
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                ),
+              child: Stack(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.fromLTRB(20, 0, 20, 0),
+                    decoration: BoxDecoration(
+                      color: _kAccentBg,
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: _kBorder, width: 1.5),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(16),
+                      child: QuillEditor(
+                        controller: _quillController,
+                        scrollController: _scrollController,
+                        focusNode: _editorFocus,
+                        config: const QuillEditorConfig(
+                          placeholder: '开始书写吧...',
+                          padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // 浮动甜甜猫
+                  Positioned(
+                    right: 24,
+                    bottom: 16,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Speech bubble
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: _kAccent.withValues(alpha: 0.1),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text('甜甜陪你', style: TextStyle(
+                                fontSize: 11, fontWeight: FontWeight.w600, color: _kAccent,
+                              )),
+                              Text('记录每一天~', style: TextStyle(
+                                fontSize: 10, color: _kSecondary,
+                              )),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // Hearts
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.favorite, size: 10, color: _kAccent.withValues(alpha: 0.35)),
+                            const SizedBox(width: 4),
+                            Icon(Icons.favorite, size: 8, color: _kAccent.withValues(alpha: 0.25)),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        // Cat image
+                        Image.asset(
+                          PetAssets.journalWriting,
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -462,35 +534,43 @@ class _TitleSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          TextField(
-            controller: titleController,
-            style: const TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w700,
-              color: _kInk,
-              height: 1.2,
-            ),
-            decoration: const InputDecoration(
-              hintText: '标题',
-              hintStyle: TextStyle(color: _kHint),
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              contentPadding: EdgeInsets.zero,
-              isDense: true,
-              filled: false,
-            ),
-            maxLines: null,
+      child: Container(
+        decoration: const BoxDecoration(
+          border: Border(
+            left: BorderSide(color: _kAccent, width: 3),
           ),
-          const SizedBox(height: 4),
-          Text(
-            '$dateStr · $wordCount 字',
-            style: const TextStyle(fontSize: 13, color: _kSecondary),
-          ),
-        ],
+        ),
+        padding: const EdgeInsets.only(left: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: titleController,
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.w700,
+                color: _kAccent,
+                height: 1.2,
+              ),
+              decoration: const InputDecoration(
+                hintText: '标题',
+                hintStyle: TextStyle(color: _kHint),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: EdgeInsets.zero,
+                isDense: true,
+                filled: false,
+              ),
+              maxLines: null,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              '$dateStr · $wordCount 字',
+              style: const TextStyle(fontSize: 13, color: _kSecondary),
+            ),
+          ],
+        ),
       ),
     );
   }

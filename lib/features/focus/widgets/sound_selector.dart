@@ -1,97 +1,106 @@
 import 'package:flutter/material.dart';
 
-/// 白噪音/环境音选择器
-///
-/// 展示可选的环境音列表（雨声、海浪、森林、咖啡馆、白噪声、无），
-/// 点击选中后通过 [onSoundChanged] 回调返回对应的音效类型字符串。
-/// 选中项以高亮卡片样式展示。
+import '../utils/focus_options.dart';
+
 class SoundSelector extends StatelessWidget {
-  /// 当前选中的音效类型
-  final String? selectedSound;
-
-  /// 音效变更回调，返回音效类型字符串（如 'rain'、'none'）
-  final ValueChanged<String> onSoundChanged;
-
   const SoundSelector({
     super.key,
     this.selectedSound,
     required this.onSoundChanged,
+    this.compact = false,
   });
 
-  static const _sounds = [
-    _SoundOption(value: 'rain', icon: Icons.water_drop, label: '雨声'),
-    _SoundOption(value: 'ocean', icon: Icons.waves, label: '海浪'),
-    _SoundOption(value: 'forest', icon: Icons.forest, label: '森林'),
-    _SoundOption(value: 'cafe', icon: Icons.coffee, label: '咖啡馆'),
-    _SoundOption(value: 'white_noise', icon: Icons.surround_sound, label: '白噪声'),
-    _SoundOption(value: 'none', icon: Icons.volume_off, label: '无'),
-  ];
+  final String? selectedSound;
+  final ValueChanged<String> onSoundChanged;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
+    final selected = selectedSound ?? 'none';
     return Wrap(
-      spacing: 12,
-      runSpacing: 12,
-      children: _sounds.map((sound) {
-        final isSelected = selectedSound == sound.value;
-        return GestureDetector(
+      spacing: compact ? 8 : 12,
+      runSpacing: compact ? 8 : 12,
+      children: focusSoundOptions.map((sound) {
+        final isSelected = selected == sound.value;
+        return _SoundChip(
+          label: sound.label,
+          asset: sound.asset,
+          selected: isSelected,
+          compact: compact,
           onTap: () => onSoundChanged(sound.value),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? theme.colorScheme.primaryContainer
-                  : theme.colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: isSelected
-                    ? theme.colorScheme.primary
-                    : theme.colorScheme.outlineVariant,
-                width: isSelected ? 2 : 1,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  sound.icon,
-                  size: 20,
-                  color: isSelected
-                      ? theme.colorScheme.primary
-                      : theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  sound.label,
-                  style: theme.textTheme.labelLarge?.copyWith(
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.onSurfaceVariant,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                  ),
-                ),
-              ],
-            ),
-          ),
         );
-      }).toList(),
+      }).toList(growable: false),
     );
   }
 }
 
-/// 音效选项数据
-class _SoundOption {
-  final String value;
-  final IconData icon;
-  final String label;
-
-  const _SoundOption({
-    required this.value,
-    required this.icon,
+class _SoundChip extends StatelessWidget {
+  const _SoundChip({
     required this.label,
+    required this.asset,
+    required this.selected,
+    required this.compact,
+    required this.onTap,
   });
+
+  final String label;
+  final String asset;
+  final bool selected;
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    const primary = Color(0xFF43B7A8);
+    final border = selected ? primary : const Color(0xFFE6DDD4);
+    final background = selected
+        ? const Color(0xFFEAFBF6)
+        : Colors.white.withValues(alpha: 0.72);
+    final imageSize = compact ? 24.0 : 30.0;
+
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 14,
+            vertical: compact ? 7 : 9,
+          ),
+          decoration: BoxDecoration(
+            color: background,
+            borderRadius: BorderRadius.circular(compact ? 16 : 22),
+            border: Border.all(color: border, width: selected ? 1.8 : 1),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: primary.withValues(alpha: 0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
+                : null,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(asset, width: imageSize, height: imageSize),
+              SizedBox(width: compact ? 5 : 8),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? const Color(0xFF178F85) : const Color(0xFF5E6666),
+                  fontSize: compact ? 12 : 14,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

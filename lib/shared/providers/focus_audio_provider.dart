@@ -21,17 +21,21 @@ class FocusAudioState {
   });
 
   FocusAudioState copyWith({
-    String? currentSoundType,
+    Object? currentSoundType = _sentinel,
     double? volume,
     bool? isPlaying,
   }) {
     return FocusAudioState(
-      currentSoundType: currentSoundType ?? this.currentSoundType,
+      currentSoundType: currentSoundType == _sentinel
+          ? this.currentSoundType
+          : currentSoundType as String?,
       volume: volume ?? this.volume,
       isPlaying: isPlaying ?? this.isPlaying,
     );
   }
 }
+
+const Object _sentinel = Object();
 
 final focusAudioStateProvider = StateNotifierProvider<FocusAudioStateNotifier, FocusAudioState>((ref) {
   return FocusAudioStateNotifier(ref);

@@ -67,20 +67,23 @@ class FocusSetupState {
     String? type,
     int? durationMinutes,
     String? title,
-    String? subject,
-    String? soundType,
+    Object? subject = _focusSetupUnset,
+    Object? soundType = _focusSetupUnset,
     int? totalRounds,
   }) {
     return FocusSetupState(
       type: type ?? this.type,
       durationMinutes: durationMinutes ?? this.durationMinutes,
       title: title ?? this.title,
-      subject: subject ?? this.subject,
-      soundType: soundType ?? this.soundType,
+      subject: subject == _focusSetupUnset ? this.subject : subject as String?,
+      soundType:
+          soundType == _focusSetupUnset ? this.soundType : soundType as String?,
       totalRounds: totalRounds ?? this.totalRounds,
     );
   }
 }
+
+const Object _focusSetupUnset = Object();
 
 /// 专注设置 StateProvider
 final focusSetupProvider = StateProvider<FocusSetupState>((ref) {

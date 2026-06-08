@@ -273,12 +273,6 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final wordCount = _contentController.text.trim().length;
-    final expService = ref.read(expServiceProvider);
-    final estimatedExp = wordCount > 0
-        ? expService.calculateJournalExp(wordCount: wordCount)
-        : 0;
-
     return Scaffold(
       backgroundColor: JournalColors.bg,
       appBar: _buildAppBar(),
@@ -323,16 +317,8 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
             _buildToolButtons(),
             const SizedBox(height: 24),
 
-            // ── 写作小结（内容非空时显示）──
-            if (wordCount > 0) ...[
-              _buildWritingSummary(wordCount, estimatedExp),
-              const SizedBox(height: 24),
-            ],
-
             // ── 底部操作按钮 ──
             _buildSaveButton(),
-            const SizedBox(height: 12),
-            _buildDoneButton(),
             const SizedBox(height: 40),
           ],
         ),
@@ -364,7 +350,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       centerTitle: true,
       actions: [
         IconButton(
-          icon: const Icon(Icons.check_circle_outline_rounded, size: 24),
+          icon: const Icon(Icons.save_rounded, size: 24),
           color: JournalColors.pinkMain,
           onPressed: _saving ? null : _save,
         ),
@@ -397,11 +383,23 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       decoration: InputDecoration(
         hintText: '例如：充实的一天',
         hintStyle: const TextStyle(color: JournalColors.textMuted),
-        prefixIcon: const Icon(
-          Icons.title_rounded,
-          size: 20,
-          color: JournalColors.pinkSoft,
+        prefixIcon: Container(
+          width: 32,
+          height: 32,
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: JournalColors.pinkBg,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: const Center(
+            child: Text('T', style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w700,
+              color: JournalColors.pinkMain,
+            )),
+          ),
         ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 40),
         filled: true,
         fillColor: Colors.white,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -439,10 +437,11 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
           },
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            width: 62,
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
               color: isSelected ? JournalColors.pinkBg : Colors.white,
-              borderRadius: BorderRadius.circular(999),
+              borderRadius: BorderRadius.circular(14),
               border: Border.all(
                 color: isSelected
                     ? JournalColors.pinkMain
@@ -498,7 +497,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? JournalColors.pinkBg : Colors.white,
+              color: isSelected ? JournalColors.pinkBg : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(999),
               border: Border.all(
                 color: isSelected
@@ -581,7 +580,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
                   child: Row(
                     children: [
                       const Icon(
-                        Icons.lightbulb_outline_rounded,
+                        Icons.push_pin_rounded,
                         size: 18,
                         color: JournalColors.pinkSoft,
                       ),
@@ -611,34 +610,52 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildContentField() {
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: 220),
-      child: TextField(
-        controller: _contentController,
-        maxLines: null,
-        minLines: 8,
-        onChanged: (_) => setState(() {}),
-        decoration: InputDecoration(
-          hintText: '写下今天的复盘...',
-          hintStyle: const TextStyle(color: JournalColors.textMuted),
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.all(16),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: const BorderSide(color: JournalColors.pinkBorder),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide: const BorderSide(color: JournalColors.pinkBorder),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(18),
-            borderSide:
-                const BorderSide(color: JournalColors.pinkMain, width: 1.5),
+    return Stack(
+      children: [
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 220),
+          child: TextField(
+            controller: _contentController,
+            maxLines: null,
+            minLines: 8,
+            onChanged: (_) => setState(() {}),
+            decoration: InputDecoration(
+              hintText: '写下今天的复盘...',
+              hintStyle: const TextStyle(color: JournalColors.textMuted),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.all(16),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: JournalColors.pinkBorder),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide: const BorderSide(color: JournalColors.pinkBorder),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(18),
+                borderSide:
+                    const BorderSide(color: JournalColors.pinkMain, width: 1.5),
+              ),
+            ),
           ),
         ),
-      ),
+        Positioned(
+          right: 8,
+          bottom: 8,
+          child: Opacity(
+            opacity: 0.45,
+            child: Image.asset(
+              PetAssets.journalWriting,
+              width: 72,
+              height: 72,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -665,7 +682,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
                   Icon(Icons.image_outlined, size: 18, color: JournalColors.textDark),
                   SizedBox(width: 6),
                   Text(
-                    '图片导入',
+                    '📷 图片导入',
                     style: TextStyle(fontSize: 13, color: JournalColors.textDark),
                   ),
                 ],
@@ -690,7 +707,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
                   Icon(Icons.edit_note_rounded, size: 18, color: JournalColors.textDark),
                   SizedBox(width: 6),
                   Text(
-                    '全屏书写',
+                    '🔲 全屏书写',
                     style: TextStyle(fontSize: 13, color: JournalColors.textDark),
                   ),
                 ],
@@ -770,7 +787,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         decoration: BoxDecoration(
           gradient: _saving ? null : JournalColors.heroGradient,
           color: _saving ? JournalColors.pinkSoft : null,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(999),
           boxShadow: _saving
               ? null
               : [
@@ -792,7 +809,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
                   ),
                 )
               : const Text(
-                  '保存日记',
+                  '✓ 保存日记',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
@@ -849,61 +866,76 @@ class _TiantianCompanionSection extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: JournalColors.pinkBorder),
       ),
-      child: Row(
+      child: Column(
         children: [
-          // 甜甜 PNG
-          Image.asset(
-            PetAssets.journalWriting,
-            width: 80,
-            height: 80,
-            fit: BoxFit.contain,
-            errorBuilder: (_, __, ___) => const SizedBox(
-              width: 80,
-              height: 80,
-              child: Center(
-                child: Icon(Icons.pets_rounded,
-                    size: 40, color: JournalColors.pinkSoft),
-              ),
+          // Speech bubble
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: JournalColors.pinkMain.withValues(alpha: 0.06),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: const Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '甜甜在这里陪着你 ✨',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: JournalColors.textDark,
+                  ),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  '今天也要好好记录自己的小美好哦～',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: JournalColors.textSecondary,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 14),
-          // 语音气泡
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: JournalColors.pinkMain.withValues(alpha: 0.06),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+          const SizedBox(height: 10),
+          // Cat image + hearts
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Image.asset(
+                PetAssets.journalWriting,
+                width: 100,
+                height: 100,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: Center(
+                    child: Icon(Icons.pets_rounded,
+                        size: 50, color: JournalColors.pinkSoft),
                   ),
-                ],
+                ),
               ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '甜甜在这里陪着你 ✨',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: JournalColors.textDark,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    '今天也要好好记录自己的小美好哦～',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: JournalColors.textSecondary,
-                    ),
-                  ),
-                ],
+              Positioned(
+                top: -4,
+                right: 10,
+                child: Icon(Icons.favorite, size: 14,
+                    color: JournalColors.pinkMain.withValues(alpha: 0.4)),
               ),
-            ),
+              Positioned(
+                top: 10,
+                left: -8,
+                child: Icon(Icons.favorite, size: 10,
+                    color: JournalColors.pinkSoft.withValues(alpha: 0.5)),
+              ),
+            ],
           ),
         ],
       ),
