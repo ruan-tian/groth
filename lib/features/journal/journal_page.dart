@@ -405,14 +405,38 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 ],
               ),
             ),
-            Image.asset(
-              PetAssets.journalWriting,
-              width: 80,
-              height: 80,
-              fit: BoxFit.contain,
-            ),
+            _buildPetImage(PetAssets.journalWriting, 80),
           ],
         ),
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 甜甜图片（白色圆形底衬，防止透明PNG被渐变背景染色）
+  // ---------------------------------------------------------------------------
+
+  Widget _buildPetImage(String assetPath, double size) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.shadow,
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: EdgeInsets.all(size * 0.12),
+      child: Image.asset(
+        assetPath,
+        fit: BoxFit.contain,
+        errorBuilder: (_, __, ___) =>
+            Text('🐱', style: TextStyle(fontSize: size * 0.4)),
       ),
     );
   }
@@ -677,14 +701,9 @@ class _TiantianCompanionCard extends StatelessWidget {
         border: Border.all(color: JournalColors.pinkBorder, width: 1),
       ),
       child: Row(
-        children: [
-          Image.asset(
-            PetAssets.journalWriting,
-            width: 100,
-            height: 100,
-            fit: BoxFit.contain,
-          ),
-          const SizedBox(width: 16),
+          children: [
+            _buildPetImage(PetAssets.journalWriting, 100),
+            const SizedBox(width: 16),
           Expanded(
             child: CustomPaint(
               painter: _BubblePainter(),
