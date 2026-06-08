@@ -38,7 +38,7 @@ class JournalColors {
   static Color get shadow => pinkMain.withValues(alpha: 0.08);
 
   // ── 柔粉渐变（Hero 卡片）──
-  static const heroGradient = LinearGradient(
+  static final heroGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFF8A9C2), Color(0xFFF56F9C)],
@@ -46,7 +46,7 @@ class JournalColors {
   );
 
   // ── 极浅粉渐变（陪伴卡片）──
-  static const companionGradient = LinearGradient(
+  static final companionGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFFFFF1F5), Color(0xFFFFF8FA)],

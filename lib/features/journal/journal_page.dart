@@ -9,16 +9,16 @@ import 'package:go_router/go_router.dart';
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
 import '../../core/repositories/journal_repository.dart';
-import '../../pet/utils/pet_assets.dart';
+import '../pet/utils/pet_assets.dart';
 import '../../shared/providers/dashboard_provider.dart';
 import '../../shared/providers/journal_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/sort_button.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
 import '../pet/models/pet_scene_model.dart';
-import '../utils/journal_constants.dart';
-import '../widgets/journal_colors.dart';
-import '../widgets/heatmap_calendar.dart';
+import 'utils/journal_constants.dart';
+import 'widgets/journal_colors.dart';
+import '../statistics/widgets/heatmap_calendar.dart';
 
 // =============================================================================
 // New Providers
