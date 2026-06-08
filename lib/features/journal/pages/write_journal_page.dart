@@ -795,9 +795,9 @@ class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSec
     final bannerPath = sceneState.config.state.bannerPath;
 
     return Container(
-      height: 180,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: JournalColors.pinkBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: JournalColors.shadow,
@@ -808,56 +808,51 @@ class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSec
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(20),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // 第1层：完整底图
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 600),
-              child: Image.asset(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 600),
+          child: Stack(
+            key: ValueKey(bannerPath),
+            children: [
+              // 第1层：完整底图
+              Image.asset(
                 bannerPath,
-                key: ValueKey(bannerPath),
-                fit: BoxFit.cover,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
                 errorBuilder: (_, __, ___) => Container(
+                  height: 180,
                   color: JournalColors.companionGradient.colors.first,
                 ),
               ),
-            ),
-            // 第2层：文字直接写在底图上（右侧留白区）
-            Positioned(
-              right: 20,
-              top: 24,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '甜甜在这里陪着你 ✨',
-                    style: TextStyle(
-                      fontFamily: JournalColors.fontFamily,
-                      fontSize: 16,
-                      color: Colors.white,
-                      shadows: const [
-                        Shadow(blurRadius: 4, color: Colors.black26, offset: Offset(1, 1)),
-                      ],
+              // 第2层：文字（右侧留白区）
+              Positioned(
+                right: 16,
+                bottom: 20,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '甜甜在这里陪着你',
+                      style: TextStyle(
+                        fontFamily: JournalColors.fontFamily,
+                        fontSize: 15,
+                        color: JournalColors.textDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '今天也要好好记录自己的小美好哦～',
-                    style: TextStyle(
-                      fontFamily: JournalColors.fontFamily,
-                      fontSize: 12,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      shadows: const [
-                        Shadow(blurRadius: 3, color: Colors.black26),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      '今天也要好好记录自己的小美好哦～',
+                      style: TextStyle(
+                        fontFamily: JournalColors.fontFamily,
+                        fontSize: 11,
+                        color: JournalColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

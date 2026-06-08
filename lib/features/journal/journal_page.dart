@@ -339,10 +339,9 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     return GestureDetector(
       onTap: () => context.push('/plan/journal/write'),
       child: Container(
-        width: double.infinity,
-        constraints: const BoxConstraints(minHeight: 160, maxHeight: 220),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
+          border: Border.all(color: JournalColors.pinkBorder, width: 1),
           boxShadow: [
             BoxShadow(
               color: JournalColors.shadow,
@@ -354,73 +353,67 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(28),
           child: Stack(
-            fit: StackFit.expand,
             children: [
               // 第1层：完整底图
               Image.asset(
                 PetAssets.journalTodayRecordBg,
+                width: double.infinity,
                 fit: BoxFit.fitWidth,
                 errorBuilder: (_, __, ___) => Container(
+                  height: 180,
                   decoration: BoxDecoration(gradient: JournalColors.heroGradient),
                 ),
               ),
-              // 第2层：代码文字覆盖（右侧，人物在左）
+              // 第2层：文字覆盖（右侧）
               Positioned(
-                right: 24,
-                top: 28,
+                right: 20,
+                bottom: 20,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // 标题行：铅笔图标 + 文字 + 星星图标
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Image.asset(
                           'assets/images/pet_center/deco/deco_pencil.png',
-                          width: 18,
-                          height: 18,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.edit_rounded, size: 18, color: Colors.white),
+                          width: 16,
+                          height: 16,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                         ),
                         const SizedBox(width: 6),
                         Text(
                           '今日记录',
                           style: TextStyle(
                             fontFamily: JournalColors.fontFamily,
-                            fontSize: 20,
-                            color: Colors.white,
-                            shadows: const [
-                              Shadow(blurRadius: 4, color: Colors.black26, offset: Offset(1, 1)),
-                            ],
+                            fontSize: 18,
+                            color: JournalColors.textDark,
                           ),
                         ),
                         const SizedBox(width: 6),
                         Image.asset(
                           'assets/images/pet_center/deco/deco_star.png',
-                          width: 16,
-                          height: 16,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.star_rounded, size: 16, color: Colors.white),
+                          width: 14,
+                          height: 14,
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Text(
                       count > 0 ? '已记录 $count 篇' : '开始记录今天的成长',
                       style: TextStyle(
                         fontFamily: JournalColors.fontFamily,
-                        fontSize: 13,
-                        color: Colors.white.withValues(alpha: 0.9),
-                        shadows: const [
-                          Shadow(blurRadius: 3, color: Colors.black26),
-                        ],
+                        fontSize: 12,
+                        color: JournalColors.textSecondary,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 10),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                          horizontal: 14, vertical: 8),
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: JournalColors.pinkMain,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Row(
@@ -430,7 +423,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                             'assets/images/pet_center/deco/deco_pencil.png',
                             width: 14,
                             height: 14,
-                            errorBuilder: (_, __, ___) => const Icon(Icons.edit_rounded, size: 14, color: JournalColors.pinkMain),
+                            errorBuilder: (_, __, ___) => const Icon(Icons.edit_rounded, size: 14, color: Colors.white),
                           ),
                           const SizedBox(width: 6),
                           Text(
@@ -438,7 +431,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                             style: TextStyle(
                               fontFamily: JournalColors.fontFamily,
                               fontSize: 13,
-                              color: JournalColors.pinkMain,
+                              color: Colors.white,
                             ),
                           ),
                         ],
@@ -735,9 +728,9 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> 
     final bannerPath = sceneState.config.state.bannerPath;
 
     return Container(
-      height: 180,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: JournalColors.pinkBorder, width: 1),
         boxShadow: [
           BoxShadow(
             color: JournalColors.shadow,
@@ -748,56 +741,51 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> 
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(28),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            // 第1层：完整底图
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 600),
-              child: Image.asset(
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 600),
+          child: Stack(
+            key: ValueKey(bannerPath),
+            children: [
+              // 第1层：完整底图
+              Image.asset(
                 bannerPath,
-                key: ValueKey(bannerPath),
-                fit: BoxFit.cover,
+                width: double.infinity,
+                fit: BoxFit.fitWidth,
                 errorBuilder: (_, __, ___) => Container(
+                  height: 180,
                   color: JournalColors.companionGradient.colors.first,
                 ),
               ),
-            ),
-            // 第2层：文字直接写在底图上（右侧留白区）
-            Positioned(
-              right: 24,
-              top: 32,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '甜甜',
-                    style: TextStyle(
-                      fontFamily: JournalColors.fontFamily,
-                      fontSize: 22,
-                      color: Colors.white,
-                      shadows: const [
-                        Shadow(blurRadius: 4, color: Colors.black26, offset: Offset(1, 1)),
-                      ],
+              // 第2层：文字（右侧留白区）
+              Positioned(
+                right: 20,
+                bottom: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '甜甜',
+                      style: TextStyle(
+                        fontFamily: JournalColors.fontFamily,
+                        fontSize: 20,
+                        color: JournalColors.textDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    '记录一下今天的成长吧！',
-                    style: TextStyle(
-                      fontFamily: JournalColors.fontFamily,
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.9),
-                      shadows: const [
-                        Shadow(blurRadius: 3, color: Colors.black26),
-                      ],
+                    const SizedBox(height: 4),
+                    Text(
+                      '记录一下今天的成长吧！',
+                      style: TextStyle(
+                        fontFamily: JournalColors.fontFamily,
+                        fontSize: 12,
+                        color: JournalColors.textSecondary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
