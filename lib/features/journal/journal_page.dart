@@ -339,9 +339,8 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     return GestureDetector(
       onTap: () => context.push('/plan/journal/write'),
       child: Container(
-        padding: const EdgeInsets.all(20),
+        height: 180,
         decoration: BoxDecoration(
-          gradient: JournalColors.heroGradient,
           borderRadius: BorderRadius.circular(28),
           boxShadow: [
             BoxShadow(
@@ -351,91 +350,82 @@ class _JournalPageState extends ConsumerState<JournalPage> {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '✏️ 今日记录 ✨',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(28),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // 第1层：完整底图
+              Image.asset(
+                PetAssets.journalTodayRecordBg,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  decoration: BoxDecoration(gradient: JournalColors.heroGradient),
+                ),
+              ),
+              // 第2层：代码文字覆盖（左侧）
+              Positioned(
+                left: 20,
+                top: 24,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '✏️ 今日记录 ✨',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(blurRadius: 4, color: Colors.black26),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    count > 0 ? '已记录 $count 篇' : '开始记录今天的成长',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.white.withValues(alpha: 0.85),
+                    const SizedBox(height: 6),
+                    Text(
+                      count > 0 ? '已记录 $count 篇' : '开始记录今天的成长',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withValues(alpha: 0.9),
+                        shadows: const [
+                          Shadow(blurRadius: 3, color: Colors.black26),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.edit_rounded,
-                          size: 15,
-                          color: JournalColors.pinkMain,
-                        ),
-                        SizedBox(width: 6),
-                        Text(
-                          '开始写日记',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.edit_rounded,
+                            size: 15,
                             color: JournalColors.pinkMain,
                           ),
-                        ),
-                      ],
+                          SizedBox(width: 6),
+                          Text(
+                            '开始写日记',
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: JournalColors.pinkMain,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            _buildPetImage(PetAssets.journalWriting, 80),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 甜甜图片（白色圆形底衬，防止透明PNG被渐变背景染色）
-  // ---------------------------------------------------------------------------
-
-  Widget _buildPetImage(String assetPath, double size) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: JournalColors.shadow,
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            ],
           ),
-        ],
-      ),
-      padding: EdgeInsets.all(size * 0.12),
-      child: Image.asset(
-        assetPath,
-        fit: BoxFit.contain,
-        errorBuilder: (_, __, ___) =>
-            Text('🐱', style: TextStyle(fontSize: size * 0.4)),
+        ),
       ),
     );
   }
@@ -718,12 +708,11 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> 
   @override
   Widget build(BuildContext context) {
     final sceneState = ref.watch(petSceneProvider(PetModuleType.journal));
-    final imagePath = sceneState.config.state.assetPath;
+    final bannerPath = sceneState.config.state.bannerPath;
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      height: 180,
       decoration: BoxDecoration(
-        gradient: JournalColors.companionGradient,
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
@@ -733,77 +722,82 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> 
           ),
         ],
       ),
-      child: Stack(
-        clipBehavior: Clip.none,
-        children: [
-          Row(
-            children: [
-              // 猫图 — 带 CrossFade 轮转动效
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 600),
-                child: Image.asset(
-                  imagePath,
-                  key: ValueKey(imagePath),
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                      const Text('🐱', style: TextStyle(fontSize: 40)),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(28),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 第1层：完整底图
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 600),
+              child: Image.asset(
+                bannerPath,
+                key: ValueKey(bannerPath),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: JournalColors.companionGradient.colors.first,
+                  child: const Center(child: Text('🐱', style: TextStyle(fontSize: 40))),
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: CustomPaint(
-                  painter: _BubblePainter(),
-                  child: Container(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '甜甜',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                            color: JournalColors.textDark,
-                          ),
+            ),
+            // 第2层：代码气泡（白色容器 + 三角尾巴）
+            Positioned(
+              right: 20,
+              top: 28,
+              child: CustomPaint(
+                painter: _BubblePainter(),
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+                  constraints: const BoxConstraints(maxWidth: 180),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.06),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '甜甜',
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                          color: JournalColors.textDark,
                         ),
-                        SizedBox(height: 4),
-                        Text(
-                          '记录一下今天的成长吧！',
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: JournalColors.textSecondary,
-                          ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        '记录一下今天的成长吧！',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: JournalColors.textSecondary,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-          // ❤️ 装饰爱心
-          Positioned(
-            top: -4,
-            right: 30,
-            child: Icon(Icons.favorite, size: 14, color: JournalColors.pinkMain.withValues(alpha: 0.35)),
-          ),
-          Positioned(
-            top: 16,
-            right: 8,
-            child: Icon(Icons.favorite, size: 10, color: JournalColors.pinkSoft.withValues(alpha: 0.45)),
-          ),
-          Positioned(
-            bottom: 8,
-            right: 50,
-            child: Icon(Icons.favorite, size: 12, color: JournalColors.pinkMain.withValues(alpha: 0.25)),
-          ),
-        ],
+            ),
+            // 第3层：爱心装饰
+            Positioned(
+              top: 12,
+              right: 12,
+              child: Icon(Icons.favorite, size: 14, color: JournalColors.pinkMain.withValues(alpha: 0.35)),
+            ),
+            Positioned(
+              top: 32,
+              right: 220,
+              child: Icon(Icons.favorite, size: 10, color: JournalColors.pinkSoft.withValues(alpha: 0.45)),
+            ),
+          ],
+        ),
       ),
     );
   }

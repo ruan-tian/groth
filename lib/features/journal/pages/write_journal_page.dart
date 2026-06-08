@@ -792,12 +792,11 @@ class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSec
   @override
   Widget build(BuildContext context) {
     final sceneState = ref.watch(petSceneProvider(PetModuleType.journal));
-    final imagePath = sceneState.config.state.assetPath;
+    final bannerPath = sceneState.config.state.bannerPath;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      height: 180,
       decoration: BoxDecoration(
-        gradient: JournalColors.companionGradient,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -807,81 +806,77 @@ class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSec
           ),
         ],
       ),
-      child: Column(
-        children: [
-          // Speech bubble
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: JournalColors.pinkMain.withValues(alpha: 0.06),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // 第1层：完整底图
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 600),
+              child: Image.asset(
+                bannerPath,
+                key: ValueKey(bannerPath),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: JournalColors.companionGradient.colors.first,
                 ),
-              ],
+              ),
             ),
-            child: const Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '甜甜在这里陪着你 ✨',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: JournalColors.textDark,
-                  ),
-                ),
-                SizedBox(height: 4),
-                Text(
-                  '今天也要好好记录自己的小美好哦～',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: JournalColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
-          // Cat image + hearts
-          Stack(
-            clipBehavior: Clip.none,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 600),
-                child: Image.asset(
-                  imagePath,
-                  key: ValueKey(imagePath),
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const SizedBox(
-                    width: 100,
-                    height: 100,
-                    child: Center(
-                      child: Icon(Icons.pets_rounded,
-                          size: 50, color: JournalColors.pinkSoft),
+            // 第2层：代码气泡
+            Positioned(
+              right: 16,
+              top: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                constraints: const BoxConstraints(maxWidth: 200),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: JournalColors.pinkMain.withValues(alpha: 0.06),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
+                  ],
+                ),
+                child: const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '甜甜在这里陪着你 ✨',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: JournalColors.textDark,
+                      ),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      '今天也要好好记录自己的小美好哦～',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: JournalColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Positioned(
-                top: -4,
-                right: 10,
-                child: Icon(Icons.favorite, size: 14,
-                    color: JournalColors.pinkMain.withValues(alpha: 0.4)),
-              ),
-              Positioned(
-                top: 10,
-                left: -8,
-                child: Icon(Icons.favorite, size: 10,
-                    color: JournalColors.pinkSoft.withValues(alpha: 0.5)),
-              ),
-            ],
-          ),
+            ),
+            // 第3层：爱心装饰
+            Positioned(
+              top: 10,
+              left: 16,
+              child: Icon(Icons.favorite, size: 14,
+                  color: JournalColors.pinkMain.withValues(alpha: 0.4)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
         ],
       ),
     );

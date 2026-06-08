@@ -27,6 +27,13 @@ class PetAssets {
   static const journalBook = 'assets/pet/journal/journal_book.png';
   static const journalDone = 'assets/pet/journal/journal_done.png';
 
+  // ── Journal Banners (完整底图，陪伴卡轮播用) ──
+  static const journalBannerWriting = 'assets/journal/banners/journal_banner_writing.png';
+  static const journalBannerThinking = 'assets/journal/banners/journal_banner_thinking.png';
+  static const journalBannerReading = 'assets/journal/banners/journal_banner_reading.png';
+  static const journalBannerDone = 'assets/journal/banners/journal_banner_done.png';
+  static const journalTodayRecordBg = 'assets/journal/banners/journal_today_record_bg.png';
+
   static const dietEating = 'assets/pet/diet/diet_eating.png';
   static const dietDrink = 'assets/pet/diet/diet_drink.png';
   static const dietPlate = 'assets/pet/diet/diet_plate.png';

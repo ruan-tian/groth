@@ -248,6 +248,22 @@ extension PetSceneStateTypeX on PetSceneStateType {
     }
   }
 
+  /// 完整底图路径（日记陪伴卡轮播用，其他模块 fallback 到 assetPath）
+  String get bannerPath {
+    switch (this) {
+      case PetSceneStateType.journalWriting:
+        return PetAssets.journalBannerWriting;
+      case PetSceneStateType.journalThinking:
+        return PetAssets.journalBannerThinking;
+      case PetSceneStateType.journalBook:
+        return PetAssets.journalBannerReading;
+      case PetSceneStateType.journalDone:
+        return PetAssets.journalBannerDone;
+      default:
+        return assetPath;
+    }
+  }
+
   /// fallback 资源路径（使用现有 pet_idle.png）
   String get fallbackAssetPath => PetAssets.commonFallback;
 
