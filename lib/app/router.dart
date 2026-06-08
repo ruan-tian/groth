@@ -466,5 +466,10 @@ final goRouter = GoRouter(
       pageBuilder: (context, state) =>
           buildSlideTransition(context, state, const PetSettingsPage()),
     ),
+    GoRoute(
+      path: '/ai-config',
+      pageBuilder: (context, state) =>
+          MaterialPage<void>(key: state.pageKey, child: const AiConfigPage()),
+    ),
   ],
 );

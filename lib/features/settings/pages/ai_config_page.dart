@@ -227,7 +227,9 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
       );
 
       if (mounted) {
-        _showSnackBar('连接测试成功！AI 响应: ${result.length > 50 ? "${result.substring(0, 50)}..." : result}');
+        _showSnackBar(
+          '连接测试成功！AI 响应: ${result.length > 50 ? "${result.substring(0, 50)}..." : result}',
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -242,7 +244,9 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError ? const Color(0xFFFF6B6B) : const Color(0xFF35C976),
+        backgroundColor: isError
+            ? const Color(0xFFFF6B6B)
+            : const Color(0xFF35C976),
       ),
     );
   }
@@ -338,54 +342,66 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
           onPressed: () => context.pop(),
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // ── 说明卡片 ──
-                  _buildInfoCard(),
-                  const SizedBox(height: 24),
+      body: SafeArea(
+        top: false,
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : LayoutBuilder(
+                builder: (context, constraints) {
+                  return SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(
+                        minHeight: constraints.maxHeight - 40,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // ── 说明卡片 ──
+                          _buildInfoCard(),
+                          const SizedBox(height: 24),
 
-                  // ── 服务提供商选择（3列网格） ──
-                  _buildSectionTitle('选择服务商'),
-                  const SizedBox(height: 12),
-                  _buildProviderGrid(),
-                  const SizedBox(height: 24),
+                          // ── 服务提供商选择（3列网格） ──
+                          _buildSectionTitle('选择服务商'),
+                          const SizedBox(height: 12),
+                          _buildProviderGrid(),
+                          const SizedBox(height: 24),
 
-                  // ── API 配置 ──
-                  _buildSectionTitle('API 配置'),
-                  const SizedBox(height: 12),
-                  _buildApiConfigForm(),
-                  const SizedBox(height: 24),
+                          // ── API 配置 ──
+                          _buildSectionTitle('API 配置'),
+                          const SizedBox(height: 12),
+                          _buildApiConfigForm(),
+                          const SizedBox(height: 24),
 
-                  // ── 模型选择 ──
-                  if (_selectedProvider != null &&
-                      _selectedProvider!.models.isNotEmpty) ...[
-                    _buildSectionTitle('模型选择'),
-                    const SizedBox(height: 12),
-                    _buildModelSelector(),
-                    const SizedBox(height: 24),
-                  ],
+                          // ── 模型选择 ──
+                          if (_selectedProvider != null &&
+                              _selectedProvider!.models.isNotEmpty) ...[
+                            _buildSectionTitle('模型选择'),
+                            const SizedBox(height: 12),
+                            _buildModelSelector(),
+                            const SizedBox(height: 24),
+                          ],
 
-                  // ── 高级参数 ──
-                  _buildSectionTitle('高级参数'),
-                  const SizedBox(height: 12),
-                  _buildAdvancedParams(),
-                  const SizedBox(height: 24),
+                          // ── 高级参数 ──
+                          _buildSectionTitle('高级参数'),
+                          const SizedBox(height: 12),
+                          _buildAdvancedParams(),
+                          const SizedBox(height: 24),
 
-                  // ── 测试连接按钮 ──
-                  _buildTestButton(),
-                  const SizedBox(height: 12),
+                          // ── 测试连接按钮 ──
+                          _buildTestButton(),
+                          const SizedBox(height: 12),
 
-                  // ── 保存按钮 ──
-                  _buildSaveButton(),
-                  const SizedBox(height: 40),
-                ],
+                          // ── 保存按钮 ──
+                          _buildSaveButton(),
+                          const SizedBox(height: 40),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
-            ),
+      ),
     );
   }
 
@@ -501,17 +517,16 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(
-              provider.icon,
-              style: const TextStyle(fontSize: 28),
-            ),
+            Text(provider.icon, style: const TextStyle(fontSize: 28)),
             const SizedBox(height: 6),
             Text(
               provider.name,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? const Color(0xFF5C3D2E) : const Color(0xFF8B6F5E),
+                color: isSelected
+                    ? const Color(0xFF5C3D2E)
+                    : const Color(0xFF8B6F5E),
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
@@ -662,7 +677,9 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE8C9A0).withValues(alpha: 0.3)),
+        border: Border.all(
+          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -671,12 +688,29 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('温度 (Temperature)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF5C3D2E))),
-              Text(_temperature.toStringAsFixed(1), style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFD4A574))),
+              const Text(
+                '温度 (Temperature)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF5C3D2E),
+                ),
+              ),
+              Text(
+                _temperature.toStringAsFixed(1),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFD4A574),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text('控制输出的随机性。0=确定性，2=最大随机', style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A))),
+          const Text(
+            '控制输出的随机性。0=确定性，2=最大随机',
+            style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
+          ),
           Slider(
             value: _temperature,
             min: 0.0,
@@ -691,12 +725,29 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('最大 Token 数', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: Color(0xFF5C3D2E))),
-              Text('$_maxTokens', style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFFD4A574))),
+              const Text(
+                '最大 Token 数',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF5C3D2E),
+                ),
+              ),
+              Text(
+                '$_maxTokens',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFFD4A574),
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text('控制 AI 回复的最大长度。1 token ≈ 1.5 个中文字', style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A))),
+          const Text(
+            '控制 AI 回复的最大长度。1 token ≈ 1.5 个中文字',
+            style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
+          ),
           Slider(
             value: _maxTokens.toDouble(),
             min: 256,
@@ -737,7 +788,9 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFFFF1DF) : const Color(0xFFF8F8F8),
+                color: isSelected
+                    ? const Color(0xFFFFF1DF)
+                    : const Color(0xFFF8F8F8),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected
@@ -750,7 +803,9 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? const Color(0xFF5C3D2E) : const Color(0xFF8B6F5E),
+                  color: isSelected
+                      ? const Color(0xFF5C3D2E)
+                      : const Color(0xFF8B6F5E),
                 ),
               ),
             ),

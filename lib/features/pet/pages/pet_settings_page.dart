@@ -9,6 +9,7 @@ import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../services/pet_diary_service.dart';
 import '../utils/pet_assets.dart';
+import '../widgets/pet_floating_asset.dart';
 
 class PetSettingsPage extends ConsumerStatefulWidget {
   const PetSettingsPage({super.key});
@@ -121,7 +122,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
                   title: 'AI 配置',
                   subtitle: '配置本地保存的 API Key 和模型',
                   trailing: const Icon(Icons.chevron_right_rounded),
-                  onTap: () => context.push('/settings/ai-config'),
+                  onTap: () => context.push('/ai-config'),
                 ),
               ],
             ),
@@ -181,15 +182,10 @@ class _HeroCard extends StatelessWidget {
     return _PaperCard(
       child: Row(
         children: [
-          Container(
-            width: 76,
-            height: 76,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFE8D7),
-              borderRadius: BorderRadius.circular(22),
-            ),
-            child: Image.asset(PetCenterAssets.petIdle, fit: BoxFit.contain),
+          const PetFloatingAsset(
+            asset: PetCenterAssets.petIdle,
+            size: 82,
+            padding: 1,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -358,16 +354,7 @@ class _ImageBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 42,
-      height: 42,
-      padding: const EdgeInsets.all(7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF0E4),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Image.asset(asset, fit: BoxFit.contain),
-    );
+    return PetFloatingAsset(asset: asset, size: 42, padding: 1);
   }
 }
 

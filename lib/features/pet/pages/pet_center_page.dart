@@ -9,6 +9,7 @@ import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/pet_provider.dart';
 import '../utils/pet_assets.dart';
+import '../widgets/pet_floating_asset.dart';
 import '../widgets/pet_journal_section.dart';
 import '../widgets/pet_scene_hero.dart';
 
@@ -150,10 +151,7 @@ class _GrowthIdentityCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              _AssetBadge(
-                asset: PetAssets.eventLevelUp,
-                color: const Color(0xFFFFE5B8),
-              ),
+              _AssetBadge(asset: PetAssets.eventLevelUp, size: 58),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -461,7 +459,7 @@ class _ActionRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _AssetBadge(asset: asset, color: Colors.white),
+            _AssetBadge(asset: asset, size: 52),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -619,23 +617,14 @@ class _LevelPill extends StatelessWidget {
 }
 
 class _AssetBadge extends StatelessWidget {
-  const _AssetBadge({required this.asset, required this.color});
+  const _AssetBadge({required this.asset, this.size = 54});
 
   final String asset;
-  final Color color;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 54,
-      height: 54,
-      padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Image.asset(asset, fit: BoxFit.contain),
-    );
+    return PetFloatingAsset(asset: asset, size: size, padding: 3);
   }
 }
 
@@ -646,16 +635,7 @@ class _AssetMini extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 36,
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF0E4),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Image.asset(asset, fit: BoxFit.contain),
-    );
+    return PetFloatingAsset(asset: asset, size: 36, padding: 2);
   }
 }
 

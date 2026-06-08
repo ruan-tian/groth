@@ -168,6 +168,11 @@ class _PetSceneHeroState extends ConsumerState<PetSceneHero>
             .toDouble();
         final petBottom = height * 0.095;
         final petLeft = (width - petSize) / 2;
+        final narrowBubble = width < 380;
+        final bubbleWidth = narrowBubble
+            ? math.min(width - 32, 300.0)
+            : math.min(width - 32, 360.0);
+        final bubbleTop = math.max(76.0, height * 0.18);
 
         return GestureDetector(
           behavior: HitTestBehavior.translucent,
@@ -257,9 +262,10 @@ class _PetSceneHeroState extends ConsumerState<PetSceneHero>
                   ),
                 ),
                 Positioned(
-                  top: math.max(72, height * 0.18),
-                  right: 20,
-                  width: math.min(252, width - 40),
+                  top: bubbleTop,
+                  left: narrowBubble ? (width - bubbleWidth) / 2 : null,
+                  right: narrowBubble ? null : math.max(16.0, width * 0.08),
+                  width: bubbleWidth,
                   child: _PetSpeechBubble(
                     text: bubbleText,
                     accent: tint.accent,
@@ -487,75 +493,54 @@ class _PetSpeechBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 280),
-      child: CustomPaint(
+      child: Stack(
         key: ValueKey(text),
-        painter: _BubbleTailPainter(
-          color: Colors.white.withValues(alpha: 0.82),
-          borderColor: Colors.white.withValues(alpha: 0.92),
-        ),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 42),
-          padding: const EdgeInsets.fromLTRB(15, 10, 15, 13),
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.82),
-            borderRadius: BorderRadius.circular(23),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.92)),
-            boxShadow: [
-              BoxShadow(
-                color: accent.withValues(alpha: 0.14),
-                blurRadius: 22,
-                offset: const Offset(0, 8),
+        clipBehavior: Clip.none,
+        children: [
+          Container(
+            constraints: const BoxConstraints(minHeight: 44),
+            padding: const EdgeInsets.fromLTRB(17, 11, 17, 12),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.84),
+              borderRadius: BorderRadius.circular(23),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.94)),
+              boxShadow: [
+                BoxShadow(
+                  color: accent.withValues(alpha: 0.14),
+                  blurRadius: 22,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Text(
+              text,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.35,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0,
+                color: Color(0xFF5D4E57),
               ),
-            ],
-          ),
-          child: Text(
-            text,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.35,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0,
-              color: Color(0xFF5D4E57),
             ),
           ),
-        ),
+          Positioned(
+            right: 28,
+            bottom: -12,
+            width: 34,
+            height: 22,
+            child: Image.asset(
+              PetCenterAssets.bubbleTail,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ],
       ),
     );
-  }
-}
-
-class _BubbleTailPainter extends CustomPainter {
-  const _BubbleTailPainter({required this.color, required this.borderColor});
-
-  final Color color;
-  final Color borderColor;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final tailX = size.width * 0.52;
-    final tailTop = size.height - 2;
-    final path = Path()
-      ..moveTo(tailX - 9, tailTop)
-      ..quadraticBezierTo(tailX, tailTop + 14, tailX + 18, tailTop + 17)
-      ..quadraticBezierTo(tailX + 5, tailTop + 7, tailX + 9, tailTop)
-      ..close();
-
-    canvas.drawPath(path, Paint()..color = color);
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = borderColor
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _BubbleTailPainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.borderColor != borderColor;
   }
 }
 

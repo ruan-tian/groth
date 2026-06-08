@@ -46,11 +46,11 @@ class PetAssets {
   static const moduleDefaultFocus = 'assets/pet/study/study_focus.png';
 
   // ── Focus Module (aliases to existing images) ──
-  static const focusReading  = 'assets/pet/study/study_reading.png';
-  static const focusWriting  = 'assets/pet/study/study_writing.png';
+  static const focusReading = 'assets/pet/study/study_reading.png';
+  static const focusWriting = 'assets/pet/study/study_writing.png';
   static const focusThinking = 'assets/pet/study/study_focus.png';
-  static const focusDone     = 'assets/pet/study/study_done.png';
-  static const focusRest     = 'assets/pet/life/喝个茶.png';
+  static const focusDone = 'assets/pet/study/study_done.png';
+  static const focusRest = 'assets/pet/life/喝个茶.png';
 
   // ── Common States ──
   static const commonHappy = 'assets/pet/common/common_happy.png';
@@ -131,6 +131,7 @@ class PetCenterAssets {
   static const bubbleTip = '$_root/effects/bubble_pet_tip.png';
   static const softShadow = '$_root/effects/soft_shadow_pet.png';
   static const roomGlow = '$_root/effects/light_room_glow.webp';
+  static const bubbleTail = 'assets/images/weather/common/bubble_tail.png';
 
   static const all = <String>[
     bgMorning,
@@ -158,6 +159,7 @@ class PetCenterAssets {
     particleSparkle,
     particlePetals,
     bubbleTip,
+    bubbleTail,
     softShadow,
     roomGlow,
   ];

@@ -210,6 +210,14 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // ── 0. 宠物提示条 ──
+              PetSceneBanner(
+                module: PetModuleType.journal,
+                hasRecords: (todayCount.whenOrNull(data: (c) => c) ?? 0) > 0,
+                onTap: () => context.push('/pet-center'),
+              ),
+              const SizedBox(height: 16),
+
               // ── 1. Streak Banner ──
               streak.when(
                 data: (s) => s > 0

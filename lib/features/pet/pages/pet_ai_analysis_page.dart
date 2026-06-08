@@ -12,6 +12,7 @@ import '../utils/pet_assets.dart';
 import '../utils/pet_data_collector.dart';
 import '../widgets/pet_ai_data_preview_sheet.dart';
 import '../widgets/pet_ai_result_sheet.dart';
+import '../widgets/pet_floating_asset.dart';
 
 class PetAIAnalysisPage extends ConsumerStatefulWidget {
   const PetAIAnalysisPage({super.key, this.initialTab});
@@ -157,15 +158,10 @@ class _AiHeroCard extends StatelessWidget {
     return _PaperCard(
       child: Row(
         children: [
-          Container(
-            width: 84,
-            height: 84,
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: const Color(0xFFEFF1FF),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Image.asset(PetAssets.aiThinking, fit: BoxFit.contain),
+          const PetFloatingAsset(
+            asset: PetAssets.aiThinking,
+            size: 88,
+            padding: 2,
           ),
           const SizedBox(width: 16),
           const Expanded(
@@ -313,12 +309,7 @@ class _AnalysisCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Image.asset(
-                entry.asset,
-                width: 44,
-                height: 44,
-                fit: BoxFit.contain,
-              ),
+              PetFloatingAsset(asset: entry.asset, size: 46, padding: 1),
               const Spacer(),
               Text(
                 entry.title,
@@ -394,7 +385,7 @@ class _ErrorCard extends StatelessWidget {
     return _PaperCard(
       child: Row(
         children: [
-          Image.asset(PetAssets.aiNetworkError, width: 48, height: 48),
+          const PetFloatingAsset(asset: PetAssets.aiNetworkError, size: 50),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -471,16 +462,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 42,
-          height: 42,
-          padding: const EdgeInsets.all(7),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFFF0E4),
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Image.asset(asset, fit: BoxFit.contain),
-        ),
+        PetFloatingAsset(asset: asset, size: 42, padding: 1),
         const SizedBox(width: 10),
         Expanded(
           child: Column(

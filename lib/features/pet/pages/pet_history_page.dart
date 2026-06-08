@@ -9,6 +9,7 @@ import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/pet_provider.dart';
 import '../utils/pet_assets.dart';
+import '../widgets/pet_floating_asset.dart';
 
 final _petHistoryDataProvider = FutureProvider.autoDispose<PetHistoryData>((
   ref,
@@ -618,15 +619,10 @@ class _ImageBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      padding: EdgeInsets.all(size > 50 ? 9 : 7),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF0E4),
-        borderRadius: BorderRadius.circular(size > 50 ? 20 : 14),
-      ),
-      child: Image.asset(asset, fit: BoxFit.contain),
+    return PetFloatingAsset(
+      asset: asset,
+      size: size,
+      padding: size > 50 ? 3 : 2,
     );
   }
 }
