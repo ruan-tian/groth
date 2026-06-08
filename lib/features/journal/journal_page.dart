@@ -453,18 +453,6 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       ),
     );
   }
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   // ---------------------------------------------------------------------------
   // Tag Filter
