@@ -89,7 +89,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   }
 
   void _initAudio() {
-    final soundType = widget.soundType;
+    final soundType = ref.read(focusCycleProvider).soundType;
     if (soundType != null && soundType.isNotEmpty && soundType != 'none') {
       Future.microtask(() {
         if (mounted) {
@@ -363,6 +363,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
         body: LayoutBuilder(
           builder: (context, constraints) {
             final isLandscape = constraints.maxWidth >= constraints.maxHeight;
+            final isCompactLandscape =
+                isLandscape &&
+                (constraints.maxWidth < 900 || constraints.maxHeight < 520);
             return Stack(
               children: [
                 Positioned.fill(
@@ -385,7 +388,20 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     color: const Color(0xFF061C29).withValues(alpha: 0.28),
                   ),
                 ),
-                if (isLandscape)
+                if (isCompactLandscape)
+                  _CompactLandscapeSession(
+                    cycleState: cycleState,
+                    isCycleDone: isCycleDone,
+                    onCancel: _showCancelDialog,
+                    onPause: _pauseTimer,
+                    onResume: _resumeTimer,
+                    onSkipBreak: _skipBreak,
+                    onReturn: () => context.pop(),
+                    onSoundChanged: (value) {
+                      ref.read(focusCycleProvider.notifier).setSoundType(value);
+                    },
+                  )
+                else if (isLandscape)
                   _LandscapeSession(
                     cycleState: cycleState,
                     isCycleDone: isCycleDone,
@@ -394,6 +410,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
+                    onSoundChanged: (value) {
+                      ref.read(focusCycleProvider.notifier).setSoundType(value);
+                    },
                   )
                 else
                   _PortraitSession(
@@ -404,6 +423,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
+                    onSoundChanged: (value) {
+                      ref.read(focusCycleProvider.notifier).setSoundType(value);
+                    },
                   ),
               ],
             );
@@ -423,6 +445,7 @@ class _PortraitSession extends StatelessWidget {
     required this.onResume,
     required this.onSkipBreak,
     required this.onReturn,
+    required this.onSoundChanged,
   });
 
   final FocusCycleState cycleState;
@@ -432,6 +455,7 @@ class _PortraitSession extends StatelessWidget {
   final VoidCallback onResume;
   final VoidCallback onSkipBreak;
   final VoidCallback onReturn;
+  final ValueChanged<String?> onSoundChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -448,7 +472,7 @@ class _PortraitSession extends StatelessWidget {
           ListView(
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 28),
             children: [
-              _SessionTopBar(title: '番茄专注', onBack: onCancel, centered: true),
+              _SessionTopBar(title: '', onBack: onCancel, centered: true),
               const SizedBox(height: 14),
               _RoundStepper(cycleState: cycleState, dark: true),
               const SizedBox(height: 22),
@@ -467,12 +491,6 @@ class _PortraitSession extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 18),
-              FocusSoundPanel(
-                initialSoundType: cycleState.soundType ?? 'none',
-                compact: true,
-                dark: true,
-              ),
-              const SizedBox(height: 22),
               _SessionControls(
                 cycleState: cycleState,
                 isCycleDone: isCycleDone,
@@ -481,6 +499,13 @@ class _PortraitSession extends StatelessWidget {
                 onResume: onResume,
                 onSkipBreak: onSkipBreak,
                 onReturn: onReturn,
+              ),
+              const SizedBox(height: 18),
+              FocusSoundPanel(
+                initialSoundType: cycleState.soundType ?? 'none',
+                compact: true,
+                dark: true,
+                onSoundChanged: onSoundChanged,
               ),
               const SizedBox(height: 18),
               _NextPhaseCard(cycleState: cycleState),
@@ -503,6 +528,7 @@ class _LandscapeSession extends StatelessWidget {
     required this.onResume,
     required this.onSkipBreak,
     required this.onReturn,
+    required this.onSoundChanged,
   });
 
   final FocusCycleState cycleState;
@@ -512,6 +538,7 @@ class _LandscapeSession extends StatelessWidget {
   final VoidCallback onResume;
   final VoidCallback onSkipBreak;
   final VoidCallback onReturn;
+  final ValueChanged<String?> onSoundChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -574,11 +601,6 @@ class _LandscapeSession extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            FocusSoundPanel(
-                              initialSoundType: cycleState.soundType ?? 'none',
-                              dark: true,
-                            ),
-                            const SizedBox(height: 22),
                             Row(
                               children: [
                                 Expanded(
@@ -600,6 +622,12 @@ class _LandscapeSession extends StatelessWidget {
                                   ),
                                 ),
                               ],
+                            ),
+                            const SizedBox(height: 18),
+                            FocusSoundPanel(
+                              initialSoundType: cycleState.soundType ?? 'none',
+                              dark: true,
+                              onSoundChanged: onSoundChanged,
                             ),
                             const SizedBox(height: 20),
                             Row(
@@ -628,16 +656,132 @@ class _LandscapeSession extends StatelessWidget {
   }
 }
 
+class _CompactLandscapeSession extends StatelessWidget {
+  const _CompactLandscapeSession({
+    required this.cycleState,
+    required this.isCycleDone,
+    required this.onCancel,
+    required this.onPause,
+    required this.onResume,
+    required this.onSkipBreak,
+    required this.onReturn,
+    required this.onSoundChanged,
+  });
+
+  final FocusCycleState cycleState;
+  final bool isCycleDone;
+  final VoidCallback onCancel;
+  final VoidCallback onPause;
+  final VoidCallback onResume;
+  final VoidCallback onSkipBreak;
+  final VoidCallback onReturn;
+  final ValueChanged<String?> onSoundChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.sizeOf(context);
+    final timerSize = math.min(size.height * 0.72, size.width * 0.34);
+    return SafeArea(
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: Image.asset(FocusAssets.deskLandscape, fit: BoxFit.fitWidth),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(18, 10, 18, 12),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: math.max(260, size.width * 0.38),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      _SessionTopBar(
+                        title: '',
+                        onBack: onCancel,
+                        centered: true,
+                        compact: true,
+                      ),
+                      const SizedBox(height: 8),
+                      _RoundStepper(
+                        cycleState: cycleState,
+                        dark: true,
+                        compact: true,
+                      ),
+                      const SizedBox(height: 6),
+                      _SessionTitleBlock(
+                        cycleState: cycleState,
+                        centered: true,
+                        compact: true,
+                      ),
+                      const SizedBox(height: 6),
+                      TimerDisplay(
+                        remaining: Duration(
+                          seconds: cycleState.remainingSeconds,
+                        ),
+                        total: _totalFor(cycleState),
+                        isBreak: cycleState.isBreak,
+                        size: timerSize,
+                        dark: true,
+                        roundLabel:
+                            '第 ${cycleState.currentRound} / ${cycleState.totalRounds} 轮',
+                        catAsset: FocusAssets.catForCycle(cycleState),
+                        showCat: false,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    children: [
+                      _SessionControls(
+                        cycleState: cycleState,
+                        isCycleDone: isCycleDone,
+                        onCancel: onCancel,
+                        onPause: onPause,
+                        onResume: onResume,
+                        onSkipBreak: onSkipBreak,
+                        onReturn: onReturn,
+                        compact: true,
+                      ),
+                      const SizedBox(height: 12),
+                      FocusSoundPanel(
+                        initialSoundType: cycleState.soundType ?? 'none',
+                        compact: true,
+                        dark: true,
+                        onSoundChanged: onSoundChanged,
+                      ),
+                      const SizedBox(height: 12),
+                      _NextPhaseCard(cycleState: cycleState, compact: true),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _SessionTopBar extends StatelessWidget {
   const _SessionTopBar({
     required this.title,
     required this.onBack,
     required this.centered,
+    this.compact = false,
   });
 
   final String title;
   final VoidCallback onBack;
   final bool centered;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -645,18 +789,19 @@ class _SessionTopBar extends StatelessWidget {
       children: [
         _RoundIconButton(icon: Icons.arrow_back_ios_new_rounded, onTap: onBack),
         if (centered) const Spacer(),
-        Padding(
-          padding: EdgeInsets.only(left: centered ? 0 : 18),
-          child: Text(
-            title,
-            style: const TextStyle(
-              color: _sessionCream,
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 0,
+        if (title.isNotEmpty)
+          Padding(
+            padding: EdgeInsets.only(left: centered ? 0 : 18),
+            child: Text(
+              title,
+              style: TextStyle(
+                color: _sessionCream,
+                fontSize: compact ? 22 : 30,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+              ),
             ),
           ),
-        ),
         if (centered) const Spacer(),
         if (centered) const SizedBox(width: 54),
       ],
@@ -665,10 +810,15 @@ class _SessionTopBar extends StatelessWidget {
 }
 
 class _RoundStepper extends StatelessWidget {
-  const _RoundStepper({required this.cycleState, required this.dark});
+  const _RoundStepper({
+    required this.cycleState,
+    required this.dark,
+    this.compact = false,
+  });
 
   final FocusCycleState cycleState;
   final bool dark;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -683,8 +833,8 @@ class _RoundStepper extends StatelessWidget {
         return Row(
           children: [
             Container(
-              width: active ? 46 : 40,
-              height: active ? 46 : 40,
+              width: active ? (compact ? 34 : 46) : (compact ? 30 : 40),
+              height: active ? (compact ? 34 : 46) : (compact ? 30 : 40),
               decoration: BoxDecoration(
                 color: active
                     ? _sessionMint.withValues(alpha: 0.86)
@@ -702,7 +852,7 @@ class _RoundStepper extends StatelessWidget {
                   '$round',
                   style: TextStyle(
                     color: active ? _sessionInk : _sessionCream,
-                    fontSize: 18,
+                    fontSize: compact ? 14 : 18,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -710,7 +860,7 @@ class _RoundStepper extends StatelessWidget {
             ),
             if (round != cycleState.totalRounds)
               Container(
-                width: 34,
+                width: compact ? 18 : 34,
                 height: 2,
                 margin: const EdgeInsets.symmetric(horizontal: 6),
                 color: _sessionCream.withValues(alpha: 0.58),
@@ -723,10 +873,15 @@ class _RoundStepper extends StatelessWidget {
 }
 
 class _SessionTitleBlock extends StatelessWidget {
-  const _SessionTitleBlock({required this.cycleState, required this.centered});
+  const _SessionTitleBlock({
+    required this.cycleState,
+    required this.centered,
+    this.compact = false,
+  });
 
   final FocusCycleState cycleState;
   final bool centered;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -745,9 +900,9 @@ class _SessionTitleBlock extends StatelessWidget {
           textAlign: centered ? TextAlign.center : TextAlign.start,
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             color: _sessionCream,
-            fontSize: 28,
+            fontSize: compact ? 20 : 28,
             fontWeight: FontWeight.w900,
           ),
         ),
@@ -762,9 +917,9 @@ class _SessionTitleBlock extends StatelessWidget {
             ),
             child: Text(
               cycleState.subject,
-              style: const TextStyle(
+              style: TextStyle(
                 color: _sessionMint,
-                fontSize: 15,
+                fontSize: compact ? 12 : 15,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -784,6 +939,7 @@ class _SessionControls extends StatelessWidget {
     required this.onResume,
     required this.onSkipBreak,
     required this.onReturn,
+    this.compact = false,
   });
 
   final FocusCycleState cycleState;
@@ -793,6 +949,7 @@ class _SessionControls extends StatelessWidget {
   final VoidCallback onResume;
   final VoidCallback onSkipBreak;
   final VoidCallback onReturn;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -803,6 +960,7 @@ class _SessionControls extends StatelessWidget {
           label: '返回',
           onTap: onReturn,
           large: true,
+          compact: compact,
         ),
       );
     }
@@ -816,8 +974,9 @@ class _SessionControls extends StatelessWidget {
           label: cycleState.isBreak ? '跳过' : '取消',
           onTap: cycleState.isBreak ? onSkipBreak : onCancel,
           danger: !cycleState.isBreak,
+          compact: compact,
         ),
-        const SizedBox(width: 28),
+        SizedBox(width: compact ? 16 : 28),
         _GlowButton(
           icon: cycleState.isRunning
               ? Icons.pause_rounded
@@ -825,6 +984,7 @@ class _SessionControls extends StatelessWidget {
           label: cycleState.isRunning ? '暂停专注' : '继续专注',
           onTap: cycleState.isRunning ? onPause : onResume,
           large: true,
+          compact: compact,
         ),
       ],
     );
@@ -837,25 +997,32 @@ class _ControlColumn extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.danger,
+    required this.compact,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool danger;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _RoundIconButton(icon: icon, onTap: onTap, danger: danger),
-        const SizedBox(height: 8),
+        _RoundIconButton(
+          icon: icon,
+          onTap: onTap,
+          danger: danger,
+          size: compact ? 42 : 54,
+        ),
+        SizedBox(height: compact ? 5 : 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: _sessionCream,
-            fontSize: 15,
+            fontSize: compact ? 12 : 15,
             fontWeight: FontWeight.w800,
           ),
         ),
@@ -869,25 +1036,27 @@ class _RoundIconButton extends StatelessWidget {
     required this.icon,
     required this.onTap,
     this.danger = false,
+    this.size = 54,
   });
 
   final IconData icon;
   final VoidCallback onTap;
   final bool danger;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 54,
-        height: 54,
+        width: size,
+        height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: danger ? const Color(0x331A0E0A) : const Color(0x220D3540),
           border: Border.all(color: _sessionCream.withValues(alpha: 0.72)),
         ),
-        child: Icon(icon, color: _sessionCream, size: 26),
+        child: Icon(icon, color: _sessionCream, size: size * 0.48),
       ),
     );
   }
@@ -899,23 +1068,26 @@ class _GlowButton extends StatelessWidget {
     required this.label,
     required this.onTap,
     required this.large,
+    this.compact = false,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback onTap;
   final bool large;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final buttonSize = compact ? 58.0 : (large ? 86.0 : 64.0);
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         GestureDetector(
           onTap: onTap,
           child: Container(
-            width: large ? 86 : 64,
-            height: large ? 86 : 64,
+            width: buttonSize,
+            height: buttonSize,
             decoration: BoxDecoration(
               color: _sessionMint.withValues(alpha: 0.9),
               shape: BoxShape.circle,
@@ -928,15 +1100,23 @@ class _GlowButton extends StatelessWidget {
               ],
               border: Border.all(color: Colors.white.withValues(alpha: 0.76)),
             ),
-            child: Icon(icon, color: Colors.white, size: large ? 44 : 32),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: compact
+                  ? 30
+                  : large
+                  ? 44
+                  : 32,
+            ),
           ),
         ),
         const SizedBox(height: 8),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             color: _sessionMint,
-            fontSize: 16,
+            fontSize: compact ? 13 : 16,
             fontWeight: FontWeight.w900,
           ),
         ),

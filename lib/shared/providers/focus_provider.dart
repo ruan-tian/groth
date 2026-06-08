@@ -168,7 +168,7 @@ class FocusCycleState {
     int? longBreakSeconds,
     String? title,
     String? subject,
-    String? soundType,
+    Object? soundType = _focusCycleUnset,
     String? type,
   }) {
     return FocusCycleState(
@@ -186,7 +186,9 @@ class FocusCycleState {
       longBreakSeconds: longBreakSeconds ?? this.longBreakSeconds,
       title: title ?? this.title,
       subject: subject ?? this.subject,
-      soundType: soundType ?? this.soundType,
+      soundType: soundType == _focusCycleUnset
+          ? this.soundType
+          : soundType as String?,
       type: type ?? this.type,
     );
   }
@@ -237,6 +239,8 @@ class FocusCycleState {
     );
   }
 }
+
+const Object _focusCycleUnset = Object();
 
 // =============================================================================
 // 专注循环 Notifier（状态机）
@@ -309,6 +313,11 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
     if (!state.isBreak) return;
     _tickTimer?.cancel();
     _advanceToNextPhase();
+  }
+
+  void setSoundType(String? soundType) {
+    state = state.copyWith(soundType: soundType);
+    _persist();
   }
 
   /// 取消整个循环

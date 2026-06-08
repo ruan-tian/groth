@@ -10,11 +10,13 @@ class FocusSoundPanel extends ConsumerWidget {
     required this.initialSoundType,
     this.compact = false,
     this.dark = false,
+    this.onSoundChanged,
   });
 
   final String initialSoundType;
   final bool compact;
   final bool dark;
+  final ValueChanged<String?>? onSoundChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -75,10 +77,7 @@ class FocusSoundPanel extends ConsumerWidget {
             runSpacing: compact ? 8 : 10,
             children: focusSoundOptions
                 .map((sound) {
-                  final selected =
-                      current == sound.value ||
-                      (sound.value == 'none' &&
-                          audioState.currentSoundType == null);
+                  final selected = current == sound.value;
                   return _SessionSoundTile(
                     label: sound.label,
                     asset: sound.asset,
@@ -88,10 +87,12 @@ class FocusSoundPanel extends ConsumerWidget {
                     onTap: () {
                       if (sound.value == 'none') {
                         ref.read(focusAudioStateProvider.notifier).stopNoise();
+                        onSoundChanged?.call(null);
                       } else {
                         ref
                             .read(focusAudioStateProvider.notifier)
                             .changeSound(sound.value);
+                        onSoundChanged?.call(sound.value);
                       }
                     },
                   );

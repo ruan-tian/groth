@@ -14,7 +14,6 @@ import '../../shared/providers/settings_provider.dart';
 import '../../shared/providers/study_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
-import 'package:go_router/go_router.dart';
 import '../pet/models/pet_scene_model.dart';
 import '../pet/widgets/pet_scene_banner.dart';
 
@@ -1229,74 +1228,242 @@ class _QuickActionCard extends StatelessWidget {
 }
 
 // =============================================================================
-// 科目分布卡片
+// 科目分布卡片（左饼图 + 右图例）
 // =============================================================================
 
-class _SubjectDistributionCard extends StatelessWidget {
+class _SubjectDistributionCard extends StatefulWidget {
   const _SubjectDistributionCard({required this.dist});
 
   final Map<String, int> dist;
 
   @override
+  State<_SubjectDistributionCard> createState() =>
+      _SubjectDistributionCardState();
+}
+
+class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
+  int _touchedIndex = -1;
+
+  @override
   Widget build(BuildContext context) {
-    final total = dist.values.fold<int>(0, (sum, v) => sum + v);
-    final sorted = dist.entries.toList()..sort((a, b) => b.value.compareTo(a.value));
+    final total = widget.dist.values.fold<int>(0, (sum, v) => sum + v);
+    final sorted = widget.dist.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final top5 = sorted.take(5).toList();
 
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(color: AppColors.border),
       ),
-      child: Column(
-        children: sorted.take(5).map((entry) {
-          final percent = total > 0 ? (entry.value / total * 100).round() : 0;
-          final color = _getSubjectColor(entry.key);
-
-          return Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.md),
-            child: Row(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // ── 左侧：饼图 ──
+          SizedBox(
+            width: 160,
+            height: 160,
+            child: Stack(
+              alignment: Alignment.center,
               children: [
-                Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: color,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                SizedBox(
-                  width: 40,
-                  child: Text(entry.key, style: TextStyle(fontSize: 13, color: AppColors.textPrimary)),
-                ),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(4),
-                    child: LinearProgressIndicator(
-                      value: entry.value / total,
-                      minHeight: 8,
-                      backgroundColor: color.withValues(alpha: 0.1),
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
+                PieChart(
+                  PieChartData(
+                    pieTouchData: PieTouchData(
+                      touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                        setState(() {
+                          if (!event.isInterestedForInteractions ||
+                              pieTouchResponse == null ||
+                              pieTouchResponse.touchedSection == null) {
+                            _touchedIndex = -1;
+                            return;
+                          }
+                          _touchedIndex = pieTouchResponse
+                              .touchedSection!.touchedSectionIndex;
+                        });
+                      },
                     ),
+                    borderData: FlBorderData(show: false),
+                    sectionsSpace: 2,
+                    centerSpaceRadius: 42,
+                    sections: _buildSections(top5, total),
                   ),
+                  duration: const Duration(milliseconds: 150),
+                  curve: Curves.linear,
                 ),
-                const SizedBox(width: AppSpacing.sm),
-                SizedBox(
-                  width: 36,
-                  child: Text(
-                    '$percent%',
-                    style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                    textAlign: TextAlign.right,
-                  ),
+                // 中心总时长
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _formatHours(total),
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '总时长',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          );
-        }).toList(),
+          ),
+
+          const SizedBox(width: 20),
+
+          // ── 右侧：图例列表 ──
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(top5.length, (index) {
+                final entry = top5[index];
+                final color = _getSubjectColor(entry.key);
+                final percent =
+                    total > 0 ? (entry.value / total * 100).round() : 0;
+                final isSelected = _touchedIndex == index;
+
+                return GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _touchedIndex = _touchedIndex == index ? -1 : index;
+                    });
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: const EdgeInsets.only(bottom: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? color.withValues(alpha: 0.08)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: isSelected
+                            ? color.withValues(alpha: 0.3)
+                            : Colors.transparent,
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        // 彩色圆点
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          width: isSelected ? 10 : 8,
+                          height: isSelected ? 10 : 8,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 科目名
+                        SizedBox(
+                          width: 36,
+                          child: Text(
+                            entry.key,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: isSelected
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 进度条
+                        Expanded(
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(3),
+                            child: LinearProgressIndicator(
+                              value: entry.value / total,
+                              minHeight: 6,
+                              backgroundColor: color.withValues(alpha: 0.1),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(color),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        // 时长 + 百分比
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              _formatMinutes(entry.value),
+                              style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              '$percent%',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.textTertiary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+            ),
+          ),
+        ],
       ),
     );
+  }
+
+  List<PieChartSectionData> _buildSections(
+    List<MapEntry<String, int>> entries,
+    int total,
+  ) {
+    return List.generate(entries.length, (index) {
+      final isTouched = _touchedIndex == index;
+      final entry = entries[index];
+      final color = _getSubjectColor(entry.key);
+
+      return PieChartSectionData(
+        color: color,
+        value: entry.value.toDouble(),
+        title: '',
+        radius: isTouched ? 38 : 32,
+        borderSide: isTouched
+            ? BorderSide(color: Colors.white, width: 2)
+            : BorderSide(color: Colors.white.withValues(alpha: 0.5), width: 1),
+      );
+    });
+  }
+
+  String _formatHours(int minutes) {
+    if (minutes < 60) return '${minutes}m';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return m > 0 ? '${h}.${(m * 10 / 60).round()}h' : '${h}h';
+  }
+
+  String _formatMinutes(int minutes) {
+    if (minutes < 60) return '${minutes}m';
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
+    return m > 0 ? '${h}h${m}m' : '${h}h';
   }
 
   Color _getSubjectColor(String subject) {

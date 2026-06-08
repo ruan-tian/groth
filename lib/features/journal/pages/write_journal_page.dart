@@ -11,8 +11,10 @@ import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/journal_provider.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../../pet/models/pet_event.dart';
+import '../../pet/models/pet_scene_model.dart';
 import '../../pet/services/pet_event_bus.dart';
 import '../../pet/utils/pet_assets.dart';
+import '../../../shared/providers/pet_scene_provider.dart';
 import '../utils/journal_constants.dart';
 import '../widgets/journal_colors.dart';
 import 'quill_editor_page.dart';
@@ -771,11 +773,27 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
 // 甜甜陪伴区域
 // =============================================================================
 
-class _TiantianCompanionSection extends StatelessWidget {
+class _TiantianCompanionSection extends ConsumerStatefulWidget {
   const _TiantianCompanionSection();
 
   @override
+  ConsumerState<_TiantianCompanionSection> createState() => _TiantianCompanionSectionState();
+}
+
+class _TiantianCompanionSectionState extends ConsumerState<_TiantianCompanionSection> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(petSceneProvider(PetModuleType.journal).notifier).initScene(hasRecords: false);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final sceneState = ref.watch(petSceneProvider(PetModuleType.journal));
+    final imagePath = sceneState.config.state.assetPath;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -832,17 +850,21 @@ class _TiantianCompanionSection extends StatelessWidget {
           Stack(
             clipBehavior: Clip.none,
             children: [
-              Image.asset(
-                PetAssets.journalWriting,
-                width: 100,
-                height: 100,
-                fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const SizedBox(
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 600),
+                child: Image.asset(
+                  imagePath,
+                  key: ValueKey(imagePath),
                   width: 100,
                   height: 100,
-                  child: Center(
-                    child: Icon(Icons.pets_rounded,
-                        size: 50, color: JournalColors.pinkSoft),
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const SizedBox(
+                    width: 100,
+                    height: 100,
+                    child: Center(
+                      child: Icon(Icons.pets_rounded,
+                          size: 50, color: JournalColors.pinkSoft),
+                    ),
                   ),
                 ),
               ),

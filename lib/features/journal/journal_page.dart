@@ -16,6 +16,7 @@ import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/sort_button.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
 import '../pet/models/pet_scene_model.dart';
+import '../../shared/providers/pet_scene_provider.dart';
 import 'utils/journal_constants.dart';
 import 'widgets/journal_colors.dart';
 import '../statistics/widgets/heatmap_calendar.dart';
@@ -698,11 +699,27 @@ class _JournalPageState extends ConsumerState<JournalPage> {
 // _TiantianCompanionCard
 // =============================================================================
 
-class _TiantianCompanionCard extends StatelessWidget {
+class _TiantianCompanionCard extends ConsumerStatefulWidget {
   const _TiantianCompanionCard();
 
   @override
+  ConsumerState<_TiantianCompanionCard> createState() => _TiantianCompanionCardState();
+}
+
+class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(petSceneProvider(PetModuleType.journal).notifier).initScene(hasRecords: false);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final sceneState = ref.watch(petSceneProvider(PetModuleType.journal));
+    final imagePath = sceneState.config.state.assetPath;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -721,23 +738,14 @@ class _TiantianCompanionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: JournalColors.shadow,
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                padding: const EdgeInsets.all(12),
+              // 猫图 — 带 CrossFade 轮转动效
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 600),
                 child: Image.asset(
-                  PetAssets.journalWriting,
+                  imagePath,
+                  key: ValueKey(imagePath),
+                  width: 100,
+                  height: 100,
                   fit: BoxFit.contain,
                   errorBuilder: (_, __, ___) =>
                       const Text('🐱', style: TextStyle(fontSize: 40)),
