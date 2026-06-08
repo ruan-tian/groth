@@ -97,6 +97,12 @@ class _FocusPageState extends ConsumerState<FocusPage> {
             ],
             const SizedBox(height: AppSpacing.xl),
 
+            // ── 专注轮次 ──
+            Text('专注轮次', style: AppTextStyles.sectionTitle),
+            const SizedBox(height: AppSpacing.md),
+            _buildRoundSelector(setup),
+            const SizedBox(height: AppSpacing.xl),
+
             // ── 专注标题 ──
             Text('专注标题', style: AppTextStyles.sectionTitle),
             const SizedBox(height: AppSpacing.md),
@@ -336,6 +342,60 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     );
   }
 
+  // ── 轮次选择器 ──
+  Widget _buildRoundSelector(FocusSetupState setup) {
+    return Row(
+      children: [1, 2, 3, 4].map((rounds) {
+        final isSelected = setup.totalRounds == rounds;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: GestureDetector(
+              onTap: () {
+                ref.read(focusSetupProvider.notifier).state =
+                    setup.copyWith(totalRounds: rounds);
+              },
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : AppColors.card,
+                  borderRadius: BorderRadius.circular(AppRadius.md),
+                  border: Border.all(
+                    color: isSelected ? AppColors.primary : AppColors.border,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      '$rounds',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: isSelected
+                            ? Colors.white
+                            : AppColors.textPrimary,
+                      ),
+                    ),
+                    Text(
+                      '轮',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: isSelected
+                            ? Colors.white70
+                            : AppColors.textTertiary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   // ── 开始按钮 ──
   Widget _buildStartButton(FocusSetupState setup) {
     return PrimaryButton(
@@ -449,6 +509,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       '/focus/session'
       '?duration=$duration'
       '&type=${setup.type}'
+      '&rounds=${setup.totalRounds}'
       '&title=${Uri.encodeComponent(title)}'
       '&subject=${Uri.encodeComponent(subject)}'
       '${setup.soundType != null ? "&sound=${setup.soundType}" : ""}',

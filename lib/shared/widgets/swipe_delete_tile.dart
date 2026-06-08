@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../app/theme.dart';
+import '../../app/design/design.dart';
 
 class SwipeDeleteTile extends StatelessWidget {
   const SwipeDeleteTile({
@@ -27,10 +27,10 @@ class SwipeDeleteTile extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: AppTheme.spaceLg),
+        padding: const EdgeInsets.only(right: AppSpacing.lg),
         decoration: BoxDecoration(
           color: theme.colorScheme.error,
-          borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+          borderRadius: BorderRadius.circular(AppRadius.md),
         ),
         child: Icon(
           Icons.delete_outline,

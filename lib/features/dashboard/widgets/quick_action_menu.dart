@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/router.dart';
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 
 /// 快捷操作菜单
 ///
@@ -68,35 +68,35 @@ class _QuickActionMenuState extends State<QuickActionMenu> {
                 _buildActionButton(
                   icon: Icons.menu_book_rounded,
                   label: '添加学习',
-                  color: GrowthColors.studyPrimary,
+                  color: AppColors.study,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.fitness_center_rounded,
                   label: '添加健身',
-                  color: GrowthColors.fitnessPrimary,
+                  color: AppColors.fitness,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.restaurant_rounded,
                   label: '记录饮食',
-                  color: GrowthColors.dietPrimary,
+                  color: AppColors.diet,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.bedtime_rounded,
                   label: '记录睡眠',
-                  color: GrowthColors.sleepPrimary,
+                  color: AppColors.sleep,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.edit_note_rounded,
                   label: '写日记',
-                  color: GrowthColors.primary,
+                  color: AppColors.primary,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 24),
@@ -164,11 +164,11 @@ class _QuickActionMenuState extends State<QuickActionMenu> {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          color: GrowthColors.primary,
+          color: AppColors.primary,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: GrowthColors.primary.withValues(alpha: 0.3),
+              color: AppColors.primary.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 6),
             ),

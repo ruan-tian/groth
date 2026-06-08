@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/services/statistics_service.dart';
 import '../../../core/utils/stats_formatters.dart';
 import '../../../shared/providers/service_providers.dart';
@@ -75,11 +75,11 @@ class _MonthlyContent extends ConsumerWidget {
     final totalExp = stats.fold<int>(0, (sum, d) => sum + d.expGained);
 
     return ListView(
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
+      padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         // ── 月份导航 ──
         const _MonthNavigator(),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 汇总卡片 ──
         _SummaryCards(
@@ -87,15 +87,15 @@ class _MonthlyContent extends ConsumerWidget {
           totalFitness: totalFitness,
           totalExp: totalExp,
         ),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 趋势折线图 ──
         _TrendChart(stats: stats),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 热力图日历 ──
         _HeatmapPlaceholder(stats: stats),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 每日明细 ──
         _DailyBreakdown(stats: stats),
@@ -135,7 +135,7 @@ class _MonthNavigator extends ConsumerWidget {
               icon: const Icon(Icons.chevron_left_rounded),
               tooltip: '上个月',
             ),
-            const SizedBox(width: AppTheme.spaceSm),
+            const SizedBox(width: AppSpacing.sm),
             // 月份文字
             Text(
               formatMonth(targetMonth),
@@ -143,7 +143,7 @@ class _MonthNavigator extends ConsumerWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: AppTheme.spaceSm),
+            const SizedBox(width: AppSpacing.sm),
             // 右箭头（禁用当已是当月）
             IconButton(
               onPressed: offset == 0
@@ -156,7 +156,7 @@ class _MonthNavigator extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppTheme.spaceSm),
+        const SizedBox(height: AppSpacing.sm),
 
         // ── 回到本月按钮（仅在非当月时显示） ──
         if (offset != 0)
@@ -196,25 +196,25 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.menu_book_rounded,
             label: '总学习',
             value: formatMinutesShort(totalStudy),
-            color: GrowthColors.studyPrimary,
+            color: AppColors.study,
           ),
         ),
-        const SizedBox(width: AppTheme.spaceSm),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: StatsSummaryCard(
             icon: Icons.fitness_center_rounded,
             label: '总健身',
             value: formatMinutesShort(totalFitness),
-            color: GrowthColors.fitnessPrimary,
+            color: AppColors.fitness,
           ),
         ),
-        const SizedBox(width: AppTheme.spaceSm),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: StatsSummaryCard(
             icon: Icons.star_rounded,
             label: '总经验',
             value: formatExp(totalExp),
-            color: GrowthColors.expFill,
+            color: AppColors.primary,
           ),
         ),
       ],
@@ -246,7 +246,7 @@ class _TrendChart extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -256,18 +256,18 @@ class _TrendChart extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: AppTheme.spaceXs),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '学习 + 健身时长',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             DurationLineChart(
               valuesInMinutes: values,
               labels: labels,
-              lineColor: GrowthColors.primary,
+              lineColor: AppColors.primary,
               height: 200,
             ),
           ],
@@ -322,7 +322,7 @@ class _HeatmapPlaceholder extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -331,9 +331,9 @@ class _HeatmapPlaceholder extends StatelessWidget {
                 Icon(
                   Icons.grid_view_rounded,
                   size: 18,
-                  color: GrowthColors.expFill,
+                  color: AppColors.primary,
                 ),
-                const SizedBox(width: AppTheme.spaceSm),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   '活跃热力图',
                   style: theme.textTheme.titleMedium?.copyWith(
@@ -342,7 +342,7 @@ class _HeatmapPlaceholder extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             if (heatmapData.isEmpty)
               Container(
                 height: 80,
@@ -390,10 +390,10 @@ class _DailyBreakdown extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('每日明细', style: theme.textTheme.titleMedium),
-        const SizedBox(height: AppTheme.spaceSm),
+        const SizedBox(height: AppSpacing.sm),
         if (activeStats.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceXl),
+            padding: const EdgeInsets.symmetric(vertical: AppSpacing.xl),
             child: Center(
               child: Text(
                 '本月暂无活动记录',
@@ -438,12 +438,12 @@ class _DailyBreakdownItem extends StatelessWidget {
     final weekday = formatWeekday(day.date);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppTheme.spaceSm),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Card(
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppTheme.spaceMd,
-            vertical: AppTheme.spaceSm,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
           ),
           child: Row(
             children: [
@@ -468,7 +468,7 @@ class _DailyBreakdownItem extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
 
               // ── 数据条 ──
               Expanded(
@@ -478,7 +478,7 @@ class _DailyBreakdownItem extends StatelessWidget {
                   maxMinutes: maxMinutes,
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
 
               // ── 经验值 ──
               Column(
@@ -487,7 +487,7 @@ class _DailyBreakdownItem extends StatelessWidget {
                   Text(
                     '+${formatExp(day.expGained)}',
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: GrowthColors.expFill,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -525,7 +525,7 @@ class _MiniBar extends StatelessWidget {
     final totalRatio = maxMinutes > 0 ? total / maxMinutes : 0.0;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+      borderRadius: BorderRadius.circular(AppRadius.xxs),
       child: SizedBox(
         height: 8,
         child: total == 0
@@ -539,11 +539,11 @@ class _MiniBar extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: studyMinutes.clamp(1, 9999),
-                      child: Container(color: GrowthColors.studyPrimary),
+                      child: Container(color: AppColors.study),
                     ),
                     Expanded(
                       flex: fitnessMinutes.clamp(1, 9999),
-                      child: Container(color: GrowthColors.fitnessPrimary),
+                      child: Container(color: AppColors.fitness),
                     ),
                   ],
                 ),
@@ -567,14 +567,14 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceXl),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             FilledButton(
               onPressed: onRetry,
               child: const Text('重试'),

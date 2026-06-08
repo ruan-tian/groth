@@ -42,6 +42,7 @@ class AppColors {
   static const Color lavender = Color(0xFF9B8FE8);
   static const Color lavenderDark = Color(0xFF7B6FD6);
   static const Color sleepPink = Color(0xFFFFB8C6);
+  static const Color info = Color(0xFF1890FF);
 
   static const Color ratingActive = Color(0xFFFFB13D);
   static const Color ratingInactive = Color(0xFFDADDEB);
@@ -64,5 +65,15 @@ class AppColors {
 
   static const List<BoxShadow> elevatedShadow = [
     BoxShadow(color: Color(0x22101344), blurRadius: 30, offset: Offset(0, 16)),
+  ];
+
+  static const List<Color> chartPalette = [
+    primary,
+    study,
+    fitness,
+    diet,
+    sleep,
+    danger,
+    success,
   ];
 }

@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/theme.dart';
+import '../../../../app/design/design.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../shared/providers/task_provider.dart';
 
@@ -34,14 +34,14 @@ class _TaskTemplateSheetState extends ConsumerState<TaskTemplateSheet> {
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
             borderRadius: const BorderRadius.vertical(
-              top: Radius.circular(AppTheme.radiusXl),
+              top: Radius.circular(AppRadius.xl),
             ),
           ),
           child: Column(
             children: [
               // ── 拖拽指示器 ──
               Container(
-                margin: const EdgeInsets.only(top: AppTheme.spaceSm),
+                margin: const EdgeInsets.only(top: AppSpacing.sm),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
@@ -53,8 +53,8 @@ class _TaskTemplateSheetState extends ConsumerState<TaskTemplateSheet> {
               // ── 标题栏 ──
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppTheme.spaceMd,
-                  vertical: AppTheme.spaceSm,
+                  horizontal: AppSpacing.md,
+                  vertical: AppSpacing.sm,
                 ),
                 child: Row(
                   children: [
@@ -63,7 +63,7 @@ class _TaskTemplateSheetState extends ConsumerState<TaskTemplateSheet> {
                       size: 20,
                       color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: AppTheme.spaceSm),
+                    const SizedBox(width: AppSpacing.sm),
                     Text(
                       '任务模板',
                       style: theme.textTheme.titleMedium,
@@ -136,14 +136,14 @@ class _TemplateList extends ConsumerWidget {
                   size: 48,
                   color: theme.colorScheme.outlineVariant,
                 ),
-                const SizedBox(height: AppTheme.spaceMd),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   '暂无模板',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: AppTheme.spaceSm),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   '点击右上角 + 创建常用任务模板',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -158,8 +158,8 @@ class _TemplateList extends ConsumerWidget {
         return ListView.builder(
           controller: scrollController,
           padding: const EdgeInsets.symmetric(
-            horizontal: AppTheme.spaceMd,
-            vertical: AppTheme.spaceSm,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm,
           ),
           itemCount: templates.length,
           itemBuilder: (context, index) {
@@ -212,7 +212,7 @@ class _TemplateList extends ConsumerWidget {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: GrowthColors.error,
+              foregroundColor: AppColors.danger,
             ),
             child: const Text('删除'),
           ),
@@ -249,14 +249,14 @@ class _TemplateTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: AppTheme.spaceSm),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusMd),
+        borderRadius: BorderRadius.circular(AppRadius.md),
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppTheme.spaceMd,
-            vertical: AppTheme.spaceSm + 2,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + 2,
           ),
           child: Row(
             children: [
@@ -266,7 +266,7 @@ class _TemplateTile extends StatelessWidget {
                 height: 36,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
                 child: Icon(
                   Icons.task_alt,
@@ -274,7 +274,7 @@ class _TemplateTile extends StatelessWidget {
                   color: theme.colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
 
               // 内容
               Expanded(
@@ -312,7 +312,7 @@ class _TemplateTile extends StatelessWidget {
                   color: theme.colorScheme.outline,
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceXs),
+              const SizedBox(width: AppSpacing.xs),
 
               // 删除按钮
               IconButton(
@@ -375,7 +375,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
+      padding: const EdgeInsets.all(AppSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -389,7 +389,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
             ),
             autofocus: true,
           ),
-          const SizedBox(height: AppTheme.spaceMd),
+          const SizedBox(height: AppSpacing.md),
 
           // 模板描述
           TextField(
@@ -401,7 +401,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
             ),
             maxLines: 2,
           ),
-          const SizedBox(height: AppTheme.spaceMd),
+          const SizedBox(height: AppSpacing.md),
 
           // 时间选择
           Row(
@@ -418,7 +418,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppTheme.spaceSm,
+                  horizontal: AppSpacing.sm,
                 ),
                 child: Icon(
                   Icons.arrow_forward,
@@ -438,7 +438,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
               ),
             ],
           ),
-          const SizedBox(height: AppTheme.spaceLg),
+          const SizedBox(height: AppSpacing.lg),
 
           // 保存按钮
           FilledButton.icon(
@@ -473,7 +473,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
           onTimeSelected(picked);
         }
       },
-      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+      borderRadius: BorderRadius.circular(AppRadius.xs),
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,

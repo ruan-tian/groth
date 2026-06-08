@@ -48,7 +48,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration {
@@ -108,6 +108,11 @@ class AppDatabase extends _$AppDatabase {
         }
         if (from < 14) {
           await m.createTable(petDiaries);
+        }
+        if (from < 15) {
+          // 为专注记录表添加轮次和分组列
+          await m.addColumn(focusSessions, focusSessions.roundIndex);
+          await m.addColumn(focusSessions, focusSessions.sessionGroupId);
         }
       },
     );

@@ -17,15 +17,17 @@ import '../features/health/pages/add_sleep_record_page.dart';
 import '../features/journal/pages/journal_detail_page.dart';
 import '../features/journal/pages/write_journal_page.dart';
 import '../features/journal/pages/edit_journal_page.dart';
+import '../features/pet/pages/pet_ai_analysis_page.dart';
 import '../features/pet/pages/pet_center_page.dart';
 import '../features/pet/pages/pet_diary_page.dart';
+import '../features/pet/pages/pet_history_page.dart';
+import '../features/pet/pages/pet_settings_page.dart';
 import '../features/settings/settings_page.dart';
 import '../features/settings/pages/profile_page.dart';
 import '../features/settings/pages/backup_page.dart';
 import '../features/settings/pages/restore_page.dart';
 import '../features/settings/pages/weather_settings_page.dart';
 import '../features/ai/pages/ai_analysis_page.dart';
-import '../features/pet/pages/pet_ai_analysis_page.dart';
 import '../features/settings/pages/ai_config_page.dart';
 import '../features/study/pages/add_study_record_page.dart';
 import '../features/study/pages/study_record_detail_page.dart';
@@ -58,30 +60,53 @@ class RouteNames {
 // ─── Page transition helpers ─────────────────────────────────────────────────
 
 /// 滑入滑出页面过渡动画
+///
+/// [useSecondaryShift] 为 true 时，前一页会向左让 15%（适合 root 级页面）。
+/// Shell branch 内部子路由必须传 false，避免 secondaryAnimation 残留偏移。
 CustomTransitionPage<void> buildSlideTransition(
   BuildContext context,
   GoRouterState state,
-  Widget child,
-) {
+  Widget child, {
+  bool useSecondaryShift = true,
+}) {
   return CustomTransitionPage<void>(
     key: state.pageKey,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1.0, 0.0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: animation, curve: Curves.easeInOut)),
-        child: SlideTransition(
-          position: Tween<Offset>(
-            begin: const Offset(-0.15, 0.0),
-            end: Offset.zero,
-          ).animate(CurvedAnimation(parent: secondaryAnimation, curve: Curves.easeInOut)),
-          child: child,
-        ),
-      );
+      final primaryOffset = Tween<Offset>(
+        begin: const Offset(1.0, 0.0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+
+      Widget result = SlideTransition(position: primaryOffset, child: child);
+
+      if (useSecondaryShift) {
+        final secondaryOffset =
+            Tween<Offset>(
+              begin: Offset.zero,
+              end: const Offset(-0.15, 0.0),
+            ).animate(
+              CurvedAnimation(
+                parent: secondaryAnimation,
+                curve: Curves.easeOut,
+              ),
+            );
+
+        result = SlideTransition(position: secondaryOffset, child: result);
+      }
+
+      return result;
     },
   );
+}
+
+/// Shell branch 内部子路由专用过渡动画（禁用 secondaryAnimation 左移）
+CustomTransitionPage<void> buildShellSlideTransition(
+  BuildContext context,
+  GoRouterState state,
+  Widget child,
+) {
+  return buildSlideTransition(context, state, child, useSecondaryShift: false);
 }
 
 // ─── Shell wrapper with AdvancedBottomNav ───────────────────────────────────
@@ -145,7 +170,7 @@ final goRouter = GoRouter(
                 // 学习相关
                 GoRoute(
                   path: 'study/add',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AddStudyRecordPage(),
@@ -155,7 +180,7 @@ final goRouter = GoRouter(
                   path: 'study/detail/:id',
                   pageBuilder: (context, state) {
                     final id = int.parse(state.pathParameters['id']!);
-                    return buildSlideTransition(
+                    return buildShellSlideTransition(
                       context,
                       state,
                       StudyRecordDetailPage(recordId: id),
@@ -164,7 +189,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'study/recent',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const RecentRecordsPage(),
@@ -172,7 +197,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'study/subjects',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const SubjectDistributionPage(),
@@ -183,7 +208,7 @@ final goRouter = GoRouter(
                   path: 'fitness/add',
                   pageBuilder: (context, state) {
                     final mode = state.uri.queryParameters['mode'] ?? 'simple';
-                    return buildSlideTransition(
+                    return buildShellSlideTransition(
                       context,
                       state,
                       AddFitnessRecordPage(initialMode: mode),
@@ -194,7 +219,7 @@ final goRouter = GoRouter(
                   path: 'fitness/detail/:id',
                   pageBuilder: (context, state) {
                     final id = int.parse(state.pathParameters['id']!);
-                    return buildSlideTransition(
+                    return buildShellSlideTransition(
                       context,
                       state,
                       FitnessRecordDetailPage(recordId: id),
@@ -203,7 +228,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'fitness/body-metric/add',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AddBodyMetricPage(),
@@ -211,7 +236,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'fitness/body-metric/detail',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const BodyMetricDetailPage(),
@@ -219,7 +244,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'fitness/weekly',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const WeeklyFitnessPage(),
@@ -227,7 +252,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'fitness/records',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AllFitnessRecordsPage(),
@@ -236,7 +261,7 @@ final goRouter = GoRouter(
                 // 日记相关
                 GoRoute(
                   path: 'journal/write',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const WriteJournalPage(),
@@ -246,7 +271,7 @@ final goRouter = GoRouter(
                   path: 'journal/detail/:id',
                   pageBuilder: (context, state) {
                     final id = int.parse(state.pathParameters['id']!);
-                    return buildSlideTransition(
+                    return buildShellSlideTransition(
                       context,
                       state,
                       JournalDetailPage(journalId: id),
@@ -257,7 +282,7 @@ final goRouter = GoRouter(
                   path: 'journal/edit/:id',
                   pageBuilder: (context, state) {
                     final id = int.parse(state.pathParameters['id']!);
-                    return buildSlideTransition(
+                    return buildShellSlideTransition(
                       context,
                       state,
                       EditJournalPage(journalId: id),
@@ -267,7 +292,7 @@ final goRouter = GoRouter(
                 // 饮食相关
                 GoRoute(
                   path: 'diet/add',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AddDietRecordPage(),
@@ -275,7 +300,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'diet/records',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AllDietRecordsPage(),
@@ -284,7 +309,7 @@ final goRouter = GoRouter(
                 // 睡眠相关
                 GoRoute(
                   path: 'sleep/add',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AddSleepRecordPage(),
@@ -292,7 +317,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'sleep/history',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const SleepHistoryPage(),
@@ -301,7 +326,7 @@ final goRouter = GoRouter(
                 // AI 分析
                 GoRoute(
                   path: 'ai-analysis',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AiAnalysisPage(),
@@ -322,12 +347,15 @@ final goRouter = GoRouter(
               routes: [
                 GoRoute(
                   path: 'profile',
-                  pageBuilder: (context, state) =>
-                      buildSlideTransition(context, state, const ProfilePage()),
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const ProfilePage(),
+                  ),
                 ),
                 GoRoute(
                   path: 'ai-config',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AiConfigPage(),
@@ -335,7 +363,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'ai-analysis',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const AiAnalysisPage(),
@@ -343,7 +371,7 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'pet-ai-analysis',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const PetAIAnalysisPage(),
@@ -351,17 +379,23 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'backup',
-                  pageBuilder: (context, state) =>
-                      buildSlideTransition(context, state, const BackupPage()),
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const BackupPage(),
+                  ),
                 ),
                 GoRoute(
                   path: 'restore',
-                  pageBuilder: (context, state) =>
-                      buildSlideTransition(context, state, const RestorePage()),
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const RestorePage(),
+                  ),
                 ),
                 GoRoute(
                   path: 'weather',
-                  pageBuilder: (context, state) => buildSlideTransition(
+                  pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
                     const WeatherSettingsPage(),
@@ -393,6 +427,7 @@ final goRouter = GoRouter(
                 title: params['title'] ?? '',
                 subject: params['subject'] ?? '',
                 soundType: params['sound'],
+                totalRounds: int.parse(params['rounds'] ?? '4'),
               ),
             );
           },
@@ -415,6 +450,21 @@ final goRouter = GoRouter(
       path: '/pet-diary',
       pageBuilder: (context, state) =>
           buildSlideTransition(context, state, const PetDiaryPage()),
+    ),
+    GoRoute(
+      path: '/pet-history',
+      pageBuilder: (context, state) =>
+          buildSlideTransition(context, state, const PetHistoryPage()),
+    ),
+    GoRoute(
+      path: '/pet-ai-analysis',
+      pageBuilder: (context, state) =>
+          buildSlideTransition(context, state, const PetAIAnalysisPage()),
+    ),
+    GoRoute(
+      path: '/pet-settings',
+      pageBuilder: (context, state) =>
+          buildSlideTransition(context, state, const PetSettingsPage()),
     ),
   ],
 );

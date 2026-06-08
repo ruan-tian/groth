@@ -15,6 +15,7 @@ enum PetModuleType {
   journal,
   diet,
   sleep,
+  focus,
 }
 
 /// 模块扩展
@@ -32,6 +33,8 @@ extension PetModuleTypeX on PetModuleType {
         return '饮食';
       case PetModuleType.sleep:
         return '睡眠';
+      case PetModuleType.focus:
+        return '专注';
     }
   }
 
@@ -48,6 +51,8 @@ extension PetModuleTypeX on PetModuleType {
         return '#FFFBEB'; // 浅橙
       case PetModuleType.sleep:
         return '#F5F3FF'; // 浅紫
+      case PetModuleType.focus:
+        return '#F0FDF4'; // 浅绿
     }
   }
 
@@ -64,6 +69,8 @@ extension PetModuleTypeX on PetModuleType {
         return '#F59E0B'; // 橙
       case PetModuleType.sleep:
         return '#8B5CF6'; // 紫
+      case PetModuleType.focus:
+        return '#059669'; // 翡翠绿
     }
   }
 
@@ -100,6 +107,12 @@ extension PetModuleTypeX on PetModuleType {
           PetSceneStateType.sleepSleeping,
           PetSceneStateType.sleepStretch,
         ];
+      case PetModuleType.focus:
+        return [
+          PetSceneStateType.focusReading,
+          PetSceneStateType.focusWriting,
+          PetSceneStateType.focusThinking,
+        ];
     }
   }
 
@@ -116,6 +129,8 @@ extension PetModuleTypeX on PetModuleType {
         return PetSceneStateType.dietDone;
       case PetModuleType.sleep:
         return PetSceneStateType.sleepDone;
+      case PetModuleType.focus:
+        return PetSceneStateType.focusDone;
     }
   }
 }
@@ -155,6 +170,13 @@ enum PetSceneStateType {
   sleepSleeping,
   sleepStretch,
   sleepDone,
+
+  // 专注
+  focusReading,
+  focusWriting,
+  focusThinking,
+  focusRest,
+  focusDone,
 
   // 通用（AI 相关）
   thinking,
@@ -207,6 +229,16 @@ extension PetSceneStateTypeX on PetSceneStateType {
         return PetAssets.sleepStretch;
       case PetSceneStateType.sleepDone:
         return PetAssets.sleepDone;
+      case PetSceneStateType.focusReading:
+        return PetAssets.focusReading;
+      case PetSceneStateType.focusWriting:
+        return PetAssets.focusWriting;
+      case PetSceneStateType.focusThinking:
+        return PetAssets.focusThinking;
+      case PetSceneStateType.focusRest:
+        return PetAssets.focusRest;
+      case PetSceneStateType.focusDone:
+        return PetAssets.focusDone;
       case PetSceneStateType.thinking:
         return PetAssets.commonThinking;
       case PetSceneStateType.report:
@@ -227,6 +259,7 @@ extension PetSceneStateTypeX on PetSceneStateType {
     if (name.startsWith('journal')) return PetModuleType.journal;
     if (name.startsWith('diet')) return PetModuleType.diet;
     if (name.startsWith('sleep')) return PetModuleType.sleep;
+    if (name.startsWith('focus')) return PetModuleType.focus;
     // thinking / report / error → default study, not really used
     return PetModuleType.study;
   }
@@ -310,6 +343,18 @@ PetDecoration getDecorationForState(PetSceneStateType state) {
       return const PetDecoration(primary: '🛏️', secondary: '☁️');
     case PetSceneStateType.sleepDone:
       return const PetDecoration(primary: '✅', secondary: '🌞');
+
+    // 专注
+    case PetSceneStateType.focusReading:
+      return const PetDecoration(primary: '📖', secondary: '🧠');
+    case PetSceneStateType.focusWriting:
+      return const PetDecoration(primary: '✏️', secondary: '🔥');
+    case PetSceneStateType.focusThinking:
+      return const PetDecoration(primary: '💭', secondary: '🎯');
+    case PetSceneStateType.focusRest:
+      return const PetDecoration(primary: '☕', secondary: '🌿');
+    case PetSceneStateType.focusDone:
+      return const PetDecoration(primary: '✅', secondary: '🏆');
 
     // 通用（AI 相关）
     case PetSceneStateType.thinking:

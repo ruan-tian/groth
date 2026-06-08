@@ -112,7 +112,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         plainText: Value(plainText),
         mood: Value(_selectedMood),
         tags: Value(
-          _selectedTags.isEmpty ? null : _selectedTags.join(','),
+          _selectedTags.isEmpty ? null : jsonEncode(_selectedTags.toList()),
         ),
         wordCount: Value(wordCount),
         expGained: Value(exp),

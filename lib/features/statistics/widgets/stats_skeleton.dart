@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 
 /// 统计页面骨架屏加载组件
 class StatsSkeleton extends StatelessWidget {
@@ -12,7 +12,7 @@ class StatsSkeleton extends StatelessWidget {
       baseColor: Colors.grey.shade300,
       highlightColor: Colors.grey.shade100,
       child: ListView(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           // Date navigator skeleton
           Row(
@@ -25,7 +25,7 @@ class StatsSkeleton extends StatelessWidget {
               Container(width: 24, height: 24, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(4))),
             ],
           ),
-          const SizedBox(height: AppTheme.spaceLg),
+          const SizedBox(height: AppSpacing.lg),
 
           // Summary cards skeleton (3 cards in a row)
           Row(
@@ -40,7 +40,7 @@ class StatsSkeleton extends StatelessWidget {
               ),
             )),
           ),
-          const SizedBox(height: AppTheme.spaceLg),
+          const SizedBox(height: AppSpacing.lg),
 
           // Chart skeleton
           Container(
@@ -50,7 +50,7 @@ class StatsSkeleton extends StatelessWidget {
               borderRadius: BorderRadius.circular(16),
             ),
           ),
-          const SizedBox(height: AppTheme.spaceLg),
+          const SizedBox(height: AppSpacing.lg),
 
           // Breakdown list skeleton
           ...List.generate(5, (i) => Padding(

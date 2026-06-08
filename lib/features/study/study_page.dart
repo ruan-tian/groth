@@ -23,16 +23,16 @@ import '../pet/widgets/pet_scene_banner.dart';
 // =============================================================================
 
 const _subjectColors = <String, Color>{
-  '数学': Color(0xFF2563EB),
-  '英语': Color(0xFF10B981),
+  '数学': AppColors.study,
+  '英语': AppColors.success,
   '物理': Color(0xFF3B82F6),
   '化学': Color(0xFF06B6D4),
-  '编程': Color(0xFF1E40AF),
+  '编程': AppColors.primaryDark,
   '语文': Color(0xFF4ADE80),
   '历史': Color(0xFF6366F1),
   '地理': Color(0xFF14B8A6),
   '生物': Color(0xFF0EA5E9),
-  '其他': Color(0xFF6B7280),
+  '其他': AppColors.textTertiary,
 };
 
 // =============================================================================
@@ -72,7 +72,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
               title: const Text('学习', style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF1E40AF),
+                color: AppColors.primaryDark,
               )),
               centerTitle: false,
               backgroundColor: AppColors.softBlue,
@@ -80,7 +80,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 IconButton(
                   tooltip: '专注计时',
                   onPressed: () => context.push('/focus'),
-                  icon: const Icon(Icons.timer_outlined, color: Color(0xFF1E40AF)),
+                  icon: const Icon(Icons.timer_outlined, color: AppColors.primaryDark),
                 ),
               ],
             ),
@@ -133,14 +133,14 @@ class _StudyPageState extends ConsumerState<StudyPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/plan/study/add'),
-        backgroundColor: const Color(0xFF2563EB),
+        backgroundColor: AppColors.study,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add_rounded),
       ),
     );
   }
 
-  // ── 顶部数据卡片（带圆环进度）──
+  // ── 顶部数据卡片（模块英雄卡片）──
   Widget _buildStatsCards(
     BuildContext context,
     WidgetRef ref,
@@ -148,37 +148,47 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     AsyncValue<List<StudyRecord>> todayRecords,
     DailyGoal studyGoal,
   ) {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => _showGoalEditSheet(context, ref, studyGoal),
-            child: _StatCardWithRing(
-              icon: Icons.timer_rounded,
-              label: '今日学习',
-              asyncValue: todayMinutes.whenData((m) => _formatMinutes(m)),
-              subtitle: '目标 ${_formatMinutes(studyGoal.target)}',
-              color: const Color(0xFF2563EB),
-              progress: todayMinutes.whenOrNull(
-                data: (m) => studyGoal.target > 0 ? (m / studyGoal.target).clamp(0.0, 1.0) : 0.0,
-              ),
+    return todayMinutes.when(
+      data: (minutes) {
+        final progress = studyGoal.target > 0 ? (minutes / studyGoal.target).clamp(0.0, 1.0) : 0.0;
+        return ModuleHeroCard(
+          icon: Icons.timer_rounded,
+          title: '今日学习',
+          primaryValue: _formatMinutes(minutes),
+          primaryLabel: '今日已学习',
+          color: AppColors.study,
+          progress: progress,
+          targetLabel: '目标 ${_formatMinutes(studyGoal.target)}',
+          metrics: [
+            ModuleMetricChip(
+              icon: Icons.repeat_rounded,
+              value: '${todayRecords.whenOrNull(data: (list) => list.length) ?? 0}次',
+              label: '专注次数',
             ),
-          ),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _StatCardWithRing(
-            icon: Icons.repeat_rounded,
-            label: '专注次数',
-            asyncValue: todayRecords.whenData((list) => '${list.length}'),
-            subtitle: '今日学习记录',
-            color: const Color(0xFF1E40AF),
-            progress: todayRecords.whenOrNull(
-              data: (list) => (list.length / 5).clamp(0.0, 1.0),
+            ModuleMetricChip(
+              icon: Icons.auto_stories_rounded,
+              value: '${todayRecords.whenOrNull(data: (list) => list.map((r) => r.subject).toSet().length) ?? 0}科',
+              label: '科目',
             ),
-          ),
+            ModuleMetricChip(
+              icon: Icons.star_rounded,
+              value: '+${todayRecords.whenOrNull(data: (list) => list.fold<int>(0, (s, r) => s + r.expGained)) ?? 0}',
+              label: '今日经验',
+            ),
+          ],
+          onTargetTap: () => _showGoalEditSheet(context, ref, studyGoal),
+        );
+      },
+      loading: () => Container(
+        height: 200,
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border),
         ),
-      ],
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 
@@ -193,7 +203,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
       max: 480,
       step: 10,
       suggestion: '建议每天学习 60~180 分钟',
-      color: const Color(0xFF2563EB),
+      color: AppColors.study,
       onSave: (value) async {
         final goals = ref.read(dailyGoalsProvider);
         final newGoals = goals.map((g) {
@@ -264,12 +274,12 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF2563EB) : Colors.transparent,
+            color: isSelected ? AppColors.study : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.sm),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: const Color(0xFF2563EB).withValues(alpha: 0.3),
+                      color: AppColors.study.withValues(alpha: 0.3),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -441,9 +451,9 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return Container(
       height: 200,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       child: const Center(child: CircularProgressIndicator()),
     );
@@ -462,7 +472,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           child: _QuickActionCard(
             icon: Icons.add_rounded,
             label: '添加记录',
-            color: const Color(0xFF2563EB),
+            color: AppColors.study,
             onTap: () => context.push('/plan/study/add'),
           ),
         ),
@@ -471,7 +481,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           child: _QuickActionCard(
             icon: Icons.timer_outlined,
             label: '专注计时',
-            color: const Color(0xFF10B981),
+            color: AppColors.success,
             onTap: () => context.push('/focus'),
           ),
         ),
@@ -480,7 +490,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           child: _QuickActionCard(
             icon: Icons.history_rounded,
             label: '全部记录',
-            color: const Color(0xFF6B7280),
+            color: AppColors.textTertiary,
             onTap: () => context.push('/plan/study/recent'),
           ),
         ),
@@ -531,153 +541,86 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // ── 最近记录（带展开/收起）──
+  // ── 最近记录 ──
   Widget _buildRecentRecords(
     BuildContext context,
     WidgetRef ref,
     AsyncValue<List<StudyRecord>> recentRecords,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Text('最近记录', style: AppTextStyles.sectionTitle),
-            const Spacer(),
-            GestureDetector(
-              onTap: () => context.push('/plan/study/recent'),
-              child: Row(
-                children: [
-                  Text('查看全部', style: TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-                  Icon(Icons.chevron_right, size: 18, color: AppColors.textSecondary),
-                ],
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        recentRecords.when(
-          data: (records) {
-            if (records.isEmpty) {
-              return const EmptyStateWidget(
-                icon: Icons.menu_book_outlined,
-                title: '还没有学习记录',
-                subtitle: '点击右下角按钮开始学习',
-                accentColor: AppColors.study,
-              );
-            }
-
-            const maxVisible = 5;
-            final showExpandButton = records.length > maxVisible;
-            final visibleRecords =
-                _isRecentExpanded ? records : records.take(maxVisible).toList();
-
-            return Column(
-              children: [
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 280),
-                  curve: Curves.easeInOut,
-                  alignment: Alignment.topCenter,
-                  child: Column(
-                    children: visibleRecords.map((record) {
-                      final date = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
-                      final dateStr =
-                          '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
-                          '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
-                      final isProfessional = record.mode == 'professional';
-
-                      return SwipeDeleteTile(
-                        key: ValueKey('study_${record.id}'),
-                        onConfirmDelete: () async {
-                          final confirmed = await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) => AlertDialog(
-                              title: const Text('删除确认'),
-                              content: const Text('确定要删除这条学习记录吗？'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx, false),
-                                  child: const Text('取消'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(ctx, true),
-                                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-                                  child: const Text('删除'),
-                                ),
-                              ],
-                            ),
-                          );
-
-                          if (confirmed == true && context.mounted) {
-                            final repo = ref.read(studyRepositoryProvider);
-                            await repo.deleteStudyRecord(record.id);
-                            ref.invalidate(recentStudyRecordsProvider);
-                            ref.invalidate(todayStudyMinutesProvider);
-                            ref.invalidate(todayStudyRecordsProvider);
-                            ref.invalidate(dashboardProvider);
-                            if (context.mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('已删除')),
-                              );
-                            }
-                          }
-                          return false;
-                        },
-                        onDismissed: () {},
-                        child: RecentRecordTile(
-                          icon: isProfessional ? Icons.school : Icons.menu_book,
-                          iconColor: Colors.white,
-                          iconBackgroundColor: AppColors.study,
-                          title: record.title,
-                          subtitle:
-                              '${record.subject ?? ''} · ${record.durationMinutes}分钟 · $dateStr',
-                          primaryBadge: '+${record.expGained} EXP',
-                          primaryBadgeColor: AppColors.study,
-                          secondaryBadge: null,
-                          onTap: () => _showStudyRecordDetail(context, record),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                if (showExpandButton)
-                  GestureDetector(
-                    onTap: () => setState(() => _isRecentExpanded = !_isRecentExpanded),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            _isRecentExpanded ? '收起' : '查看更多',
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.study,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          AnimatedRotation(
-                            turns: _isRecentExpanded ? 0.5 : 0,
-                            duration: const Duration(milliseconds: 200),
-                            child: Icon(
-                              Icons.keyboard_arrow_down,
-                              size: 18,
-                              color: AppColors.study,
-                            ),
-                          ),
-                        ],
+    return recentRecords.when(
+      data: (records) {
+        if (records.isEmpty) {
+          return const EmptyStateWidget(
+            icon: Icons.menu_book_outlined,
+            title: '还没有学习记录',
+            subtitle: '点击右下角按钮开始学习',
+            accentColor: AppColors.study,
+          );
+        }
+        const maxVisible = 5;
+        final visibleRecords = _isRecentExpanded ? records : records.take(maxVisible).toList();
+        return ModuleRecordsCard(
+          title: '最近记录',
+          action: '查看全部',
+          onActionTap: () => context.push('/plan/study/recent'),
+          color: AppColors.study,
+          recordCount: records.length,
+          maxVisible: maxVisible,
+          isExpanded: _isRecentExpanded,
+          onToggleExpand: () => setState(() => _isRecentExpanded = !_isRecentExpanded),
+          children: visibleRecords.map((record) {
+            final date = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
+            final dateStr = '${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')} '
+                '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
+            return SwipeDeleteTile(
+              key: ValueKey('study_${record.id}'),
+              onConfirmDelete: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    title: const Text('删除确认'),
+                    content: const Text('确定要删除这条学习记录吗？'),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                        child: const Text('删除'),
                       ),
-                    ),
+                    ],
                   ),
-              ],
+                );
+                if (confirmed == true && context.mounted) {
+                  final repo = ref.read(studyRepositoryProvider);
+                  await repo.deleteStudyRecord(record.id);
+                  ref.invalidate(recentStudyRecordsProvider);
+                  ref.invalidate(todayStudyMinutesProvider);
+                  ref.invalidate(todayStudyRecordsProvider);
+                  ref.invalidate(dashboardProvider);
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已删除')));
+                  }
+                }
+                return false;
+              },
+              onDismissed: () {},
+              child: RecentRecordTile(
+                icon: record.mode == 'professional' ? Icons.school : Icons.menu_book,
+                iconColor: Colors.white,
+                iconBackgroundColor: AppColors.study,
+                title: record.title,
+                subtitle: '${record.subject ?? ''} · ${record.durationMinutes}分钟 · $dateStr',
+                primaryBadge: '+${record.expGained} EXP',
+                primaryBadgeColor: AppColors.study,
+                secondaryBadge: null,
+                onTap: () => _showStudyRecordDetail(context, record),
+              ),
             );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('加载失败: $e')),
-        ),
-      ],
+          }).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('加载失败: $e')),
     );
   }
 
@@ -785,79 +728,6 @@ String _formatMinutesCompact(int minutes) {
 }
 
 // =============================================================================
-// 统计卡片（带圆环进度）
-// =============================================================================
-
-class _StatCardWithRing extends StatelessWidget {
-  const _StatCardWithRing({
-    required this.icon,
-    required this.label,
-    required this.asyncValue,
-    required this.subtitle,
-    required this.color,
-    this.progress,
-  });
-
-  final IconData icon;
-  final String label;
-  final AsyncValue<String> asyncValue;
-  final String subtitle;
-  final Color color;
-  final double? progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Icon(icon, color: color, size: 20),
-              ),
-              const Spacer(),
-              if (progress != null)
-                SizedBox(
-                  width: 36,
-                  height: 36,
-                  child: CircularProgressIndicator(
-                    value: progress,
-                    strokeWidth: 3,
-                    backgroundColor: color.withValues(alpha: 0.1),
-                    valueColor: AlwaysStoppedAnimation<Color>(color),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
-          const SizedBox(height: AppSpacing.xs),
-          asyncValue.when(
-            data: (v) => Text(v, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
-            loading: () => Text('--', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
-            error: (_, _) => Text('--', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
-          ),
-          const SizedBox(height: AppSpacing.xs),
-          Text(subtitle, style: TextStyle(fontSize: 11, color: AppColors.textTertiary)),
-        ],
-      ),
-    );
-  }
-}
-
-// =============================================================================
 // 柱状图数据模型
 // =============================================================================
 
@@ -909,8 +779,7 @@ class _StudyBarChart extends StatefulWidget {
 class _StudyBarChartState extends State<_StudyBarChart> {
   int? _touchedIndex;
 
-  static const _barColor = Color(0xFF2563EB);
-  static const _barColorLight = Color(0x4D2563EB); // 30% opacity
+  static const _barColor = AppColors.study;
   static const _tooltipBg = Color(0xFF1E293B);
 
   @override
@@ -922,9 +791,9 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: [
@@ -1108,7 +977,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
   BarChartGroupData _buildBarGroup(int index, double yMax) {
     final bar = widget.stats[index];
     final isTouched = index == _touchedIndex;
-    final barColor = _isHighlighted(index) ? _barColor : _barColorLight;
+    final barColor = _isHighlighted(index) ? _barColor : _barColor.withValues(alpha: 0.3);
 
     return BarChartGroupData(
       x: index,
@@ -1233,7 +1102,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
           style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E40AF),
+            color: AppColors.primaryDark,
           ),
         ),
       ],
@@ -1285,7 +1154,7 @@ class _ValueBubble extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: const Color(0xFFE5E7EB)),
+            border: Border.all(color: AppColors.border),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: 0.06),
@@ -1299,7 +1168,7 @@ class _ValueBubble extends StatelessWidget {
             style: const TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF2563EB),
+              color: AppColors.study,
             ),
           ),
         ),
@@ -1343,9 +1212,9 @@ class _QuickActionCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFFFF),
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+          border: Border.all(color: AppColors.border),
         ),
         child: Column(
           children: [
@@ -1376,9 +1245,9 @@ class _SubjectDistributionCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFFFF),
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         children: sorted.take(5).map((entry) {
@@ -1431,7 +1300,7 @@ class _SubjectDistributionCard extends StatelessWidget {
   }
 
   Color _getSubjectColor(String subject) {
-    return _subjectColors[subject] ?? const Color(0xFF2563EB);
+    return _subjectColors[subject] ?? AppColors.study;
   }
 }
 

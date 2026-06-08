@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 
 /// 等级详情底部弹窗
 ///
@@ -46,7 +46,7 @@ class LevelDetailSheet extends StatelessWidget {
     return Container(
       height: screenHeight * 0.75,
       decoration: const BoxDecoration(
-        color: GrowthColors.cardBackground,
+        color: AppColors.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
@@ -88,7 +88,7 @@ class LevelDetailSheet extends StatelessWidget {
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: GrowthColors.textHint.withValues(alpha: 0.4),
+        color: AppColors.textHint.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -116,7 +116,7 @@ class LevelDetailSheet extends StatelessWidget {
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: GrowthColors.textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -124,7 +124,7 @@ class LevelDetailSheet extends StatelessWidget {
                   '总经验值: $totalExp EXP',
                   style: const TextStyle(
                     fontSize: 14,
-                    color: GrowthColors.textSecondary,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
@@ -144,7 +144,7 @@ class LevelDetailSheet extends StatelessWidget {
         height: 56,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [GrowthColors.primaryLight, GrowthColors.primary],
+            colors: [AppColors.primaryLight, AppColors.primary],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -205,7 +205,7 @@ class LevelDetailSheet extends StatelessWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: GrowthColors.textPrimary,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
@@ -215,7 +215,7 @@ class LevelDetailSheet extends StatelessWidget {
                   children: [
                     const Icon(
                       Icons.check_circle,
-                      color: GrowthColors.primary,
+                      color: AppColors.primary,
                       size: 18,
                     ),
                     const SizedBox(width: 8),
@@ -224,7 +224,7 @@ class LevelDetailSheet extends StatelessWidget {
                         benefit,
                         style: const TextStyle(
                           fontSize: 14,
-                          color: GrowthColors.textPrimary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ),
@@ -249,7 +249,7 @@ class LevelDetailSheet extends StatelessWidget {
             : '已达最高等级，继续积累经验值吧！',
         style: const TextStyle(
           fontSize: 12,
-          color: GrowthColors.textSecondary,
+          color: AppColors.textSecondary,
         ),
         textAlign: TextAlign.center,
       ),
@@ -353,11 +353,11 @@ class _LevelTile extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: isCurrentLevel
-            ? GrowthColors.primaryLight.withValues(alpha: 0.3)
+            ? AppColors.primaryLight.withValues(alpha: 0.3)
             : null,
         border: isCurrentLevel
             ? Border.all(
-                color: GrowthColors.primary.withValues(alpha: 0.5),
+                color: AppColors.primary.withValues(alpha: 0.5),
                 width: 2,
               )
             : null,
@@ -380,13 +380,13 @@ class _LevelTile extends StatelessWidget {
         shape: BoxShape.circle,
         color: isUnlocked
             ? levelData.color.withValues(alpha: 0.15)
-            : GrowthColors.textHint.withValues(alpha: 0.3),
+            : AppColors.textHint.withValues(alpha: 0.3),
       ),
       child: Icon(
         levelData.icon,
         color: isUnlocked
             ? levelData.color
-            : GrowthColors.textHint.withValues(alpha: 0.5),
+            : AppColors.textHint.withValues(alpha: 0.5),
         size: 24,
       ),
     );
@@ -401,8 +401,8 @@ class _LevelTile extends StatelessWidget {
             fontSize: 12,
             fontWeight: FontWeight.w600,
             color: isUnlocked
-                ? GrowthColors.textSecondary
-                : GrowthColors.textHint,
+                ? AppColors.textSecondary
+                : AppColors.textHint,
           ),
         ),
         const SizedBox(width: 8),
@@ -412,8 +412,8 @@ class _LevelTile extends StatelessWidget {
             fontSize: 16,
             fontWeight: isCurrentLevel ? FontWeight.bold : FontWeight.w500,
             color: isUnlocked
-                ? GrowthColors.textPrimary
-                : GrowthColors.textHint,
+                ? AppColors.textPrimary
+                : AppColors.textHint,
           ),
         ),
         if (isCurrentLevel) ...[
@@ -421,7 +421,7 @@ class _LevelTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: GrowthColors.primary,
+              color: AppColors.primary,
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Text(
@@ -446,8 +446,8 @@ class _LevelTile extends StatelessWidget {
         style: TextStyle(
           fontSize: 12,
           color: isUnlocked
-              ? GrowthColors.primary
-              : GrowthColors.textHint,
+              ? AppColors.primary
+              : AppColors.textHint,
           fontWeight: FontWeight.w500,
         ),
       ),
@@ -458,7 +458,7 @@ class _LevelTile extends StatelessWidget {
     if (isUnlocked && !isCurrentLevel) {
       return const Icon(
         Icons.check_circle,
-        color: GrowthColors.success,
+        color: AppColors.success,
         size: 24,
       );
     }
@@ -466,7 +466,7 @@ class _LevelTile extends StatelessWidget {
     if (!isUnlocked) {
       return Icon(
         Icons.lock_outline,
-        color: GrowthColors.textHint.withValues(alpha: 0.5),
+        color: AppColors.textHint.withValues(alpha: 0.5),
         size: 24,
       );
     }
@@ -490,7 +490,7 @@ class _LevelTile extends StatelessWidget {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: GrowthColors.primary,
+              color: AppColors.primary,
             ),
           ),
           const SizedBox(height: 4),
@@ -499,9 +499,9 @@ class _LevelTile extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4,
-              backgroundColor: GrowthColors.primary.withValues(alpha: 0.15),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
               valueColor: const AlwaysStoppedAnimation<Color>(
-                GrowthColors.primary,
+                AppColors.primary,
               ),
             ),
           ),

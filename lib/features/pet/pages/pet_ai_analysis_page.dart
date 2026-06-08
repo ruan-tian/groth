@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/pet_scene_provider.dart';
 import '../models/pet_ai_result.dart';
 import '../models/pet_scene_model.dart';
 import '../services/pet_ai_service.dart';
+import '../utils/pet_assets.dart';
 import '../utils/pet_data_collector.dart';
 import '../widgets/pet_ai_data_preview_sheet.dart';
 import '../widgets/pet_ai_result_sheet.dart';
 
-/// 宠物 AI 分析页面
-///
-/// 展示 AI 分析入口和历史分析结果。
 class PetAIAnalysisPage extends ConsumerStatefulWidget {
   const PetAIAnalysisPage({super.key, this.initialTab});
 
-  /// Initial tab index (0=study, 1=fitness, 2=diet, 3=sleep, 4=weekly, 5=monthly)
   final int? initialTab;
 
   @override
@@ -29,13 +28,74 @@ class _PetAIAnalysisPageState extends ConsumerState<PetAIAnalysisPage> {
     super.initState();
     if (widget.initialTab != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        final type = PetAIAnalysisType.values[widget.initialTab!];
-        _startAnalysis(type);
+        final index = widget.initialTab!.clamp(
+          0,
+          PetAIAnalysisType.values.length - 1,
+        );
+        _startAnalysis(PetAIAnalysisType.values[index]);
       });
     }
   }
 
-  PetModuleType _getModuleFromType(PetAIAnalysisType type) {
+  @override
+  Widget build(BuildContext context) {
+    ref.listen<PetAIState>(petAIProvider, (previous, current) {
+      if (current.result != null && previous?.result != current.result) {
+        final type = current.analysisType;
+        if (type != null) {
+          final module = _moduleFromType(type);
+          ref
+              .read(petSceneProvider(module).notifier)
+              .setReport(
+                current.result!.petMessage,
+                title: current.result!.title,
+                highlights: current.result!.highlights,
+                suggestions: current.result!.suggestions,
+              );
+        }
+      }
+    });
+
+    final aiState = ref.watch(petAIProvider);
+
+    return Scaffold(
+      backgroundColor: const Color(0xFFFFF7EF),
+      appBar: AppBar(
+        title: const Text('甜甜分析'),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 19),
+          onPressed: () => context.pop(),
+        ),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
+        children: [
+          const _AiHeroCard(),
+          const SizedBox(height: 16),
+          _AnalysisGrid(aiState: aiState, onTap: _startAnalysis),
+          const SizedBox(height: 16),
+          const _PrivacyCard(),
+          if (aiState.isLoading) ...[
+            const SizedBox(height: 16),
+            const _LoadingCard(),
+          ],
+          if (aiState.error != null) ...[
+            const SizedBox(height: 16),
+            _ErrorCard(error: aiState.error!),
+          ],
+          if (aiState.result != null) ...[
+            const SizedBox(height: 16),
+            _ResultCard(result: aiState.result!),
+          ],
+        ],
+      ),
+    );
+  }
+
+  PetModuleType _moduleFromType(PetAIAnalysisType type) {
     switch (type) {
       case PetAIAnalysisType.study:
         return PetModuleType.study;
@@ -51,234 +111,29 @@ class _PetAIAnalysisPageState extends ConsumerState<PetAIAnalysisPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    // Listen to AI analysis state changes and update pet scene
-    ref.listen<PetAIState>(petAIProvider, (previous, current) {
-      if (current.result != null && previous?.result != current.result) {
-        final type = current.analysisType;
-        if (type != null) {
-          final module = _getModuleFromType(type);
-          ref.read(petSceneProvider(module).notifier).setReport(
-                current.result!.petMessage,
-                title: current.result!.title,
-                highlights: current.result!.highlights,
-                suggestions: current.result!.suggestions,
-              );
-        }
-      }
-    });
-
-    final aiState = ref.watch(petAIProvider);
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('甜甜分析'),
-        centerTitle: true,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 头部介绍
-            _buildHeader(),
-            const SizedBox(height: 24),
-
-            // 分析入口
-            _buildAnalysisGrid(aiState),
-            const SizedBox(height: 24),
-
-            // 分析结果
-            if (aiState.isLoading) _buildLoading(),
-            if (aiState.error != null) _buildError(aiState.error!),
-            if (aiState.result != null) _buildResult(aiState.result!),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primary.withValues(alpha: 0.08), AppColors.background],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          const Text('🐱', style: TextStyle(fontSize: 40)),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '甜甜成长分析',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '让甜甜帮你分析成长数据，发现亮点和改进方向',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAnalysisGrid(PetAIState aiState) {
-    final types = [
-      _AnalysisEntry(type: PetAIAnalysisType.study, icon: Icons.menu_book_rounded, color: AppColors.study, label: '学习分析'),
-      _AnalysisEntry(type: PetAIAnalysisType.fitness, icon: Icons.fitness_center_rounded, color: AppColors.fitness, label: '健身分析'),
-      _AnalysisEntry(type: PetAIAnalysisType.diet, icon: Icons.restaurant_rounded, color: AppColors.diet, label: '饮食分析'),
-      _AnalysisEntry(type: PetAIAnalysisType.sleep, icon: Icons.bedtime_rounded, color: AppColors.sleep, label: '睡眠分析'),
-      _AnalysisEntry(type: PetAIAnalysisType.weeklyReport, icon: Icons.calendar_view_week_rounded, color: AppColors.primary, label: '成长周报'),
-      _AnalysisEntry(type: PetAIAnalysisType.monthlyReport, icon: Icons.calendar_month_rounded, color: AppColors.accent, label: '成长月报'),
-    ];
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 2.2,
-      ),
-      itemCount: types.length,
-      itemBuilder: (context, index) {
-        final entry = types[index];
-        return _buildAnalysisCard(entry, aiState.isLoading);
-      },
-    );
-  }
-
-  Widget _buildAnalysisCard(_AnalysisEntry entry, bool isLoading) {
-    return GestureDetector(
-      onTap: isLoading ? null : () => _startAnalysis(entry.type),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.5)),
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: entry.color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(entry.icon, color: entry.color, size: 18),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                entry.label,
-                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500, color: AppColors.textPrimary),
-              ),
-            ),
-            Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textTertiary),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLoading() {
-    return Container(
-      padding: const EdgeInsets.all(32),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: const Column(
-        children: [
-          CircularProgressIndicator(color: AppColors.primary),
-          SizedBox(height: 16),
-          Text('甜甜正在认真分析中...', style: TextStyle(color: AppColors.textSecondary)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildError(String error) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.danger.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.error_outline, color: AppColors.danger, size: 20),
-          const SizedBox(width: 10),
-          Expanded(child: Text(error, style: const TextStyle(color: AppColors.danger, fontSize: 13))),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResult(PetAIResult result) {
-    return GestureDetector(
-      onTap: () => PetAIResultSheet.show(context: context, result: result),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.success.withValues(alpha: 0.3)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.check_circle_outline, color: AppColors.success, size: 20),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(result.title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                ),
-                const Icon(Icons.chevron_right_rounded, size: 20, color: AppColors.textTertiary),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(result.petMessage, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.4)),
-          ],
-        ),
-      ),
-    );
-  }
-
   Future<void> _startAnalysis(PetAIAnalysisType type) async {
+    HapticFeedback.selectionClick();
     final collector = PetDataCollector(ProviderScope.containerOf(ref.context));
-    Map<String, dynamic> data;
+    final Map<String, dynamic> data;
     switch (type) {
-      case PetAIAnalysisType.study: data = await collector.collectStudyData(); break;
-      case PetAIAnalysisType.fitness: data = await collector.collectFitnessData(); break;
-      case PetAIAnalysisType.diet: data = await collector.collectDietData(); break;
-      case PetAIAnalysisType.sleep: data = await collector.collectSleepData(); break;
-      case PetAIAnalysisType.weeklyReport: data = await collector.collectWeeklyReportData(); break;
-      case PetAIAnalysisType.monthlyReport: data = await collector.collectMonthlyReportData(); break;
+      case PetAIAnalysisType.study:
+        data = await collector.collectStudyData();
+        break;
+      case PetAIAnalysisType.fitness:
+        data = await collector.collectFitnessData();
+        break;
+      case PetAIAnalysisType.diet:
+        data = await collector.collectDietData();
+        break;
+      case PetAIAnalysisType.sleep:
+        data = await collector.collectSleepData();
+        break;
+      case PetAIAnalysisType.weeklyReport:
+        data = await collector.collectWeeklyReportData();
+        break;
+      case PetAIAnalysisType.monthlyReport:
+        data = await collector.collectMonthlyReportData();
+        break;
     }
 
     if (!mounted) return;
@@ -294,10 +149,405 @@ class _PetAIAnalysisPageState extends ConsumerState<PetAIAnalysisPage> {
   }
 }
 
+class _AiHeroCard extends StatelessWidget {
+  const _AiHeroCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _PaperCard(
+      child: Row(
+        children: [
+          Container(
+            width: 84,
+            height: 84,
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF1FF),
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Image.asset(PetAssets.aiThinking, fit: BoxFit.contain),
+          ),
+          const SizedBox(width: 16),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '让甜甜读懂你的成长',
+                  style: TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                SizedBox(height: 7),
+                Text(
+                  '选择一个方向，先确认数据预览，再生成分析建议。',
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.45,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnalysisGrid extends StatelessWidget {
+  const _AnalysisGrid({required this.aiState, required this.onTap});
+
+  final PetAIState aiState;
+  final void Function(PetAIAnalysisType type) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final entries = const [
+      _AnalysisEntry(
+        type: PetAIAnalysisType.study,
+        asset: PetAssets.studyReading,
+        title: '学习分析',
+        subtitle: '节奏、科目和复习建议',
+        color: AppColors.study,
+      ),
+      _AnalysisEntry(
+        type: PetAIAnalysisType.fitness,
+        asset: PetAssets.fitnessDone,
+        title: '健身分析',
+        subtitle: '训练量、强度和恢复',
+        color: AppColors.fitness,
+      ),
+      _AnalysisEntry(
+        type: PetAIAnalysisType.diet,
+        asset: PetAssets.dietPlate,
+        title: '饮食分析',
+        subtitle: '餐次、饮水和健康评分',
+        color: AppColors.diet,
+      ),
+      _AnalysisEntry(
+        type: PetAIAnalysisType.sleep,
+        asset: PetAssets.sleepSleeping,
+        title: '睡眠分析',
+        subtitle: '时长、质量和作息',
+        color: AppColors.sleep,
+      ),
+      _AnalysisEntry(
+        type: PetAIAnalysisType.weeklyReport,
+        asset: PetAssets.eventWeeklyRpt,
+        title: '成长周报',
+        subtitle: '一周亮点和调整方向',
+        color: AppColors.primary,
+      ),
+      _AnalysisEntry(
+        type: PetAIAnalysisType.monthlyReport,
+        asset: PetAssets.eventMonthlyRpt,
+        title: '成长月报',
+        subtitle: '长期趋势和里程碑',
+        color: AppColors.accent,
+      ),
+    ];
+
+    return _PaperCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _Header(
+            asset: PetCenterAssets.decoTarget,
+            title: '分析入口',
+            subtitle: 'AI 不会自动发送数据，每次都需要你确认',
+          ),
+          const SizedBox(height: 14),
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: entries.length,
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 2,
+              crossAxisSpacing: 10,
+              mainAxisSpacing: 10,
+              childAspectRatio: 1.48,
+            ),
+            itemBuilder: (context, index) {
+              final entry = entries[index];
+              return _AnalysisCard(
+                entry: entry,
+                disabled: aiState.isLoading,
+                onTap: () => onTap(entry.type),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AnalysisCard extends StatelessWidget {
+  const _AnalysisCard({
+    required this.entry,
+    required this.disabled,
+    required this.onTap,
+  });
+
+  final _AnalysisEntry entry;
+  final bool disabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: disabled ? null : onTap,
+      child: Opacity(
+        opacity: disabled ? 0.58 : 1,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: entry.color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Image.asset(
+                entry.asset,
+                width: 44,
+                height: 44,
+                fit: BoxFit.contain,
+              ),
+              const Spacer(),
+              Text(
+                entry.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                entry.subtitle,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  height: 1.25,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PrivacyCard extends StatelessWidget {
+  const _PrivacyCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _PaperCard(
+      child: _Header(
+        asset: PetAssets.aiPrivacy,
+        title: '隐私确认',
+        subtitle: '分析前会弹出数据预览；只有你点击确认后，才会调用已配置的 AI 服务。',
+      ),
+    );
+  }
+}
+
+class _LoadingCard extends StatelessWidget {
+  const _LoadingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _PaperCard(
+      child: Column(
+        children: [
+          CircularProgressIndicator(color: Color(0xFFE89B68)),
+          SizedBox(height: 14),
+          Text(
+            '甜甜正在认真分析中...',
+            style: TextStyle(color: AppColors.textSecondary),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorCard extends StatelessWidget {
+  const _ErrorCard({required this.error});
+
+  final String error;
+
+  @override
+  Widget build(BuildContext context) {
+    return _PaperCard(
+      child: Row(
+        children: [
+          Image.asset(PetAssets.aiNetworkError, width: 48, height: 48),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              error,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: AppColors.danger,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ResultCard extends StatelessWidget {
+  const _ResultCard({required this.result});
+
+  final PetAIResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(22),
+      onTap: () => PetAIResultSheet.show(context: context, result: result),
+      child: _PaperCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _Header(
+              asset: PetAssets.aiReport,
+              title: '分析完成',
+              subtitle: '点击卡片查看完整建议',
+            ),
+            const SizedBox(height: 12),
+            Text(
+              result.title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              result.petMessage,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _Header extends StatelessWidget {
+  const _Header({
+    required this.asset,
+    required this.title,
+    required this.subtitle,
+  });
+
+  final String asset;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 42,
+          height: 42,
+          padding: const EdgeInsets.all(7),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFFF0E4),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Image.asset(asset, fit: BoxFit.contain),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 12,
+                  height: 1.35,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaperCard extends StatelessWidget {
+  const _PaperCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFB97A52).withValues(alpha: 0.10),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Padding(padding: const EdgeInsets.all(18), child: child),
+    );
+  }
+}
+
 class _AnalysisEntry {
-  const _AnalysisEntry({required this.type, required this.icon, required this.color, required this.label});
+  const _AnalysisEntry({
+    required this.type,
+    required this.asset,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+  });
+
   final PetAIAnalysisType type;
-  final IconData icon;
+  final String asset;
+  final String title;
+  final String subtitle;
   final Color color;
-  final String label;
 }

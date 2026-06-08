@@ -9,6 +9,7 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/journal_provider.dart';
+import '../widgets/markdown_preview.dart';
 
 /// 心情 emoji 映射
 const _moodEmojiMap = {
@@ -127,6 +128,42 @@ class _DetailContent extends ConsumerWidget {
                 _buildContent(journal),
                 const SizedBox(height: 24),
 
+                // ── 图片附件 ──
+                FutureBuilder<List<JournalAsset>>(
+                  future: ref.read(journalRepositoryProvider).getJournalAssets(journal.id),
+                  builder: (context, snapshot) {
+                    final assets = snapshot.data ?? [];
+                    if (assets.isEmpty) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: assets.map((asset) {
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.asset(
+                              asset.localPath,
+                              width: 100,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: AppColors.border,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(Icons.image_not_supported_rounded, size: 24),
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  },
+                ),
+
                 // ── 标签 ──
                 if (tags.isNotEmpty) ...[
                   _buildTags(tags),
@@ -202,14 +239,10 @@ class _DetailContent extends ConsumerWidget {
     if (journal.contentType == 'quill' && journal.quillDeltaJson != null) {
       return _QuillReadOnlyContent(deltaJson: journal.quillDeltaJson!);
     }
-    
-    return SelectableText(
-      journal.content,
-      style: const TextStyle(
-        fontSize: 16,
-        height: 1.65,
-        color: Color(0xFF1F2329),
-      ),
+
+    // Use MarkdownPreview for markdown content
+    return JournalMarkdownPreview(
+      markdown: journal.content,
     );
   }
 
@@ -303,6 +336,11 @@ class _DetailContent extends ConsumerWidget {
       try {
         final repo = ref.read(journalRepositoryProvider);
         await repo.deleteJournal(journal.id);
+
+        ref.invalidate(recentJournalsProvider);
+        ref.invalidate(todayJournalCountProvider);
+        ref.invalidate(dashboardProvider);
+        ref.invalidate(allJournalTagsProvider);
 
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

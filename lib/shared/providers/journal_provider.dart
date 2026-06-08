@@ -8,6 +8,15 @@ import '../../core/database/app_database.dart';
 import '../../core/services/image_service.dart';
 import 'dashboard_provider.dart';
 
+List<String> _parseTagsSafe(String? tagsString) {
+  if (tagsString == null || tagsString.isEmpty) return const [];
+  try {
+    final decoded = jsonDecode(tagsString);
+    if (decoded is List) return decoded.cast<String>();
+  } catch (_) {}
+  return tagsString.split(',').where((t) => t.trim().isNotEmpty).toList();
+}
+
 // =============================================================================
 // 日记 Provider
 // =============================================================================
@@ -51,16 +60,7 @@ final allJournalTagsProvider = FutureProvider<List<String>>((ref) async {
 
   final tagSet = <String>{};
   for (final j in journals) {
-    if (j.tags != null && j.tags!.isNotEmpty) {
-      try {
-        final list = (jsonDecode(j.tags!) as List<dynamic>)
-            .map((e) => e.toString())
-            .toList();
-        tagSet.addAll(list);
-      } catch (_) {
-        // skip malformed tags
-      }
-    }
+    tagSet.addAll(_parseTagsSafe(j.tags));
   }
   return tagSet.toList();
 });
@@ -75,14 +75,7 @@ final journalsByTagProvider =
 
   // Drift doesn't support JSON array contains natively, filter in Dart
   return journals.where((j) {
-    if (j.tags == null || j.tags!.isEmpty) return false;
-    try {
-      final list =
-          (jsonDecode(j.tags!) as List<dynamic>).map((e) => e.toString());
-      return list.contains(tag);
-    } catch (_) {
-      return false;
-    }
+    return _parseTagsSafe(j.tags).contains(tag);
   }).toList();
 });
 

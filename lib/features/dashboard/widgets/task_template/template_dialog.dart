@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../../app/theme.dart';
+import '../../../../app/design/design.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../shared/providers/task_provider.dart';
 
@@ -31,7 +31,7 @@ class _TaskTemplateDialogState extends ConsumerState<TaskTemplateDialog> {
       title: Row(
         children: [
           Icon(Icons.library_books, color: theme.colorScheme.primary),
-          const SizedBox(width: AppTheme.spaceSm),
+          const SizedBox(width: AppSpacing.sm),
           const Text('任务模板'),
           const Spacer(),
           IconButton(
@@ -89,7 +89,7 @@ class _TaskTemplateDialogState extends ConsumerState<TaskTemplateDialog> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: GrowthColors.error,
+              foregroundColor: AppColors.danger,
             ),
             child: const Text('删除'),
           ),
@@ -137,14 +137,14 @@ class _TemplateList extends StatelessWidget {
                   size: 48,
                   color: theme.colorScheme.outlineVariant,
                 ),
-                const SizedBox(height: AppTheme.spaceMd),
+                const SizedBox(height: AppSpacing.md),
                 Text(
                   '暂无模板',
                   style: theme.textTheme.bodyLarge?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: AppTheme.spaceSm),
+                const SizedBox(height: AppSpacing.sm),
                 Text(
                   '点击右上角 + 创建模板',
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -195,7 +195,7 @@ class _TemplateTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      margin: const EdgeInsets.only(bottom: AppTheme.spaceSm),
+      margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: ListTile(
         leading: CircleAvatar(
           backgroundColor: theme.colorScheme.primaryContainer,
@@ -291,7 +291,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
           '创建新模板',
           style: Theme.of(context).textTheme.titleMedium,
         ),
-        const SizedBox(height: AppTheme.spaceMd),
+        const SizedBox(height: AppSpacing.md),
 
         // 模板名称
         TextField(
@@ -301,7 +301,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
             hintText: '例如：晨间学习',
           ),
         ),
-        const SizedBox(height: AppTheme.spaceMd),
+        const SizedBox(height: AppSpacing.md),
 
         // 模板描述
         TextField(
@@ -312,7 +312,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
           ),
           maxLines: 2,
         ),
-        const SizedBox(height: AppTheme.spaceMd),
+        const SizedBox(height: AppSpacing.md),
 
         // 时间选择
         Row(
@@ -327,7 +327,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
                 },
               ),
             ),
-            const SizedBox(width: AppTheme.spaceMd),
+            const SizedBox(width: AppSpacing.md),
             Expanded(
               child: _buildTimePicker(
                 context,
@@ -340,7 +340,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
             ),
           ],
         ),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // 保存按钮
         FilledButton.icon(
@@ -374,7 +374,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
           onTimeSelected(picked);
         }
       },
-      borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+      borderRadius: BorderRadius.circular(AppRadius.xs),
       child: InputDecorator(
         decoration: InputDecoration(
           labelText: label,

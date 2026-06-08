@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 
 // =============================================================================
 // HeatmapCalendar Widget
@@ -112,7 +112,7 @@ class HeatmapCalendar extends StatelessWidget {
 
         // ── 图例 ──
         if (showLegend) ...[
-          const SizedBox(height: AppTheme.spaceMd),
+          const SizedBox(height: AppSpacing.md),
           _HeatmapLegend(
             baseColor: baseColor ?? _defaultBase,
             maxColor: maxColor ?? _defaultMax,
@@ -154,7 +154,7 @@ class HeatmapCalendar extends StatelessWidget {
               margin: EdgeInsets.all(cellSpacing / 2),
               decoration: BoxDecoration(
                 color: color,
-                borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+                borderRadius: BorderRadius.circular(AppRadius.xxs),
                 border: isToday ? Border.all(color: Colors.white, width: 2) : null,
                 boxShadow: isToday ? [
                   BoxShadow(

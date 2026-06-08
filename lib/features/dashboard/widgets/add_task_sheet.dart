@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 
 /// 添加任务底部弹窗
 ///
@@ -49,7 +49,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
     return Container(
       height: screenHeight * 0.85,
       decoration: const BoxDecoration(
-        color: GrowthColors.cardBackground,
+        color: AppColors.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
@@ -115,7 +115,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: GrowthColors.textHint.withValues(alpha: 0.4),
+        color: AppColors.textHint.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -132,7 +132,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: GrowthColors.textPrimary,
+              color: AppColors.textPrimary,
             ),
           ),
           const Spacer(),
@@ -142,13 +142,13 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: GrowthColors.background,
+                color: AppColors.background,
                 borderRadius: BorderRadius.circular(16),
               ),
               child: const Icon(
                 Icons.close,
                 size: 18,
-                color: GrowthColors.textSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
           ),
@@ -167,7 +167,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: GrowthColors.textPrimary,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -177,10 +177,10 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
             hintText: '请输入任务标题',
             hintStyle: const TextStyle(
               fontSize: 14,
-              color: GrowthColors.textHint,
+              color: AppColors.textHint,
             ),
             filled: true,
-            fillColor: GrowthColors.background,
+            fillColor: AppColors.background,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -211,7 +211,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: GrowthColors.textPrimary,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 8),
@@ -221,7 +221,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
-              color: GrowthColors.background,
+              color: AppColors.background,
               borderRadius: BorderRadius.circular(16),
             ),
             child: Row(
@@ -229,14 +229,14 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                 const Icon(
                   Icons.calendar_today_rounded,
                   size: 18,
-                  color: GrowthColors.primary,
+                  color: AppColors.primary,
                 ),
                 const SizedBox(width: 12),
                 Text(
                   '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}',
                   style: const TextStyle(
                     fontSize: 14,
-                    color: GrowthColors.textPrimary,
+                    color: AppColors.textPrimary,
                   ),
                 ),
               ],
@@ -260,7 +260,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: GrowthColors.textPrimary,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -269,7 +269,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: GrowthColors.background,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -277,14 +277,14 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                       const Icon(
                         Icons.access_time_rounded,
                         size: 18,
-                        color: GrowthColors.primary,
+                        color: AppColors.primary,
                       ),
                       const SizedBox(width: 12),
                       Text(
                         _startTime.format(context),
                         style: const TextStyle(
                           fontSize: 14,
-                          color: GrowthColors.textPrimary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -304,7 +304,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: GrowthColors.textPrimary,
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -313,7 +313,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                   decoration: BoxDecoration(
-                    color: GrowthColors.background,
+                    color: AppColors.background,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Row(
@@ -321,14 +321,14 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                       const Icon(
                         Icons.access_time_rounded,
                         size: 18,
-                        color: GrowthColors.primary,
+                        color: AppColors.primary,
                       ),
                       const SizedBox(width: 12),
                       Text(
                         _endTime.format(context),
                         style: const TextStyle(
                           fontSize: 14,
-                          color: GrowthColors.textPrimary,
+                          color: AppColors.textPrimary,
                         ),
                       ),
                     ],
@@ -345,12 +345,12 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
   /// 模板选择
   Widget _buildTemplateSection() {
     final templates = [
-      {'name': '学习', 'icon': Icons.menu_book_rounded, 'color': GrowthColors.studyPrimary},
-      {'name': '健身', 'icon': Icons.fitness_center_rounded, 'color': GrowthColors.fitnessPrimary},
-      {'name': '饮食', 'icon': Icons.restaurant_rounded, 'color': GrowthColors.dietPrimary},
-      {'name': '睡眠', 'icon': Icons.bedtime_rounded, 'color': GrowthColors.sleepPrimary},
-      {'name': '日记', 'icon': Icons.edit_note_rounded, 'color': GrowthColors.primary},
-      {'name': '自定义', 'icon': Icons.add_rounded, 'color': GrowthColors.textSecondary},
+      {'name': '学习', 'icon': Icons.menu_book_rounded, 'color': AppColors.study},
+      {'name': '健身', 'icon': Icons.fitness_center_rounded, 'color': AppColors.fitness},
+      {'name': '饮食', 'icon': Icons.restaurant_rounded, 'color': AppColors.diet},
+      {'name': '睡眠', 'icon': Icons.bedtime_rounded, 'color': AppColors.sleep},
+      {'name': '日记', 'icon': Icons.edit_note_rounded, 'color': AppColors.primary},
+      {'name': '自定义', 'icon': Icons.add_rounded, 'color': AppColors.textSecondary},
     ];
 
     return Column(
@@ -361,7 +361,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
           style: TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w600,
-            color: GrowthColors.textPrimary,
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 12),
@@ -381,7 +381,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: isSelected ? color.withValues(alpha: 0.15) : GrowthColors.background,
+                  color: isSelected ? color.withValues(alpha: 0.15) : AppColors.background,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: isSelected ? color : Colors.transparent,
@@ -394,7 +394,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                     Icon(
                       template['icon'] as IconData,
                       size: 18,
-                      color: isSelected ? color : GrowthColors.textSecondary,
+                      color: isSelected ? color : AppColors.textSecondary,
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -402,7 +402,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                        color: isSelected ? color : GrowthColors.textSecondary,
+                        color: isSelected ? color : AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -425,7 +425,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
         child: ElevatedButton(
           onPressed: _saveTask,
           style: ElevatedButton.styleFrom(
-            backgroundColor: GrowthColors.primary,
+            backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
@@ -487,7 +487,7 @@ class _AddTaskSheetState extends ConsumerState<AddTaskSheet> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('任务已保存'),
-          backgroundColor: GrowthColors.success,
+          backgroundColor: AppColors.success,
         ),
       );
     }

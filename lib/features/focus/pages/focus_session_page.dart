@@ -22,6 +22,7 @@ import '../widgets/timer_display.dart';
 // ─── Focus Colors ───────────────────────────────────────────────────────────
 
 const Color _focusPrimary = Color(0xFF00897B);
+const Color _breakColor = Color(0xFF059669);
 
 // ─── Helper functions ───────────────────────────────────────────────────────
 
@@ -70,6 +71,7 @@ class FocusSessionPage extends ConsumerStatefulWidget {
     this.title = '',
     this.subject = '',
     this.soundType,
+    this.totalRounds = 4,
   });
 
   final int durationMinutes;
@@ -77,29 +79,32 @@ class FocusSessionPage extends ConsumerStatefulWidget {
   final String title;
   final String subject;
   final String? soundType;
+  final int totalRounds;
 
   @override
   ConsumerState<FocusSessionPage> createState() => _FocusSessionPageState();
 }
 
-class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
-  Timer? _timer;
-  late int _remainingSeconds;
-  late final int _totalSeconds;
-  bool _isRunning = false;
-  bool _isPaused = false;
-  bool _isCompleted = false;
-  late final int _startTimeMs;
+class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
+    with WidgetsBindingObserver {
   bool _saved = false;
+  bool _phaseCompletionHandled = false;
 
   @override
   void initState() {
     super.initState();
-    _totalSeconds = widget.durationMinutes * 60;
-    _remainingSeconds = _totalSeconds;
-    _startTimeMs = DateTime.now().millisecondsSinceEpoch;
-    _isRunning = true;
-    _startTimer();
+    WidgetsBinding.instance.addObserver(this);
+
+    final notifier = ref.read(focusCycleProvider.notifier);
+    notifier.start(
+      focusMinutes: widget.durationMinutes,
+      totalRounds: widget.totalRounds,
+      type: widget.type,
+      title: widget.title,
+      subject: widget.subject,
+      soundType: widget.soundType,
+    );
+
     _initAudio();
   }
 
@@ -116,97 +121,142 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
 
   @override
   void dispose() {
-    _timer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     ref.read(focusAudioStateProvider.notifier).stopNoise();
     super.dispose();
   }
 
-  // ── Timer controls ──────────────────────────────────────────────────────
-
-  void _startTimer() {
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_remainingSeconds > 0) {
-        setState(() => _remainingSeconds--);
-      } else {
-        _completeSession();
-      }
-    });
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(focusCycleProvider.notifier).recalculate();
+    }
   }
 
+  // ── Timer controls ──────────────────────────────────────────────────────
+
   void _pauseTimer() {
-    _timer?.cancel();
     ref.read(focusAudioStateProvider.notifier).pauseNoise();
-    setState(() {
-      _isRunning = false;
-      _isPaused = true;
-    });
+    ref.read(focusCycleProvider.notifier).pause();
   }
 
   void _resumeTimer() {
     ref.read(focusAudioStateProvider.notifier).resumeNoise();
-    setState(() {
-      _isRunning = true;
-      _isPaused = false;
-    });
-    _startTimer();
+    ref.read(focusCycleProvider.notifier).resume();
+  }
+
+  void _skipBreak() {
+    ref.read(focusCycleProvider.notifier).skipBreak();
+    _phaseCompletionHandled = false;
+    _initAudio();
   }
 
   void _cancelSession() {
-    _timer?.cancel();
     ref.read(focusAudioStateProvider.notifier).stopNoise();
-    setState(() {
-      _isRunning = false;
-      _isPaused = false;
-      _isCompleted = true;
-    });
-    _saveSession(completed: false);
+    _saveFocusRound(completed: false);
+    ref.read(focusCycleProvider.notifier).cancel();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('专注已中断，已归档到学习记录'),
+          backgroundColor: AppColors.warning,
+        ),
+      );
+      context.pop();
+    }
   }
 
-  void _completeSession() {
-    _timer?.cancel();
-    ref.read(focusAudioStateProvider.notifier).stopNoise();
-    ref.read(focusAudioStateProvider.notifier).playBell('gentle_bell');
-    setState(() {
-      _isRunning = false;
-      _isPaused = false;
-      _isCompleted = true;
-      _remainingSeconds = 0;
-    });
-    _saveSession(completed: true);
+  // ── Phase completion ────────────────────────────────────────────────────
+
+  void _onPhaseComplete() {
+    if (_phaseCompletionHandled) return;
+    _phaseCompletionHandled = true;
+
+    final cycleState = ref.read(focusCycleProvider);
+
+    if (cycleState.phase == FocusPhase.focus) {
+      // Focus phase completed
+      ref.read(focusAudioStateProvider.notifier).stopNoise();
+      ref.read(focusAudioStateProvider.notifier).playBell('gentle_bell');
+
+      // Save this focus round
+      _saveFocusRound(completed: true);
+
+      // Pet event
+      PetEventBus.instance.emit(PetEvent.moduleCompleted(
+        eventId: 'focus_${DateTime.now().millisecondsSinceEpoch}',
+        type: PetEventType.studyCompleted,
+        module: 'study',
+      ));
+
+      // Advance to next phase
+      final cycleComplete =
+          ref.read(focusCycleProvider.notifier).advanceToNextPhase();
+
+      if (cycleComplete) {
+        // Entire cycle done (shouldn't happen here, longBreak comes first)
+      } else {
+        // Started a break
+        _phaseCompletionHandled = false;
+      }
+    } else {
+      // Break phase completed
+      ref.read(focusAudioStateProvider.notifier).playBell('gentle_bell');
+      ref.read(focusAudioStateProvider.notifier).stopNoise();
+
+      final cycleComplete =
+          ref.read(focusCycleProvider.notifier).advanceToNextPhase();
+
+      if (!cycleComplete) {
+        // Started next focus round
+        _phaseCompletionHandled = false;
+        _initAudio();
+      } else {
+        // Entire cycle complete
+        setState(() {});
+      }
+    }
   }
 
   // ── Database operations ─────────────────────────────────────────────────
 
-  Future<void> _saveSession({required bool completed}) async {
+  Future<void> _saveFocusRound({required bool completed}) async {
     if (_saved) return;
     _saved = true;
 
+    final cycleState = ref.read(focusCycleProvider);
     final focusRepo = ref.read(focusRepositoryProvider);
     final studyRepo = ref.read(studyRepositoryProvider);
     final now = DateTime.now().millisecondsSinceEpoch;
+    final phaseStartMs =
+        cycleState.phaseStartAt?.millisecondsSinceEpoch ?? now;
     final actualDuration = completed
         ? widget.durationMinutes
-        : ((_totalSeconds - _remainingSeconds) / 60).ceil();
+        : ((cycleState.focusSeconds - cycleState.remainingSeconds) / 60)
+            .ceil();
 
-    // 保存专注记录
+    // Save focus session with round info
     final session = FocusSessionsCompanion(
-      type: drift.Value(widget.type),
+      type: drift.Value(cycleState.type),
       title: drift.Value(
-        widget.title.isEmpty
-            ? '${_getTypeLabel(widget.type)}专注'
-            : widget.title,
+        cycleState.title.isEmpty
+            ? '${_getTypeLabel(cycleState.type)}专注'
+            : cycleState.title,
       ),
-      startTime: drift.Value(_startTimeMs),
+      startTime: drift.Value(phaseStartMs),
       endTime: drift.Value(now),
       durationMinutes: drift.Value(actualDuration),
       completed: drift.Value(completed),
-      soundType: drift.Value(widget.soundType),
+      soundType: drift.Value(cycleState.soundType),
+      roundIndex: drift.Value(cycleState.currentRound),
+      sessionGroupId: drift.Value(cycleState.sessionGroupId),
       createdAt: drift.Value(now),
     );
 
     final sessionId = await focusRepo.insertFocusSession(session);
 
-    // 完成时记录经验值
+    // EXP
     if (completed) {
       final expValue = _calculateFocusExp(widget.durationMinutes);
       final expRepo = ref.read(expRepositoryProvider);
@@ -219,7 +269,8 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
           sourceId: drift.Value(sessionId),
           expValue: drift.Value(expValue),
           reason: drift.Value(
-            '完成${_getTypeLabel(widget.type)}专注 ${widget.durationMinutes}分钟',
+            '完成${_getTypeLabel(cycleState.type)}专注 '
+            '第${cycleState.currentRound}轮 ${widget.durationMinutes}分钟',
           ),
           createdAt: drift.Value(now),
         ),
@@ -234,143 +285,52 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
       }
     }
 
-    // 自动归档到学习记录
-    final subject = widget.subject.isNotEmpty ? widget.subject : null;
-    final studyTitle = widget.title.isNotEmpty
-        ? widget.title
-        : '${_getTypeLabel(widget.type)}专注';
+    // Auto-archive to study records
+    final subject =
+        cycleState.subject.isNotEmpty ? cycleState.subject : null;
+    final studyTitle = cycleState.title.isNotEmpty
+        ? cycleState.title
+        : '${_getTypeLabel(cycleState.type)}专注';
 
     final studyRecord = StudyRecordsCompanion(
       mode: const drift.Value('simple'),
       title: drift.Value(studyTitle),
       subject: drift.Value(subject),
-      startTime: drift.Value(_startTimeMs),
+      startTime: drift.Value(phaseStartMs),
       endTime: drift.Value(now),
       durationMinutes: drift.Value(actualDuration),
       focusLevel: drift.Value(completed ? 4 : 2),
       note: drift.Value(
         completed
-            ? '专注完成 · ${_getTypeLabel(widget.type)}模式'
+            ? '专注完成 · ${_getTypeLabel(cycleState.type)}模式 · 第${cycleState.currentRound}轮'
             : '中途中断 · 实际专注 $actualDuration 分钟',
       ),
-      expGained: drift.Value(completed ? _calculateFocusExp(widget.durationMinutes) : 0),
+      expGained: drift.Value(
+        completed ? _calculateFocusExp(widget.durationMinutes) : 0,
+      ),
       createdAt: drift.Value(now),
       updatedAt: drift.Value(now),
     );
 
     final studyId = await studyRepo.insertStudyRecord(studyRecord);
-
-    // 关联专注记录到学习记录
     await focusRepo.updateFocusSessionStudyLink(sessionId, studyId);
 
-    // 刷新相关 Provider
+    // Refresh providers
     ref.invalidate(todayFocusMinutesProvider);
     ref.invalidate(recentFocusSessionsProvider);
     ref.invalidate(todayStudyMinutesProvider);
     ref.invalidate(recentStudyRecordsProvider);
     ref.invalidate(dashboardProvider);
 
-    if (mounted) {
-      // 发送宠物事件（专注完成或中断都算学习完成）
-      PetEventBus.instance.emit(PetEvent.moduleCompleted(
-        eventId: 'focus_${DateTime.now().millisecondsSinceEpoch}',
-        type: PetEventType.studyCompleted,
-        module: 'study',
-      ));
-    }
-
-    if (mounted && completed) {
-      _showCompletionDialog(actualDuration);
-    } else if (mounted) {
-      _showInterruptedSnackBar(actualDuration);
-      context.pop();
-    }
+    // Reset for next round
+    _saved = false;
   }
 
-  // ── Completion dialog ───────────────────────────────────────────────────
-
-  void _showCompletionDialog(int duration) {
-    final expValue = _calculateFocusExp(widget.durationMinutes);
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        icon: const Icon(Icons.celebration, color: _focusPrimary, size: 48),
-        title: const Text('专注完成！'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              '${_getTypeLabel(widget.type)} · ${widget.durationMinutes}分钟',
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-            if (widget.subject.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.study.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  widget.subject,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.study,
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 12),
-            Text(
-              '+$expValue EXP',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '已自动归档到学习记录',
-              style: AppTextStyles.caption,
-            ),
-          ],
-        ),
-        actions: [
-          FilledButton(
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              context.pop();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: _focusPrimary,
-            ),
-            child: const Text('完成'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Interrupted snackbar ────────────────────────────────────────────────
-
-  void _showInterruptedSnackBar(int duration) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('专注已中断，记录 $duration 分钟 · 已归档到学习记录'),
-        backgroundColor: AppColors.warning,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
-
-  // ── Cancel confirmation ─────────────────────────────────────────────────
+  // ── Cancel dialog ───────────────────────────────────────────────────────
 
   void _showCancelDialog() {
-    final elapsed = _totalSeconds - _remainingSeconds;
+    final cycleState = ref.read(focusCycleProvider);
+    final elapsed = cycleState.focusSeconds - cycleState.remainingSeconds;
     final elapsedMinutes = (elapsed / 60).ceil();
 
     showDialog(
@@ -379,7 +339,8 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
         title: const Text('中断专注？'),
         content: Text(
           elapsedMinutes > 0
-              ? '已专注 $elapsedMinutes 分钟，中断后将记录为未完成状态并归档到学习记录。'
+              ? '已专注 $elapsedMinutes 分钟（第${cycleState.currentRound}轮），'
+                  '中断后将记录为未完成状态。'
               : '当前专注将被记录为未完成状态。',
         ),
         actions: [
@@ -406,22 +367,40 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final cycleState = ref.watch(focusCycleProvider);
+
+    // Listen for phase completion
+    ref.listen<FocusCycleState>(focusCycleProvider, (prev, next) {
+      if (prev != null &&
+          prev.remainingSeconds > 0 &&
+          next.remainingSeconds <= 0 &&
+          next.isRunning) {
+        _onPhaseComplete();
+      }
+    });
+
+    final isCycleDone = !cycleState.isRunning &&
+        cycleState.phase == FocusPhase.longBreak &&
+        cycleState.remainingSeconds <= 0;
+
     return PopScope(
-      canPop: !_isRunning,
+      canPop: !cycleState.isRunning,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && _isRunning) {
+        if (!didPop && cycleState.isRunning) {
           _showCancelDialog();
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: cycleState.isBreak
+            ? const Color(0xFFF0FDF4)
+            : AppColors.background,
         appBar: AppBar(
-          title: Text(_getTypeLabel(widget.type)),
+          title: Text(_getTypeLabel(cycleState.type)),
           centerTitle: true,
-          backgroundColor: AppColors.background,
-          automaticallyImplyLeading: !_isRunning,
+          backgroundColor: Colors.transparent,
+          automaticallyImplyLeading: !cycleState.isRunning,
           actions: [
-            if (_isRunning)
+            if (cycleState.isRunning)
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: _showCancelDialog,
@@ -431,6 +410,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
         body: SafeArea(
           child: Column(
             children: [
+              // ── Round indicator ──
+              _buildRoundIndicator(cycleState),
+
               // ── Session info ──
               Padding(
                 padding: const EdgeInsets.symmetric(
@@ -439,21 +421,29 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
                 ),
                 child: Column(
                   children: [
-                    // 标题行
+                    // Title row
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          _getTypeIcon(widget.type),
-                          color: _focusPrimary,
+                          cycleState.isBreak
+                              ? Icons.coffee
+                              : _getTypeIcon(cycleState.type),
+                          color: cycleState.isBreak
+                              ? _breakColor
+                              : _focusPrimary,
                           size: 20,
                         ),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            widget.title.isEmpty
-                                ? '${_getTypeLabel(widget.type)}专注'
-                                : widget.title,
+                            cycleState.isBreak
+                                ? (cycleState.phase == FocusPhase.longBreak
+                                    ? '长休息'
+                                    : '短休息')
+                                : (cycleState.title.isEmpty
+                                    ? '${_getTypeLabel(cycleState.type)}专注'
+                                    : cycleState.title),
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -463,7 +453,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        if (widget.soundType != null) ...[
+                        if (cycleState.soundType != null) ...[
                           const SizedBox(width: 8),
                           Icon(
                             Icons.music_note,
@@ -473,17 +463,20 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
                         ],
                       ],
                     ),
-                    // 科目标签
-                    if (widget.subject.isNotEmpty) ...[
+                    // Subject tag
+                    if (cycleState.subject.isNotEmpty && !cycleState.isBreak) ...[
                       const SizedBox(height: 8),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 4,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.study.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          widget.subject,
+                          cycleState.subject,
                           style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -496,48 +489,160 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage> {
                 ),
               ),
 
-              // ── Circular timer ──
+              // ── Timer ──
               const Spacer(),
               Center(
                 child: TimerDisplay(
-                  remaining: Duration(seconds: _remainingSeconds),
-                  total: Duration(seconds: _totalSeconds),
+                  remaining: Duration(seconds: cycleState.remainingSeconds),
+                  total: Duration(
+                    seconds: cycleState.phase == FocusPhase.focus
+                        ? cycleState.focusSeconds
+                        : cycleState.phase == FocusPhase.shortBreak
+                            ? cycleState.shortBreakSeconds
+                            : cycleState.longBreakSeconds,
+                  ),
+                  isBreak: cycleState.isBreak,
                 ),
               ),
               const SizedBox(height: 24),
 
-              // ── Sound panel (only during active session) ──
-              if (!_isCompleted && widget.soundType != null)
-                FocusSoundPanel(initialSoundType: widget.soundType!),
+              // ── Sound panel ──
+              if (cycleState.isRunning && cycleState.soundType != null)
+                FocusSoundPanel(initialSoundType: cycleState.soundType!),
 
               const Spacer(),
 
               // ── Controls ──
               Padding(
                 padding: const EdgeInsets.only(bottom: 48),
-                child: !_isCompleted
-                    ? TimerControls(
-                        isRunning: _isRunning,
-                        isPaused: _isPaused,
-                        onStart: () {},
-                        onPause: _pauseTimer,
-                        onResume: _resumeTimer,
-                        onCancel: _showCancelDialog,
-                      )
-                    : Center(
-                        child: FilledButton.icon(
-                          onPressed: () => context.pop(),
-                          icon: const Icon(Icons.check),
-                          label: const Text('返回'),
-                          style: FilledButton.styleFrom(
-                            backgroundColor: _focusPrimary,
-                            minimumSize: const Size(200, 48),
+                child: isCycleDone
+                    ? _buildReturnButton()
+                    : cycleState.isBreak
+                        ? _buildBreakControls(cycleState)
+                        : TimerControls(
+                            isRunning: cycleState.isRunning,
+                            isPaused: !cycleState.isRunning &&
+                                cycleState.remainingSeconds > 0,
+                            onStart: () {},
+                            onPause: _pauseTimer,
+                            onResume: _resumeTimer,
+                            onCancel: _showCancelDialog,
                           ),
-                        ),
-                      ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  // ── Sub-widgets ─────────────────────────────────────────────────────────
+
+  Widget _buildRoundIndicator(FocusCycleState cycleState) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(cycleState.totalRounds, (index) {
+          final roundNum = index + 1;
+          final isCompleted = roundNum < cycleState.currentRound ||
+              (roundNum == cycleState.currentRound &&
+                  cycleState.phase != FocusPhase.focus);
+          final isCurrent = roundNum == cycleState.currentRound &&
+              cycleState.phase == FocusPhase.focus;
+
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 4),
+            width: isCurrent ? 24 : 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: isCompleted
+                  ? _breakColor
+                  : isCurrent
+                      ? _focusPrimary
+                      : AppColors.border,
+              borderRadius: BorderRadius.circular(5),
+            ),
+            child: isCurrent
+                ? Center(
+                    child: Text(
+                      '$roundNum',
+                      style: const TextStyle(
+                        fontSize: 8,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  )
+                : null,
+          );
+        }),
+      ),
+    );
+  }
+
+  Widget _buildBreakControls(FocusCycleState cycleState) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Skip break
+        GestureDetector(
+          onTap: _skipBreak,
+          child: Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: AppColors.card,
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.border),
+            ),
+            child: Icon(
+              Icons.skip_next_rounded,
+              color: AppColors.textSecondary,
+              size: 28,
+            ),
+          ),
+        ),
+        const SizedBox(width: 32),
+        // Pause / Resume
+        GestureDetector(
+          onTap: cycleState.isRunning ? _pauseTimer : _resumeTimer,
+          child: Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: _breakColor,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: _breakColor.withValues(alpha: 0.3),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Icon(
+              cycleState.isRunning
+                  ? Icons.pause_rounded
+                  : Icons.play_arrow_rounded,
+              color: Colors.white,
+              size: 36,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildReturnButton() {
+    return Center(
+      child: FilledButton.icon(
+        onPressed: () => context.pop(),
+        icon: const Icon(Icons.check),
+        label: const Text('返回'),
+        style: FilledButton.styleFrom(
+          backgroundColor: _focusPrimary,
+          minimumSize: const Size(200, 48),
         ),
       ),
     );

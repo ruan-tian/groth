@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
-import 'theme.dart';
+import 'design/design.dart';
 import '../shared/providers/settings_provider.dart';
 
 /// Growth OS 应用根 Widget
@@ -20,8 +20,8 @@ class GrowthOSApp extends ConsumerWidget {
       debugShowCheckedModeBanner: false,
 
       // 主题
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
+      theme: AppTheme.light(),
+      darkTheme: AppTheme.dark(),
       themeMode: themeMode,
 
       // 路由

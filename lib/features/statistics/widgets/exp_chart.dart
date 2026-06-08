@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/utils/stats_formatters.dart';
 
 /// 经验值柱状图组件
@@ -166,11 +166,11 @@ class ExpChart extends StatelessWidget {
                       topLeft: Radius.circular(4),
                       topRight: Radius.circular(4),
                     ),
-                    color: GrowthColors.expFill,
+                    color: AppColors.primary,
                     backDrawRodData: BackgroundBarChartRodData(
                       show: true,
                       toY: maxY,
-                      color: GrowthColors.expBackground,
+                      color: AppColors.softPurple,
                     ),
                   ),
                 ],

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/services/statistics_service.dart';
 import '../../../core/utils/stats_formatters.dart';
 import '../../../shared/providers/service_providers.dart';
@@ -75,19 +75,19 @@ class _DailyStatsContent extends StatelessWidget {
         // 由父级 ConsumerWidget 处理刷新
       },
       child: ListView(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         children: [
           // ── 日期导航 ──
           _DateNavigator(),
-          const SizedBox(height: AppTheme.spaceMd),
+          const SizedBox(height: AppSpacing.md),
 
           // ── 连续打卡 ──
           const _StreakBanner(),
-          const SizedBox(height: AppTheme.spaceLg),
+          const SizedBox(height: AppSpacing.lg),
 
           // ── 统计卡片网格 ──
           _StatsGrid(stats: stats),
-          const SizedBox(height: AppTheme.spaceLg),
+          const SizedBox(height: AppSpacing.lg),
 
           // ── 今日总结 ──
           _DailySummary(stats: stats),
@@ -176,12 +176,12 @@ class _StreakBanner extends ConsumerWidget {
       data: (streak) {
         if (streak <= 0) return const SizedBox.shrink();
         return Padding(
-          padding: const EdgeInsets.symmetric(vertical: AppTheme.spaceXs),
+          padding: const EdgeInsets.symmetric(vertical: AppSpacing.xs),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Text('🔥', style: TextStyle(fontSize: 16)),
-              const SizedBox(width: AppTheme.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
               Text(
                 '连续打卡 $streak 天',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -212,8 +212,8 @@ class _StatsGrid extends StatelessWidget {
       crossAxisCount: 3,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: AppTheme.spaceSm,
-      crossAxisSpacing: AppTheme.spaceSm,
+      mainAxisSpacing: AppSpacing.sm,
+      crossAxisSpacing: AppSpacing.sm,
       childAspectRatio: 1.2,
       children: [
         // 学习时长 (blue)
@@ -221,8 +221,8 @@ class _StatsGrid extends StatelessWidget {
           icon: Icons.menu_book_rounded,
           label: '学习时长',
           value: formatMinutes(stats.studyMinutes),
-          color: GrowthColors.studyPrimary,
-          backgroundColor: GrowthColors.studyLight,
+          color: AppColors.study,
+          backgroundColor: AppColors.softBlue,
         ),
         // 健身时长 (orange)
         _StatCard(
@@ -245,7 +245,7 @@ class _StatsGrid extends StatelessWidget {
           icon: Icons.restaurant_rounded,
           label: '饮食记录',
           value: '${stats.dietCount}次',
-          color: GrowthColors.success,
+          color: AppColors.success,
           backgroundColor: const Color(0xFFF6FFED),
         ),
         // 睡眠时长 (purple)
@@ -253,16 +253,16 @@ class _StatsGrid extends StatelessWidget {
           icon: Icons.bedtime_rounded,
           label: '睡眠时长',
           value: formatMinutes(stats.sleepMinutes),
-          color: GrowthColors.sleepPrimary,
-          backgroundColor: GrowthColors.sleepLight,
+          color: AppColors.sleep,
+          backgroundColor: AppColors.softPurple,
         ),
         // 专注时长 (teal)
         _StatCard(
           icon: Icons.timer_rounded,
           label: '专注时长',
           value: formatMinutes(stats.focusMinutes),
-          color: GrowthColors.fitnessPrimary,
-          backgroundColor: GrowthColors.fitnessLight,
+          color: AppColors.fitness,
+          backgroundColor: AppColors.softGreen,
         ),
       ],
     );
@@ -296,17 +296,17 @@ class _StatCard extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             // 图标
             Container(
-              padding: const EdgeInsets.all(AppTheme.spaceSm),
+              padding: const EdgeInsets.all(AppSpacing.sm),
               decoration: BoxDecoration(
                 color: backgroundColor,
-                borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
               child: Icon(icon, color: color, size: 20),
             ),
@@ -388,7 +388,7 @@ class _DailySummary extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -397,13 +397,13 @@ class _DailySummary extends StatelessWidget {
                 Icon(
                   Icons.auto_awesome_rounded,
                   size: 20,
-                  color: GrowthColors.expFill,
+                  color: AppColors.primary,
                 ),
-                const SizedBox(width: AppTheme.spaceSm),
+                const SizedBox(width: AppSpacing.sm),
                 Text('今日总结', style: theme.textTheme.titleMedium),
               ],
             ),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             Text(
               summary,
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -431,14 +431,14 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceXl),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             FilledButton(
               onPressed: onRetry,
               child: const Text('重试'),

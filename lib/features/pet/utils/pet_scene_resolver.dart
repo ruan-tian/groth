@@ -66,6 +66,8 @@ class PetSceneResolver {
         return '记得记录今天的饮食哦～';
       case PetModuleType.sleep:
         return '好好休息很重要呢～';
+      case PetModuleType.focus:
+        return '准备好了吗？开始专注吧～';
     }
   }
 
@@ -81,6 +83,8 @@ class PetSceneResolver {
         return '饮食记录得很认真呢！';
       case PetModuleType.sleep:
         return '睡眠记录很详细，继续保持～';
+      case PetModuleType.focus:
+        return '专注中的你很棒，继续加油～';
     }
   }
 
@@ -96,6 +100,8 @@ class PetSceneResolver {
         return '饮食记录完成！';
       case PetModuleType.sleep:
         return '睡眠记录完成，晚安～';
+      case PetModuleType.focus:
+        return '专注完成！休息一下吧～';
     }
   }
 
@@ -112,6 +118,8 @@ class PetSceneResolver {
         return '嗨～记得好好吃饭哦！';
       case PetModuleType.sleep:
         return '嗨～今晚早点休息吧！';
+      case PetModuleType.focus:
+        return '嗨～一起专注吧！';
     }
   }
 }

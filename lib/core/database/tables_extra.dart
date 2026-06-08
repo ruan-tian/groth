@@ -12,6 +12,8 @@ class FocusSessions extends Table {
   IntColumn get durationMinutes => integer()();
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
   TextColumn get soundType => text().nullable()();
+  IntColumn get roundIndex => integer().nullable()();      // 第几轮 (1-based)
+  TextColumn get sessionGroupId => text().nullable()();    // cycle UUID，串联多轮
   IntColumn get createdAt => integer()(); // timestamp ms
 }
 

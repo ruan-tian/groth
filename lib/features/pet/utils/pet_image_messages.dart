@@ -19,8 +19,8 @@ class PetImageMessages {
     '跳舞': 'life', '荡秋千': 'life', '玩毛球': 'life', '抓蝴蝶': 'life',
     '下雨打伞': 'life', '举铁好重': 'life', '夏天晒太阳': 'life',
     '冬天堆雪人': 'life', '春天菜花': 'life', '秋天捡落叶': 'life',
-    '英语考试': 'life', '没抢到K-pop 的演唱会门票伤心': 'life',
-    '和朋友一起吃饭png': 'social', '和朋友一起打游戏': 'social',
+    '英语考试': 'life', '没抢到K-pop演唱会门票伤心': 'life',
+    '和朋友一起吃饭': 'social', '和朋友一起打游戏': 'social',
     '和朋友一起游泳': 'social', '和朋友一起看海': 'social',
     '和朋友一起羽毛球': 'social', '和朋友一起购物': 'social',
     '和朋友一起钓鱼': 'social', '和朋友一起骑车': 'social',
@@ -309,7 +309,7 @@ class PetImageMessages {
       '甜甜陪你一起加油',
       '努力会有回报的',
     ],
-    '没抢到K-pop 的演唱会门票伤心': [
+    '没抢到K-pop演唱会门票伤心': [
       '甜甜没抢到票...好伤心😭',
       '下次一定能抢到！',
       '票一出来就没了',
@@ -321,7 +321,7 @@ class PetImageMessages {
     ],
 
     // ── 社交 (8张) ──
-    '和朋友一起吃饭png': [
+    '和朋友一起吃饭': [
       '甜甜和朋友一起吃饭呢～好开心！',
       '和朋友一起吃饭更香哦～🍽️',
       '今天吃的是火锅，好辣',
@@ -593,7 +593,7 @@ class PetImageMessages {
   /// Get weekend image pool
   static List<String> getWeekendPool() {
     return [
-      '和朋友一起吃饭png',
+      '和朋友一起吃饭',
       '和朋友一起打游戏',
       '和朋友一起游泳',
       '和朋友一起看海',
@@ -632,7 +632,7 @@ class PetImageMessages {
   /// Get social pool (weekends, medium frequency)
   static List<String> getSocialPool() {
     return [
-      '和朋友一起吃饭png',
+      '和朋友一起吃饭',
       '和朋友一起打游戏',
       '和朋友一起游泳',
       '和朋友一起看海',

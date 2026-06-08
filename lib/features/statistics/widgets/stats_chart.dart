@@ -1,7 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/services/statistics_service.dart';
 import '../../../core/utils/chart_scale_utils.dart';
 
@@ -63,7 +63,7 @@ class StatsChart extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,7 +75,7 @@ class StatsChart extends StatelessWidget {
                   size: 20,
                   color: colorScheme.primary,
                 ),
-                const SizedBox(width: AppTheme.spaceSm),
+                const SizedBox(width: AppSpacing.sm),
                 Text('数据趋势', style: theme.textTheme.titleMedium),
                 const Spacer(),
                 // ── 单位提示 ──
@@ -86,7 +86,7 @@ class StatsChart extends StatelessWidget {
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(width: AppTheme.spaceMd),
+                const SizedBox(width: AppSpacing.md),
                 Text(
                   '${data.length} 天',
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -95,7 +95,7 @@ class StatsChart extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
 
             // ── 图例 ──
             _Legend(
@@ -103,7 +103,7 @@ class StatsChart extends StatelessWidget {
               showFitness: showFitness,
               showExp: showExp,
             ),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
 
             // ── 折线图 ──
             ClipRect(
@@ -248,14 +248,14 @@ class StatsChart extends StatelessWidget {
     if (showStudy) {
       lines.add(_buildLine(
         values: data.map((d) => scale.convertMinutes(d.studyMinutes)).toList(),
-        color: GrowthColors.studyPrimary,
+        color: AppColors.study,
         surfaceColor: colorScheme.surface,
       ));
     }
     if (showFitness) {
       lines.add(_buildLine(
         values: data.map((d) => scale.convertMinutes(d.fitnessMinutes)).toList(),
-        color: GrowthColors.fitnessPrimary,
+        color: AppColors.fitness,
         surfaceColor: colorScheme.surface,
       ));
     }
@@ -263,7 +263,7 @@ class StatsChart extends StatelessWidget {
       // EXP 归一化到时长范围
       lines.add(_buildLine(
         values: data.map((d) => d.expGained * expScale).toList(),
-        color: GrowthColors.expFill,
+        color: AppColors.primary,
         surfaceColor: colorScheme.surface,
       ));
     }
@@ -356,23 +356,23 @@ class _Legend extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Wrap(
-      spacing: AppTheme.spaceMd,
+      spacing: AppSpacing.md,
       children: [
         if (showStudy)
           _LegendItem(
-            color: GrowthColors.studyPrimary,
+            color: AppColors.study,
             label: '学习 (min)',
             textStyle: theme.textTheme.labelSmall,
           ),
         if (showFitness)
           _LegendItem(
-            color: GrowthColors.fitnessPrimary,
+            color: AppColors.fitness,
             label: '健身 (min)',
             textStyle: theme.textTheme.labelSmall,
           ),
         if (showExp)
           _LegendItem(
-            color: GrowthColors.expFill,
+            color: AppColors.primary,
             label: '经验 (EXP)',
             textStyle: theme.textTheme.labelSmall,
           ),

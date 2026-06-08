@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/repository_providers.dart' show sleepRepositoryProvider;
 import '../../../shared/providers/sleep_provider.dart';
@@ -166,23 +166,23 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(AppTheme.spaceMd),
+          padding: const EdgeInsets.all(AppSpacing.md),
           children: [
             // 睡眠时长预览
             Card(
-              color: GrowthColors.sleepLight,
+              color: AppColors.softPurple,
               child: Padding(
-                padding: const EdgeInsets.all(AppTheme.spaceMd),
+                padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   children: [
                     Icon(Icons.bedtime,
-                        color: GrowthColors.sleepPrimary, size: 48),
-                    const SizedBox(height: AppTheme.spaceSm),
+                        color: AppColors.sleep, size: 48),
+                    const SizedBox(height: AppSpacing.sm),
                     Text(
                       '${hours}h ${minutes}m',
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: GrowthColors.sleepPrimary,
+                        color: AppColors.sleep,
                       ),
                     ),
                     const Text('预计睡眠时长'),
@@ -190,11 +190,11 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                 ),
               ),
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // 时间选择
             Text('时间', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             _TimePickerRow(
               label: '上床',
               time: _formatTime(_bedTime),
@@ -210,11 +210,11 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
               time: _formatTime(_wakeTime),
               onTap: () => _pickTime(false, false),
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // 睡眠质量
             Text('睡眠质量', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
@@ -222,18 +222,18 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                   icon: Icon(
                     index < _qualityLevel ? Icons.star : Icons.star_border,
                     size: 36,
-                    color: GrowthColors.expFill,
+                    color: AppColors.primary,
                   ),
                   onPressed: () =>
                       setState(() => _qualityLevel = index + 1),
                 );
               }),
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // 入睡耗时
             Text('入睡耗时（分钟）', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             Slider(
               value: _fallAsleepMinutes.toDouble(),
               min: 0,
@@ -243,11 +243,11 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
               onChanged: (v) =>
                   setState(() => _fallAsleepMinutes = v.toInt()),
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // 夜醒次数
             Text('夜醒次数', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -269,11 +269,11 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                 ),
               ],
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // 醒后精力
             Text('醒后精力', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(5, (index) {
@@ -283,18 +283,18 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                         ? Icons.battery_full
                         : Icons.battery_1_bar,
                     size: 32,
-                    color: GrowthColors.expFill,
+                    color: AppColors.primary,
                   ),
                   onPressed: () =>
                       setState(() => _energyLevel = index + 1),
                 );
               }),
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // 梦境备注
             Text('梦境', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: _dreamController,
               maxLines: 2,
@@ -303,11 +303,11 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // 备注
             Text('备注', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: _noteController,
               maxLines: 2,
@@ -316,7 +316,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-            const SizedBox(height: AppTheme.spaceXl),
+            const SizedBox(height: AppSpacing.xxxxl),
 
             // 保存按钮
             FilledButton.icon(

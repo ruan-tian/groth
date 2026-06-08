@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/task_provider.dart';
 import '../../../shared/widgets/date_grouped_list.dart';
@@ -69,7 +69,7 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
         children: [
           // ── 搜索栏 ──
           Padding(
-            padding: const EdgeInsets.all(AppTheme.spaceMd),
+            padding: const EdgeInsets.all(AppSpacing.md),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -86,7 +86,7 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
                     : null,
                 isDense: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+                  borderRadius: BorderRadius.circular(AppRadius.xs),
                 ),
               ),
               onChanged: (value) {
@@ -130,7 +130,7 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
                           size: 64,
                           color: theme.colorScheme.outlineVariant,
                         ),
-                        const SizedBox(height: AppTheme.spaceMd),
+                        const SizedBox(height: AppSpacing.md),
                         Text(
                           '暂无任务',
                           style: theme.textTheme.bodyLarge?.copyWith(
@@ -190,7 +190,7 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: GrowthColors.error,
+              foregroundColor: AppColors.danger,
             ),
             child: const Text('删除'),
           ),
@@ -246,8 +246,8 @@ class _TaskHistoryTile extends StatelessWidget {
       },
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: AppTheme.spaceMd),
-        color: GrowthColors.error,
+        padding: const EdgeInsets.only(right: AppSpacing.md),
+        color: AppColors.danger,
         child: const Icon(
           Icons.delete,
           color: Colors.white,
@@ -255,7 +255,7 @@ class _TaskHistoryTile extends StatelessWidget {
       ),
       child: Card(
         margin: const EdgeInsets.symmetric(
-          horizontal: AppTheme.spaceMd,
+          horizontal: AppSpacing.md,
           vertical: 2,
         ),
         child: ListTile(
@@ -268,11 +268,11 @@ class _TaskHistoryTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: task.isCompleted
-                    ? GrowthColors.success
+                    ? AppColors.success
                     : Colors.transparent,
                 border: Border.all(
                   color: task.isCompleted
-                      ? GrowthColors.success
+                      ? AppColors.success
                       : colorScheme.outline,
                   width: 2,
                 ),
@@ -313,7 +313,7 @@ class _TaskHistoryTile extends StatelessWidget {
             ],
           ),
           trailing: task.isCompleted
-              ? Icon(Icons.check_circle, color: GrowthColors.success, size: 20)
+              ? Icon(Icons.check_circle, color: AppColors.success, size: 20)
               : null,
         ),
       ),

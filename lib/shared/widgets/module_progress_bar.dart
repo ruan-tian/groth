@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 
 /// 模块进度条组件
 ///
@@ -43,12 +43,12 @@ class ModuleProgressBar extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(
-        horizontal: AppTheme.spaceMd,
-        vertical: AppTheme.spaceSm,
+        horizontal: AppSpacing.md,
+        vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+        borderRadius: BorderRadius.circular(AppRadius.xs),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -74,7 +74,7 @@ class ModuleProgressBar extends StatelessWidget {
                     ),
                   ),
                   if (showPercentage) ...[
-                    const SizedBox(width: AppTheme.spaceXs),
+                    const SizedBox(width: AppSpacing.xs),
                     Text(
                       '$percentage%',
                       style: theme.textTheme.labelSmall?.copyWith(
@@ -87,7 +87,7 @@ class ModuleProgressBar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: AppTheme.spaceXs),
+          const SizedBox(height: AppSpacing.xs),
           // 进度条
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
@@ -96,7 +96,7 @@ class ModuleProgressBar extends StatelessWidget {
               minHeight: 6,
               backgroundColor: color.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation<Color>(
-                isCompleted ? GrowthColors.success : color,
+                isCompleted ? AppColors.success : color,
               ),
             ),
           ),
@@ -134,23 +134,23 @@ class CombinedProgressBar extends StatelessWidget {
           target: studyTarget,
           label: '学习',
           unit: '分钟',
-          color: GrowthColors.studyPrimary,
+          color: AppColors.study,
         ),
-        const SizedBox(height: AppTheme.spaceSm),
+        const SizedBox(height: AppSpacing.sm),
         ModuleProgressBar(
           current: fitnessMinutes,
           target: fitnessTarget,
           label: '健身',
           unit: '分钟',
-          color: GrowthColors.fitnessPrimary,
+          color: AppColors.fitness,
         ),
-        const SizedBox(height: AppTheme.spaceSm),
+        const SizedBox(height: AppSpacing.sm),
         ModuleProgressBar(
           current: journalCount,
           target: journalTarget,
           label: '日记',
           unit: '篇',
-          color: GrowthColors.journalPrimary,
+          color: AppColors.journal,
         ),
       ],
     );

@@ -5,9 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/journal_provider.dart';
 import 'quill_editor_page.dart';
 
 /// 心情选项
@@ -56,10 +57,12 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
   // 编辑模式下保留的原始数据
   int? _createdAt;
   int? _originalExpGained;
+  String? _originalContent;
 
   // Quill 富文本支持
   String _contentType = 'markdown';
   String? _quillDeltaJson;
+  bool _openedQuillEditor = false;
 
   @override
   void initState() {
@@ -90,6 +93,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
           _selectedMood = journal.mood;
           _createdAt = journal.createdAt;
           _originalExpGained = journal.expGained;
+          _originalContent = journal.content;
           _contentType = journal.contentType;
           _quillDeltaJson = journal.quillDeltaJson;
 
@@ -133,6 +137,13 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       final content = _contentController.text.trim();
       final wordCount = content.length;
 
+      // If plain text changed but Quill editor was never opened, downgrade to markdown
+      final originalContent = _originalContent ?? '';
+      if (content != originalContent.trim() && !_openedQuillEditor) {
+        _contentType = 'markdown';
+        _quillDeltaJson = null;
+      }
+
       // 重新计算经验值
       final expService = ref.read(expServiceProvider);
       final exp = expService.calculateJournalExp(wordCount: wordCount);
@@ -166,7 +177,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
         final expRepo = ref.read(expRepositoryProvider);
         await expRepo.insertExpLog(
           GrowthExpLogsCompanion.insert(
-            sourceType: 'journal_edit',
+            sourceType: 'journal',
             sourceId: widget.journalId,
             expValue: expDiff,
             reason: '日记编辑: ${_titleController.text.trim()} ($wordCount字)',
@@ -179,6 +190,10 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('已更新，经验值 $exp EXP')),
         );
+        ref.invalidate(recentJournalsProvider);
+        ref.invalidate(todayJournalCountProvider);
+        ref.invalidate(dashboardProvider);
+        ref.invalidate(allJournalTagsProvider);
         context.pop();
       }
     } catch (e) {
@@ -204,6 +219,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
   // ---------------------------------------------------------------------------
 
   void _openQuillEditor() {
+    _openedQuillEditor = true;
     Navigator.of(context, rootNavigator: true).push(
       MaterialPageRoute(
         builder: (_) => QuillEditorPage(
@@ -248,7 +264,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(AppTheme.spaceMd),
+          padding: const EdgeInsets.all(AppSpacing.md),
           children: [
             // ── 标题 ──
             TextFormField(
@@ -260,11 +276,11 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? '请输入标题' : null,
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // ── 心情选择 ──
             Text('今天心情', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             _MoodSelector(
               selectedMood: _selectedMood,
               onMoodSelected: (mood) {
@@ -273,11 +289,11 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
                 });
               },
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // ── 标签选择 ──
             Text('标签', style: theme.textTheme.titleSmall),
-            const SizedBox(height: AppTheme.spaceSm),
+            const SizedBox(height: AppSpacing.sm),
             _TagSelector(
               tags: _presetTags,
               selectedTags: _selectedTags,
@@ -291,7 +307,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
                 });
               },
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
 
             // ── 正文 ──
             TextFormField(
@@ -306,7 +322,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
               validator: (v) =>
                   (v == null || v.trim().isEmpty) ? '请输入正文' : null,
             ),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
 
             // ── 全屏编辑按钮 ──
             OutlinedButton.icon(
@@ -316,26 +332,26 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
                 _contentType == 'quill' ? '继续富文本编辑' : '全屏编辑（富文本）',
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: GrowthColors.journalPrimary,
-                side: BorderSide(color: GrowthColors.journalPrimary),
+                foregroundColor: AppColors.journal,
+                side: BorderSide(color: AppColors.journal),
               ),
             ),
             if (_contentType == 'quill') ...[
-              const SizedBox(height: AppTheme.spaceXs),
+              const SizedBox(height: AppSpacing.xs),
               Text(
                 '当前为富文本格式',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: GrowthColors.journalPrimary,
+                      color: AppColors.journal,
                     ),
               ),
             ],
-            const SizedBox(height: AppTheme.spaceXl),
+            const SizedBox(height: AppSpacing.xxxxl),
 
             // ── 保存按钮 ──
             FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(
-                backgroundColor: GrowthColors.journalPrimary,
+                backgroundColor: AppColors.journal,
               ),
               child: _saving
                   ? const SizedBox(
@@ -348,7 +364,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
                     )
                   : const Text('保存修改'),
             ),
-            const SizedBox(height: AppTheme.spaceLg),
+            const SizedBox(height: AppSpacing.lg),
           ],
         ),
       ),
@@ -394,14 +410,14 @@ class _MoodSelector extends StatelessWidget {
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(
-              horizontal: AppTheme.spaceSm,
-              vertical: AppTheme.spaceSm,
+              horizontal: AppSpacing.sm,
+              vertical: AppSpacing.sm,
             ),
             decoration: BoxDecoration(
               color: isSelected
                   ? theme.colorScheme.primaryContainer
                   : theme.colorScheme.surfaceContainerLow,
-              borderRadius: BorderRadius.circular(AppTheme.radiusSm),
+              borderRadius: BorderRadius.circular(AppRadius.xs),
               border: isSelected
                   ? Border.all(
                       color: theme.colorScheme.primary,
@@ -413,7 +429,7 @@ class _MoodSelector extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(mood.emoji, style: const TextStyle(fontSize: 28)),
-                const SizedBox(height: AppTheme.spaceXs),
+                const SizedBox(height: AppSpacing.xs),
                 Text(
                   mood.label,
                   style: theme.textTheme.labelSmall?.copyWith(
@@ -451,16 +467,16 @@ class _TagSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Wrap(
-      spacing: AppTheme.spaceSm,
-      runSpacing: AppTheme.spaceXs,
+      spacing: AppSpacing.sm,
+      runSpacing: AppSpacing.xs,
       children: tags.map((tag) {
         final isSelected = selectedTags.contains(tag);
         return FilterChip(
           label: Text(tag),
           selected: isSelected,
           onSelected: (_) => onTagToggled(tag),
-          selectedColor: GrowthColors.journalLight,
-          checkmarkColor: GrowthColors.journalPrimary,
+          selectedColor: AppColors.softPink,
+          checkmarkColor: AppColors.journal,
         );
       }).toList(),
     );

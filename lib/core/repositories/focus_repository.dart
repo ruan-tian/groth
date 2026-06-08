@@ -71,6 +71,14 @@ class FocusRepository {
     return result.read(_db.focusSessions.durationMinutes.sum()) ?? 0;
   }
 
+  /// 获取同一 cycle 的所有专注记录（按轮次排序）。
+  Future<List<FocusSession>> getFocusSessionsByGroupId(String groupId) {
+    return (_db.select(_db.focusSessions)
+          ..where((t) => t.sessionGroupId.equals(groupId))
+          ..orderBy([(t) => OrderingTerm.asc(t.roundIndex)]))
+        .get();
+  }
+
   // ---------------------------------------------------------------------------
   // 内部工具
   // ---------------------------------------------------------------------------

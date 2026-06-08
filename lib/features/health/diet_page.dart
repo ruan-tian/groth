@@ -66,7 +66,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF2D5016),
+                  color: AppColors.textPrimary,
                 ),
               ),
               centerTitle: true,
@@ -74,7 +74,7 @@ class _DietPageState extends ConsumerState<DietPage> {
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                color: const Color(0xFF2D5016),
+                color: AppColors.textPrimary,
                 onPressed: () => context.pop(),
               ),
             ),
@@ -114,12 +114,7 @@ class _DietPageState extends ConsumerState<DietPage> {
               const SizedBox(height: 16),
 
               // ── 最近饮食记录 ──
-              SectionHeader(
-                title: '最近饮食',
-                action: '查看全部',
-                onActionTap: () => context.push('/plan/diet/records'),
-              ),
-              _buildRecentRecords(),
+              _buildRecentRecordsInline(),
               const SizedBox(height: 80),
             ],
           ),
@@ -127,7 +122,7 @@ class _DietPageState extends ConsumerState<DietPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/plan/diet/add'),
-        backgroundColor: const Color(0xFF6B8E23),
+        backgroundColor: AppColors.diet,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add_rounded, size: 24),
       ),
@@ -138,82 +133,45 @@ class _DietPageState extends ConsumerState<DietPage> {
   // 最近饮食记录
   // ---------------------------------------------------------------------------
 
-  Widget _buildRecentRecords() {
+  Widget _buildRecentRecordsInline() {
     final recentRecords = ref.watch(recentDietRecordsProvider(10));
-
     return recentRecords.when(
       data: (records) {
         if (records.isEmpty) return _buildEmptyState();
-        final displayRecords =
-            _recentRecordsExpanded ? records : records.take(5).toList();
-        return Column(
-          children: [
-            ...displayRecords.map(
-              (r) => SwipeDeleteTile(
-                key: ValueKey('diet_${r.id}'),
-                onConfirmDelete: () async {
-                  _deleteDietRecord(context, ref, r);
-                  return false;
-                },
-                onDismissed: () {},
-                child: RecentRecordTile(
-                  icon: Icons.restaurant_rounded,
-                  iconColor: Colors.white,
-                  iconBackgroundColor: const Color(0xFF6B8E23),
-                  title: r.foodText,
-                  subtitle:
-                      '${_mealTypeLabel(r.mealType)} · ${_portionLabel(r.portionLevel)}',
-                  primaryBadge:
-                      '${'★' * r.healthScore}${'☆' * (5 - r.healthScore)}',
-                  primaryBadgeColor: const Color(0xFF6B8E23),
-                  secondaryBadge: null,
-                  secondaryBadgeColor: AppColors.textSecondary,
-                  onTap: () => _showDietDetailSheet(context, r),
-                ),
-              ),
+        final displayRecords = _recentRecordsExpanded ? records : records.take(5).toList();
+        return ModuleRecordsCard(
+          title: '最近饮食',
+          action: '查看全部',
+          onActionTap: () => context.push('/plan/diet/records'),
+          color: AppColors.diet,
+          recordCount: records.length,
+          maxVisible: 5,
+          isExpanded: _recentRecordsExpanded,
+          onToggleExpand: () => setState(() => _recentRecordsExpanded = !_recentRecordsExpanded),
+          children: displayRecords.map((r) => SwipeDeleteTile(
+            key: ValueKey('diet_${r.id}'),
+            onConfirmDelete: () async {
+              _deleteDietRecord(context, ref, r);
+              return false;
+            },
+            onDismissed: () {},
+            child: RecentRecordTile(
+              icon: Icons.restaurant_rounded,
+              iconColor: Colors.white,
+              iconBackgroundColor: AppColors.diet,
+              title: r.foodText,
+              subtitle: '${_mealTypeLabel(r.mealType)} · ${_portionLabel(r.portionLevel)}',
+              primaryBadge: '${'★' * r.healthScore}${'☆' * (5 - r.healthScore)}',
+              primaryBadgeColor: AppColors.diet,
+              secondaryBadge: null,
+              secondaryBadgeColor: AppColors.textSecondary,
+              onTap: () => _showDietDetailSheet(context, r),
             ),
-            if (records.length > 5)
-              GestureDetector(
-                onTap: () => setState(() {
-                  _recentRecordsExpanded = !_recentRecordsExpanded;
-                }),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        _recentRecordsExpanded ? '收起' : '查看更多',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF6B8E23),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        _recentRecordsExpanded
-                            ? Icons.keyboard_arrow_up_rounded
-                            : Icons.keyboard_arrow_down_rounded,
-                        size: 18,
-                        color: const Color(0xFF6B8E23),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
+          )).toList(),
         );
       },
-      loading: () => const Padding(
-        padding: EdgeInsets.all(32),
-        child: Center(child: CircularProgressIndicator()),
-      ),
-      error: (e, _) => Padding(
-        padding: const EdgeInsets.all(32),
-        child: Center(child: Text('加载失败: $e')),
-      ),
+      loading: () => const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator())),
+      error: (e, _) => Padding(padding: const EdgeInsets.all(32), child: Center(child: Text('加载失败: $e'))),
     );
   }
 
@@ -252,7 +210,7 @@ class _DietPageState extends ConsumerState<DietPage> {
       isScrollControlled: true,
       builder: (ctx) => RecordDetailSheet(
         title: _formatDietDate(record),
-        accentColor: const Color(0xFF6B8E23),
+        accentColor: AppColors.diet,
         primaryMetricLabel: '健康评分',
         primaryMetricValue: '${record.healthScore}/5',
         detailItems: [
@@ -304,21 +262,21 @@ class _DietPageState extends ConsumerState<DietPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: AppColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.note_outlined, color: Color(0xFF86909C), size: 20),
+          const Icon(Icons.note_outlined, color: AppColors.textTertiary, size: 20),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('备注', style: TextStyle(fontSize: 13, color: Color(0xFF86909C))),
+                const Text('备注', style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
                 const SizedBox(height: 4),
-                Text(note, style: const TextStyle(fontSize: 14, color: Color(0xFF1F2329))),
+                Text(note, style: const TextStyle(fontSize: 14, color: AppColors.textPrimary)),
               ],
             ),
           ),
@@ -394,172 +352,43 @@ class _DietPageState extends ConsumerState<DietPage> {
     final score = todayScore.whenOrNull(data: (s) => s) ?? 0;
     final calorieGoal = ref.watch(dailyCalorieGoalProvider);
 
-    // 计算总卡路里（估算）
     int totalCalories = 0;
     for (final r in records) {
       switch (r.calorieLevel) {
-        case 'low':
-          totalCalories += 300;
-          break;
-        case 'normal':
-          totalCalories += 500;
-          break;
-        case 'high':
-          totalCalories += 800;
-          break;
+        case 'low': totalCalories += 300; break;
+        case 'normal': totalCalories += 500; break;
+        case 'high': totalCalories += 800; break;
       }
     }
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFF6B8E23).withValues(alpha: 0.2),
-        ),
-      ),
-      child: Column(
-        children: [
-          // 标题行
-          Row(
-            children: [
-              const Text(
-                '今日统计',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xFF2D5016),
-                ),
-              ),
-              const Spacer(),
-              GestureDetector(
-                onTap: _showGoalSettings,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF6B8E23).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Row(
-                    children: [
-                      Icon(Icons.settings_rounded, size: 14, color: Color(0xFF6B8E23)),
-                      SizedBox(width: 4),
-                      Text(
-                        '设定目标',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF6B8E23),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
+    final calorieProgress = calorieGoal > 0 ? (totalCalories / calorieGoal).clamp(0.0, 1.0) : 0.0;
 
-          // 统计卡片
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.restaurant_rounded,
-                  label: '餐次',
-                  value: '$count',
-                  unit: '餐',
-                  color: const Color(0xFF6B8E23),
-                ),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.local_fire_department_rounded,
-                  label: '卡路里',
-                  value: '$totalCalories',
-                  unit: 'kcal',
-                  color: const Color(0xFFFF8C00),
-                  progress: totalCalories / calorieGoal,
-                ),
-              ),
-              Expanded(
-                child: _buildStatItem(
-                  icon: Icons.star_rounded,
-                  label: '健康评分',
-                  value: score.toStringAsFixed(1),
-                  unit: '/5',
-                  color: const Color(0xFFDAA520),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem({
-    required IconData icon,
-    required String label,
-    required String value,
-    required String unit,
-    required Color color,
-    double? progress,
-  }) {
-    return Column(
-      children: [
-        Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Icon(icon, color: color, size: 20),
+    return ModuleHeroCard(
+      icon: Icons.restaurant_rounded,
+      title: '今日统计',
+      primaryValue: '${score.toStringAsFixed(1)}/5',
+      primaryLabel: '今日健康评分',
+      color: AppColors.diet,
+      progress: calorieProgress,
+      targetLabel: '卡路里 ${totalCalories}/${calorieGoal}kcal',
+      metrics: [
+        ModuleMetricChip(
+          icon: Icons.restaurant_rounded,
+          value: '$count餐',
+          label: '餐次',
         ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFF8B8B83),
-          ),
+        ModuleMetricChip(
+          icon: Icons.local_fire_department_rounded,
+          value: '${(calorieProgress * 100).toInt()}%',
+          label: '热量达成',
         ),
-        const SizedBox(height: 4),
-        RichText(
-          text: TextSpan(
-            children: [
-              TextSpan(
-                text: value,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                  color: color,
-                ),
-              ),
-              TextSpan(
-                text: ' $unit',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: Color(0xFF8B8B83),
-                ),
-              ),
-            ],
-          ),
+        ModuleMetricChip(
+          icon: Icons.water_drop_rounded,
+          value: '${_currentWater}ml',
+          label: '饮水',
         ),
-        if (progress != null) ...[
-          const SizedBox(height: 4),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(2),
-            child: LinearProgressIndicator(
-              value: progress.clamp(0.0, 1.0),
-              minHeight: 3,
-              backgroundColor: color.withValues(alpha: 0.1),
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-            ),
-          ),
-        ],
       ],
+      onTargetTap: _showGoalSettings,
     );
   }
 
@@ -575,7 +404,7 @@ class _DietPageState extends ConsumerState<DietPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF4A90D9).withValues(alpha: 0.2),
+          color: AppColors.info.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -587,12 +416,12 @@ class _DietPageState extends ConsumerState<DietPage> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A90D9).withValues(alpha: 0.1),
+                  color: AppColors.info.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.water_drop_rounded,
-                  color: Color(0xFF4A90D9),
+                  color: AppColors.info,
                   size: 16,
                 ),
               ),
@@ -602,7 +431,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF2D5016),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const Spacer(),
@@ -611,14 +440,14 @@ class _DietPageState extends ConsumerState<DietPage> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A90D9).withValues(alpha: 0.1),
+                    color: AppColors.info.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     '目标 ${waterGoal}ml',
                     style: const TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF4A90D9),
+                      color: AppColors.info,
                     ),
                   ),
                 ),
@@ -633,8 +462,8 @@ class _DietPageState extends ConsumerState<DietPage> {
             child: LinearProgressIndicator(
               value: (_currentWater / waterGoal).clamp(0.0, 1.0),
               minHeight: 12,
-              backgroundColor: const Color(0xFF4A90D9).withValues(alpha: 0.1),
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4A90D9)),
+              backgroundColor: AppColors.info.withValues(alpha: 0.1),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.info),
             ),
           ),
           const SizedBox(height: 8),
@@ -648,14 +477,14 @@ class _DietPageState extends ConsumerState<DietPage> {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF4A90D9),
+                  color: AppColors.info,
                 ),
               ),
               Text(
                 '${((_currentWater / waterGoal) * 100).toInt()}%',
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Color(0xFF8B8B83),
+                  color: AppColors.textTertiary,
                 ),
               ),
             ],
@@ -685,22 +514,22 @@ class _DietPageState extends ConsumerState<DietPage> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: const Color(0xFF4A90D9).withValues(alpha: 0.08),
+          color: AppColors.info.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: const Color(0xFF4A90D9).withValues(alpha: 0.2),
+            color: AppColors.info.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
           children: [
-            const Icon(Icons.add_rounded, size: 14, color: Color(0xFF4A90D9)),
+            const Icon(Icons.add_rounded, size: 14, color: AppColors.info),
             const SizedBox(width: 4),
             Text(
               label,
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Color(0xFF4A90D9),
+                color: AppColors.info,
               ),
             ),
           ],
@@ -722,7 +551,7 @@ class _DietPageState extends ConsumerState<DietPage> {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFF6B8E23).withValues(alpha: 0.2),
+          color: AppColors.diet.withValues(alpha: 0.2),
         ),
       ),
       child: Column(
@@ -735,12 +564,12 @@ class _DietPageState extends ConsumerState<DietPage> {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6B8E23).withValues(alpha: 0.1),
+                  color: AppColors.diet.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: const Icon(
                   Icons.show_chart_rounded,
-                  color: Color(0xFF6B8E23),
+                  color: AppColors.diet,
                   size: 16,
                 ),
               ),
@@ -752,7 +581,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                         ? '本月趋势'
                         : '今年趋势',
                 style: AppTextStyles.cardTitle.copyWith(
-                  color: const Color(0xFF2D5016),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ],
@@ -819,7 +648,7 @@ class _DietPageState extends ConsumerState<DietPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF6B8E23) : Colors.transparent,
+            color: isSelected ? AppColors.diet : Colors.transparent,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
@@ -828,7 +657,7 @@ class _DietPageState extends ConsumerState<DietPage> {
             style: TextStyle(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-              color: isSelected ? Colors.white : const Color(0xFF8B8B83),
+              color: isSelected ? Colors.white : AppColors.textTertiary,
             ),
           ),
         ),
@@ -852,7 +681,7 @@ class _DietPageState extends ConsumerState<DietPage> {
           label,
           style: const TextStyle(
             fontSize: 11,
-            color: Color(0xFF8B8B83),
+            color: AppColors.textTertiary,
           ),
         ),
       ],
@@ -870,7 +699,7 @@ class _DietPageState extends ConsumerState<DietPage> {
         icon: Icons.restaurant_rounded,
         title: '还没有饮食记录',
         subtitle: '点击右下角按钮记录饮食',
-        accentColor: const Color(0xFF6B8E23),
+        accentColor: AppColors.diet,
       ),
     );
   }
@@ -908,7 +737,7 @@ class _DietPageState extends ConsumerState<DietPage> {
       max: 5000,
       step: 100,
       suggestion: '建议每天饮水 1500~2500 ml',
-      color: const Color(0xFF4A90D9),
+      color: AppColors.info,
       onSave: (value) async {
         ref.read(dailyWaterGoalProvider.notifier).state = value;
         final repo = ref.read(settingRepositoryProvider);
@@ -1080,7 +909,7 @@ class _CalorieWaterChartState extends State<_CalorieWaterChart> {
     final points = _buildPoints();
     if (points.isEmpty) {
       return const Center(
-        child: Text('暂无数据', style: TextStyle(fontSize: 12, color: Color(0xFF8B8B83))),
+        child: Text('暂无数据', style: TextStyle(fontSize: 12, color: AppColors.textTertiary)),
       );
     }
 
@@ -1308,7 +1137,7 @@ class _CalorieWaterChartState extends State<_CalorieWaterChart> {
                         style: const TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w500,
-                          color: Color(0xFF2D5016),
+                  color: AppColors.textPrimary,
                         ),
                       ),
                       if (p.subLabel.isNotEmpty)
@@ -1316,7 +1145,7 @@ class _CalorieWaterChartState extends State<_CalorieWaterChart> {
                           p.subLabel,
                           style: const TextStyle(
                             fontSize: 8,
-                            color: Color(0xFF8B8B83),
+                            color: AppColors.textTertiary,
                           ),
                         ),
                     ],

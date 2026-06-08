@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:go_router/go_router.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/pet_provider.dart';
 import '../../../shared/providers/dashboard_provider.dart';
@@ -43,7 +43,7 @@ class PetPartnerSheet extends ConsumerWidget {
     return Container(
       height: screenHeight * 0.8,
       decoration: const BoxDecoration(
-        color: GrowthColors.cardBackground,
+        color: AppColors.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
@@ -101,7 +101,7 @@ class PetPartnerSheet extends ConsumerWidget {
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: GrowthColors.textHint.withValues(alpha: 0.4),
+        color: AppColors.textHint.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -134,7 +134,7 @@ class PetPartnerSheet extends ConsumerWidget {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: GrowthColors.textPrimary,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -142,7 +142,7 @@ class PetPartnerSheet extends ConsumerWidget {
                       'Lv.$level ${getPetLevelName(level)}',
                       style: const TextStyle(
                         fontSize: 14,
-                        color: GrowthColors.textSecondary,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -165,10 +165,10 @@ class PetPartnerSheet extends ConsumerWidget {
         width: 72,
         height: 72,
         decoration: BoxDecoration(
-          color: GrowthColors.primaryLight.withValues(alpha: 0.3),
+          color: AppColors.primaryLight.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: GrowthColors.primary.withValues(alpha: 0.3),
+            color: AppColors.primary.withValues(alpha: 0.3),
             width: 2,
           ),
         ),
@@ -206,7 +206,7 @@ class PetPartnerSheet extends ConsumerWidget {
               '亲密度',
               style: TextStyle(
                 fontSize: 12,
-                color: GrowthColors.textSecondary,
+                color: AppColors.textSecondary,
               ),
             ),
             Text(
@@ -214,7 +214,7 @@ class PetPartnerSheet extends ConsumerWidget {
               style: const TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: GrowthColors.primary,
+                color: AppColors.primary,
               ),
             ),
           ],
@@ -225,9 +225,9 @@ class PetPartnerSheet extends ConsumerWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 6,
-            backgroundColor: GrowthColors.primary.withValues(alpha: 0.15),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
             valueColor: const AlwaysStoppedAnimation<Color>(
-              GrowthColors.primary,
+              AppColors.primary,
             ),
           ),
         ),
@@ -248,7 +248,7 @@ class PetPartnerSheet extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: GrowthColors.background,
+            color: AppColors.background,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -267,7 +267,7 @@ class PetPartnerSheet extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: GrowthColors.textPrimary,
+                        color: AppColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -275,7 +275,7 @@ class PetPartnerSheet extends ConsumerWidget {
                       moodText,
                       style: const TextStyle(
                         fontSize: 12,
-                        color: GrowthColors.textSecondary,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
@@ -319,7 +319,7 @@ class PetPartnerSheet extends ConsumerWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: GrowthColors.textPrimary,
+                      color: AppColors.textPrimary,
                     ),
                   ),
                 ],
@@ -329,7 +329,7 @@ class PetPartnerSheet extends ConsumerWidget {
                 message,
                 style: const TextStyle(
                   fontSize: 14,
-                  color: GrowthColors.textSecondary,
+                  color: AppColors.textSecondary,
                   height: 1.5,
                 ),
               ),
@@ -356,7 +356,7 @@ class PetPartnerSheet extends ConsumerWidget {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: GrowthColors.textPrimary,
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -365,7 +365,7 @@ class PetPartnerSheet extends ConsumerWidget {
                 Expanded(
                   child: _buildHighlightCard(
                     icon: Icons.menu_book_rounded,
-                    color: GrowthColors.studyPrimary,
+                    color: AppColors.study,
                     label: '学习时长',
                     value: '${dashboard.todayStudyMinutes}分钟',
                   ),
@@ -374,7 +374,7 @@ class PetPartnerSheet extends ConsumerWidget {
                 Expanded(
                   child: _buildHighlightCard(
                     icon: Icons.fitness_center_rounded,
-                    color: GrowthColors.fitnessPrimary,
+                    color: AppColors.fitness,
                     label: '健身时长',
                     value: '${dashboard.todayFitnessMinutes}分钟',
                   ),
@@ -387,7 +387,7 @@ class PetPartnerSheet extends ConsumerWidget {
                 Expanded(
                   child: _buildHighlightCard(
                     icon: Icons.edit_note_rounded,
-                    color: GrowthColors.dietPrimary,
+                    color: AppColors.diet,
                     label: '日记篇数',
                     value: '${dashboard.todayJournalCount}篇',
                   ),
@@ -396,7 +396,7 @@ class PetPartnerSheet extends ConsumerWidget {
                 Expanded(
                   child: _buildHighlightCard(
                     icon: Icons.star_rounded,
-                    color: GrowthColors.primary,
+                    color: AppColors.primary,
                     label: '总经验值',
                     value: '${dashboard.totalExp} EXP',
                   ),
@@ -431,7 +431,7 @@ class PetPartnerSheet extends ConsumerWidget {
             label,
             style: const TextStyle(
               fontSize: 12,
-              color: GrowthColors.textSecondary,
+              color: AppColors.textSecondary,
             ),
           ),
           const SizedBox(height: 4),
@@ -460,21 +460,21 @@ class PetPartnerSheet extends ConsumerWidget {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: GrowthColors.textPrimary,
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.study, '学习分析', GrowthColors.studyPrimary)),
+              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.study, '学习分析', AppColors.study)),
               const SizedBox(width: 8),
-              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.fitness, '健身分析', GrowthColors.fitnessPrimary)),
+              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.fitness, '健身分析', AppColors.fitness)),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.diet, '饮食分析', GrowthColors.dietPrimary)),
+              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.diet, '饮食分析', AppColors.diet)),
               const SizedBox(width: 8),
               Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.sleep, '睡眠分析', const Color(0xFF7058F5))),
             ],

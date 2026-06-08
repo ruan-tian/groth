@@ -30,7 +30,10 @@ final dashboardPetViewProvider = Provider<PetViewState?>((ref) {
 });
 
 /// 模块页专用投影 family
-final modulePetViewProvider = Provider.family<PetViewState?, String>((ref, module) {
+final modulePetViewProvider = Provider.family<PetViewState?, String>((
+  ref,
+  module,
+) {
   final state = ref.watch(petOrchestratorProvider);
   return _project(state, PetSurface.modulePage, module);
 });
@@ -41,7 +44,11 @@ final petCenterViewProvider = Provider<PetViewState?>((ref) {
   return _project(state, PetSurface.petCenter, null);
 });
 
-PetViewState? _project(PetRuntimeState state, PetSurface surface, String? module) {
+PetViewState? _project(
+  PetRuntimeState state,
+  PetSurface surface,
+  String? module,
+) {
   final intent = state.effectiveIntent;
   if (intent == null && state.baseIntent == null) return null;
 
@@ -52,7 +59,36 @@ PetViewState? _project(PetRuntimeState state, PetSurface surface, String? module
     bubbleText: active?.displayMessage ?? state.baseIntent?.displayMessage,
     isBubbleVisible: (active?.fixedMessage ?? active?.displayMessage) != null,
     mood: 'neutral',
-    action: 'idle',
+    action: _inferAction(active?.imagePath ?? state.baseIntent?.imagePath),
     module: module,
   );
+}
+
+String _inferAction(String? imagePath) {
+  final path = imagePath?.toLowerCase();
+  if (path == null) return 'idle';
+  if (path.contains('thinking') ||
+      path.contains('report') ||
+      path.contains('ai')) {
+    return 'think';
+  }
+  if (path.contains('happy') ||
+      path.contains('done') ||
+      path.contains('level') ||
+      path.contains('goal') ||
+      path.contains('task')) {
+    return 'happy';
+  }
+  if (path.contains('sleep') || path.contains('yawn')) {
+    return 'sleep';
+  }
+  if (path.contains('read') ||
+      path.contains('study') ||
+      path.contains('focus')) {
+    return 'read';
+  }
+  if (path.contains('wave') || path.contains('greet')) {
+    return 'wave';
+  }
+  return 'idle';
 }

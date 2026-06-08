@@ -1,381 +1,28 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../shared/providers/pet_projection_provider.dart';
 import '../utils/pet_assets.dart';
 import 'particle_burst.dart';
 
-// =============================================================================
-// Constants — named, documented, zero magic numbers
-// =============================================================================
-
-// -- Time-of-day buckets (hour ranges, start-inclusive, end-exclusive) --------
-
-/// Morning: 06:00 – 11:59
 const int kMorningStartHour = 6;
 const int kAfternoonStartHour = 12;
 const int kEveningStartHour = 17;
 const int kNightStartHour = 21;
 
-// -- Gradient palettes per time-of-day ---------------------------------------
+const double kHeroPetMaxSize = 280;
+const double kHeroPetMinSize = 168;
+const Duration kGreetingDuration = Duration(milliseconds: 1800);
+const Duration kSceneSwitchDuration = Duration(milliseconds: 340);
 
-/// Warm peach gradient for morning (6:00–12:00).
-const List<Color> kMorningGradient = [
-  Color(0xFFFFF0E6),
-  Color(0xFFFFE4CC),
-];
-
-/// Soft blue gradient for afternoon (12:00–17:00).
-const List<Color> kAfternoonGradient = [
-  Color(0xFFE8F0FE),
-  Color(0xFFD4E4FF),
-];
-
-/// Lavender gradient for evening (17:00–21:00).
-const List<Color> kEveningGradient = [
-  Color(0xFFF0E6FF),
-  Color(0xFFE0D4F5),
-];
-
-/// Deep indigo gradient for night (21:00–6:00).
-const List<Color> kNightGradient = [
-  Color(0xFFE0E0F0),
-  Color(0xFFC8C8E0),
-];
-
-// -- Pet image assets per time-of-day ----------------------------------------
-
-/// Morning pet image path.
-const String kPetImageMorning = PetAssets.heroMorning;
-
-/// Afternoon pet image path.
-const String kPetImageAfternoon = PetAssets.heroAfternoon;
-
-/// Evening pet image path.
-const String kPetImageEvening = PetAssets.heroEvening;
-
-/// Night pet image path.
-const String kPetImageNight = PetAssets.heroNight;
-
-// -- Pet image dimensions ----------------------------------------------------
-
-/// Width and height of the pet image (square).
-const double kPetImageSize = 160.0;
-
-// -- Floating animation -------------------------------------------------------
-
-/// Duration of one float cycle (up or down).
-const Duration kFloatDuration = Duration(seconds: 3);
-
-/// Maximum vertical offset for the float animation (negative = up).
-const double kFloatOffsetY = -4.0;
-
-// -- Breathing animation ------------------------------------------------------
-
-/// Duration of one breath cycle (expand or contract).
-const Duration kBreatheDuration = Duration(seconds: 4);
-
-/// Maximum scale factor for the breathing animation.
-const double kBreatheMaxScale = 1.03;
-
-// -- Tap bounce animation -----------------------------------------------------
-
-/// Duration of the tap-bounce scale animation.
-const Duration kBounceDuration = Duration(milliseconds: 300);
-
-/// Peak scale factor when the pet bounces on tap.
-const double kBouncePeakScale = 1.1;
-
-// -- Speech bubble ------------------------------------------------------------
-
-/// Border radius of the speech bubble.
-const double kBubbleBorderRadius = 16.0;
-
-/// Background opacity of the speech bubble.
-const double kBubbleBackgroundOpacity = 0.9;
-
-/// Font size for the bubble message text.
-const double kBubbleFontSize = 13.0;
-
-/// Color for the bubble message text.
-const Color kBubbleTextColor = Color(0xFF5D4E37);
-
-/// Width of the triangle tail at its base.
-const double kTailWidth = 12.0;
-
-/// Height of the triangle tail.
-const double kTailHeight = 8.0;
-
-// -- Message rotation ---------------------------------------------------------
-
-/// Interval between message rotations.
-const Duration kMessageRotationInterval = Duration(minutes: 5);
-
-// -- Decoration emoji ---------------------------------------------------------
-
-/// Font size for floating decoration emoji.
-const double kDecorationFontSize = 20.0;
-
-/// Opacity for floating decoration emoji.
-const double kDecorationOpacity = 0.7;
-
-// -- Ground gradient ----------------------------------------------------------
-
-/// The warm color the ground gradient fades to.
-const Color kGroundColor = Color(0xFFF5EDE4);
-
-/// Fraction of the hero height occupied by the ground gradient.
-const double kGroundHeightFraction = 0.12;
-
-// =============================================================================
-// Time-of-day helpers
-// =============================================================================
-
-/// Represents the four time-of-day periods used for theming.
-///
-/// Named `PetTimeOfDay` to avoid clashing with Flutter's built-in [TimeOfDay].
-enum PetTimeOfDay {
-  morning,
-  afternoon,
-  evening,
-  night,
-}
-
-/// Returns the [PetTimeOfDay] for the given [hour] (0–23).
-PetTimeOfDay _petTimeOfDayForHour(int hour) {
-  if (hour >= kMorningStartHour && hour < kAfternoonStartHour) {
-    return PetTimeOfDay.morning;
-  } else if (hour >= kAfternoonStartHour && hour < kEveningStartHour) {
-    return PetTimeOfDay.afternoon;
-  } else if (hour >= kEveningStartHour && hour < kNightStartHour) {
-    return PetTimeOfDay.evening;
-  } else {
-    return PetTimeOfDay.night;
-  }
-}
-
-/// Returns the gradient colors for the given [PetTimeOfDay].
-List<Color> _gradientColorsFor(PetTimeOfDay tod) {
-  switch (tod) {
-    case PetTimeOfDay.morning:
-      return kMorningGradient;
-    case PetTimeOfDay.afternoon:
-      return kAfternoonGradient;
-    case PetTimeOfDay.evening:
-      return kEveningGradient;
-    case PetTimeOfDay.night:
-      return kNightGradient;
-  }
-}
-
-/// Returns the pet image asset path for the given [PetTimeOfDay].
-String _petImageFor(PetTimeOfDay tod) {
-  switch (tod) {
-    case PetTimeOfDay.morning:
-      return kPetImageMorning;
-    case PetTimeOfDay.afternoon:
-      return kPetImageAfternoon;
-    case PetTimeOfDay.evening:
-      return kPetImageEvening;
-    case PetTimeOfDay.night:
-      return kPetImageNight;
-  }
-}
-
-/// Returns the message pool for the given [PetTimeOfDay].
-List<String> _messagesFor(PetTimeOfDay tod) {
-  switch (tod) {
-    case PetTimeOfDay.morning:
-      return const [
-        '早安！新的一天开始了～',
-        '早上好，今天也要加油！',
-        '甜甜等你好久了～',
-      ];
-    case PetTimeOfDay.afternoon:
-      return const [
-        '下午好，继续加油！',
-        '学习辛苦啦～',
-        '要不要休息一下？',
-      ];
-    case PetTimeOfDay.evening:
-      return const [
-        '晚上好，今天辛苦了',
-        '放松一下吧～',
-        '回顾一下今天的收获？',
-      ];
-    case PetTimeOfDay.night:
-      return const [
-        '该睡觉了哦～',
-        '晚安，明天见！',
-        '今天也辛苦了',
-      ];
-  }
-}
-
-// =============================================================================
-// Decoration configuration per level range
-// =============================================================================
-
-/// A decoration item: an emoji and the anchor position around the pet.
-class _DecorationConfig {
-  const _DecorationConfig({
-    required this.emoji,
-    required this.anchor,
-    required this.duration,
-  });
-
-  final String emoji;
-
-  /// Normalized position relative to the pet center:
-  /// x: -1.0 (far left) → 1.0 (far right)
-  /// y: -1.0 (above) → 1.0 (below)
-  final Offset anchor;
-
-  /// Float animation duration for this decoration.
-  final Duration duration;
-}
-
-/// Returns the decoration configs for the given [level].
-List<_DecorationConfig> _decorationsForLevel(int level) {
-  if (level >= 20) {
-    return const [
-      _DecorationConfig(
-        emoji: '📚',
-        anchor: Offset(-1.2, -0.8),
-        duration: Duration(seconds: 3),
-      ),
-      _DecorationConfig(
-        emoji: '✏️',
-        anchor: Offset(1.2, -0.8),
-        duration: Duration(seconds: 4),
-      ),
-      _DecorationConfig(
-        emoji: '🎯',
-        anchor: Offset(-1.2, 0.8),
-        duration: Duration(seconds: 3, milliseconds: 500),
-      ),
-      _DecorationConfig(
-        emoji: '⭐',
-        anchor: Offset(1.2, 0.8),
-        duration: Duration(seconds: 5),
-      ),
-      _DecorationConfig(
-        emoji: '🏆',
-        anchor: Offset(1.4, 0.0),
-        duration: Duration(seconds: 4, milliseconds: 200),
-      ),
-    ];
-  } else if (level >= 11) {
-    return const [
-      _DecorationConfig(
-        emoji: '📚',
-        anchor: Offset(-1.2, -0.8),
-        duration: Duration(seconds: 3),
-      ),
-      _DecorationConfig(
-        emoji: '✏️',
-        anchor: Offset(1.2, -0.8),
-        duration: Duration(seconds: 4),
-      ),
-      _DecorationConfig(
-        emoji: '🎯',
-        anchor: Offset(-1.2, 0.8),
-        duration: Duration(seconds: 3, milliseconds: 500),
-      ),
-      _DecorationConfig(
-        emoji: '⭐',
-        anchor: Offset(1.2, 0.8),
-        duration: Duration(seconds: 5),
-      ),
-    ];
-  } else if (level >= 6) {
-    return const [
-      _DecorationConfig(
-        emoji: '📚',
-        anchor: Offset(-1.2, -0.8),
-        duration: Duration(seconds: 3),
-      ),
-      _DecorationConfig(
-        emoji: '✏️',
-        anchor: Offset(1.2, -0.8),
-        duration: Duration(seconds: 4),
-      ),
-      _DecorationConfig(
-        emoji: '🎯',
-        anchor: Offset(1.2, 0.8),
-        duration: Duration(seconds: 3, milliseconds: 500),
-      ),
-    ];
-  } else {
-    // Level 1–5: 2 decorations
-    return const [
-      _DecorationConfig(
-        emoji: '📚',
-        anchor: Offset(-1.2, -0.6),
-        duration: Duration(seconds: 3),
-      ),
-      _DecorationConfig(
-        emoji: '✏️',
-        anchor: Offset(1.2, -0.6),
-        duration: Duration(seconds: 4),
-      ),
-    ];
-  }
-}
-
-// =============================================================================
-// Speech bubble tail painter
-// =============================================================================
-
-/// Paints a small upward-pointing triangle tail for the speech bubble.
-class _BubbleTailPainter extends CustomPainter {
-  const _BubbleTailPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final path = Path()
-      ..moveTo(size.width / 2 - kTailWidth / 2, size.height)
-      ..lineTo(size.width / 2, 0)
-      ..lineTo(size.width / 2 + kTailWidth / 2, size.height)
-      ..close();
-
-    canvas.drawPath(
-      path,
-      Paint()
-        ..color = color
-        ..style = PaintingStyle.fill,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _BubbleTailPainter oldDelegate) =>
-      oldDelegate.color != color;
-}
-
-// =============================================================================
-// PetSceneHero widget
-// =============================================================================
-
-/// The hero section of the pet center page — the top 40% where the pet "lives".
-///
-/// Displays a time-aware gradient background, the pet image with floating and
-/// breathing animations, a rotating speech bubble, level-based decorations,
-/// and tap-to-burst particle effects.
 class PetSceneHero extends ConsumerStatefulWidget {
-  const PetSceneHero({
-    super.key,
-    required this.level,
-    required this.petName,
-  });
+  const PetSceneHero({super.key, required this.level, required this.petName});
 
-  /// Current pet level — controls decoration density.
   final int level;
-
-  /// Pet name — used in speech bubble messages.
   final String petName;
 
   @override
@@ -384,403 +31,726 @@ class PetSceneHero extends ConsumerStatefulWidget {
 
 class _PetSceneHeroState extends ConsumerState<PetSceneHero>
     with TickerProviderStateMixin {
-  // -- Animation controllers --------------------------------------------------
-
-  /// Controls the gentle vertical float of the pet.
   late final AnimationController _floatController;
-  late final Animation<double> _floatAnimation;
-
-  /// Controls the subtle breathing scale of the pet.
   late final AnimationController _breatheController;
-  late final Animation<double> _breatheAnimation;
-
-  /// Controls the tap-bounce scale of the pet.
   late final AnimationController _bounceController;
-  late final Animation<double> _bounceAnimation;
-
-  // -- Particle burst trigger -------------------------------------------------
-
-  /// ValueNotifier toggled on each tap to fire a [ParticleBurst].
+  late final AnimationController _particleController;
   late final ValueNotifier<bool> _burstTrigger;
 
-  /// Alternates between heart and star particles on successive taps.
+  Timer? _greetingTimer;
+  Timer? _tapMessageTimer;
+  bool _showGreeting = true;
   bool _nextBurstIsHeart = true;
-
-  /// The particle type for the current (most recent) burst.
-  ParticleType _activeBurstType = ParticleType.hearts;
-
-  /// The center position of the latest tap (for particle origin).
   Offset _burstCenter = Offset.zero;
-
-  // -- Message rotation -------------------------------------------------------
-
-  /// Timer that rotates the speech bubble message.
-  Timer? _messageTimer;
-
-  /// Index into the current time-of-day message pool.
-  int _messageIndex = 0;
-
-  /// The currently displayed message text.
-  late String _currentMessage;
-
-  // -- Decoration float controllers -------------------------------------------
-
-  /// One controller per decoration emoji for independent floating.
-  final List<AnimationController> _decorationControllers = [];
-  final List<Animation<double>> _decorationAnimations = [];
-
-  // -- Time-of-day snapshot ---------------------------------------------------
-
-  /// Captured once at init; updates on message rotation boundary.
-  late PetTimeOfDay _tod;
-
-  // ===========================================================================
-  // Lifecycle
-  // ===========================================================================
+  ParticleType _burstType = ParticleType.hearts;
+  String? _tapMessage;
 
   @override
   void initState() {
     super.initState();
-
-    _tod = _petTimeOfDayForHour(DateTime.now().hour);
-
-    // -- Float animation ------------------------------------------------------
     _floatController = AnimationController(
       vsync: this,
-      duration: kFloatDuration,
-    );
-    _floatAnimation = Tween<double>(
-      begin: 0,
-      end: kFloatOffsetY,
-    ).animate(CurvedAnimation(
-      parent: _floatController,
-      curve: Curves.easeInOut,
-    ));
-    _floatController.repeat(reverse: true);
-
-    // -- Breathe animation ----------------------------------------------------
+      duration: const Duration(milliseconds: 3200),
+    )..repeat(reverse: true);
     _breatheController = AnimationController(
       vsync: this,
-      duration: kBreatheDuration,
-    );
-    _breatheAnimation = Tween<double>(
-      begin: 1.0,
-      end: kBreatheMaxScale,
-    ).animate(CurvedAnimation(
-      parent: _breatheController,
-      curve: Curves.easeInOut,
-    ));
-    _breatheController.repeat(reverse: true);
-
-    // -- Bounce animation (one-shot, triggered by tap) ------------------------
+      duration: const Duration(milliseconds: 4200),
+    )..repeat(reverse: true);
     _bounceController = AnimationController(
       vsync: this,
-      duration: kBounceDuration,
+      duration: const Duration(milliseconds: 320),
     );
-    _bounceAnimation = TweenSequence<double>([
-      TweenSequenceItem(
-        tween: Tween(begin: 1.0, end: kBouncePeakScale)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 50,
-      ),
-      TweenSequenceItem(
-        tween: Tween(begin: kBouncePeakScale, end: 1.0)
-            .chain(CurveTween(curve: Curves.easeOut)),
-        weight: 50,
-      ),
-    ]).animate(_bounceController);
-
-    // -- Particle burst -------------------------------------------------------
+    _particleController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 5200),
+    )..repeat();
     _burstTrigger = ValueNotifier<bool>(false);
-
-    // -- Decoration animations ------------------------------------------------
-    _initDecorationAnimations();
-
-    // -- Message rotation -----------------------------------------------------
-    _currentMessage = _messagesFor(_tod).first;
-    _messageTimer = Timer.periodic(kMessageRotationInterval, (_) {
-      _rotateMessage();
+    _greetingTimer = Timer(kGreetingDuration, () {
+      if (mounted) {
+        setState(() => _showGreeting = false);
+      }
     });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _syncMotionPreference();
   }
 
   @override
   void dispose() {
-    _messageTimer?.cancel();
+    _greetingTimer?.cancel();
+    _tapMessageTimer?.cancel();
     _floatController.dispose();
     _breatheController.dispose();
     _bounceController.dispose();
+    _particleController.dispose();
     _burstTrigger.dispose();
-    for (final c in _decorationControllers) {
-      c.dispose();
-    }
     super.dispose();
   }
 
-  // ===========================================================================
-  // Decoration setup
-  // ===========================================================================
-
-  /// Creates one [AnimationController] per decoration emoji.
-  void _initDecorationAnimations() {
-    final decorations = _decorationsForLevel(widget.level);
-    for (final deco in decorations) {
-      final controller = AnimationController(
-        vsync: this,
-        duration: deco.duration,
-      );
-      final animation = Tween<double>(
-        begin: 0,
-        end: -3.0, // Each decoration floats up by 3px
-      ).animate(CurvedAnimation(
-        parent: controller,
-        curve: Curves.easeInOut,
-      ));
-      controller.repeat(reverse: true);
-      _decorationControllers.add(controller);
-      _decorationAnimations.add(animation);
+  void _syncMotionPreference() {
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion) {
+      _floatController.stop();
+      _breatheController.stop();
+      _particleController.stop();
+      _floatController.value = 0;
+      _breatheController.value = 0;
+      _particleController.value = 0;
+    } else {
+      if (!_floatController.isAnimating) {
+        _floatController.repeat(reverse: true);
+      }
+      if (!_breatheController.isAnimating) {
+        _breatheController.repeat(reverse: true);
+      }
+      if (!_particleController.isAnimating) {
+        _particleController.repeat();
+      }
     }
   }
 
-  // ===========================================================================
-  // Message rotation
-  // ===========================================================================
+  void _handleTapDown(TapDownDetails details) {
+    HapticFeedback.lightImpact();
+    _burstCenter = details.localPosition;
+    _burstType = _nextBurstIsHeart ? ParticleType.hearts : ParticleType.stars;
+    _nextBurstIsHeart = !_nextBurstIsHeart;
+    _burstTrigger.value = !_burstTrigger.value;
+    _bounceController.forward(from: 0);
 
-  void _rotateMessage() {
-    final messages = _messagesFor(_tod);
     setState(() {
-      _messageIndex = (_messageIndex + 1) % messages.length;
-      _currentMessage = messages[_messageIndex];
+      _tapMessage = _nextTapMessage();
+      _showGreeting = false;
+    });
+    _tapMessageTimer?.cancel();
+    _tapMessageTimer = Timer(kGreetingDuration, () {
+      if (mounted) {
+        setState(() => _tapMessage = null);
+      }
     });
   }
 
-  // ===========================================================================
-  // Tap handling
-  // ===========================================================================
-
-  void _handleTapDown(TapDownDetails details) {
-    HapticFeedback.lightImpact();
-
-    // Determine burst type BEFORE toggling so this burst uses the current type.
-    _activeBurstType =
-        _nextBurstIsHeart ? ParticleType.hearts : ParticleType.stars;
-
-    // Fire particle burst at the tap position.
-    _burstCenter = details.localPosition;
-    _burstTrigger.value = !_burstTrigger.value;
-
-    // Toggle for the NEXT tap.
-    _nextBurstIsHeart = !_nextBurstIsHeart;
-
-    // Trigger pet bounce.
-    _bounceController.forward(from: 0);
+  String _nextTapMessage() {
+    final slot = _timeSlotForHour(DateTime.now().hour);
+    switch (slot) {
+      case PetCenterTimeSlot.morning:
+        return '早安，今天也一起升级';
+      case PetCenterTimeSlot.afternoon:
+        return '我在这儿，专注一下吧';
+      case PetCenterTimeSlot.evening:
+        return '今天辛苦啦，记得复盘';
+      case PetCenterTimeSlot.night:
+        return '早点休息，明天继续';
+    }
   }
-
-  // ===========================================================================
-  // Build
-  // ===========================================================================
 
   @override
   Widget build(BuildContext context) {
-    final gradientColors = _gradientColorsFor(_tod);
-    final petImagePath = _petImageFor(_tod);
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    final view = ref.watch(petCenterViewProvider);
+    final slot = _timeSlotForHour(DateTime.now().hour);
+    final petAsset = _petAssetFor(view, slot);
+    final bubbleText = _bubbleTextFor(view, slot);
+    final backgroundAsset = PetCenterAssets.backgroundForTime(slot);
+    final tint = _tintForTime(slot);
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final heroWidth = constraints.maxWidth;
-        final heroHeight = constraints.maxHeight;
-        final petCenter = Offset(heroWidth / 2, heroHeight * 0.42);
+        final width = constraints.maxWidth;
+        final height = constraints.maxHeight;
+        final petSize = math
+            .min(width * 0.54, height * 0.64)
+            .clamp(kHeroPetMinSize, kHeroPetMaxSize)
+            .toDouble();
+        final petBottom = height * 0.095;
+        final petLeft = (width - petSize) / 2;
 
         return GestureDetector(
-          onTapDown: _handleTapDown,
           behavior: HitTestBehavior.translucent,
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              // -- Layer 0: Time-aware gradient background --------------------
-              Positioned.fill(
-                child: DecoratedBox(
+          onTapDown: _handleTapDown,
+          child: ClipRect(
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                _SceneImage(
+                  asset: backgroundAsset,
+                  fit: BoxFit.cover,
+                  fallbackColor: tint.background,
+                ),
+                DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      colors: gradientColors,
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
+                      colors: [tint.overlayTop, tint.overlayBottom],
                     ),
                   ),
                 ),
-              ),
-
-              // -- Layer 1: Ground / floor illusion ---------------------------
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 0,
-                height: heroHeight * kGroundHeightFraction,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        kGroundColor.withValues(alpha: 0.0),
-                        kGroundColor.withValues(alpha: 0.6),
-                      ],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+                _SceneImage(
+                  asset: PetCenterAssets.roomGlow,
+                  fit: BoxFit.cover,
+                  opacity: tint.glowOpacity,
+                ),
+                if (!reduceMotion)
+                  AnimatedBuilder(
+                    animation: _particleController,
+                    builder: (_, _) {
+                      return _AmbientParticleLayer(
+                        progress: _particleController.value,
+                        slot: slot,
+                      );
+                    },
+                  ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: -height * 0.02,
+                  height: height * 0.38,
+                  child: _SceneImage(
+                    asset: PetCenterAssets.ground,
+                    fit: BoxFit.fitWidth,
+                    alignment: Alignment.bottomCenter,
+                    opacity: 0.96,
+                  ),
+                ),
+                ..._buildDecorations(width, height, petSize, reduceMotion),
+                Positioned(
+                  left: petLeft + petSize * 0.12,
+                  right: petLeft + petSize * 0.12,
+                  bottom: petBottom + petSize * 0.02,
+                  height: petSize * 0.25,
+                  child: _SceneImage(
+                    asset: PetCenterAssets.softShadow,
+                    fit: BoxFit.contain,
+                    opacity: 0.54,
+                  ),
+                ),
+                Positioned(
+                  left: petLeft,
+                  bottom: petBottom,
+                  width: petSize,
+                  height: petSize,
+                  child: _AnimatedPet(
+                    asset: petAsset,
+                    floatController: _floatController,
+                    breatheController: _breatheController,
+                    bounceController: _bounceController,
+                    reduceMotion: reduceMotion,
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: -height * 0.01,
+                  height: height * 0.36,
+                  child: IgnorePointer(
+                    child: _SceneImage(
+                      asset: PetCenterAssets.furniture,
+                      fit: BoxFit.fitWidth,
+                      alignment: Alignment.bottomCenter,
+                      opacity: 0.9,
                     ),
                   ),
                 ),
-              ),
-
-              // -- Layer 2: Floating decorations ------------------------------
-              ..._buildDecorationLayer(petCenter),
-
-              // -- Layer 3: Pet image with float + breathe + bounce -----------
-              Positioned(
-                left: petCenter.dx - kPetImageSize / 2,
-                top: petCenter.dy - kPetImageSize / 2,
-                child: AnimatedBuilder(
-                  animation: Listenable.merge([
-                    _floatAnimation,
-                    _breatheAnimation,
-                    _bounceAnimation,
-                  ]),
-                  builder: (context, child) {
-                    return Transform.translate(
-                      offset: Offset(0, _floatAnimation.value),
-                      child: Transform.scale(
-                        scale: _breatheAnimation.value * _bounceAnimation.value,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: SizedBox(
-                    width: kPetImageSize,
-                    height: kPetImageSize,
-                    child: Image.asset(
-                      petImagePath,
-                      width: kPetImageSize,
-                      height: kPetImageSize,
-                      fit: BoxFit.contain,
-                      errorBuilder: (context, error, stackTrace) {
-                        return const Center(
-                          child: Text(
-                            '🐱',
-                            style: TextStyle(fontSize: 80),
-                          ),
-                        );
-                      },
-                    ),
+                Positioned(
+                  top: math.max(72, height * 0.18),
+                  right: 20,
+                  width: math.min(252, width - 40),
+                  child: _PetSpeechBubble(
+                    text: bubbleText,
+                    accent: tint.accent,
                   ),
                 ),
-              ),
-
-              // -- Layer 4: Speech bubble with tail ---------------------------
-              Positioned(
-                left: petCenter.dx - 80,
-                top: petCenter.dy + kPetImageSize / 2 + 12,
-                child: _buildSpeechBubble(),
-              ),
-
-              // -- Layer 5: Particle burst overlay ----------------------------
-              Positioned.fill(
-                child: ParticleBurst(
-                  trigger: _burstTrigger,
-                  center: _burstCenter,
-                  type: _activeBurstType,
+                Positioned.fill(
+                  child: ParticleBurst(
+                    trigger: _burstTrigger,
+                    center: _burstCenter,
+                    type: _burstType,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
     );
   }
 
-  // ===========================================================================
-  // Sub-widgets
-  // ===========================================================================
-
-  /// Builds the speech bubble with a triangle tail pointing up.
-  Widget _buildSpeechBubble() {
-    final bubbleColor = Colors.white.withValues(alpha: kBubbleBackgroundOpacity);
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Triangle tail (points up toward the pet).
-        SizedBox(
-          width: kTailWidth,
-          height: kTailHeight,
-          child: CustomPaint(
-            painter: _BubbleTailPainter(color: bubbleColor),
-          ),
-        ),
-        // Bubble body.
-        Container(
-          constraints: const BoxConstraints(maxWidth: 160),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: bubbleColor,
-            borderRadius: BorderRadius.circular(kBubbleBorderRadius),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: Text(
-              _currentMessage,
-              key: ValueKey(_currentMessage),
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: kBubbleFontSize,
-                color: kBubbleTextColor,
-                height: 1.4,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
+  String _petAssetFor(PetViewState? view, PetCenterTimeSlot slot) {
+    if (_showGreeting) {
+      return PetCenterAssets.petWave;
+    }
+    final mapped = _actionFromView(view);
+    return PetCenterAssets.petForAction(mapped, slot);
   }
 
-  /// Builds the floating decoration emoji layer.
-  List<Widget> _buildDecorationLayer(Offset petCenter) {
-    final decoConfigs = _decorationsForLevel(widget.level);
-    final List<Widget> widgets = [];
-    final spreadX = kPetImageSize * 0.85;
-    final spreadY = kPetImageSize * 0.7;
+  String _bubbleTextFor(PetViewState? view, PetCenterTimeSlot slot) {
+    if (_tapMessage != null) {
+      return _tapMessage!;
+    }
+    if (_showGreeting) {
+      return '${widget.petName}的小窝变漂亮啦';
+    }
+    final text = view?.bubbleText;
+    if (text != null && text.trim().isNotEmpty) {
+      return text.trim();
+    }
+    switch (slot) {
+      case PetCenterTimeSlot.morning:
+        return '新的一天开始啦';
+      case PetCenterTimeSlot.afternoon:
+        return '把节奏稳稳找回来';
+      case PetCenterTimeSlot.evening:
+        return '今天也有认真成长';
+      case PetCenterTimeSlot.night:
+        return '晚安，我陪你收尾';
+    }
+  }
 
-    for (var i = 0; i < decoConfigs.length; i++) {
-      if (i >= _decorationAnimations.length) break;
+  String? _actionFromView(PetViewState? view) {
+    final action = view?.action;
+    if (action != null && action != 'idle') {
+      return action;
+    }
+    final path = view?.imagePath?.toLowerCase();
+    if (path == null) return action;
+    if (path.contains('thinking') ||
+        path.contains('report') ||
+        path.contains('ai')) {
+      return 'think';
+    }
+    if (path.contains('happy') ||
+        path.contains('done') ||
+        path.contains('level')) {
+      return 'happy';
+    }
+    if (path.contains('sleep') || path.contains('yawn')) {
+      return 'sleep';
+    }
+    if (path.contains('read') ||
+        path.contains('study') ||
+        path.contains('focus')) {
+      return 'read';
+    }
+    if (path.contains('wave') || path.contains('greet')) {
+      return 'wave';
+    }
+    return action;
+  }
 
-      final deco = decoConfigs[i];
-      final dx = petCenter.dx + deco.anchor.dx * spreadX;
-      final dy = petCenter.dy + deco.anchor.dy * spreadY;
+  List<Widget> _buildDecorations(
+    double width,
+    double height,
+    double petSize,
+    bool reduceMotion,
+  ) {
+    final assets = PetCenterAssets.decoForLevel(widget.level);
+    final anchors = <Offset>[
+      Offset(width * 0.19, height * 0.31),
+      Offset(width * 0.78, height * 0.29),
+      Offset(width * 0.18, height * 0.66),
+      Offset(width * 0.82, height * 0.63),
+      Offset(width * 0.66, height * 0.2),
+    ];
 
-      widgets.add(
-        AnimatedBuilder(
-          animation: _decorationAnimations[i],
-          builder: (context, child) {
-            return Positioned(
-              left: dx - 14,
-              top: dy - 14 + _decorationAnimations[i].value,
-              child: child!,
-            );
-          },
+    return List.generate(assets.length, (index) {
+      final asset = assets[index];
+      final anchor = anchors[index % anchors.length];
+      final size = math.min(54.0, math.max(34.0, petSize * 0.18));
+      final phase = index * 0.18;
+
+      return AnimatedBuilder(
+        animation: _floatController,
+        builder: (context, child) {
+          final dy = reduceMotion
+              ? 0.0
+              : math.sin((_floatController.value + phase) * math.pi * 2) * 4;
+          return Positioned(
+            left: anchor.dx - size / 2,
+            top: anchor.dy - size / 2 + dy,
+            width: size,
+            height: size,
+            child: child!,
+          );
+        },
+        child: IgnorePointer(
           child: Opacity(
-            opacity: kDecorationOpacity,
-            child: Text(
-              deco.emoji,
-              style: const TextStyle(fontSize: kDecorationFontSize),
-            ),
+            opacity: 0.86,
+            child: _SceneImage(asset: asset, fit: BoxFit.contain),
           ),
         ),
       );
-    }
+    });
+  }
+}
 
-    return widgets;
+class _AnimatedPet extends StatelessWidget {
+  const _AnimatedPet({
+    required this.asset,
+    required this.floatController,
+    required this.breatheController,
+    required this.bounceController,
+    required this.reduceMotion,
+  });
+
+  final String asset;
+  final AnimationController floatController;
+  final AnimationController breatheController;
+  final AnimationController bounceController;
+  final bool reduceMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: Listenable.merge([
+          floatController,
+          breatheController,
+          bounceController,
+        ]),
+        builder: (context, child) {
+          final floatY = reduceMotion
+              ? 0.0
+              : Tween<double>(begin: 0, end: -6)
+                    .chain(CurveTween(curve: Curves.easeInOut))
+                    .transform(floatController.value);
+          final breathe = reduceMotion
+              ? 1.0
+              : Tween<double>(begin: 1, end: 1.025)
+                    .chain(CurveTween(curve: Curves.easeInOut))
+                    .transform(breatheController.value);
+          final bounce = TweenSequence<double>([
+            TweenSequenceItem(
+              tween: Tween(
+                begin: 1.0,
+                end: 1.08,
+              ).chain(CurveTween(curve: Curves.easeOutCubic)),
+              weight: 45,
+            ),
+            TweenSequenceItem(
+              tween: Tween(
+                begin: 1.08,
+                end: 1.0,
+              ).chain(CurveTween(curve: Curves.easeOutBack)),
+              weight: 55,
+            ),
+          ]).transform(bounceController.value);
+
+          return Transform.translate(
+            offset: Offset(0, floatY),
+            child: Transform.scale(
+              scale: breathe * bounce,
+              alignment: Alignment.bottomCenter,
+              child: child,
+            ),
+          );
+        },
+        child: AnimatedSwitcher(
+          duration: kSceneSwitchDuration,
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            final scale = Tween<double>(begin: 0.96, end: 1).animate(animation);
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(scale: scale, child: child),
+            );
+          },
+          child: Image.asset(
+            asset,
+            key: ValueKey(asset),
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.medium,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.pets_rounded,
+              size: 112,
+              color: Color(0xFFE69AAC),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _PetSpeechBubble extends StatelessWidget {
+  const _PetSpeechBubble({required this.text, required this.accent});
+
+  final String text;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 280),
+      child: CustomPaint(
+        key: ValueKey(text),
+        painter: _BubbleTailPainter(
+          color: Colors.white.withValues(alpha: 0.82),
+          borderColor: Colors.white.withValues(alpha: 0.92),
+        ),
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 42),
+          padding: const EdgeInsets.fromLTRB(15, 10, 15, 13),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(23),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.92)),
+            boxShadow: [
+              BoxShadow(
+                color: accent.withValues(alpha: 0.14),
+                blurRadius: 22,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Text(
+            text,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.35,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0,
+              color: Color(0xFF5D4E57),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BubbleTailPainter extends CustomPainter {
+  const _BubbleTailPainter({required this.color, required this.borderColor});
+
+  final Color color;
+  final Color borderColor;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final tailX = size.width * 0.52;
+    final tailTop = size.height - 2;
+    final path = Path()
+      ..moveTo(tailX - 9, tailTop)
+      ..quadraticBezierTo(tailX, tailTop + 14, tailX + 18, tailTop + 17)
+      ..quadraticBezierTo(tailX + 5, tailTop + 7, tailX + 9, tailTop)
+      ..close();
+
+    canvas.drawPath(path, Paint()..color = color);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = borderColor
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _BubbleTailPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.borderColor != borderColor;
+  }
+}
+
+class _AmbientParticleLayer extends StatelessWidget {
+  const _AmbientParticleLayer({required this.progress, required this.slot});
+
+  final double progress;
+  final PetCenterTimeSlot slot;
+
+  @override
+  Widget build(BuildContext context) {
+    final particles = _particleConfigFor(slot);
+    return IgnorePointer(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return Stack(
+            children: List.generate(particles.length, (index) {
+              final particle = particles[index];
+              final cycle = (progress + particle.phase) % 1.0;
+              final wave = math.sin((cycle + particle.phase) * math.pi * 2);
+              final x = constraints.maxWidth * particle.anchor.dx + wave * 8;
+              final y =
+                  constraints.maxHeight *
+                  ((particle.anchor.dy + cycle * particle.travel) % 1.0);
+              final opacity = (0.18 + math.sin(cycle * math.pi) * 0.42)
+                  .clamp(0.0, 0.62)
+                  .toDouble();
+
+              return Positioned(
+                left: x,
+                top: y,
+                width: particle.size,
+                height: particle.size,
+                child: Opacity(
+                  opacity: opacity,
+                  child: Transform.rotate(
+                    angle: wave * 0.18,
+                    child: Image.asset(
+                      particle.asset,
+                      fit: BoxFit.contain,
+                      filterQuality: FilterQuality.low,
+                    ),
+                  ),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  List<_FloatingParticle> _particleConfigFor(PetCenterTimeSlot slot) {
+    final ambientAsset = switch (slot) {
+      PetCenterTimeSlot.morning => PetCenterAssets.particlePetals,
+      PetCenterTimeSlot.afternoon => PetCenterAssets.particleSparkle,
+      PetCenterTimeSlot.evening => PetCenterAssets.particleHeart,
+      PetCenterTimeSlot.night => PetCenterAssets.particleStar,
+    };
+    return [
+      _FloatingParticle(ambientAsset, const Offset(0.15, 0.16), 0.26, 0.0, 22),
+      _FloatingParticle(ambientAsset, const Offset(0.72, 0.12), 0.3, 0.18, 18),
+      _FloatingParticle(ambientAsset, const Offset(0.42, 0.28), 0.24, 0.36, 16),
+      _FloatingParticle(ambientAsset, const Offset(0.85, 0.38), 0.22, 0.56, 20),
+      _FloatingParticle(
+        PetCenterAssets.particleSparkle,
+        const Offset(0.24, 0.48),
+        0.18,
+        0.74,
+        15,
+      ),
+      _FloatingParticle(
+        PetCenterAssets.particleStar,
+        const Offset(0.6, 0.58),
+        0.16,
+        0.9,
+        14,
+      ),
+    ];
+  }
+}
+
+class _FloatingParticle {
+  const _FloatingParticle(
+    this.asset,
+    this.anchor,
+    this.travel,
+    this.phase,
+    this.size,
+  );
+
+  final String asset;
+  final Offset anchor;
+  final double travel;
+  final double phase;
+  final double size;
+}
+
+class _SceneImage extends StatelessWidget {
+  const _SceneImage({
+    required this.asset,
+    this.fit = BoxFit.contain,
+    this.alignment = Alignment.center,
+    this.opacity = 1,
+    this.fallbackColor,
+  });
+
+  final String asset;
+  final BoxFit fit;
+  final Alignment alignment;
+  final double opacity;
+  final Color? fallbackColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final image = Image.asset(
+      asset,
+      fit: fit,
+      alignment: alignment,
+      opacity: AlwaysStoppedAnimation(opacity),
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (_, _, _) {
+        final color = fallbackColor;
+        if (color != null) {
+          return ColoredBox(color: color);
+        }
+        return const SizedBox.shrink();
+      },
+    );
+    return RepaintBoundary(child: image);
+  }
+}
+
+class _TimeTint {
+  const _TimeTint({
+    required this.background,
+    required this.overlayTop,
+    required this.overlayBottom,
+    required this.accent,
+    required this.glowOpacity,
+  });
+
+  final Color background;
+  final Color overlayTop;
+  final Color overlayBottom;
+  final Color accent;
+  final double glowOpacity;
+}
+
+PetCenterTimeSlot _timeSlotForHour(int hour) {
+  if (hour >= kMorningStartHour && hour < kAfternoonStartHour) {
+    return PetCenterTimeSlot.morning;
+  }
+  if (hour >= kAfternoonStartHour && hour < kEveningStartHour) {
+    return PetCenterTimeSlot.afternoon;
+  }
+  if (hour >= kEveningStartHour && hour < kNightStartHour) {
+    return PetCenterTimeSlot.evening;
+  }
+  return PetCenterTimeSlot.night;
+}
+
+_TimeTint _tintForTime(PetCenterTimeSlot slot) {
+  switch (slot) {
+    case PetCenterTimeSlot.morning:
+      return const _TimeTint(
+        background: Color(0xFFFFF1DD),
+        overlayTop: Color(0x10FFFFFF),
+        overlayBottom: Color(0x28FFE1B9),
+        accent: Color(0xFFE7A05F),
+        glowOpacity: 0.32,
+      );
+    case PetCenterTimeSlot.afternoon:
+      return const _TimeTint(
+        background: Color(0xFFEAF6FF),
+        overlayTop: Color(0x18FFFFFF),
+        overlayBottom: Color(0x224DB5C7),
+        accent: Color(0xFF4FAFC1),
+        glowOpacity: 0.24,
+      );
+    case PetCenterTimeSlot.evening:
+      return const _TimeTint(
+        background: Color(0xFFFFE0C6),
+        overlayTop: Color(0x16FFFFFF),
+        overlayBottom: Color(0x2AEF8F72),
+        accent: Color(0xFFE88B65),
+        glowOpacity: 0.34,
+      );
+    case PetCenterTimeSlot.night:
+      return const _TimeTint(
+        background: Color(0xFFDBE0F5),
+        overlayTop: Color(0x183A3F78),
+        overlayBottom: Color(0x384C558B),
+        accent: Color(0xFF737FBD),
+        glowOpacity: 0.18,
+      );
   }
 }

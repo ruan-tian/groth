@@ -95,6 +95,7 @@ flutter:
     - assets/pet/life/
     - assets/pet/social/
     - assets/pet/travel/
+    - assets/pet/concerts/
     - assets/audio/noise/
     - assets/audio/bell/
     - assets/data/
@@ -105,6 +106,12 @@ flutter:
     - assets/images/weather/lights/
     - assets/images/weather/props/
     - assets/images/weather/common/
+    - assets/images/pet_center/backgrounds/
+    - assets/images/pet_center/foregrounds/
+    - assets/images/pet_center/pets/
+    - assets/images/pet_center/deco/
+    - assets/images/pet_center/particles/
+    - assets/images/pet_center/effects/
 
   # To add assets to your application, add an assets section, like this:
   # assets:

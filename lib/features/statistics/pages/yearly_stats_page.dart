@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../app/theme.dart';
+import '../../../app/design/design.dart';
 import '../../../core/services/statistics_service.dart';
 import '../../../core/utils/stats_formatters.dart';
 import '../../../shared/providers/service_providers.dart';
@@ -124,11 +124,11 @@ class _YearlyContent extends ConsumerWidget {
     final totalExp = monthlyStats.fold<int>(0, (s, m) => s + m.expGained);
 
     return ListView(
-      padding: const EdgeInsets.all(AppTheme.spaceMd),
+      padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         // ── 年份导航 ──
         const _YearNavigator(),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 汇总卡片 ──
         _SummaryCards(
@@ -136,19 +136,19 @@ class _YearlyContent extends ConsumerWidget {
           totalFitness: totalFitness,
           totalExp: totalExp,
         ),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 月度趋势柱状图 ──
         _MonthlyTrendChart(monthlyStats: monthlyStats),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 成长热力图 ──
         _HeatmapSection(dailyStats: dailyStats),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── EXP 趋势图 ──
         _ExpTrendPlaceholder(monthlyStats: monthlyStats),
-        const SizedBox(height: AppTheme.spaceLg),
+        const SizedBox(height: AppSpacing.lg),
 
         // ── 月度明细 ──
         _MonthlyBreakdown(monthlyStats: monthlyStats),
@@ -188,7 +188,7 @@ class _YearNavigator extends ConsumerWidget {
               icon: const Icon(Icons.chevron_left_rounded),
               tooltip: '上一年',
             ),
-            const SizedBox(width: AppTheme.spaceSm),
+            const SizedBox(width: AppSpacing.sm),
             // 年份文字
             Text(
               formatYear(year),
@@ -196,7 +196,7 @@ class _YearNavigator extends ConsumerWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(width: AppTheme.spaceSm),
+            const SizedBox(width: AppSpacing.sm),
             // 右箭头（禁用当已是今年）
             IconButton(
               onPressed: offset == 0
@@ -209,7 +209,7 @@ class _YearNavigator extends ConsumerWidget {
             ),
           ],
         ),
-        const SizedBox(height: AppTheme.spaceSm),
+        const SizedBox(height: AppSpacing.sm),
 
         // ── 回到今年按钮（仅在非今年时显示） ──
         if (offset != 0)
@@ -249,25 +249,25 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.menu_book_rounded,
             label: '总学习',
             value: formatMinutesShort(totalStudy),
-            color: GrowthColors.studyPrimary,
+            color: AppColors.study,
           ),
         ),
-        const SizedBox(width: AppTheme.spaceSm),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: StatsSummaryCard(
             icon: Icons.fitness_center_rounded,
             label: '总健身',
             value: formatMinutesShort(totalFitness),
-            color: GrowthColors.fitnessPrimary,
+            color: AppColors.fitness,
           ),
         ),
-        const SizedBox(width: AppTheme.spaceSm),
+        const SizedBox(width: AppSpacing.sm),
         Expanded(
           child: StatsSummaryCard(
             icon: Icons.star_rounded,
             label: '总经验',
             value: formatExp(totalExp),
-            color: GrowthColors.expFill,
+            color: AppColors.primary,
           ),
         ),
       ],
@@ -291,7 +291,7 @@ class _MonthlyTrendChart extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -301,14 +301,14 @@ class _MonthlyTrendChart extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: AppTheme.spaceXs),
+            const SizedBox(height: AppSpacing.xs),
             Text(
               '学习 + 健身时长',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             DurationBarChart(
               valuesInMinutes: monthlyStats
                   .map((m) => m.studyMinutes + m.fitnessMinutes)
@@ -316,7 +316,7 @@ class _MonthlyTrendChart extends StatelessWidget {
               labels: monthlyStats
                   .map((m) => '${int.parse(m.month.split('-')[1])}月')
                   .toList(),
-              barColor: GrowthColors.studyPrimary,
+              barColor: AppColors.study,
               height: 200,
             ),
           ],
@@ -342,7 +342,7 @@ class _HeatmapSection extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -353,7 +353,7 @@ class _HeatmapSection extends StatelessWidget {
                   size: 18,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: AppTheme.spaceSm),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   '成长热力图',
                   style: theme.textTheme.titleMedium?.copyWith(
@@ -362,7 +362,7 @@ class _HeatmapSection extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             dailyStats.when(
               loading: () => const SizedBox(
                 height: 120,
@@ -419,7 +419,7 @@ class _ExpTrendPlaceholder extends StatelessWidget {
 
     return Card(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceMd),
+        padding: const EdgeInsets.all(AppSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -428,9 +428,9 @@ class _ExpTrendPlaceholder extends StatelessWidget {
                 Icon(
                   Icons.trending_up_rounded,
                   size: 18,
-                  color: GrowthColors.expFill,
+                  color: AppColors.primary,
                 ),
-                const SizedBox(width: AppTheme.spaceSm),
+                const SizedBox(width: AppSpacing.sm),
                 Text(
                   'EXP 趋势',
                   style: theme.textTheme.titleMedium?.copyWith(
@@ -439,7 +439,7 @@ class _ExpTrendPlaceholder extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             ExpChart(
               values: monthlyStats.map((m) => m.expGained).toList(),
               labels: monthlyStats.map((m) {
@@ -478,7 +478,7 @@ class _MonthlyBreakdown extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('月度明细', style: theme.textTheme.titleMedium),
-        const SizedBox(height: AppTheme.spaceSm),
+        const SizedBox(height: AppSpacing.sm),
         ...monthlyStats.map(
           (month) => _MonthlyBreakdownItem(
             month: month,
@@ -507,12 +507,12 @@ class _MonthlyBreakdownItem extends StatelessWidget {
     final label = '$monthNum月';
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: AppTheme.spaceSm),
+      padding: const EdgeInsets.only(bottom: AppSpacing.sm),
       child: Card(
         child: Padding(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppTheme.spaceMd,
-            vertical: AppTheme.spaceSm + 2,
+            horizontal: AppSpacing.md,
+            vertical: AppSpacing.sm + 2,
           ),
           child: Row(
             children: [
@@ -526,7 +526,7 @@ class _MonthlyBreakdownItem extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
 
               // ── 学习+健身迷你条 ──
               Expanded(
@@ -536,7 +536,7 @@ class _MonthlyBreakdownItem extends StatelessWidget {
                   maxMinutes: maxMinutes,
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
 
               // ── 活跃天数 ──
               SizedBox(
@@ -549,7 +549,7 @@ class _MonthlyBreakdownItem extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
               ),
-              const SizedBox(width: AppTheme.spaceSm),
+              const SizedBox(width: AppSpacing.sm),
 
               // ── 经验值 ──
               Column(
@@ -558,7 +558,7 @@ class _MonthlyBreakdownItem extends StatelessWidget {
                   Text(
                     '+${formatExp(month.expGained)}',
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: GrowthColors.expFill,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -596,7 +596,7 @@ class _MonthlyMiniBar extends StatelessWidget {
     final totalRatio = maxMinutes > 0 ? total / maxMinutes : 0.0;
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(AppTheme.radiusXs),
+      borderRadius: BorderRadius.circular(AppRadius.xxs),
       child: SizedBox(
         height: 8,
         child: total == 0
@@ -610,11 +610,11 @@ class _MonthlyMiniBar extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: studyMinutes.clamp(1, 99999),
-                      child: Container(color: GrowthColors.studyPrimary),
+                      child: Container(color: AppColors.study),
                     ),
                     Expanded(
                       flex: fitnessMinutes.clamp(1, 99999),
-                      child: Container(color: GrowthColors.fitnessPrimary),
+                      child: Container(color: AppColors.fitness),
                     ),
                   ],
                 ),
@@ -638,14 +638,14 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(AppTheme.spaceXl),
+        padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: AppTheme.spaceMd),
+            const SizedBox(height: AppSpacing.md),
             FilledButton(
               onPressed: onRetry,
               child: const Text('重试'),

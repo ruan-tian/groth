@@ -5,35 +5,18 @@ import '../../core/database/app_database.dart';
 import '../../features/pet/utils/pet_assets.dart';
 import 'dashboard_provider.dart';
 
-// =============================================================================
-// Pet 状态枚举
-// =============================================================================
+enum PetStateType { idle, peek, happy, sleepy }
 
-/// 宠物状态
-enum PetStateType {
-  idle, // 默认状态
-  peek, // 探头状态
-  happy, // 开心状态
-  sleepy, // 困倦状态
-}
-
-// =============================================================================
-// Pet Repository
-// =============================================================================
-
-/// 宠物仓库
 class PetRepository {
   PetRepository(this._db);
 
   final AppDatabase _db;
 
-  /// 获取宠物档案
   Future<PetProfile?> getProfile() async {
     final profiles = await (_db.select(_db.petProfiles)..limit(1)).get();
     return profiles.isNotEmpty ? profiles.first : null;
   }
 
-  /// 初始化宠物档案
   Future<void> initProfile() async {
     final existing = await getProfile();
     if (existing == null) {
@@ -51,7 +34,31 @@ class PetRepository {
     }
   }
 
-  /// 更新宠物等级
+  Future<void> updateName(String name) async {
+    final profile = await getProfile();
+    final cleanName = normalizePetName(name);
+    final now = DateTime.now().millisecondsSinceEpoch;
+    if (profile == null) {
+      await _db
+          .into(_db.petProfiles)
+          .insert(
+            PetProfilesCompanion(
+              name: Value(cleanName),
+              level: const Value(1),
+              createdAt: Value(now),
+              updatedAt: Value(now),
+            ),
+          );
+      return;
+    }
+
+    await (_db.update(
+      _db.petProfiles,
+    )..where((t) => t.id.equals(profile.id))).write(
+      PetProfilesCompanion(name: Value(cleanName), updatedAt: Value(now)),
+    );
+  }
+
   Future<void> updateLevel(int level) async {
     final profile = await getProfile();
     if (profile != null) {
@@ -66,13 +73,11 @@ class PetRepository {
     }
   }
 
-  /// 获取宠物状态
   Future<PetState?> getState() async {
     final states = await (_db.select(_db.petStates)..limit(1)).get();
     return states.isNotEmpty ? states.first : null;
   }
 
-  /// 初始化宠物状态
   Future<void> initState() async {
     final existing = await getState();
     if (existing == null) {
@@ -90,23 +95,22 @@ class PetRepository {
     }
   }
 
-  /// 更新宠物状态
   Future<void> updateState(String state) async {
     final existing = await getState();
     if (existing != null) {
+      final now = DateTime.now().millisecondsSinceEpoch;
       await (_db.update(
         _db.petStates,
       )..where((t) => t.id.equals(existing.id))).write(
         PetStatesCompanion(
           currentState: Value(state),
-          lastInteractionTime: Value(DateTime.now().millisecondsSinceEpoch),
-          updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+          lastInteractionTime: Value(now),
+          updatedAt: Value(now),
         ),
       );
     }
   }
 
-  /// 记录开心时间
   Future<void> recordHappyTime() async {
     final existing = await getState();
     if (existing != null) {
@@ -121,7 +125,6 @@ class PetRepository {
     }
   }
 
-  /// 检查是否需要显示 sleepy 状态（48小时未记录）
   Future<bool> shouldShowSleepy() async {
     final state = await getState();
     if (state == null) return false;
@@ -134,53 +137,59 @@ class PetRepository {
   }
 }
 
-// =============================================================================
-// Pet Providers
-// =============================================================================
-
-/// 宠物仓库 Provider
 final petRepositoryProvider = Provider<PetRepository>((ref) {
   return PetRepository(ref.watch(databaseProvider));
 });
 
-/// 宠物档案 Provider
 final petProfileProvider = FutureProvider<PetProfile?>((ref) async {
   final repo = ref.watch(petRepositoryProvider);
   return repo.getProfile();
 });
 
-/// 宠物状态 Provider
 final petStateProvider = FutureProvider<PetState?>((ref) async {
   final repo = ref.watch(petRepositoryProvider);
   return repo.getState();
 });
 
-/// 当前宠物状态类型 Provider
 final petStateTypeProvider = StateProvider<PetStateType>((ref) {
   return PetStateType.idle;
 });
 
-/// 宠物等级 Provider
 final petLevelProvider = FutureProvider<int>((ref) async {
-  final profile = await ref.watch(petProfileProvider.future);
-  return profile?.level ?? 1;
+  final dashboard = await ref.watch(dashboardProvider.future);
+  return dashboard.currentLevel;
 });
 
-/// 宠物名称 Provider
 final petNameProvider = FutureProvider<String>((ref) async {
   final profile = await ref.watch(petProfileProvider.future);
-  return profile?.name ?? '甜甜';
+  return normalizePetName(profile?.name);
 });
 
-/// 宠物等级名称
-String getPetLevelName(int level) {
-  if (level >= 50) return '围巾甜甜';
-  if (level >= 20) return '眼镜甜甜';
-  if (level >= 10) return '书包甜甜';
-  return '普通甜甜';
+String normalizePetName(String? name) {
+  final clean = name?.trim();
+  if (clean == null || clean.isEmpty) return '甜甜';
+  if (clean.contains('鐢滅敎')) return '甜甜';
+  return clean;
 }
 
-/// 宠物状态图片路径
+String petTitleForLevel(int level) {
+  if (level <= 5) return '萌芽';
+  if (level <= 10) return '成长';
+  if (level <= 20) return '进阶';
+  if (level <= 35) return '高手';
+  if (level <= 50) return '大师';
+  return '传说';
+}
+
+String petAppearanceForLevel(int level) {
+  if (level <= 9) return '普通甜甜';
+  if (level <= 19) return '书包甜甜';
+  if (level <= 49) return '眼镜甜甜';
+  return '围巾甜甜';
+}
+
+String getPetLevelName(int level) => petAppearanceForLevel(level);
+
 String getPetImagePath(PetStateType state) {
   switch (state) {
     case PetStateType.idle:
@@ -194,31 +203,27 @@ String getPetImagePath(PetStateType state) {
   }
 }
 
-/// 宠物提示文案
 String getPetMessage(PetStateType state) {
   switch (state) {
     case PetStateType.idle:
-      return '今天也要加油哦～';
+      return '今天也要加油哦';
     case PetStateType.peek:
-      return '好久没记录了，来写点什么吧？';
+      return '好久没记录了，来写点什么吧';
     case PetStateType.happy:
-      return '太棒了！目标完成啦～';
+      return '太棒了，目标完成啦';
     case PetStateType.sleepy:
-      return '好困...好久没见到你了...';
+      return '有点困了，我们慢慢收尾';
   }
 }
 
-/// 宠物提示气泡 Provider
 final petBubbleProvider = StateProvider<String?>((ref) {
   return null;
 });
 
-/// 宠物提示气泡显示状态
 final petBubbleVisibleProvider = StateProvider<bool>((ref) {
   return false;
 });
 
-/// 陪伴天数 Provider
 final petAgeDaysProvider = Provider<int>((ref) {
   final profile = ref.watch(petProfileProvider);
   return profile.when(
@@ -228,40 +233,24 @@ final petAgeDaysProvider = Provider<int>((ref) {
       return DateTime.now().difference(created).inDays;
     },
     loading: () => 0,
-    error: (_, __) => 0,
+    error: (_, _) => 0,
   );
 });
 
-/// 宠物称号 Provider
 final petTitleProvider = Provider<String>((ref) {
-  final profile = ref.watch(petProfileProvider);
-  return profile.when(
-    data: (p) {
-      final level = p?.level ?? 1;
-      if (level <= 5) return '萌芽';
-      if (level <= 10) return '成长';
-      if (level <= 20) return '进阶';
-      if (level <= 35) return '高手';
-      if (level <= 50) return '大师';
-      return '传说';
-    },
+  final dashboard = ref.watch(dashboardProvider);
+  return dashboard.when(
+    data: (data) => petTitleForLevel(data.currentLevel),
     loading: () => '萌芽',
-    error: (_, __) => '萌芽',
+    error: (_, _) => '萌芽',
   );
 });
 
-/// 宠物外观名称 Provider
 final petAppearanceProvider = Provider<String>((ref) {
-  final profile = ref.watch(petProfileProvider);
-  return profile.when(
-    data: (p) {
-      final level = p?.level ?? 1;
-      if (level <= 9) return '普通甜甜';
-      if (level <= 19) return '书包甜甜';
-      if (level <= 49) return '眼镜甜甜';
-      return '围巾甜甜';
-    },
+  final dashboard = ref.watch(dashboardProvider);
+  return dashboard.when(
+    data: (data) => petAppearanceForLevel(data.currentLevel),
     loading: () => '普通甜甜',
-    error: (_, __) => '普通甜甜',
+    error: (_, _) => '普通甜甜',
   );
 });

@@ -32,12 +32,11 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   int _selectedRange = 7; // 7, 30, 365
   bool _showAllRecentRecords = false;
 
-  // 薰衣草色系
-  static const _lavender = Color(0xFF9B8FE8);
-  static const _lavenderDark = Color(0xFF7B6FD6);
-  static const _lavenderLight = Color(0xFFF0EDFF);
-  static const _sleepPink = Color(0xFFFFB8C6);
-  static const _warmWhite = Color(0xFFFFF8F0);
+  // 薰衣草色系 (mapped to AppColors)
+  static const _lavender = AppColors.lavender;
+  static const _lavenderDark = AppColors.lavenderDark;
+  static const _lavenderLight = AppColors.softLavender;
+  static const _sleepPink = AppColors.sleepPink;
 
   @override
   void initState() {
@@ -179,85 +178,41 @@ class _SleepPageState extends ConsumerState<SleepPage> {
         if (record == null) {
           return _buildNoRecordCard();
         }
-
-        // 计算前一晚数据用于对比
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '昨晚睡眠概况',
-              style: AppTextStyles.sectionTitle,
+        final progress = (record.durationMinutes / (_sleepGoalHours * 60)).clamp(0.0, 1.0);
+        return ModuleHeroCard(
+          icon: Icons.bedtime_rounded,
+          title: '昨晚睡眠概况',
+          primaryValue: _formatDuration(record.durationMinutes),
+          primaryLabel: '昨晚睡眠时长',
+          color: AppColors.sleep,
+          progress: progress,
+          targetLabel: '目标 ${_sleepGoalHours}小时',
+          metrics: [
+            ModuleMetricChip(
+              icon: Icons.nightlight_round,
+              value: record.sleepTime,
+              label: '入睡',
             ),
-            const SizedBox(height: AppSpacing.md),
-            // 2x2 网格
-            Row(
-              children: [
-                Expanded(
-                  child: _MetricCard(
-                    icon: Icons.bedtime_rounded,
-                    label: '睡眠时长',
-                    value: _formatDuration(record.durationMinutes),
-                    subtitle: '目标 ${_sleepGoalHours}小时',
-                    progress: record.durationMinutes / (_sleepGoalHours * 60),
-                    color: _lavender,
-                    backgroundColor: _lavenderLight,
-                    onTap: () => _showGoalEditSheet(context),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _MetricCard(
-                    icon: Icons.nightlight_round,
-                    label: '入睡时间',
-                    value: record.sleepTime,
-                    subtitle: _getSleepTimeChange(record),
-                    color: const Color(0xFF7B6FD6),
-                    backgroundColor: _lavenderLight.withValues(alpha: 0.6),
-                    onTap: () {},
-                  ),
-                ),
-              ],
+            ModuleMetricChip(
+              icon: Icons.wb_sunny_rounded,
+              value: record.wakeTime,
+              label: '起床',
             ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _MetricCard(
-                    icon: Icons.wb_sunny_rounded,
-                    label: '起床时间',
-                    value: record.wakeTime,
-                    subtitle: _getWakeTimeChange(record),
-                    color: const Color(0xFFFFB347),
-                    backgroundColor: _warmWhite,
-                    onTap: () {},
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _MetricCard(
-                    icon: Icons.star_rounded,
-                    label: '睡眠评分',
-                    value: '${record.qualityLevel}/5',
-                    subtitle: _getQualityLabel(record.qualityLevel),
-                    color: _getQualityColor(record.qualityLevel),
-                    backgroundColor: _getQualityColor(record.qualityLevel).withValues(alpha: 0.1),
-                    onTap: () {},
-                  ),
-                ),
-              ],
+            ModuleMetricChip(
+              icon: Icons.star_rounded,
+              value: '${record.qualityLevel}/5',
+              label: _getQualityLabel(record.qualityLevel),
             ),
           ],
+          onTargetTap: () => _showGoalEditSheet(context),
         );
       },
       loading: () => Container(
         height: 200,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: AppColors.border)),
         child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 
@@ -265,7 +220,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: _lavender.withValues(alpha: 0.2)),
       ),
@@ -290,21 +245,6 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     );
   }
 
-  String _getSleepTimeChange(SleepRecord record) {
-    // 简化：显示入睡用时
-    if (record.fallAsleepMinutes > 0) {
-      return '入睡用时 ${record.fallAsleepMinutes}分钟';
-    }
-    return '入睡用时 --';
-  }
-
-  String _getWakeTimeChange(SleepRecord record) {
-    if (record.wakeCount > 0) {
-      return '夜间醒来 ${record.wakeCount}次';
-    }
-    return '整夜安睡';
-  }
-
   // ─── 记录睡眠入口 ────────────────────────────────────────────────────────
 
   Widget _buildRecordSleepEntry(BuildContext context) {
@@ -313,7 +253,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: AppColors.card,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: _lavender.withValues(alpha: 0.2)),
           boxShadow: [
@@ -431,7 +371,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                   child: Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: AppColors.card,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(color: _lavender.withValues(alpha: 0.15)),
                     ),
@@ -583,7 +523,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           label,
           style: const TextStyle(
             fontSize: 11,
-            color: Color(0xFF86909C),
+            color: AppColors.textTertiary,
           ),
         ),
       ],
@@ -597,7 +537,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           label,
           style: const TextStyle(
             fontSize: 11,
-            color: Color(0xFF86909C),
+            color: AppColors.textTertiary,
           ),
         ),
         const SizedBox(height: 4),
@@ -731,97 +671,45 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   // ─── 最近记录 ────────────────────────────────────────────────────────────
 
   Widget _buildRecentRecords(AsyncValue<List<SleepRecord>> recentRecords) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionHeader(
+    return recentRecords.when(
+      data: (records) {
+        if (records.isEmpty) {
+          return _buildEmptyState();
+        }
+        final displayRecords = _showAllRecentRecords ? records : records.take(5).toList();
+        return ModuleRecordsCard(
           title: '最近记录',
           action: '查看全部',
           onActionTap: () => _navigateToHistory(context),
-        ),
-        recentRecords.when(
-          data: (records) {
-            if (records.isEmpty) {
-              return _buildEmptyState();
-            }
-            final displayRecords = _showAllRecentRecords
-                ? records
-                : records.take(5).toList();
-            return Column(
-              children: [
-                ...displayRecords.map((r) => SwipeDeleteTile(
-                  key: ValueKey('sleep_${r.id}'),
-                  onConfirmDelete: () async {
-                    _deleteRecord(context, ref, r);
-                    return false;
-                  },
-                  onDismissed: () {},
-                  child: RecentRecordTile(
-                    icon: Icons.nightlight_round,
-                    iconColor: Colors.white,
-                    iconBackgroundColor: const Color(0xFF9B8FE8),
-                    title: '${r.sleepDate} 睡眠记录',
-                    subtitle:
-                        '${r.sleepTime} - ${r.wakeTime} · ${_formatDuration(r.durationMinutes)}',
-                    primaryBadge: _getQualityLabel(r.qualityLevel),
-                    primaryBadgeColor: const Color(0xFF9B8FE8),
-                    secondaryBadge:
-                        '${r.durationMinutes ~/ 60}h${r.durationMinutes % 60}m',
-                    secondaryBadgeColor: AppColors.textSecondary,
-                    onTap: () => _showRecordDetail(context, r),
-                  ),
-                )),
-                if (records.length > 5 && !_showAllRecentRecords)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: GestureDetector(
-                      onTap: () =>
-                          setState(() => _showAllRecentRecords = true),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '查看更多',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _lavender,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Icon(Icons.expand_more, size: 18, color: _lavender),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (_showAllRecentRecords && records.length > 5)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: GestureDetector(
-                      onTap: () =>
-                          setState(() => _showAllRecentRecords = false),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '收起',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: _lavender,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                          Icon(Icons.expand_less, size: 18, color: _lavender),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('加载失败: $e')),
-        ),
-      ],
+          color: AppColors.sleep,
+          recordCount: records.length,
+          maxVisible: 5,
+          isExpanded: _showAllRecentRecords,
+          onToggleExpand: () => setState(() => _showAllRecentRecords = !_showAllRecentRecords),
+          children: displayRecords.map((r) => SwipeDeleteTile(
+            key: ValueKey('sleep_${r.id}'),
+            onConfirmDelete: () async {
+              _deleteRecord(context, ref, r);
+              return false;
+            },
+            onDismissed: () {},
+            child: RecentRecordTile(
+              icon: Icons.nightlight_round,
+              iconColor: Colors.white,
+              iconBackgroundColor: AppColors.sleep,
+              title: '${r.sleepDate} 睡眠记录',
+              subtitle: '${r.sleepTime} - ${r.wakeTime} · ${_formatDuration(r.durationMinutes)}',
+              primaryBadge: _getQualityLabel(r.qualityLevel),
+              primaryBadgeColor: AppColors.sleep,
+              secondaryBadge: '${r.durationMinutes ~/ 60}h${r.durationMinutes % 60}m',
+              secondaryBadgeColor: AppColors.textSecondary,
+              onTap: () => _showRecordDetail(context, r),
+            ),
+          )).toList(),
+        );
+      },
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('加载失败: $e')),
     );
   }
 
@@ -829,7 +717,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Center(
@@ -930,13 +818,13 @@ class _SleepPageState extends ConsumerState<SleepPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('睡眠质量', style: TextStyle(fontSize: 13, color: Color(0xFF86909C))),
+                  const Text('睡眠质量', style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
                   const SizedBox(height: 4),
                   Row(
                     children: [
                       Text(
                         '${record.qualityLevel}/5',
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF1F2329)),
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                       ),
                       const SizedBox(width: 8),
                       Text(
@@ -966,11 +854,11 @@ class _SleepPageState extends ConsumerState<SleepPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('醒后精力', style: TextStyle(fontSize: 13, color: Color(0xFF86909C))),
+                  const Text('醒后精力', style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
                   const SizedBox(height: 4),
                   Text(
                     '${record.energyLevel}/5',
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: Color(0xFF1F2329)),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, color: AppColors.textPrimary),
                   ),
                 ],
               ),
@@ -998,11 +886,11 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('梦境', style: TextStyle(fontSize: 13, color: Color(0xFF86909C))),
+                    const Text('梦境', style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
                     const SizedBox(height: 4),
                     Text(
                       record.dreamNote!,
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF1F2329)),
+                      style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
@@ -1025,17 +913,17 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(Icons.note_outlined, color: Color(0xFF86909C), size: 20),
+              const Icon(Icons.note_outlined, color: AppColors.textTertiary, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('备注', style: TextStyle(fontSize: 13, color: Color(0xFF86909C))),
+                    const Text('备注', style: TextStyle(fontSize: 13, color: AppColors.textTertiary)),
                     const SizedBox(height: 4),
                     Text(
                       record.note!,
-                      style: const TextStyle(fontSize: 14, color: Color(0xFF1F2329)),
+                      style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
                     ),
                   ],
                 ),
@@ -1153,97 +1041,6 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return AppColors.danger;
   }
 
-}
-
-// ─── 指标卡片 ──────────────────────────────────────────────────────────────
-
-class _MetricCard extends StatelessWidget {
-  const _MetricCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.subtitle,
-    required this.color,
-    required this.backgroundColor,
-    required this.onTap,
-    this.progress,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final String subtitle;
-  final Color color;
-  final Color backgroundColor;
-  final VoidCallback onTap;
-  final double? progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: backgroundColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, size: 18, color: color),
-                ),
-                const Spacer(),
-                if (onTap != () {})
-                  Icon(Icons.chevron_right, size: 16, color: AppColors.textTertiary),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Text(label, style: AppTextStyles.caption),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: 11,
-                color: AppColors.textTertiary,
-              ),
-            ),
-            if (progress != null) ...[
-              const SizedBox(height: 8),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(3),
-                child: LinearProgressIndicator(
-                  value: progress!.clamp(0.0, 1.0),
-                  minHeight: 4,
-                  backgroundColor: color.withValues(alpha: 0.12),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 // ─── 睡眠组合图表（fl_chart 柱状图+折线图）──────────────────────────────────
