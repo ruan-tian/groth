@@ -341,6 +341,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
+          gradient: JournalColors.heroGradient,
           border: Border.all(color: JournalColors.pinkBorder, width: 1),
           boxShadow: [
             BoxShadow(
@@ -772,6 +773,7 @@ class _TiantianCompanionCardState
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
+          gradient: JournalColors.companionGradient,
           border: Border.all(color: JournalColors.pinkBorder, width: 1),
           boxShadow: [
             BoxShadow(
@@ -795,37 +797,37 @@ class _TiantianCompanionCardState
                   bannerPath,
                   width: double.infinity,
                   fit: BoxFit.fitWidth,
-                  errorBuilder: (_, __, ___) => Container(
-                    height: 180,
-                    color: JournalColors.companionGradient.colors.first,
-                  ),
+                  errorBuilder: (_, __, ___) => const SizedBox(height: 180),
                 ),
-                // 第2层：文字（右侧留白区）
+                // 第2层：文字（右侧2/3区域）
                 Positioned(
-                  right: 20,
-                  bottom: 24,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '甜甜',
-                        style: TextStyle(
-                          fontFamily: JournalColors.fontFamily,
-                          fontSize: 20,
-                          color: JournalColors.textDark,
+                  right: 24,
+                  top: 0,
+                  bottom: 0,
+                  child: Center(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          '甜甜',
+                          style: TextStyle(
+                            fontFamily: JournalColors.fontFamily,
+                            fontSize: 20,
+                            color: JournalColors.textDark,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '记录一下今天的成长吧！',
-                        style: TextStyle(
-                          fontFamily: JournalColors.fontFamily,
-                          fontSize: 12,
-                          color: JournalColors.textSecondary,
+                        const SizedBox(height: 4),
+                        Text(
+                          '记录一下今天的成长吧！',
+                          style: TextStyle(
+                            fontFamily: JournalColors.fontFamily,
+                            fontSize: 12,
+                            color: JournalColors.textSecondary,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ],
