@@ -6,7 +6,6 @@ import '../../../core/database/app_database.dart';
 import '../../../shared/providers/diet_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
-import '../../../shared/widgets/common/record_detail_sheet.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
 
 /// 饮食记录排序方式
@@ -20,8 +19,7 @@ class AllDietRecordsPage extends ConsumerStatefulWidget {
   const AllDietRecordsPage({super.key});
 
   @override
-  ConsumerState<AllDietRecordsPage> createState() =>
-      _AllDietRecordsPageState();
+  ConsumerState<AllDietRecordsPage> createState() => _AllDietRecordsPageState();
 }
 
 class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
@@ -76,9 +74,8 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
           }
           return _buildRecordList(records);
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: _accent),
-        ),
+        loading: () =>
+            const Center(child: CircularProgressIndicator(color: _accent)),
         error: (e, _) => Center(
           child: Text(
             '加载失败: $e',
@@ -141,8 +138,8 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
     final totalCount = sorted.length;
     final avgScore = totalCount > 0
         ? (sorted.map((r) => r.healthScore).reduce((a, b) => a + b) /
-                totalCount)
-            .toStringAsFixed(1)
+                  totalCount)
+              .toStringAsFixed(1)
         : '0.0';
     final todayCount = sorted.where((r) {
       final date = DateTime.parse(r.mealDate);
@@ -234,11 +231,7 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
             value: '$totalCount',
             icon: Icons.restaurant_rounded,
           ),
-          _StatItem(
-            label: '平均评分',
-            value: avgScore,
-            icon: Icons.star_rounded,
-          ),
+          _StatItem(label: '平均评分', value: avgScore, icon: Icons.star_rounded),
           _StatItem(
             label: '今日记录',
             value: '$todayCount',
@@ -407,7 +400,10 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
               children: [
                 const Text(
                   '食物描述',
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -500,32 +496,30 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(
-              foregroundColor: AppColors.danger,
-            ),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
             child: const Text('删除'),
           ),
         ],
       ),
     );
 
-    if (confirmed == true && context.mounted) {
-      try {
-        final repo = ref.read(dietRepositoryProvider);
-        await repo.deleteDietRecord(record.id);
-        ref.invalidate(recentDietRecordsProvider(_loadLimit));
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
-        }
-      }
+    if (confirmed != true || !mounted) return;
+
+    try {
+      final repo = ref.read(dietRepositoryProvider);
+      await repo.deleteDietRecord(record.id);
+      if (!mounted) return;
+
+      ref.invalidate(recentDietRecordsProvider(_loadLimit));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('已删除')));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
     }
   }
 
@@ -535,8 +529,15 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
 
   String _formatDate(DietRecord record) {
     final date = DateTime.parse(record.mealDate);
-    final weekday =
-        ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][date.weekday - 1];
+    final weekday = [
+      '周一',
+      '周二',
+      '周三',
+      '周四',
+      '周五',
+      '周六',
+      '周日',
+    ][date.weekday - 1];
     return '${date.year}年${date.month}月${date.day}日 $weekday';
   }
 
@@ -654,8 +655,15 @@ class _DietRecordTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = DateTime.parse(record.mealDate);
-    final weekday =
-        ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][date.weekday - 1];
+    final weekday = [
+      '周一',
+      '周二',
+      '周三',
+      '周四',
+      '周五',
+      '周六',
+      '周日',
+    ][date.weekday - 1];
     final dateStr = '${date.month}月${date.day}日 $weekday';
 
     return GestureDetector(
@@ -781,12 +789,8 @@ class _DietRecordTile extends StatelessWidget {
 // =============================================================================
 
 class _ListItem {
-  _ListItem.header(this.headerLabel)
-      : record = null,
-        isHeader = true;
-  _ListItem.record(this.record)
-      : headerLabel = null,
-        isHeader = false;
+  _ListItem.header(this.headerLabel) : record = null, isHeader = true;
+  _ListItem.record(this.record) : headerLabel = null, isHeader = false;
 
   final String? headerLabel;
   final DietRecord? record;

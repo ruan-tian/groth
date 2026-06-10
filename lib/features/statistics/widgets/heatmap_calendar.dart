@@ -85,40 +85,42 @@ class HeatmapCalendar extends StatelessWidget {
     // 构建日期网格（按周排列，每周 7 天）
     final weeks = _buildWeeks(startDate, endDate);
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // ── 月份标签 ──
-        _MonthLabels(
-          weeks: weeks,
-          cellSize: cellSize,
-          cellSpacing: cellSpacing,
-        ),
-
-        // ── 热力图网格 ──
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 星期标签列
-              _WeekdayLabels(cellSize: cellSize, cellSpacing: cellSpacing),
-              const SizedBox(width: 4),
-              // 网格
-              ...weeks.map((week) => _buildWeekColumn(week)),
-            ],
+    return RepaintBoundary(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── 月份标签 ──
+          _MonthLabels(
+            weeks: weeks,
+            cellSize: cellSize,
+            cellSpacing: cellSpacing,
           ),
-        ),
 
-        // ── 图例 ──
-        if (showLegend) ...[
-          const SizedBox(height: AppSpacing.md),
-          _HeatmapLegend(
-            baseColor: baseColor ?? _defaultBase,
-            maxColor: maxColor ?? _defaultMax,
+          // ── 热力图网格 ──
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 星期标签列
+                _WeekdayLabels(cellSize: cellSize, cellSpacing: cellSpacing),
+                const SizedBox(width: 4),
+                // 网格
+                ...weeks.map((week) => _buildWeekColumn(week)),
+              ],
+            ),
           ),
+
+          // ── 图例 ──
+          if (showLegend) ...[
+            const SizedBox(height: AppSpacing.md),
+            _HeatmapLegend(
+              baseColor: baseColor ?? _defaultBase,
+              maxColor: maxColor ?? _defaultMax,
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -140,7 +142,8 @@ class HeatmapCalendar extends StatelessWidget {
         final intensity = (data[normalized] ?? 0).clamp(0, 4);
         final color = _colorForIntensity(intensity);
 
-        final isToday = date.year == DateTime.now().year &&
+        final isToday =
+            date.year == DateTime.now().year &&
             date.month == DateTime.now().month &&
             date.day == DateTime.now().day;
 
@@ -155,13 +158,17 @@ class HeatmapCalendar extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(AppRadius.xxs),
-                border: isToday ? Border.all(color: Colors.white, width: 2) : null,
-                boxShadow: isToday ? [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.3),
-                    blurRadius: 4,
-                  ),
-                ] : null,
+                border: isToday
+                    ? Border.all(color: Colors.white, width: 2)
+                    : null,
+                boxShadow: isToday
+                    ? [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.3),
+                          blurRadius: 4,
+                        ),
+                      ]
+                    : null,
               ),
             ),
           ),
@@ -283,8 +290,19 @@ class _MonthLabels extends StatelessWidget {
       // 只在每月第一周显示月份标签
       if (firstDate.day <= 7) {
         final monthNames = [
-          '', '1月', '2月', '3月', '4月', '5月', '6月',
-          '7月', '8月', '9月', '10月', '11月', '12月',
+          '',
+          '1月',
+          '2月',
+          '3月',
+          '4月',
+          '5月',
+          '6月',
+          '7月',
+          '8月',
+          '9月',
+          '10月',
+          '11月',
+          '12月',
         ];
         labels.add(
           Positioned(
@@ -301,10 +319,7 @@ class _MonthLabels extends StatelessWidget {
       }
     }
 
-    return SizedBox(
-      height: 16,
-      child: Stack(children: labels),
-    );
+    return SizedBox(height: 16, child: Stack(children: labels));
   }
 }
 
@@ -313,10 +328,7 @@ class _MonthLabels extends StatelessWidget {
 // =============================================================================
 
 class _WeekdayLabels extends StatelessWidget {
-  const _WeekdayLabels({
-    required this.cellSize,
-    required this.cellSpacing,
-  });
+  const _WeekdayLabels({required this.cellSize, required this.cellSpacing});
 
   final double cellSize;
   final double cellSpacing;
@@ -360,10 +372,7 @@ class _WeekdayLabels extends StatelessWidget {
 // =============================================================================
 
 class _HeatmapLegend extends StatelessWidget {
-  const _HeatmapLegend({
-    required this.baseColor,
-    required this.maxColor,
-  });
+  const _HeatmapLegend({required this.baseColor, required this.maxColor});
 
   final Color baseColor;
   final Color maxColor;

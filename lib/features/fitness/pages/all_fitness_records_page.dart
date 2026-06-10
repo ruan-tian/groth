@@ -21,14 +21,12 @@ class AllFitnessRecordsPage extends ConsumerStatefulWidget {
       _AllFitnessRecordsPageState();
 }
 
-class _AllFitnessRecordsPageState
-    extends ConsumerState<AllFitnessRecordsPage> {
+class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
   SortOption _sortOption = SortOption.newest;
 
   // ── 主题色常量 ──
   static const _fitness = AppColors.fitness;
   static const _fitnessFaded = Color(0x1AFF8A3D); // 10% alpha
-  static const _fitnessBorder = Color(0x26FF8A3D); // 15% alpha
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +91,10 @@ class _AllFitnessRecordsPageState
   Widget _buildContent(List<FitnessRecord> records) {
     // 计算统计
     final totalCount = records.length;
-    final totalMinutes = records.fold<int>(0, (sum, r) => sum + r.durationMinutes);
+    final totalMinutes = records.fold<int>(
+      0,
+      (sum, r) => sum + r.durationMinutes,
+    );
     final totalHours = (totalMinutes / 60).toStringAsFixed(1);
     final totalExp = records.fold<int>(0, (sum, r) => sum + r.expGained);
 
@@ -201,11 +202,7 @@ class _AllFitnessRecordsPageState
             height: 40,
             color: Colors.white.withValues(alpha: 0.3),
           ),
-          _StatItem(
-            icon: Icons.star_outline,
-            label: '总经验',
-            value: '$totalExp',
-          ),
+          _StatItem(icon: Icons.star_outline, label: '总经验', value: '$totalExp'),
         ],
       ),
     );
@@ -227,11 +224,7 @@ class _AllFitnessRecordsPageState
               color: _fitnessFaded,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
-              Icons.fitness_center,
-              size: 40,
-              color: _fitness,
-            ),
+            child: const Icon(Icons.fitness_center, size: 40, color: _fitness),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text('暂无训练记录', style: AppTextStyles.cardTitle),
@@ -279,15 +272,15 @@ class _AllFitnessRecordsPageState
         ref.invalidate(todayFitnessMinutesProvider);
         ref.invalidate(weeklyFitnessCountProvider);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已删除')));
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
         }
       }
     }
@@ -343,10 +336,7 @@ class _StatItem extends StatelessWidget {
 // =============================================================================
 
 class _RecordCard extends StatelessWidget {
-  const _RecordCard({
-    required this.record,
-    required this.onTap,
-  });
+  const _RecordCard({required this.record, required this.onTap});
 
   final FitnessRecord record;
   final VoidCallback onTap;
@@ -459,12 +449,8 @@ class _RecordCard extends StatelessWidget {
 // =============================================================================
 
 class _ListItem {
-  _ListItem.header(this.headerLabel)
-      : record = null,
-        isHeader = true;
-  _ListItem.record(this.record)
-      : headerLabel = null,
-        isHeader = false;
+  _ListItem.header(this.headerLabel) : record = null, isHeader = true;
+  _ListItem.record(this.record) : headerLabel = null, isHeader = false;
 
   final String? headerLabel;
   final FitnessRecord? record;

@@ -3,7 +3,8 @@ import '../widgets/sort_button.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/services/statistics_service.dart';
-import 'dashboard_provider.dart';
+import 'repository_providers.dart';
+import 'service_providers.dart';
 
 // =============================================================================
 // 学习记录 Provider
@@ -12,11 +13,12 @@ import 'dashboard_provider.dart';
 /// 按日期获取学习记录（FutureProvider.family）
 ///
 /// 用法：`ref.watch(studyRecordsProvider(date))`
-final studyRecordsProvider =
-    FutureProvider.family<List<StudyRecord>, DateTime>((ref, date) async {
-  final repo = ref.watch(studyRepositoryProvider);
-  return repo.getStudyRecordsByDate(date);
-});
+final studyRecordsProvider = FutureProvider.family<List<StudyRecord>, DateTime>(
+  (ref, date) async {
+    final repo = ref.watch(studyRepositoryProvider);
+    return repo.getStudyRecordsByDate(date);
+  },
+);
 
 /// 今日学习记录
 final todayStudyRecordsProvider = FutureProvider<List<StudyRecord>>((ref) {
@@ -58,14 +60,17 @@ final monthlyDailyStudyProvider = FutureProvider<List<DailyStats>>((ref) {
 });
 
 /// 最近 12 个月月度统计
-final yearlyMonthlyStudyProvider = FutureProvider<List<MonthlyAggregate>>((ref) {
+final yearlyMonthlyStudyProvider = FutureProvider<List<MonthlyAggregate>>((
+  ref,
+) {
   final statsService = ref.watch(statisticsServiceProvider);
   return statsService.getYearlyStats();
 });
 
 /// 按科目统计学习时长分布（最近 30 天）
-final subjectDistributionProvider =
-    FutureProvider<Map<String, int>>((ref) async {
+final subjectDistributionProvider = FutureProvider<Map<String, int>>((
+  ref,
+) async {
   final repo = ref.watch(studyRepositoryProvider);
   final now = DateTime.now();
   final monthAgo = now.subtract(const Duration(days: 30));
@@ -87,14 +92,15 @@ final subjectDistributionProvider =
 final studySortProvider = StateProvider<SortOption>((ref) => SortOption.newest);
 
 /// 按排序方式获取最近学习记录
-final sortedRecentStudyRecordsProvider =
-    FutureProvider<List<StudyRecord>>((ref) async {
+final sortedRecentStudyRecordsProvider = FutureProvider<List<StudyRecord>>((
+  ref,
+) async {
   final repo = ref.watch(studyRepositoryProvider);
   final sort = ref.watch(studySortProvider);
-  
+
   // 获取最近20条记录（足够排序）
   final records = await repo.getRecentStudyRecords(limit: 20);
-  
+
   switch (sort) {
     case SortOption.newest:
       records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -106,6 +112,6 @@ final sortedRecentStudyRecordsProvider =
       records.sort((a, b) => b.expGained.compareTo(a.expGained));
       break;
   }
-  
+
   return records;
 });

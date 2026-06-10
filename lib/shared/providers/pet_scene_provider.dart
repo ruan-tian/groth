@@ -2,8 +2,8 @@
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/pet/models/pet_scene_model.dart';
-import '../../features/pet/utils/pet_scene_resolver.dart';
+import '../../core/domain/pet/pet_scene_model.dart';
+import '../../core/utils/pet_scene_resolver.dart';
 
 // =============================================================================
 // 宠物场景状态 Provider

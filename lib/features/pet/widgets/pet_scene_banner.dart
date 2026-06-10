@@ -5,9 +5,9 @@ import '../../../shared/providers/pet_ai_result_provider.dart';
 import '../../../shared/providers/pet_orchestrator_provider.dart';
 import '../../../shared/providers/pet_projection_provider.dart';
 import '../../../shared/providers/pet_scene_provider.dart';
-import '../models/pet_ai_result.dart';
-import '../models/pet_scene_model.dart';
-import '../utils/pet_assets.dart';
+import '../../../core/domain/pet/pet_ai_result.dart';
+import '../../../core/domain/pet/pet_scene_model.dart';
+import '../../../core/constants/pet_assets.dart';
 
 /// 宠物场景画框组件
 ///
@@ -82,7 +82,8 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
 
   @override
   Widget build(BuildContext context) {
-    final intent = ref.watch(currentPetIntentProvider);
+    final runtimeState = ref.watch(petOrchestratorProvider);
+    final intent = runtimeState.activeIntent;
     final projection = ref.watch(modulePetViewProvider(widget.module.name));
     final latestAnalysis = ref.watch(latestPetAnalysisProvider(widget.module.name));
 
@@ -91,14 +92,25 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
     final bgColorDeep = _parseColor(widget.module.primaryColorHex);
     final primaryColor = _parseColor(widget.module.primaryColorHex);
 
-    final imagePath = (intent?.module == null || intent?.module == widget.module.name)
-        ? (intent?.imagePath ?? projection?.imagePath ?? _getDefaultImagePath(widget.module.name))
-        : _getDefaultImagePath(widget.module.name);
-    final defaultMessage = intent?.displayMessage ?? projection?.bubbleText ?? _getDefaultMessages(widget.module.name).first;
+    final visibleIntent =
+        (intent?.module == null || intent?.module == widget.module.name)
+            ? intent
+            : null;
+    final imagePath =
+        visibleIntent?.imagePath ??
+        projection?.imagePath ??
+        _getDefaultImagePath(widget.module.name);
+    final defaultMessage =
+        visibleIntent?.displayMessage ??
+        projection?.bubbleText ??
+        _getDefaultMessages(widget.module.name).first;
     // Prefer latest analysis petMessage over default
     final message = latestAnalysis.valueOrNull?.petMessage ?? defaultMessage;
 
-    return GestureDetector(
+    return Semantics(
+      button: widget.onTap != null,
+      label: '宠物场景',
+      child: GestureDetector(
       onTap: widget.onTap,
       child: Container(
         height: widget.height,
@@ -121,6 +133,7 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
           ],
         ),
         child: _buildContent(imagePath, message, bgColorDeep, primaryColor, latestAnalysis.valueOrNull),
+      ),
       ),
     );
   }
@@ -355,7 +368,10 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
             sceneState.showReport &&
             sceneState.reportTitle != null) ...[
           const SizedBox(height: 4),
-          GestureDetector(
+          Semantics(
+            button: true,
+            label: '展开AI分析报告',
+            child: GestureDetector(
             onTap: () {
               setState(() => _isReportExpanded = !_isReportExpanded);
               widget.onTap?.call();
@@ -391,6 +407,7 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
                   ],
                 ),
               ),
+            ),
             ),
           ),
         ],
@@ -431,42 +448,21 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
   }
 
   String _getDefaultImagePath(String module) {
-    switch (module) {
-      case 'study':
-        return PetAssets.moduleDefaultStudy;
-      case 'fitness':
-        return PetAssets.moduleDefaultFitness;
-      case 'journal':
-        return PetAssets.moduleDefaultJournal;
-      case 'diet':
-        return PetAssets.moduleDefaultDiet;
-      case 'sleep':
-        return PetAssets.moduleDefaultSleep;
-      default:
-        return PetAssets.commonFallback;
-    }
+    return PetModuleDefinitions.maybeByName(module)?.defaultImagePath ??
+        PetAssets.commonFallback;
   }
 
   List<String> _getDefaultMessages(String module) {
-    switch (module) {
-      case 'study':
-        return ['今天先开始一点点吧～', '甜甜陪你一起学～'];
-      case 'fitness':
-        return ['动一动身体会更棒哦～', '甜甜陪你一起练～'];
-      case 'journal':
-        return ['记录一下今天的成长吧！', '甜甜安静陪你写～'];
-      case 'diet':
-        return ['记得记录今天的饮食哦～', '好好吃饭很重要～'];
-      case 'sleep':
-        return ['好好休息很重要呢～', '晚安，好梦～'];
-      default:
-        return ['甜甜在这里陪你～'];
-    }
+    return PetModuleDefinitions.maybeByName(module)?.ambientMessages ??
+        const ['甜甜在这里陪你～'];
   }
 
   /// 构建标签
   Widget _buildChip(String text, Color color, VoidCallback? onTap) {
-    return GestureDetector(
+    return Semantics(
+      button: onTap != null,
+      label: text,
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -485,6 +481,7 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
+      ),
       ),
     );
   }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
 import '../../shared/providers/dashboard_provider.dart';
+import '../music/widgets/dashboard_music_float.dart';
 import 'widgets/dashboard_pet_widget.dart';
 import 'widgets/dashboard_weather_badge.dart';
 import 'widgets/quick_action_sheet.dart';
@@ -11,7 +12,7 @@ import 'widgets/today_overview.dart';
 import 'widgets/today_tasks.dart';
 
 // =============================================================================
-// Dashboard Page (重构版 - 褐色渐变风格)
+// Dashboard Page
 // =============================================================================
 
 class DashboardPage extends ConsumerWidget {
@@ -22,91 +23,85 @@ class DashboardPage extends ConsumerWidget {
     final dashboardAsync = ref.watch(dashboardProvider);
 
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF5E6D0), // 淡褐色
-              Color(0xFFFDF5E1), // 淡黄色
-              Color(0xFFFFFDF8), // 接近白色
-              Colors.white,      // 白色
-            ],
-            stops: [0.0, 0.3, 0.6, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // ── 顶部：Growth OS + 问候语 + 宠物 ──
-              _buildHeader(context),
-
-              // ── 宠物组件（甜甜 + 气泡）──
-              const DashboardPetWidget(),
-
-              // ── 主体内容 ──
-              Expanded(
-                child: dashboardAsync.when(
-                  loading: () => const _LoadingBody(),
-                  error: (error, _) => _ErrorBody(
-                    error: error,
-                    onRetry: () => ref.invalidate(dashboardProvider),
-                  ),
-                  data: (data) => RefreshIndicator(
-                    onRefresh: () async => ref.invalidate(dashboardProvider),
-                    child: SingleChildScrollView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 28),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // ── 日期显示 ──
-                          _buildDateSection(),
-
-                          const SizedBox(height: 20),
-
-                          // ── 4个今日概况（2x2网格） ──
-                          _buildTodayOverview(ref, data),
-
-                          const SizedBox(height: 24),
-
-                          // ── 今日任务 ──
-                          const TodayTasks(),
-
-                          const SizedBox(height: 80), // 为FAB留空间
-                        ],
+      body: Stack(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Color(0xFFFFFBF5),
+                  Color(0xFFFFF7FA),
+                  Color(0xFFF8FAF0),
+                  Color(0xFFFFFFFF),
+                ],
+                stops: [0.0, 0.34, 0.72, 1.0],
+              ),
+            ),
+            child: SafeArea(
+              child: Column(
+                children: [
+                  _buildHeader(context),
+                  Expanded(
+                    child: dashboardAsync.when(
+                      loading: () => const _LoadingBody(),
+                      error: (error, _) => _ErrorBody(
+                        error: error,
+                        onRetry: () => ref.invalidate(dashboardProvider),
+                      ),
+                      data: (data) => RefreshIndicator(
+                        onRefresh: () async =>
+                            ref.invalidate(dashboardProvider),
+                        child: SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(20, 12, 20, 28),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DashboardPetWidget(data: data),
+                              const SizedBox(height: 22),
+                              _buildTodayOverview(ref, data),
+                              const SizedBox(height: 24),
+                              const TodayTasks(),
+                              const SizedBox(height: 80), // 为FAB留空间
+                              const SizedBox(height: 80),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          const DashboardMusicFloat(),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showQuickActions(context),
-        backgroundColor: AppColors.primary,
+        backgroundColor: _DashboardColors.primary,
         foregroundColor: Colors.white,
+        elevation: 8,
         child: const Icon(Icons.add_rounded, size: 28),
       ),
     );
   }
 
   // ---------------------------------------------------------------------------
-  // 顶部：Growth OS 标题 + 问候语 + 渐变线 + AI萌宠
+  // 顶部：标题、问候、日期和天气入口
   // ---------------------------------------------------------------------------
 
   Widget _buildHeader(BuildContext context) {
     final now = DateTime.now();
+    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Left side: title + greeting
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,58 +109,32 @@ class DashboardPage extends ConsumerWidget {
                 Text(
                   'Growth OS',
                   style: AppTextStyles.pageTitle.copyWith(
-                    fontSize: 24,
-                    color: const Color(0xFF5C3D2E),
+                    fontSize: 28,
+                    fontWeight: FontWeight.w900,
+                    color: _DashboardColors.ink,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  _greeting(now.hour),
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF8B6F5E),
-                  ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 6,
+                  children: [
+                    _HeaderChip(
+                      icon: Icons.waving_hand_rounded,
+                      label: _greeting(now.hour),
+                    ),
+                    _HeaderChip(
+                      icon: Icons.calendar_today_rounded,
+                      label:
+                          '${now.month}月${now.day}日 ${weekdays[now.weekday - 1]}',
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
-
-          // Right side: weather badge
           const DashboardWeatherBadge(),
         ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 日期显示
-  // ---------------------------------------------------------------------------
-
-  Widget _buildDateSection() {
-    final now = DateTime.now();
-    const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF1DF),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(
-            color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-            width: 1,
-          ),
-        ),
-        child: Text(
-          '${now.month}月${now.day}日 ${weekdays[now.weekday - 1]}',
-          style: const TextStyle(
-            color: Color(0xFF88681A),
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
       ),
     );
   }
@@ -194,6 +163,48 @@ class DashboardPage extends ConsumerWidget {
       onStudy: () => context.push('/study/add'),
       onFitness: () => context.push('/fitness/add'),
       onJournal: () => context.push('/journal/write'),
+    );
+  }
+}
+
+class _DashboardColors {
+  static const ink = Color(0xFF37314E);
+  static const muted = Color(0xFF8D869A);
+  static const primary = Color(0xFF8B75F6);
+  static const chip = Color(0xFFFFFFFF);
+  static const chipBorder = Color(0xFFF0E7DB);
+}
+
+class _HeaderChip extends StatelessWidget {
+  const _HeaderChip({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: _DashboardColors.chip.withValues(alpha: 0.78),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: _DashboardColors.chipBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: _DashboardColors.primary),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: const TextStyle(
+              color: _DashboardColors.muted,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

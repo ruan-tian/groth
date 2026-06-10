@@ -18,15 +18,16 @@ class DashboardWeatherBadge extends ConsumerWidget {
     return GestureDetector(
       onTap: () => WeatherPetSheet.show(context),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          color: Colors.white.withValues(alpha: 0.78),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFF0E7DB)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+              color: const Color(0xFF8B75F6).withValues(alpha: 0.08),
+              blurRadius: 14,
+              offset: const Offset(0, 7),
             ),
           ],
         ),
@@ -37,23 +38,32 @@ class DashboardWeatherBadge extends ConsumerWidget {
               return GestureDetector(
                 onTap: () => context.push('/settings/weather'),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: Colors.white.withValues(alpha: 0.86),
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.warning.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: AppColors.warning.withValues(alpha: 0.3),
+                    ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.06),
-                        blurRadius: 8,
-                        offset: const Offset(0, 2),
+                        color: AppColors.warning.withValues(alpha: 0.08),
+                        blurRadius: 12,
+                        offset: const Offset(0, 6),
                       ),
                     ],
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.wb_sunny_outlined, size: 18, color: AppColors.warning),
+                      Icon(
+                        Icons.wb_sunny_outlined,
+                        size: 18,
+                        color: AppColors.warning,
+                      ),
                       const SizedBox(width: 6),
                       Text(
                         '配置天气',
@@ -80,11 +90,19 @@ class DashboardWeatherBadge extends ConsumerWidget {
                   children: [
                     Text(
                       '${weather.temperature}°',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Color(0xFF1F2329)),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF37314E),
+                      ),
                     ),
                     Text(
                       weather.weatherType,
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF86909C)),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF8D869A),
+                      ),
                     ),
                   ],
                 ),
@@ -94,10 +112,14 @@ class DashboardWeatherBadge extends ConsumerWidget {
           loading: () => const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 1.5)),
+              SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 1.5),
+              ),
             ],
           ),
-          error: (_, __) => const Row(
+          error: (_, _) => const Row(
             mainAxisSize: MainAxisSize.min,
             children: [
               Text('🌤️', style: TextStyle(fontSize: 20)),

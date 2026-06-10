@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
+
 /// 日记模块颜色体系
 ///
 /// 奶油白 + 低饱和浅粉 + 浅棕灰文字
 /// 温柔、治愈、轻手绘风格
 class JournalColors {
   JournalColors._();
-
-  // ── 字体 ──
-  static const fontFamily = 'CuteFont';
 
   // ── 页面背景 ──
   static const bg = Color(0xFFFFF8F6);
@@ -28,14 +27,14 @@ class JournalColors {
   // ── 柔粉色 ──
   static const pinkSoft = Color(0xFFF8A9C2);
 
-  // ── 深文字 ──
-  static const textDark = Color(0xFF5D4037);
+  // ── 深文字（统一使用 AppColors）──
+  static const textDark = AppColors.textPrimary;
 
-  // ── 次文字 ──
-  static const textSecondary = Color(0xFFA1887F);
+  // ── 次文字（统一使用 AppColors）──
+  static const textSecondary = AppColors.textSecondary;
 
-  // ── 弱文字 ──
-  static const textMuted = Color(0xFFC7B5AE);
+  // ── 弱文字（统一使用 AppColors）──
+  static const textMuted = AppColors.textTertiary;
 
   // ── 阴影色 ──
   static Color get shadow => pinkMain.withValues(alpha: 0.08);

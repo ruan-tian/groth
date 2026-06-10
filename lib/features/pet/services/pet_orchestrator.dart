@@ -6,29 +6,36 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../shared/providers/repository_providers.dart';
-import '../../../shared/providers/pet_provider.dart';
-import '../models/pet_display_intent.dart';
-import '../models/pet_event.dart';
-import '../models/pet_intent.dart';
-import '../models/pet_priority.dart';
-import '../models/pet_runtime_state.dart';
-import '../utils/pet_assets.dart';
-import 'pet_event_bus.dart';
+import '../../../core/repositories/exp_repository.dart';
+import '../../../core/repositories/pet_repository.dart';
+import '../../../core/domain/pet/pet_display_intent.dart';
+import '../../../core/domain/pet/pet_event.dart';
+import '../../../core/domain/pet/pet_intent.dart';
+import '../../../core/domain/pet/pet_priority.dart';
+import '../../../core/domain/pet/pet_runtime_state.dart';
+import '../../../core/domain/pet/pet_scene_model.dart';
+import '../../../core/constants/pet_assets.dart';
+import '../../../core/services/pet_event_bus.dart';
 
 /// 宠物总调度器
 ///
-/// 管理 baseIntent（默认展示）和 activeIntent（临时覆盖）。
-/// 如果 activeIntent 存在且未过期，显示 activeIntent，否则显示 baseIntent。
+/// 管理 Dashboard life intent、模块 ambient intents 和 activeIntent（临时覆盖）。
+/// Surface 投影层会按页面类型选择合适的默认状态。
 ///
 /// 优先级覆盖规则：
 /// - feedback 不能覆盖 system / urgent
 /// - system 不能覆盖 urgent
 /// - 同级或低级都能被高级覆盖
 class PetOrchestrator extends StateNotifier<PetRuntimeState> {
-  PetOrchestrator(this._ref) : super(const PetRuntimeState());
+  PetOrchestrator({
+    required ExpRepository expRepository,
+    required PetRepository petRepository,
+  })  : _expRepository = expRepository,
+        _petRepository = petRepository,
+        super(const PetRuntimeState());
 
-  final Ref _ref;
+  final ExpRepository _expRepository;
+  final PetRepository _petRepository;
   StreamSubscription<PetEvent>? _subscription;
   Timer? _expiryCheckTimer;
 
@@ -38,7 +45,9 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
   static const _maxLogSize = 200;
 
   // ── 连续打卡 ──
-  DateTime _lastStreakCheck = DateTime.now().subtract(const Duration(minutes: 5));
+  DateTime _lastStreakCheck = DateTime.now().subtract(
+    const Duration(minutes: 5),
+  );
   int _lastKnownStreak = 0;
 
   void init() {
@@ -76,7 +85,9 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
       }
       if (_activeIntents.isNotEmpty) {
         _activeIntents.sort((a, b) => b.priority.compareTo(a.priority));
-        debugPrint('[Orchestrator] restored ${_activeIntents.length} persistent intents');
+        debugPrint(
+          '[Orchestrator] restored ${_activeIntents.length} persistent intents',
+        );
       }
     } catch (e) {
       debugPrint('[Orchestrator] _loadPersistentIntents failed: $e');
@@ -116,39 +127,25 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
     switch (event.type) {
       // ── 用户反馈 ──
       case PetEventType.studyCompleted:
-        _showFeedback(
-          module: 'study',
-          imagePath: PetAssets.studyDone,
-          messages: ['学习记录完成啦！📚', '今天的努力被记住啦～', '学习辛苦啦～'],
-        );
+        _showModuleFeedback(PetModuleType.study);
         break;
       case PetEventType.fitnessCompleted:
-        _showFeedback(
-          module: 'fitness',
-          imagePath: PetAssets.fitnessDone,
-          messages: ['训练完成，辛苦啦！💪', '运动让人快乐～', '记得拉伸哦～'],
-        );
+        _showModuleFeedback(PetModuleType.fitness);
         break;
       case PetEventType.journalCompleted:
-        _showFeedback(
-          module: 'journal',
-          imagePath: PetAssets.journalDone,
-          messages: ['日记写好啦！', '记录生活的你真棒～', '今天的成长被记下啦～'],
-        );
+        _showModuleFeedback(PetModuleType.journal);
         break;
       case PetEventType.dietCompleted:
-        _showFeedback(
-          module: 'diet',
-          imagePath: PetAssets.dietDone,
-          messages: ['饮食记录完成！🍚', '好好吃饭很重要～', '记录完成啦～'],
-        );
+        _showModuleFeedback(PetModuleType.diet);
         break;
       case PetEventType.sleepCompleted:
-        _showFeedback(
-          module: 'sleep',
-          imagePath: PetAssets.sleepDone,
-          messages: ['睡眠记录完成～🌙', '晚安，好梦～', '好好休息～'],
-        );
+        _showModuleFeedback(PetModuleType.sleep);
+        break;
+      case PetEventType.musicCompleted:
+        _showModuleFeedback(PetModuleType.music);
+        break;
+      case PetEventType.accountingCompleted:
+        _showModuleFeedback(PetModuleType.accounting);
         break;
       case PetEventType.taskCompleted:
         _showFeedback(
@@ -166,22 +163,28 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
       case PetEventType.streakAchieved:
         final streakDays = event.payload?['days'] as int? ?? 7;
         _showFeedback(
-          imagePath: streakDays >= 30 ? PetAssets.eventStreak30 : PetAssets.eventStreak7,
-          messages: ['连续${streakDays}天打卡！🔥', '坚持的力量～', '太自律了～'],
+          imagePath: streakDays >= 30
+              ? PetAssets.eventStreak30
+              : PetAssets.eventStreak7,
+          messages: ['连续$streakDays天打卡！🔥', '坚持的力量～', '太自律了～'],
         );
-        _pushIntent(PetIntent(
-          id: 'streak_${event.eventId}',
-          type: 'streak',
-          eventId: event.eventId,
-          scope: PetIntentScope.global,
-          replacePolicy: PetIntentReplacePolicy.stack,
-          priority: PetIntentPriority.streakAchieved,
-          imagePath: streakDays >= 30 ? PetAssets.eventStreak30 : PetAssets.eventStreak7,
-          fixedMessage: '连续${streakDays}天打卡！',
-          startedAt: DateTime.now(),
-          expiresAt: DateTime.now().add(const Duration(seconds: 6)),
-          consumable: true,
-        ));
+        _pushIntent(
+          PetIntent(
+            id: 'streak_${event.eventId}',
+            type: 'streak',
+            eventId: event.eventId,
+            scope: PetIntentScope.global,
+            replacePolicy: PetIntentReplacePolicy.stack,
+            priority: PetIntentPriority.streakAchieved,
+            imagePath: streakDays >= 30
+                ? PetAssets.eventStreak30
+                : PetAssets.eventStreak7,
+            fixedMessage: '连续$streakDays天打卡！',
+            startedAt: DateTime.now(),
+            expiresAt: DateTime.now().add(const Duration(seconds: 6)),
+            consumable: true,
+          ),
+        );
         break;
 
       // ── 系统状态 ──
@@ -193,28 +196,33 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
         );
         break;
       case PetEventType.aiAnalysisCompleted:
-        final petMessage = (event.payload?['shortPetMessage'] ?? event.payload?['petMessage']) as String? ?? '甜甜帮你分析完啦～';
+        final petMessage =
+            (event.payload?['shortPetMessage'] ?? event.payload?['petMessage'])
+                as String? ??
+            '甜甜帮你分析完啦～';
         _showSystem(
           type: 'system_ai_report',
           imagePath: PetAssets.aiReport,
           fixedMessage: petMessage,
           duration: const Duration(seconds: 8),
         );
-        _pushIntent(PetIntent(
-          id: 'ai_${event.eventId}',
-          type: 'ai_insight',
-          eventId: event.eventId,
-          scope: PetIntentScope.petCenter,
-          module: event.module,
-          replacePolicy: PetIntentReplacePolicy.ignoreIfExists,
-          priority: PetIntentPriority.aiInsight,
-          imagePath: PetAssets.aiReport,
-          fixedMessage: petMessage,
-          startedAt: DateTime.now(),
-          expiresAt: DateTime.now().add(const Duration(minutes: 30)),
-          persistent: true,
-          fromAI: true,
-        ));
+        _pushIntent(
+          PetIntent(
+            id: 'ai_${event.eventId}',
+            type: 'ai_insight',
+            eventId: event.eventId,
+            scope: PetIntentScope.petCenter,
+            module: event.module,
+            replacePolicy: PetIntentReplacePolicy.ignoreIfExists,
+            priority: PetIntentPriority.aiInsight,
+            imagePath: PetAssets.aiReport,
+            fixedMessage: petMessage,
+            startedAt: DateTime.now(),
+            expiresAt: DateTime.now().add(const Duration(minutes: 30)),
+            persistent: true,
+            fromAI: true,
+          ),
+        );
         break;
       case PetEventType.aiAnalysisFailed:
         _showSystem(
@@ -236,6 +244,8 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
 
       case PetEventType.appOpened:
       case PetEventType.pageEntered:
+      case PetEventType.musicStarted:
+      case PetEventType.accountingStarted:
       case PetEventType.bubbleDismissed:
         // 标记当前 active intent 为已消费
         if (state.activeIntent != null) {
@@ -248,6 +258,24 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
   // ──────────────────────────────────────────────
   //  Intent builders
   // ──────────────────────────────────────────────
+
+  /// 显示用户反馈（feedback 优先级，4 秒后过期）
+  void _showModuleFeedback(
+    PetModuleType module, {
+    Duration duration = const Duration(seconds: 4),
+  }) {
+    final definition = module.definition;
+    _showFeedback(
+      module: module.name,
+      imagePath: definition.doneState.assetPath,
+      messages: [
+        definition.doneMessage,
+        '${definition.label}完成啦，甜甜记住了～',
+        '今天又认真成长了一点～',
+      ],
+      duration: duration,
+    );
+  }
 
   /// 显示用户反馈（feedback 优先级，4 秒后过期）
   void _showFeedback({
@@ -319,19 +347,27 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
   void _pushIntent(PetIntent intent) {
     switch (intent.replacePolicy) {
       case PetIntentReplacePolicy.replaceSameType:
-        _activeIntents.removeWhere((i) =>
-            i.type == intent.type &&
-            (i.module == null || intent.module == null || i.module == intent.module));
+        _activeIntents.removeWhere(
+          (i) =>
+              i.type == intent.type &&
+              (i.module == null ||
+                  intent.module == null ||
+                  i.module == intent.module),
+        );
         _activeIntents.insert(0, intent);
       case PetIntentReplacePolicy.replaceScope:
         _activeIntents.removeWhere((i) => i.scope == intent.scope);
         _activeIntents.insert(0, intent);
       case PetIntentReplacePolicy.stack:
-        if (!_activeIntents.any((i) => i.type == intent.type && i.module == intent.module)) {
+        if (!_activeIntents.any(
+          (i) => i.type == intent.type && i.module == intent.module,
+        )) {
           _activeIntents.insert(0, intent);
         }
       case PetIntentReplacePolicy.ignoreIfExists:
-        if (!_activeIntents.any((i) => i.type == intent.type && i.module == intent.module)) {
+        if (!_activeIntents.any(
+          (i) => i.type == intent.type && i.module == intent.module,
+        )) {
           _activeIntents.insert(0, intent);
         }
       case PetIntentReplacePolicy.single:
@@ -342,12 +378,12 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
   }
 
   // ──────────────────────────────────────────────
-  //  Base intent management
+  //  Default intent management
   // ──────────────────────────────────────────────
 
-  /// 设置 baseIntent（Dashboard LifeSession）
-  void setBaseIntent(PetDisplayIntent intent) {
-    state = state.copyWith(baseIntent: intent);
+  /// 设置 Dashboard LifeSession。
+  void setLifeIntent(PetDisplayIntent intent) {
+    state = state.copyWith(lifeIntent: intent);
   }
 
   /// 设置模块待机状态
@@ -366,7 +402,9 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
       messages: messages,
       startedAt: now,
     );
-    state = state.copyWith(baseIntent: intent);
+    state = state.copyWith(
+      moduleIntents: {...state.moduleIntents, module: intent},
+    );
   }
 
   /// 重置为初始状态
@@ -383,11 +421,14 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
     final cleared = state.clearExpired();
     if (cleared != state) {
       if (hadActive && !cleared.hasActiveIntent) {
-        _handleEvent(PetEvent(
-          eventId: 'bubble_dismissed_${DateTime.now().millisecondsSinceEpoch}',
-          source: PetEventSource.system,
-          type: PetEventType.bubbleDismissed,
-        ));
+        _handleEvent(
+          PetEvent(
+            eventId:
+                'bubble_dismissed_${DateTime.now().millisecondsSinceEpoch}',
+            source: PetEventSource.system,
+            type: PetEventType.bubbleDismissed,
+          ),
+        );
       }
       state = cleared;
     }
@@ -396,21 +437,25 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
     _trimEventLog();
   }
 
-  DateTime _lastInactiveCheck = DateTime.now().subtract(const Duration(hours: 2));
+  DateTime _lastInactiveCheck = DateTime.now().subtract(
+    const Duration(hours: 2),
+  );
 
   void _checkInactive() {
     final now = DateTime.now();
     if (now.difference(_lastInactiveCheck).inHours < 1) return;
     _lastInactiveCheck = now;
 
-    final petRepo = _ref.read(petRepositoryProvider);
+    final petRepo = _petRepository;
     petRepo.shouldShowSleepy().then((sleepy) {
       if (sleepy) {
-        _handleEvent(PetEvent(
-          eventId: 'inactive_${now.millisecondsSinceEpoch}',
-          source: PetEventSource.system,
-          type: PetEventType.inactiveFor48Hours,
-        ));
+        _handleEvent(
+          PetEvent(
+            eventId: 'inactive_${now.millisecondsSinceEpoch}',
+            source: PetEventSource.system,
+            type: PetEventType.inactiveFor48Hours,
+          ),
+        );
         debugPrint('[Orchestrator] inactiveFor48Hours detected');
       }
     });
@@ -425,17 +470,20 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
     if (now.difference(_lastStreakCheck).inSeconds < 60) return;
     _lastStreakCheck = now;
 
-    final expRepo = _ref.read(expRepositoryProvider);
+    final expRepo = _expRepository;
     expRepo.getConsecutiveActiveDays().then((days) {
-      if (days > _lastKnownStreak && (days == 7 || days == 30 || days == 100 || _lastKnownStreak == 0)) {
+      if (days > _lastKnownStreak &&
+          (days == 7 || days == 30 || days == 100 || _lastKnownStreak == 0)) {
         _lastKnownStreak = days;
         if (days >= 7) {
-          _handleEvent(PetEvent(
-            eventId: 'streak_${days}',
-            source: PetEventSource.system,
-            type: PetEventType.streakAchieved,
-            payload: {'days': days},
-          ));
+          _handleEvent(
+            PetEvent(
+              eventId: 'streak_$days',
+              source: PetEventSource.system,
+              type: PetEventType.streakAchieved,
+              payload: {'days': days},
+            ),
+          );
           debugPrint('[Orchestrator] streak detected: $days days');
         }
       } else {
@@ -449,7 +497,10 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
   // ──────────────────────────────────────────────
 
   void _log(PetEvent event, String status) {
-    _eventLog.insert(0, _EventLog(event.eventId, event.type, status, DateTime.now()));
+    _eventLog.insert(
+      0,
+      _EventLog(event.eventId, event.type, status, DateTime.now()),
+    );
     if (_eventLog.length > _maxLogSize) _eventLog.removeLast();
     debugPrint('[Orchestrator] $status: ${event.eventId} (${event.type.name})');
   }

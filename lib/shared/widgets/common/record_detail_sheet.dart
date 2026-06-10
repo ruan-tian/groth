@@ -30,7 +30,6 @@ class RecordDetailSheet extends StatelessWidget {
     this.accentColorLight,
     this.primaryMetricIcon,
     this.extraCards,
-    this.extraCard,
   });
 
   /// Convenience method to show this sheet via [showModalBottomSheet].
@@ -85,10 +84,6 @@ class RecordDetailSheet extends StatelessWidget {
 
   /// Optional extra cards shown below the detail grid (e.g. quality, notes).
   final Widget? extraCards;
-
-  /// Deprecated: use [extraCards] instead.
-  @Deprecated('Use extraCards instead')
-  final Widget? extraCard;
 
   @override
   Widget build(BuildContext context) {
@@ -160,9 +155,6 @@ class RecordDetailSheet extends StatelessWidget {
                   // 额外卡片
                   if (extraCards != null) ...[
                     extraCards!,
-                    const SizedBox(height: 16),
-                  ] else if (extraCard != null) ...[
-                    extraCard!,
                     const SizedBox(height: 16),
                   ],
                 ],

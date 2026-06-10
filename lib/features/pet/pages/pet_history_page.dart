@@ -8,7 +8,7 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/pet_provider.dart';
-import '../utils/pet_assets.dart';
+import '../../../core/constants/pet_assets.dart';
 import '../widgets/pet_floating_asset.dart';
 
 final _petHistoryDataProvider = FutureProvider.autoDispose<PetHistoryData>((
@@ -57,7 +57,7 @@ class PetHistoryPage extends ConsumerWidget {
     final dashboard = dashboardAsync.valueOrNull;
     final profile = profileAsync.valueOrNull;
     final name = normalizePetName(profile?.name);
-    final level = dashboard?.currentLevel ?? profile?.level ?? 1;
+    final level = dashboard?.currentLevel ?? 1;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF7EF),

@@ -213,12 +213,12 @@ class AiService {
       'stream': true,
     });
 
+    final client = http.Client();
     try {
       final request = http.Request('POST', url);
       request.headers.addAll(headers);
       request.body = body;
 
-      final client = http.Client();
       final response = await client.send(request);
 
       if (response.statusCode != 200) {
@@ -240,7 +240,6 @@ class AiService {
           if (line.startsWith('data: ')) {
             final data = line.substring(6).trim();
             if (data == '[DONE]') {
-              client.close();
               return;
             }
 
@@ -248,8 +247,7 @@ class AiService {
               final json = jsonDecode(data) as Map<String, dynamic>;
               final choices = json['choices'] as List<dynamic>?;
               if (choices != null && choices.isNotEmpty) {
-                final delta =
-                    choices[0]['delta'] as Map<String, dynamic>?;
+                final delta = choices[0]['delta'] as Map<String, dynamic>?;
                 final content = delta?['content'] as String?;
                 if (content != null && content.isNotEmpty) {
                   yield content;
@@ -261,12 +259,12 @@ class AiService {
           }
         }
       }
-
-      client.close();
     } on http.ClientException catch (e) {
       throw AiServiceException('网络请求失败: ${e.message}');
     } on TimeoutException {
       throw AiServiceException('API 请求超时（${_defaultTimeout.inSeconds}秒）');
+    } finally {
+      client.close();
     }
   }
 
@@ -463,9 +461,11 @@ class AiService {
       buffer.writeln();
     }
 
-    final avgScore = records.fold<double>(0, (s, r) => s + r.healthScore) /
-        records.length;
-    buffer.writeln('共 ${records.length} 条记录，平均健康评分 ${avgScore.toStringAsFixed(1)}/5。');
+    final avgScore =
+        records.fold<double>(0, (s, r) => s + r.healthScore) / records.length;
+    buffer.writeln(
+      '共 ${records.length} 条记录，平均健康评分 ${avgScore.toStringAsFixed(1)}/5。',
+    );
     buffer.writeln('\n请给出分析和建议。');
 
     return buffer.toString();
@@ -550,7 +550,7 @@ class AiService {
       buffer.writeln('  起床时间: ${r.wakeTime}');
       final hours = r.durationMinutes ~/ 60;
       final minutes = r.durationMinutes % 60;
-      buffer.writeln('  睡眠时长: ${hours}小时${minutes}分钟');
+      buffer.writeln('  睡眠时长: $hours小时$minutes分钟');
       buffer.writeln('  睡眠质量: ${r.qualityLevel}/5');
       buffer.writeln('  入睡耗时: ${r.fallAsleepMinutes}分钟');
       buffer.writeln('  夜醒次数: ${r.wakeCount}次');

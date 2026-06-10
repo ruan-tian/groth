@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,9 +8,11 @@ import 'package:growth_os/core/repositories/ai_config_repository.dart';
 import 'package:growth_os/core/repositories/pet_diary_repository.dart';
 import 'package:growth_os/core/repositories/setting_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
+import 'package:growth_os/core/services/encryption_service.dart';
 import 'package:growth_os/features/pet/services/pet_diary_service.dart';
 
 void main() {
+  late Directory tempDir;
   late AppDatabase db;
   late SettingRepository settingRepo;
   late AiConfigRepository aiConfigRepo;
@@ -42,7 +46,9 @@ void main() {
 ''';
   }
 
-  setUp(() {
+  setUp(() async {
+    tempDir = await Directory.systemTemp.createTemp('growth_os_diary_test_');
+    KeyMaterialService.resetForTests(directory: tempDir);
     db = AppDatabase(NativeDatabase.memory());
     settingRepo = SettingRepository(db);
     aiConfigRepo = AiConfigRepository(db);
@@ -60,6 +66,10 @@ void main() {
 
   tearDown(() async {
     await db.close();
+    KeyMaterialService.resetForTests();
+    if (await tempDir.exists()) {
+      await tempDir.delete(recursive: true);
+    }
   });
 
   test('does not auto-generate before 6 AM', () async {

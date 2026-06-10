@@ -163,6 +163,8 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       ref.invalidate(journalStreakProvider);
       ref.invalidate(dashboardProvider);
 
+      _originalExpGained = exp;
+      _originalContent = content;
       if (!mounted) return;
       HapticFeedback.lightImpact();
       ScaffoldMessenger.of(
@@ -466,6 +468,7 @@ class _PaperEditor extends StatelessWidget {
               Expanded(
                 child: TextField(
                   controller: titleController,
+                  textInputAction: TextInputAction.next,
                   style: const TextStyle(
                     color: JournalColors.textDark,
                     fontSize: 22,
@@ -492,6 +495,7 @@ class _PaperEditor extends StatelessWidget {
                 painter: _PaperLinesPainter(),
                 child: TextField(
                   controller: contentController,
+                  textInputAction: TextInputAction.newline,
                   minLines: 12,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,

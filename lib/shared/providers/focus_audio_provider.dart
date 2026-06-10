@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/focus/services/focus_audio_service.dart';
+import '../../core/services/focus_audio_service.dart';
 
 final focusAudioServiceProvider = Provider<FocusAudioService>((ref) {
   final service = FocusAudioService();

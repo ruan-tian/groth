@@ -3,9 +3,10 @@ import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/providers/dashboard_provider.dart';
-import '../models/life_session.dart';
-import '../utils/pet_image_messages.dart';
+import '../../../core/repositories/setting_repository.dart';
+import '../../../shared/providers/repository_providers.dart';
+import '../../../core/domain/pet/life_session.dart';
+import '../../../core/utils/pet_image_messages.dart';
 
 /// LifeSession 管理器
 ///
@@ -16,9 +17,14 @@ import '../utils/pet_image_messages.dart';
 /// - 可选 AI 文案（每个 session 最多一次）
 /// - 保存到 AppSettings
 class LifeSessionManager {
-  LifeSessionManager(this._ref);
+  LifeSessionManager({
+    required SettingRepository settingRepository,
+    required bool aiLifeMessageEnabled,
+  })  : _settingRepository = settingRepository,
+        _aiLifeMessageEnabled = aiLifeMessageEnabled;
 
-  final Ref _ref;
+  final SettingRepository _settingRepository;
+  final bool _aiLifeMessageEnabled;
   static const _storageKey = 'pet_life_session';
 
   LifeSession? _current;
@@ -68,7 +74,7 @@ class LifeSessionManager {
     bool aiUsed = false;
 
     // 如果开启了 AI 生活文案，尝试生成
-    final aiEnabled = _ref.read(petAiLifeMessageEnabledProvider);
+    final aiEnabled = _aiLifeMessageEnabled;
     if (aiEnabled) {
       aiMessage = await _tryGenerateAIMessage(imageName);
       if (aiMessage != null) {
@@ -138,7 +144,7 @@ class LifeSessionManager {
   /// 从存储加载
   Future<LifeSession?> _loadFromStorage() async {
     try {
-      final repo = _ref.read(settingRepositoryProvider);
+      final repo = _settingRepository;
       final json = await repo.getSetting(_storageKey);
       if (json == null) return null;
       final map = jsonDecode(json) as Map<String, dynamic>;
@@ -151,7 +157,7 @@ class LifeSessionManager {
   /// 保存到存储
   Future<void> _saveToStorage(LifeSession session) async {
     try {
-      final repo = _ref.read(settingRepositoryProvider);
+      final repo = _settingRepository;
       await repo.setSetting(_storageKey, jsonEncode(session.toJson()));
     } catch (_) {
       // 保存失败不影响显示
@@ -164,7 +170,10 @@ final petAiLifeMessageEnabledProvider = StateProvider<bool>((ref) => false);
 
 /// LifeSession 管理器 Provider
 final lifeSessionManagerProvider = Provider<LifeSessionManager>((ref) {
-  return LifeSessionManager(ref);
+  return LifeSessionManager(
+    settingRepository: ref.read(settingRepositoryProvider),
+    aiLifeMessageEnabled: ref.read(petAiLifeMessageEnabledProvider),
+  );
 });
 
 /// 当前 LifeSession Provider

@@ -497,7 +497,11 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   }
 
   Widget _buildProviderItem(AIProvider provider, bool isSelected) {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择${provider.name}服务商',
+      selected: isSelected,
+      child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         _selectProvider(provider);
@@ -545,6 +549,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -580,6 +585,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
             hint: '输入你的 API Key',
             icon: Icons.key_rounded,
             isPassword: true,
+            textInputAction: TextInputAction.done,
             onTap: () {
               if (!_isEditingApiKey && _existingApiKey.isNotEmpty) {
                 setState(() {
@@ -601,6 +607,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
     required IconData icon,
     bool isPassword = false,
     VoidCallback? onTap,
+    TextInputAction? textInputAction,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -616,6 +623,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
         const SizedBox(height: 8),
         TextField(
           controller: controller,
+          textInputAction: textInputAction ?? TextInputAction.next,
           onTap: onTap,
           obscureText: isPassword && !_isApiKeyVisible,
           decoration: InputDecoration(
@@ -623,7 +631,10 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
             hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
             prefixIcon: Icon(icon, size: 18, color: const Color(0xFFD4A574)),
             suffixIcon: isPassword
-                ? GestureDetector(
+                ? Semantics(
+                    button: true,
+                    label: _isApiKeyVisible ? '隐藏API Key' : '显示API Key',
+                    child: GestureDetector(
                     onTap: () {
                       setState(() => _isApiKeyVisible = !_isApiKeyVisible);
                     },
@@ -633,6 +644,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                           : Icons.visibility_rounded,
                       size: 18,
                       color: const Color(0xFFB0A09A),
+                    ),
                     ),
                   )
                 : null,
@@ -780,7 +792,11 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
         runSpacing: 8,
         children: _selectedProvider!.models.map((model) {
           final isSelected = _selectedModel == model;
-          return GestureDetector(
+          return Semantics(
+            button: true,
+            label: '选择$model模型',
+            selected: isSelected,
+            child: GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
               setState(() => _selectedModel = model);
@@ -809,6 +825,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                 ),
               ),
             ),
+            ),
           );
         }).toList(),
       ),
@@ -820,7 +837,10 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildTestButton() {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '测试连接',
+      child: GestureDetector(
       onTap: _isTesting ? null : _testConnection,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
@@ -859,11 +879,15 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                 ),
         ),
       ),
+      ),
     );
   }
 
   Widget _buildSaveButton() {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '保存配置',
+      child: GestureDetector(
       onTap: _isSaving ? null : _saveConfig,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -906,6 +930,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                   ),
                 ),
         ),
+      ),
       ),
     );
   }

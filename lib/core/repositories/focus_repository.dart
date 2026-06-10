@@ -19,6 +19,50 @@ class FocusRepository {
     return _db.into(_db.focusSessions).insert(session);
   }
 
+  Future<FocusRoundSaveResult> saveFocusRound({
+    required FocusSessionsCompanion session,
+    required StudyRecordsCompanion studyRecord,
+    int? expValue,
+    String? expReason,
+    required int createdAt,
+  }) {
+    return _db.transaction(() async {
+      final groupId = session.sessionGroupId.value;
+      final roundIndex = session.roundIndex.value;
+      final completed = session.completed.value;
+
+      if (groupId != null && roundIndex != null) {
+        final existing = await getFocusSessionByGroupRound(
+          groupId: groupId,
+          roundIndex: roundIndex,
+          completed: completed,
+        );
+        if (existing != null) {
+          return FocusRoundSaveResult(sessionId: existing.id, inserted: false);
+        }
+      }
+
+      final sessionId = await _db.into(_db.focusSessions).insert(session);
+      if (expValue != null && expValue > 0) {
+        await _db
+            .into(_db.growthExpLogs)
+            .insert(
+              GrowthExpLogsCompanion(
+                sourceType: const Value('focus'),
+                sourceId: Value(sessionId),
+                expValue: Value(expValue),
+                reason: Value(expReason ?? ''),
+                createdAt: Value(createdAt),
+              ),
+            );
+      }
+
+      final studyId = await _db.into(_db.studyRecords).insert(studyRecord);
+      await updateFocusSessionStudyLink(sessionId, studyId);
+      return FocusRoundSaveResult(sessionId: sessionId, inserted: true);
+    });
+  }
+
   /// 更新指定专注记录关联的学习记录 ID。
   Future<void> updateFocusSessionStudyLink(int id, int studyId) {
     return (_db.update(_db.focusSessions)..where((t) => t.id.equals(id))).write(
@@ -61,13 +105,14 @@ class FocusRepository {
   /// 若当天无记录则返回 0。
   Future<int> getTotalFocusMinutesByDate(DateTime date) async {
     final range = _dayRange(date);
-    final result = await (_db.selectOnly(_db.focusSessions)
-          ..addColumns([_db.focusSessions.durationMinutes.sum()])
-          ..where(
-            _db.focusSessions.createdAt.isBiggerOrEqualValue(range.start) &
-                _db.focusSessions.createdAt.isSmallerThanValue(range.end),
-          ))
-        .getSingle();
+    final result =
+        await (_db.selectOnly(_db.focusSessions)
+              ..addColumns([_db.focusSessions.durationMinutes.sum()])
+              ..where(
+                _db.focusSessions.createdAt.isBiggerOrEqualValue(range.start) &
+                    _db.focusSessions.createdAt.isSmallerThanValue(range.end),
+              ))
+            .getSingle();
     return result.read(_db.focusSessions.durationMinutes.sum()) ?? 0;
   }
 
@@ -79,16 +124,38 @@ class FocusRepository {
         .get();
   }
 
+  Future<FocusSession?> getFocusSessionByGroupRound({
+    required String groupId,
+    required int roundIndex,
+    required bool completed,
+  }) {
+    return (_db.select(_db.focusSessions)
+          ..where(
+            (t) =>
+                t.sessionGroupId.equals(groupId) &
+                t.roundIndex.equals(roundIndex) &
+                t.completed.equals(completed),
+          )
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   // ---------------------------------------------------------------------------
   // 内部工具
   // ---------------------------------------------------------------------------
 
   /// 返回当天 [startMs, endMs) 的毫秒时间戳范围。
   _DayRange _dayRange(DateTime date) {
-    final start =
-        DateTime(date.year, date.month, date.day).millisecondsSinceEpoch;
-    final end =
-        DateTime(date.year, date.month, date.day + 1).millisecondsSinceEpoch;
+    final start = DateTime(
+      date.year,
+      date.month,
+      date.day,
+    ).millisecondsSinceEpoch;
+    final end = DateTime(
+      date.year,
+      date.month,
+      date.day + 1,
+    ).millisecondsSinceEpoch;
     return _DayRange(start, end);
   }
 }
@@ -98,4 +165,11 @@ class _DayRange {
   const _DayRange(this.start, this.end);
   final int start;
   final int end;
+}
+
+class FocusRoundSaveResult {
+  const FocusRoundSaveResult({required this.sessionId, required this.inserted});
+
+  final int sessionId;
+  final bool inserted;
 }

@@ -3,12 +3,19 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:drift/native.dart';
 
 import 'package:growth_os/core/database/app_database.dart';
 import 'package:growth_os/core/services/statistics_service.dart';
 import 'package:growth_os/features/dashboard/dashboard_page.dart';
+import 'package:growth_os/core/domain/pet/pet_display_intent.dart';
+import 'package:growth_os/core/domain/pet/pet_priority.dart';
+import 'package:growth_os/core/constants/pet_assets.dart';
 import 'package:growth_os/shared/providers/dashboard_provider.dart';
+import 'package:growth_os/shared/providers/pet_orchestrator_provider.dart';
+import 'package:growth_os/shared/providers/pet_projection_provider.dart';
 import 'package:growth_os/shared/providers/task_provider.dart';
+import 'package:growth_os/shared/providers/weather_provider.dart';
 
 DashboardData _mockDashboardData({
   int todayStudyMinutes = 90,
@@ -30,9 +37,7 @@ DashboardData _mockDashboardData({
         weeklyStats ??
         List.generate(
           7,
-          (i) => DailyStats.empty(
-            DateTime(2026, 6, 1).add(Duration(days: i)),
-          ),
+          (i) => DailyStats.empty(DateTime(2026, 6, 1).add(Duration(days: i))),
         ),
   );
 }
@@ -40,8 +45,32 @@ DashboardData _mockDashboardData({
 Widget _buildTestableWidget({required List<Override> overrides}) {
   return ProviderScope(
     overrides: [
+      appDatabaseProvider.overrideWith((ref) {
+        final db = AppDatabase(NativeDatabase.memory());
+        ref.onDispose(() => unawaited(db.close()));
+        return db;
+      }),
       todayTasksProvider.overrideWith((_) async => <DailyTask>[]),
       todayIncompleteTaskCountProvider.overrideWith((_) async => 0),
+      todayWeatherProvider.overrideWith((_) async => null),
+      weatherExtraAutoProvider.overrideWith((_) async => null),
+      dashboardPetIntentProvider.overrideWith(
+        (_) async => PetDisplayIntent(
+          id: 'test_dashboard_pet',
+          type: 'life_session',
+          priority: PetPriority.life,
+          imagePath: PetAssets.commonHappy,
+          messages: const ['甜甜在这里陪你～'],
+          startedAt: DateTime(2026, 6, 9),
+        ),
+      ),
+      dashboardPetViewProvider.overrideWithValue(
+        const PetViewState(
+          imagePath: PetAssets.commonHappy,
+          bubbleText: '甜甜在这里陪你～',
+          isBubbleVisible: true,
+        ),
+      ),
       ...overrides,
     ],
     child: const MaterialApp(home: DashboardPage()),
@@ -107,6 +136,62 @@ void main() {
       expect(find.text('添加学习'), findsOneWidget);
       expect(find.text('添加健身'), findsOneWidget);
       expect(find.text('写复盘'), findsOneWidget);
+    });
+
+    testWidgets('shows and expands the music floating capsule', (tester) async {
+      await tester.pumpWidget(
+        _buildTestableWidget(
+          overrides: [
+            dashboardProvider.overrideWith((_) async => _mockDashboardData()),
+          ],
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const ValueKey('collapsed_music_capsule')),
+        findsOneWidget,
+      );
+
+      await tester.tap(find.byKey(const ValueKey('collapsed_music_capsule')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('expanded_music_card')), findsOneWidget);
+      expect(find.text('甜甜音乐'), findsOneWidget);
+      expect(find.text('导入'), findsOneWidget);
+      expect(find.text('播放列表'), findsOneWidget);
+      expect(find.text('收藏'), findsOneWidget);
+    });
+
+    testWidgets('music floating card fits common phone widths', (tester) async {
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
+
+      for (final width in <double>[360, 390, 430]) {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        await tester.pumpWidget(
+          _buildTestableWidget(
+            overrides: [
+              dashboardProvider.overrideWith((_) async => _mockDashboardData()),
+            ],
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const ValueKey('collapsed_music_capsule')));
+        await tester.pumpAndSettle();
+
+        expect(
+          find.byKey(const ValueKey('expanded_music_card')),
+          findsOneWidget,
+          reason: 'width $width',
+        );
+        await tester.pumpWidget(const SizedBox.shrink());
+        await tester.pumpAndSettle();
+      }
     });
   });
 

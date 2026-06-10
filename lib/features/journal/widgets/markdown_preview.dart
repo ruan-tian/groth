@@ -213,7 +213,7 @@ class _LocalImageBuilder extends MarkdownElementBuilder {
               child: Image.file(
                 file,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => _buildPlaceholder(),
+                errorBuilder: (_, _, _) => _buildPlaceholder(),
               ),
             );
           },

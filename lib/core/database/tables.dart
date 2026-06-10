@@ -112,8 +112,7 @@ class FitnessExercises extends Table {
   IntColumn get id => integer().autoIncrement()();
 
   /// 所属健身记录 ID (外键)
-  IntColumn get fitnessRecordId =>
-      integer().references(FitnessRecords, #id)();
+  IntColumn get fitnessRecordId => integer().references(FitnessRecords, #id)();
 
   /// 动作名称
   TextColumn get exerciseName => text()();
@@ -129,6 +128,84 @@ class FitnessExercises extends Table {
 
   /// 组间休息 (秒)
   IntColumn get restSeconds => integer().nullable()();
+
+  /// 动作类型: reps / timed
+  TextColumn get exerciseType => text().withDefault(const Constant('reps'))();
+
+  /// 计时动作时长 (秒)
+  IntColumn get durationSeconds => integer().nullable()();
+
+  /// 动作排序
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
+  /// 动作备注
+  TextColumn get note => text().nullable()();
+
+  /// 创建时间 (Unix 毫秒)
+  IntColumn get createdAt => integer()();
+}
+
+/// 健身训练模板表
+///
+/// 保存可复用训练计划。内置模板只读，用户编辑时复制为自定义模板。
+@DataClassName('FitnessWorkoutTemplate')
+class FitnessWorkoutTemplates extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// 模板名称
+  TextColumn get name => text()();
+
+  /// 主要训练部位
+  TextColumn get bodyPart => text()();
+
+  /// 目标类型: strength / core / mobility / custom
+  TextColumn get goalType => text().withDefault(const Constant('custom'))();
+
+  /// 模板说明
+  TextColumn get description => text().nullable()();
+
+  /// 是否内置模板
+  BoolColumn get isBuiltIn => boolean().withDefault(const Constant(false))();
+
+  /// 创建时间 (Unix 毫秒)
+  IntColumn get createdAt => integer()();
+
+  /// 更新时间 (Unix 毫秒)
+  IntColumn get updatedAt => integer()();
+}
+
+/// 健身训练模板动作表
+@DataClassName('FitnessWorkoutTemplateExercise')
+class FitnessWorkoutTemplateExercises extends Table {
+  IntColumn get id => integer().autoIncrement()();
+
+  /// 所属模板 ID
+  IntColumn get templateId =>
+      integer().references(FitnessWorkoutTemplates, #id)();
+
+  /// 动作名称
+  TextColumn get exerciseName => text()();
+
+  /// 动作类型: reps / timed
+  TextColumn get exerciseType => text().withDefault(const Constant('reps'))();
+
+  /// 目标组数
+  IntColumn get targetSets => integer()();
+
+  /// 目标次数
+  IntColumn get targetReps => integer().nullable()();
+
+  /// 目标秒数
+  IntColumn get targetSeconds => integer().nullable()();
+
+  /// 默认重量 (kg)
+  RealColumn get weightKg => real().nullable()();
+
+  /// 组间休息 (秒)
+  IntColumn get restSeconds => integer().withDefault(const Constant(60))();
+
+  /// 排序
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
 
   /// 动作备注
   TextColumn get note => text().nullable()();
@@ -192,7 +269,8 @@ class DailyJournals extends Table {
   TextColumn get content => text()();
 
   /// 内容类型: markdown / quill
-  TextColumn get contentType => text().withDefault(const Constant('markdown'))();
+  TextColumn get contentType =>
+      text().withDefault(const Constant('markdown'))();
 
   /// Quill Delta JSON（富文本格式）
   TextColumn get quillDeltaJson => text().nullable()();

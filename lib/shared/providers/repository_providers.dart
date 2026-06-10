@@ -7,6 +7,7 @@ import '../../core/repositories/exp_repository.dart';
 import '../../core/repositories/fitness_repository.dart';
 import '../../core/repositories/focus_repository.dart';
 import '../../core/repositories/journal_repository.dart';
+import '../../core/repositories/music_repository.dart';
 import '../../core/repositories/pet_diary_repository.dart';
 import '../../core/repositories/setting_repository.dart';
 import '../../core/repositories/sleep_repository.dart';
@@ -93,3 +94,8 @@ final weatherSearchHistoryRepositoryProvider =
       final db = ref.watch(appDatabaseProvider);
       return WeatherSearchHistoryRepository(db);
     });
+
+final musicRepositoryProvider = Provider<MusicRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return MusicRepository(db);
+});

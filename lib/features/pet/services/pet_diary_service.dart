@@ -7,8 +7,8 @@ import '../../../core/repositories/ai_config_repository.dart';
 import '../../../core/repositories/pet_diary_repository.dart';
 import '../../../core/repositories/setting_repository.dart';
 import '../../../core/services/ai_service.dart';
-import '../models/pet_diary_draft.dart';
-import '../utils/pet_diary_prompt_builder.dart';
+import '../../../core/domain/pet/pet_diary_draft.dart';
+import '../../../core/utils/pet_diary_prompt_builder.dart';
 
 typedef PetDiaryAiCaller =
     Future<String> Function({

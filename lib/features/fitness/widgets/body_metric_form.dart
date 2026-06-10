@@ -4,7 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
 
 /// 身体数据记录表单
@@ -227,6 +227,7 @@ class _BodyMetricFormState extends ConsumerState<BodyMetricForm> {
             const SizedBox(height: 8),
             TextFormField(
               controller: _noteController,
+              textInputAction: TextInputAction.newline,
               maxLines: 3,
               decoration: InputDecoration(
                 hintText: '记录今天的感受...',
@@ -290,6 +291,7 @@ class _MetricField extends StatelessWidget {
 
     return TextFormField(
       controller: controller,
+      textInputAction: TextInputAction.next,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
       inputFormatters: [
         FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')),

@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/sort_button.dart';
 
 import '../../core/database/app_database.dart';
-import 'dashboard_provider.dart';
 import 'database_provider.dart';
+import 'repository_providers.dart';
 
 // =============================================================================
 // 健身记录 Provider
@@ -14,9 +14,9 @@ import 'database_provider.dart';
 /// 用法：`ref.watch(fitnessRecordsProvider(date))`
 final fitnessRecordsProvider =
     FutureProvider.family<List<FitnessRecord>, DateTime>((ref, date) async {
-  final repo = ref.watch(fitnessRepositoryProvider);
-  return repo.getFitnessRecordsByDate(date);
-});
+      final repo = ref.watch(fitnessRepositoryProvider);
+      return repo.getFitnessRecordsByDate(date);
+    });
 
 /// 今日健身记录
 final todayFitnessRecordsProvider = FutureProvider<List<FitnessRecord>>((ref) {
@@ -46,8 +46,10 @@ final recentFitnessRecordsProvider = FutureProvider<List<FitnessRecord>>((ref) {
 });
 
 /// 根据 ID 获取单条健身记录
-final fitnessRecordByIdProvider =
-    FutureProvider.family<FitnessRecord, int>((ref, id) async {
+final fitnessRecordByIdProvider = FutureProvider.family<FitnessRecord, int>((
+  ref,
+  id,
+) async {
   final db = ref.watch(appDatabaseProvider);
   final query = db.select(db.fitnessRecords)..where((t) => t.id.equals(id));
   return query.getSingle();
@@ -56,26 +58,45 @@ final fitnessRecordByIdProvider =
 /// 获取指定健身记录的动作列表
 final fitnessExercisesByRecordIdProvider =
     FutureProvider.family<List<FitnessExercise>, int>((ref, recordId) async {
-  final repo = ref.watch(fitnessRepositoryProvider);
-  return repo.getFitnessExercisesByRecordId(recordId);
-});
+      final repo = ref.watch(fitnessRepositoryProvider);
+      return repo.getFitnessExercisesByRecordId(recordId);
+    });
+
+final fitnessWorkoutTemplatesProvider =
+    FutureProvider<List<FitnessWorkoutTemplate>>((ref) async {
+      final repo = ref.watch(fitnessRepositoryProvider);
+      await repo.ensureBuiltInWorkoutTemplates();
+      return repo.getWorkoutTemplates();
+    });
+
+final fitnessWorkoutTemplateExercisesProvider =
+    FutureProvider.family<List<FitnessWorkoutTemplateExercise>, int>((
+      ref,
+      templateId,
+    ) {
+      final repo = ref.watch(fitnessRepositoryProvider);
+      return repo.getWorkoutTemplateExercises(templateId);
+    });
 
 // =============================================================================
 // 排序状态 Provider
 // =============================================================================
 
 /// 健身记录排序方式
-final fitnessSortProvider = StateProvider<SortOption>((ref) => SortOption.newest);
+final fitnessSortProvider = StateProvider<SortOption>(
+  (ref) => SortOption.newest,
+);
 
 /// 按排序方式获取最近健身记录
-final sortedRecentFitnessRecordsProvider =
-    FutureProvider<List<FitnessRecord>>((ref) async {
+final sortedRecentFitnessRecordsProvider = FutureProvider<List<FitnessRecord>>((
+  ref,
+) async {
   final repo = ref.watch(fitnessRepositoryProvider);
   final sort = ref.watch(fitnessSortProvider);
-  
+
   // 获取最近20条记录（足够排序）
   final records = await repo.getRecentFitnessRecords(limit: 20);
-  
+
   switch (sort) {
     case SortOption.newest:
       records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
@@ -87,7 +108,7 @@ final sortedRecentFitnessRecordsProvider =
       records.sort((a, b) => b.expGained.compareTo(a.expGained));
       break;
   }
-  
+
   return records;
 });
 
@@ -115,8 +136,10 @@ final latestBodyMetricProvider = FutureProvider<BodyMetric?>((ref) async {
 });
 
 /// 指定天数内的身体数据（用于趋势图）
-final bodyMetricsTrendProvider =
-    FutureProvider.family<List<BodyMetric>, int>((ref, days) async {
+final bodyMetricsTrendProvider = FutureProvider.family<List<BodyMetric>, int>((
+  ref,
+  days,
+) async {
   final repo = ref.watch(fitnessRepositoryProvider);
   final now = DateTime.now();
   final start = now.subtract(Duration(days: days));
@@ -124,8 +147,10 @@ final bodyMetricsTrendProvider =
 });
 
 /// 根据 ID 获取单条身体数据
-final bodyMetricByIdProvider =
-    FutureProvider.family<BodyMetric?, int>((ref, id) async {
+final bodyMetricByIdProvider = FutureProvider.family<BodyMetric?, int>((
+  ref,
+  id,
+) async {
   final repo = ref.watch(fitnessRepositoryProvider);
   return repo.getBodyMetricById(id);
 });
@@ -150,12 +175,17 @@ class FitnessChartData {
 }
 
 /// 最近 [days] 天的健身图表数据（每日聚合）
-final fitnessChartDataProvider =
-    FutureProvider.family<List<FitnessChartData>, int>((ref, days) async {
+final fitnessChartDataProvider = FutureProvider.family<List<FitnessChartData>, int>((
+  ref,
+  days,
+) async {
   final repo = ref.watch(fitnessRepositoryProvider);
   final now = DateTime.now();
-  final start = DateTime(now.year, now.month, now.day)
-      .subtract(Duration(days: days - 1));
+  final start = DateTime(
+    now.year,
+    now.month,
+    now.day,
+  ).subtract(Duration(days: days - 1));
 
   // 获取健身记录
   final records = await repo.getFitnessRecordsByRange(start, now);
@@ -173,7 +203,8 @@ final fitnessChartDataProvider =
 
     final existing = dateMap[key];
     final minutes = (existing?.minutes ?? 0) + r.durationMinutes;
-    final calories = (existing?.calories ?? 0) + (r.durationMinutes * 7.5).toInt();
+    final calories =
+        (existing?.calories ?? 0) + (r.durationMinutes * 7.5).toInt();
 
     dateMap[key] = FitnessChartData(
       date: DateTime(date.year, date.month, date.day),
@@ -209,6 +240,7 @@ final fitnessChartDataProvider =
   }
 
   // 转换为列表并排序
-  final result = dateMap.values.toList()..sort((a, b) => a.date.compareTo(b.date));
+  final result = dateMap.values.toList()
+    ..sort((a, b) => a.date.compareTo(b.date));
   return result;
 });

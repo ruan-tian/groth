@@ -8,7 +8,7 @@ import '../../../shared/providers/pet_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../services/pet_diary_service.dart';
-import '../utils/pet_assets.dart';
+import '../../../core/constants/pet_assets.dart';
 import '../widgets/pet_floating_asset.dart';
 
 class PetSettingsPage extends ConsumerStatefulWidget {
@@ -70,6 +70,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
                 const SizedBox(height: 14),
                 TextField(
                   controller: _nameController,
+                  textInputAction: TextInputAction.done,
                   maxLength: 12,
                   onChanged: (_) => _nameTouched = true,
                   decoration: InputDecoration(

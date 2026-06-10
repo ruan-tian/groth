@@ -1,17 +1,18 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/pet/models/pet_ai_result.dart';
-import 'dashboard_provider.dart';
+import '../../core/domain/pet/pet_ai_result.dart';
+import 'database_provider.dart';
 
 /// Get the latest AI analysis result for a specific module
-final latestPetAnalysisProvider =
-    FutureProvider.family<PetAIResult?, String>((ref, sourceType) async {
+final latestPetAnalysisProvider = FutureProvider.family<PetAIResult?, String>((
+  ref,
+  sourceType,
+) async {
   final db = ref.read(databaseProvider);
 
   final query = db.select(db.petMessages)
-    ..where(
-        (t) => t.type.equals('analysis') & t.sourceType.equals(sourceType))
+    ..where((t) => t.type.equals('analysis') & t.sourceType.equals(sourceType))
     ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
     ..limit(1);
 

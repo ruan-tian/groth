@@ -93,8 +93,14 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.lavender,
           indicatorWeight: 2.5,
-          labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w400),
+          labelStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+          ),
           tabs: const [
             Tab(text: '最近7天'),
             Tab(text: '最近30天'),
@@ -160,7 +166,12 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
     final qualityStr = avgQuality.toStringAsFixed(1);
 
     return Container(
-      margin: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.sm),
+      margin: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        0,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.lg,
         vertical: AppSpacing.xl,
@@ -188,11 +199,7 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
             label: '平均时长',
             value: '${hours}h${mins}m',
           ),
-          _StatItem(
-            icon: Icons.star_rounded,
-            label: '平均质量',
-            value: '$qualityStr',
-          ),
+          _StatItem(icon: Icons.star_rounded, label: '平均质量', value: qualityStr),
           _StatItem(
             icon: Icons.calendar_today_rounded,
             label: '总记录',
@@ -315,8 +322,15 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
 
   void _showRecordDetail(BuildContext context, SleepRecord record) {
     final date = DateTime.parse(record.sleepDate);
-    final weekday =
-        ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][date.weekday - 1];
+    final weekday = [
+      '周一',
+      '周二',
+      '周三',
+      '周四',
+      '周五',
+      '周六',
+      '周日',
+    ][date.weekday - 1];
     final dateStr = '${date.year}年${date.month}月${date.day}日 $weekday';
 
     final hours = record.durationMinutes ~/ 60;
@@ -518,7 +532,11 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.note_outlined, color: AppColors.textSecondary, size: 20),
+          const Icon(
+            Icons.note_outlined,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
@@ -623,10 +641,7 @@ class _StatItem extends StatelessWidget {
 // =============================================================================
 
 class _SleepRecordCard extends StatelessWidget {
-  const _SleepRecordCard({
-    required this.record,
-    required this.onTap,
-  });
+  const _SleepRecordCard({required this.record, required this.onTap});
 
   final SleepRecord record;
   final VoidCallback onTap;
@@ -634,14 +649,22 @@ class _SleepRecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final date = DateTime.parse(record.sleepDate);
-    final weekday =
-        ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][date.weekday - 1];
+    final weekday = [
+      '周一',
+      '周二',
+      '周三',
+      '周四',
+      '周五',
+      '周六',
+      '周日',
+    ][date.weekday - 1];
     final dateStr = '${date.month}月${date.day}日 $weekday';
 
     final hours = record.durationMinutes ~/ 60;
     final mins = record.durationMinutes % 60;
-    final durationText =
-        hours > 0 ? '${hours}h${mins > 0 ? '${mins}m' : ''}' : '${mins}m';
+    final durationText = hours > 0
+        ? '${hours}h${mins > 0 ? '${mins}m' : ''}'
+        : '${mins}m';
 
     return GestureDetector(
       onTap: onTap,
@@ -714,7 +737,9 @@ class _SleepRecordCard extends StatelessWidget {
                     vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: _qualityColor(record.qualityLevel).withValues(alpha: 0.10),
+                    color: _qualityColor(
+                      record.qualityLevel,
+                    ).withValues(alpha: 0.10),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Row(
@@ -782,12 +807,8 @@ class _SleepRecordCard extends StatelessWidget {
 // =============================================================================
 
 class _ListItem {
-  _ListItem.header(this.headerLabel)
-      : record = null,
-        isHeader = true;
-  _ListItem.record(this.record)
-      : headerLabel = null,
-        isHeader = false;
+  _ListItem.header(this.headerLabel) : record = null, isHeader = true;
+  _ListItem.record(this.record) : headerLabel = null, isHeader = false;
 
   final String? headerLabel;
   final SleepRecord? record;

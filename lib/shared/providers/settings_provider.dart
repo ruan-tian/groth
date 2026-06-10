@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'dashboard_provider.dart';
+import 'repository_providers.dart';
 
 // =============================================================================
 // 设置 Provider
@@ -19,8 +19,10 @@ final settingsProvider = FutureProvider<Map<String, String>>((ref) async {
 /// 按 key 获取单条设置值
 ///
 /// 用法：`ref.watch(settingProvider('theme_mode'))`
-final settingProvider =
-    FutureProvider.family<String?, String>((ref, key) async {
+final settingProvider = FutureProvider.family<String?, String>((
+  ref,
+  key,
+) async {
   final repo = ref.watch(settingRepositoryProvider);
   return repo.getSetting(key);
 });
@@ -82,11 +84,7 @@ final recordModeInitProvider = FutureProvider<void>((ref) async {
 
 /// 单个每日目标
 class DailyGoal {
-  const DailyGoal({
-    required this.name,
-    required this.target,
-    this.unit = '分钟',
-  });
+  const DailyGoal({required this.name, required this.target, this.unit = '分钟'});
 
   /// 任务名称（如 "学习"）
   final String name;
@@ -98,16 +96,16 @@ class DailyGoal {
   final String unit;
 
   Map<String, dynamic> toJson() => {
-        'name': name,
-        'target': target,
-        'unit': unit,
-      };
+    'name': name,
+    'target': target,
+    'unit': unit,
+  };
 
   factory DailyGoal.fromJson(Map<String, dynamic> json) => DailyGoal(
-        name: json['name'] as String,
-        target: json['target'] as int,
-        unit: json['unit'] as String? ?? '分钟',
-      );
+    name: json['name'] as String,
+    target: json['target'] as int,
+    unit: json['unit'] as String? ?? '分钟',
+  );
 }
 
 /// 默认每日目标
@@ -180,8 +178,7 @@ final dailyWaterGoalInitProvider = FutureProvider<void>((ref) async {
 // =============================================================================
 
 /// 每日饮水量记录 (Map<日期字符串, 饮水量ml>)
-final dailyWaterIntakeProvider =
-    StateProvider<Map<String, int>>((ref) => {});
+final dailyWaterIntakeProvider = StateProvider<Map<String, int>>((ref) => {});
 
 /// 从数据库初始化今日饮水量
 final todayWaterIntakeInitProvider = FutureProvider<void>((ref) async {
@@ -189,8 +186,9 @@ final todayWaterIntakeInitProvider = FutureProvider<void>((ref) async {
   final value = await repo.getSetting('daily_water_intake');
   if (value != null) {
     try {
-      final map = (jsonDecode(value) as Map<String, dynamic>)
-          .map((k, v) => MapEntry(k, v as int));
+      final map = (jsonDecode(value) as Map<String, dynamic>).map(
+        (k, v) => MapEntry(k, v as int),
+      );
       ref.read(dailyWaterIntakeProvider.notifier).state = map;
     } catch (_) {
       // 解析失败则使用空值
@@ -208,8 +206,7 @@ int getTodayWaterIntake(Map<String, int> waterMap) {
 
 /// 保存饮水量到数据库
 Future<void> saveWaterIntake(WidgetRef ref, int amount) async {
-  final waterMap = Map<String, int>.from(
-      ref.read(dailyWaterIntakeProvider));
+  final waterMap = Map<String, int>.from(ref.read(dailyWaterIntakeProvider));
   final today = DateTime.now();
   final key =
       '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';

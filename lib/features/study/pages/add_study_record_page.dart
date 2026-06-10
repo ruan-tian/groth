@@ -8,8 +8,8 @@ import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/study_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
-import '../../pet/models/pet_event.dart';
-import '../../pet/services/pet_event_bus.dart';
+import '../../../core/domain/pet/pet_event.dart';
+import '../../../core/services/pet_event_bus.dart';
 
 /// 添加学习记录页面
 ///
@@ -438,6 +438,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
     TextInputType? keyboardType,
     int maxLines = 1,
     String? Function(String?)? validator,
+    TextInputAction? textInputAction,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -446,6 +447,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
         const SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: controller,
+          textInputAction: textInputAction ?? (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,

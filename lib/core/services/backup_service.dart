@@ -6,224 +6,92 @@ import 'package:path_provider/path_provider.dart';
 
 import '../database/app_database.dart';
 
-/// 备份与恢复服务
-///
-/// 提供全量 JSON 导出/导入、本地文件存取功能。
-/// 导入时使用事务保证原子性，任一表写入失败则整体回滚。
+class BackupRestoreException implements Exception {
+  const BackupRestoreException({
+    required this.message,
+    this.tableName,
+    this.rowIndex,
+    this.recordId,
+  });
+
+  final String message;
+  final String? tableName;
+  final int? rowIndex;
+  final Object? recordId;
+
+  @override
+  String toString() {
+    final parts = <String>[
+      'BackupRestoreException: $message',
+      if (tableName != null) 'table=$tableName',
+      if (rowIndex != null) 'row=$rowIndex',
+      if (recordId != null) 'id=$recordId',
+    ];
+    return parts.join(', ');
+  }
+}
+
 class BackupService {
   BackupService(this._db);
 
   final AppDatabase _db;
 
-  // ---------------------------------------------------------------------------
-  // 导出
-  // ---------------------------------------------------------------------------
-
-  /// 将数据库中所有表导出为 JSON 字符串。
-  ///
-  /// 返回格式:
-  /// ```json
-  /// {
-  ///   "version": 1,
-  ///   "exportedAt": 1717600000000,
-  ///   "data": {
-  ///     "studyRecords": [...],
-  ///     "fitnessRecords": [...],
-  ///     ...
-  ///   }
-  /// }
-  /// ```
   Future<String> exportToJson() async {
-    final studyRecords = await _db.select(_db.studyRecords).get();
-    final fitnessRecords = await _db.select(_db.fitnessRecords).get();
-    final fitnessExercises = await _db.select(_db.fitnessExercises).get();
-    final bodyMetrics = await _db.select(_db.bodyMetrics).get();
-    final dailyJournals = await _db.select(_db.dailyJournals).get();
-    final focusSessions = await _db.select(_db.focusSessions).get();
-    final growthExpLogs = await _db.select(_db.growthExpLogs).get();
-    final appSettings = await _db.select(_db.appSettings).get();
-    final aiConfigs = await _db.select(_db.aiConfigs).get();
-    final backupRecords = await _db.select(_db.backupRecords).get();
+    final data = <String, List<Map<String, dynamic>>>{};
+    final counts = <String, int>{};
+
+    for (final spec in _tableSpecs) {
+      final rows = await spec.exportRows();
+      data[spec.name] = rows;
+      counts[spec.name] = rows.length;
+    }
 
     final payload = {
-      'version': 1,
+      'version': 2,
+      'backupVersion': 2,
+      'schemaVersion': _db.schemaVersion,
       'exportedAt': DateTime.now().millisecondsSinceEpoch,
-      'data': {
-        'studyRecords':
-            studyRecords.map((r) => r.toJson()).toList(growable: false),
-        'fitnessRecords':
-            fitnessRecords.map((r) => r.toJson()).toList(growable: false),
-        'fitnessExercises':
-            fitnessExercises.map((r) => r.toJson()).toList(growable: false),
-        'bodyMetrics':
-            bodyMetrics.map((r) => r.toJson()).toList(growable: false),
-        'dailyJournals':
-            dailyJournals.map((r) => r.toJson()).toList(growable: false),
-        'focusSessions':
-            focusSessions.map((r) => r.toJson()).toList(growable: false),
-        'growthExpLogs':
-            growthExpLogs.map((r) => r.toJson()).toList(growable: false),
-        'appSettings':
-            appSettings.map((r) => r.toJson()).toList(growable: false),
-        'aiConfigs':
-            aiConfigs.map((r) => r.toJson()).toList(growable: false),
-        'backupRecords':
-            backupRecords.map((r) => r.toJson()).toList(growable: false),
-      },
+      'tables': counts,
+      'data': data,
     };
 
     return jsonEncode(payload);
   }
 
-  // ---------------------------------------------------------------------------
-  // 导入
-  // ---------------------------------------------------------------------------
-
-  /// 从 JSON 字符串导入数据到数据库。
-  ///
-  /// - 使用事务保证原子性，任一表写入失败则整体回滚。
-  /// - 缺失的表字段会自动跳过，不会抛出异常。
   Future<void> importFromJson(String jsonStr) async {
-    final root = jsonDecode(jsonStr) as Map<String, dynamic>;
-    final data = root['data'] as Map<String, dynamic>? ?? {};
+    final decoded = jsonDecode(jsonStr);
+    if (decoded is! Map<String, dynamic>) {
+      throw const BackupRestoreException(
+        message: 'Backup root is not an object',
+      );
+    }
+
+    final version = decoded['backupVersion'] ?? decoded['version'];
+    if (version is! int || version < 2) {
+      throw BackupRestoreException(
+        message: 'Unsupported backup version: ${version ?? 'missing'}',
+      );
+    }
+
+    final data = decoded['data'];
+    if (data is! Map<String, dynamic>) {
+      throw const BackupRestoreException(message: 'Backup data is missing');
+    }
 
     await _db.transaction(() async {
-      // 按外键依赖顺序插入：先父表，再子表
-      await _importTable(
-        data['studyRecords'],
-        (json) => StudyRecord.fromJson(json),
-        (companion) => _db.into(_db.studyRecords).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['fitnessRecords'],
-        (json) => FitnessRecord.fromJson(json),
-        (companion) => _db.into(_db.fitnessRecords).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      // fitnessExercises 依赖 fitnessRecords
-      await _importTable(
-        data['fitnessExercises'],
-        (json) => FitnessExercise.fromJson(json),
-        (companion) => _db.into(_db.fitnessExercises).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['bodyMetrics'],
-        (json) => BodyMetric.fromJson(json),
-        (companion) => _db.into(_db.bodyMetrics).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['dailyJournals'],
-        (json) => DailyJournal.fromJson(json),
-        (companion) => _db.into(_db.dailyJournals).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['focusSessions'],
-        (json) => FocusSession.fromJson(json),
-        (companion) => _db.into(_db.focusSessions).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['growthExpLogs'],
-        (json) => GrowthExpLog.fromJson(json),
-        (companion) => _db.into(_db.growthExpLogs).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['appSettings'],
-        (json) => AppSetting.fromJson(json),
-        (companion) => _db.into(_db.appSettings).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['aiConfigs'],
-        (json) => AiConfig.fromJson(json),
-        (companion) => _db.into(_db.aiConfigs).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
-
-      await _importTable(
-        data['backupRecords'],
-        (json) => BackupRecord.fromJson(json),
-        (companion) => _db.into(_db.backupRecords).insert(
-              companion,
-              mode: InsertMode.insertOrReplace,
-            ),
-      );
+      for (final spec in _tableSpecs) {
+        await spec.importRows(data[spec.name]);
+      }
     });
   }
 
-  /// 将 JSON 列表解析为数据类后逐条写入。
-  ///
-  /// [fromJson] 负责将 `Map<String, dynamic>` 反序列化为 Drift DataClass；
-  /// [inserter] 负责将 `Insertable<T>` 写入对应表。
-  ///
-  /// 每个 Drift 生成的 DataClass 均实现了 `Insertable<自身类型>`，
-  /// 因此可直接将 `fromJson` 的结果传入 `inserter`。
-  Future<void> _importTable<T extends DataClass>(
-    dynamic jsonList,
-    T Function(Map<String, dynamic>) fromJson,
-    Future<void> Function(Insertable<T>) inserter,
-  ) async {
-    if (jsonList is! List) return;
-
-    for (final item in jsonList) {
-      if (item is! Map<String, dynamic>) continue;
-      try {
-        final dataClass = fromJson(item);
-        // T (如 StudyRecord) 实现了 Insertable<T>，可直接传入。
-        await inserter(dataClass as Insertable<T>);
-      } catch (_) {
-        // 单条记录解析/写入失败时跳过，继续处理剩余记录
-      }
-    }
-  }
-
-  // ---------------------------------------------------------------------------
-  // 文件操作
-  // ---------------------------------------------------------------------------
-
-  /// 将当前数据导出为 JSON 文件并保存到本地文档目录。
-  ///
-  /// 文件名格式: `backup_YYYYMMDD_HHMMSS.json`。
-  /// 同时在 `BackupRecords` 表中插入一条备份记录。
-  ///
-  /// 返回保存的文件绝对路径。
   Future<String> saveBackupToFile() async {
     final jsonStr = await exportToJson();
 
     final dir = await getApplicationDocumentsDirectory();
     final now = DateTime.now();
-    final timestamp = '${now.year}'
+    final timestamp =
+        '${now.year}'
         '${now.month.toString().padLeft(2, '0')}'
         '${now.day.toString().padLeft(2, '0')}_'
         '${now.hour.toString().padLeft(2, '0')}'
@@ -235,9 +103,10 @@ class BackupService {
     final file = File(filePath);
     await file.writeAsString(jsonStr);
 
-    // 记录备份元数据
     final fileSize = await file.length();
-    await _db.into(_db.backupRecords).insert(
+    await _db
+        .into(_db.backupRecords)
+        .insert(
           BackupRecordsCompanion(
             backupName: Value(fileName),
             backupPath: Value(filePath),
@@ -250,9 +119,6 @@ class BackupService {
     return filePath;
   }
 
-  /// 从指定文件路径读取备份 JSON 内容。
-  ///
-  /// 若文件不存在或读取失败则返回 `null`。
   Future<String?> loadBackupFromFile(String path) async {
     try {
       final file = File(path);
@@ -261,5 +127,289 @@ class BackupService {
     } catch (_) {
       return null;
     }
+  }
+
+  List<_BackupTableSpec> get _tableSpecs => [
+    _BackupTableSpec<StudyRecord>(
+      name: 'studyRecords',
+      exportRows: () async =>
+          (await _db.select(_db.studyRecords).get()).mapJson(),
+      fromJson: StudyRecord.fromJson,
+      insert: (row) => _db
+          .into(_db.studyRecords)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<FitnessRecord>(
+      name: 'fitnessRecords',
+      exportRows: () async =>
+          (await _db.select(_db.fitnessRecords).get()).mapJson(),
+      fromJson: FitnessRecord.fromJson,
+      insert: (row) => _db
+          .into(_db.fitnessRecords)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<FitnessWorkoutTemplate>(
+      name: 'fitnessWorkoutTemplates',
+      exportRows: () async =>
+          (await _db.select(_db.fitnessWorkoutTemplates).get()).mapJson(),
+      fromJson: FitnessWorkoutTemplate.fromJson,
+      insert: (row) => _db
+          .into(_db.fitnessWorkoutTemplates)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<BodyMetric>(
+      name: 'bodyMetrics',
+      exportRows: () async =>
+          (await _db.select(_db.bodyMetrics).get()).mapJson(),
+      fromJson: BodyMetric.fromJson,
+      insert: (row) => _db
+          .into(_db.bodyMetrics)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<DailyJournal>(
+      name: 'dailyJournals',
+      exportRows: () async =>
+          (await _db.select(_db.dailyJournals).get()).mapJson(),
+      fromJson: DailyJournal.fromJson,
+      insert: (row) => _db
+          .into(_db.dailyJournals)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<TaskTemplate>(
+      name: 'taskTemplates',
+      exportRows: () async =>
+          (await _db.select(_db.taskTemplates).get()).mapJson(),
+      fromJson: TaskTemplate.fromJson,
+      insert: (row) => _db
+          .into(_db.taskTemplates)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<DailyTask>(
+      name: 'dailyTasks',
+      exportRows: () async =>
+          (await _db.select(_db.dailyTasks).get()).mapJson(),
+      fromJson: DailyTask.fromJson,
+      insert: (row) => _db
+          .into(_db.dailyTasks)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<DietRecord>(
+      name: 'dietRecords',
+      exportRows: () async =>
+          (await _db.select(_db.dietRecords).get()).mapJson(),
+      fromJson: DietRecord.fromJson,
+      insert: (row) => _db
+          .into(_db.dietRecords)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<SleepRecord>(
+      name: 'sleepRecords',
+      exportRows: () async =>
+          (await _db.select(_db.sleepRecords).get()).mapJson(),
+      fromJson: SleepRecord.fromJson,
+      insert: (row) => _db
+          .into(_db.sleepRecords)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<PetProfile>(
+      name: 'petProfiles',
+      exportRows: () async =>
+          (await _db.select(_db.petProfiles).get()).mapJson(),
+      fromJson: PetProfile.fromJson,
+      insert: (row) => _db
+          .into(_db.petProfiles)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<PetState>(
+      name: 'petStates',
+      exportRows: () async => (await _db.select(_db.petStates).get()).mapJson(),
+      fromJson: PetState.fromJson,
+      insert: (row) =>
+          _db.into(_db.petStates).insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<PetDiary>(
+      name: 'petDiaries',
+      exportRows: () async =>
+          (await _db.select(_db.petDiaries).get()).mapJson(),
+      fromJson: PetDiary.fromJson,
+      insert: (row) => _db
+          .into(_db.petDiaries)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<DailyWeather>(
+      name: 'dailyWeather',
+      exportRows: () async =>
+          (await _db.select(_db.dailyWeatherTable).get()).mapJson(),
+      fromJson: DailyWeather.fromJson,
+      insert: (row) => _db
+          .into(_db.dailyWeatherTable)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<ApiConfig>(
+      name: 'apiConfigs',
+      exportRows: () async =>
+          (await _db.select(_db.apiConfigs).get()).mapJson(),
+      fromJson: ApiConfig.fromJson,
+      insert: (row) => _db
+          .into(_db.apiConfigs)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<WeatherSearchHistory>(
+      name: 'weatherSearchHistory',
+      exportRows: () async =>
+          (await _db.select(_db.weatherSearchHistoryTable).get()).mapJson(),
+      fromJson: WeatherSearchHistory.fromJson,
+      insert: (row) => _db
+          .into(_db.weatherSearchHistoryTable)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<MusicTrack>(
+      name: 'musicTracks',
+      exportRows: () async =>
+          (await _db.select(_db.musicTracks).get()).mapJson(),
+      fromJson: MusicTrack.fromJson,
+      insert: (row) => _db
+          .into(_db.musicTracks)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<AppSetting>(
+      name: 'appSettings',
+      exportRows: () async =>
+          (await _db.select(_db.appSettings).get()).mapJson(),
+      fromJson: AppSetting.fromJson,
+      insert: (row) => _db
+          .into(_db.appSettings)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<AiConfig>(
+      name: 'aiConfigs',
+      exportRows: () async => (await _db.select(_db.aiConfigs).get()).mapJson(),
+      fromJson: AiConfig.fromJson,
+      insert: (row) =>
+          _db.into(_db.aiConfigs).insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<BackupRecord>(
+      name: 'backupRecords',
+      exportRows: () async =>
+          (await _db.select(_db.backupRecords).get()).mapJson(),
+      fromJson: BackupRecord.fromJson,
+      insert: (row) => _db
+          .into(_db.backupRecords)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<FitnessExercise>(
+      name: 'fitnessExercises',
+      exportRows: () async =>
+          (await _db.select(_db.fitnessExercises).get()).mapJson(),
+      fromJson: FitnessExercise.fromJson,
+      insert: (row) => _db
+          .into(_db.fitnessExercises)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<FitnessWorkoutTemplateExercise>(
+      name: 'fitnessWorkoutTemplateExercises',
+      exportRows: () async =>
+          (await _db.select(_db.fitnessWorkoutTemplateExercises).get())
+              .mapJson(),
+      fromJson: FitnessWorkoutTemplateExercise.fromJson,
+      insert: (row) => _db
+          .into(_db.fitnessWorkoutTemplateExercises)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<JournalAsset>(
+      name: 'journalAssets',
+      exportRows: () async =>
+          (await _db.select(_db.journalAssets).get()).mapJson(),
+      fromJson: JournalAsset.fromJson,
+      insert: (row) => _db
+          .into(_db.journalAssets)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<FocusSession>(
+      name: 'focusSessions',
+      exportRows: () async =>
+          (await _db.select(_db.focusSessions).get()).mapJson(),
+      fromJson: FocusSession.fromJson,
+      insert: (row) => _db
+          .into(_db.focusSessions)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<GrowthExpLog>(
+      name: 'growthExpLogs',
+      exportRows: () async =>
+          (await _db.select(_db.growthExpLogs).get()).mapJson(),
+      fromJson: GrowthExpLog.fromJson,
+      insert: (row) => _db
+          .into(_db.growthExpLogs)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+    _BackupTableSpec<PetMessage>(
+      name: 'petMessages',
+      exportRows: () async =>
+          (await _db.select(_db.petMessages).get()).mapJson(),
+      fromJson: PetMessage.fromJson,
+      insert: (row) => _db
+          .into(_db.petMessages)
+          .insert(row, mode: InsertMode.insertOrReplace),
+    ),
+  ];
+}
+
+class _BackupTableSpec<T extends DataClass> {
+  const _BackupTableSpec({
+    required this.name,
+    required this.exportRows,
+    required this.fromJson,
+    required this.insert,
+  });
+
+  final String name;
+  final Future<List<Map<String, dynamic>>> Function() exportRows;
+  final T Function(Map<String, dynamic>) fromJson;
+  final Future<void> Function(Insertable<T>) insert;
+
+  Future<void> importRows(dynamic rawRows) async {
+    if (rawRows == null) {
+      throw BackupRestoreException(
+        tableName: name,
+        message: 'Table is missing from backup',
+      );
+    }
+    if (rawRows is! List) {
+      throw BackupRestoreException(
+        tableName: name,
+        message: 'Table payload is not a list',
+      );
+    }
+
+    for (var index = 0; index < rawRows.length; index++) {
+      final raw = rawRows[index];
+      if (raw is! Map) {
+        throw BackupRestoreException(
+          tableName: name,
+          rowIndex: index,
+          message: 'Record is not an object',
+        );
+      }
+
+      final row = Map<String, dynamic>.from(raw);
+      try {
+        final dataClass = fromJson(row);
+        await insert(dataClass as Insertable<T>);
+      } catch (error) {
+        throw BackupRestoreException(
+          tableName: name,
+          rowIndex: index,
+          recordId: row['id'] ?? row['key'],
+          message: error.toString(),
+        );
+      }
+    }
+  }
+}
+
+extension _JsonRows<T extends DataClass> on List<T> {
+  List<Map<String, dynamic>> mapJson() {
+    return map((row) => row.toJson()).toList(growable: false);
   }
 }

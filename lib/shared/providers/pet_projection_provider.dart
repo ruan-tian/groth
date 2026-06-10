@@ -1,7 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/pet/models/pet_intent.dart';
-import '../../features/pet/models/pet_runtime_state.dart';
+import '../../core/domain/pet/pet_display_intent.dart';
+import '../../core/domain/pet/pet_intent.dart';
+import '../../core/domain/pet/pet_runtime_state.dart';
 import 'pet_orchestrator_provider.dart';
 
 /// 宠物视图状态 —— 从 UnifiedState 投影到具体 Surface
@@ -49,19 +50,47 @@ PetViewState? _project(
   PetSurface surface,
   String? module,
 ) {
-  final intent = state.effectiveIntent;
-  if (intent == null && state.baseIntent == null) return null;
+  final active = _visibleActiveIntent(state, surface, module);
+  final fallback = switch (surface) {
+    PetSurface.modulePage => module != null ? state.moduleIntents[module] : null,
+    PetSurface.dashboard => state.lifeIntent,
+    PetSurface.petCenter => state.lifeIntent,
+  };
+  final intent = active ?? fallback;
 
-  final active = intent;
+  if (intent == null) return null;
 
   return PetViewState(
-    imagePath: active?.imagePath ?? state.baseIntent?.imagePath,
-    bubbleText: active?.displayMessage ?? state.baseIntent?.displayMessage,
-    isBubbleVisible: (active?.fixedMessage ?? active?.displayMessage) != null,
+    imagePath: intent.imagePath,
+    bubbleText: intent.displayMessage,
+    isBubbleVisible:
+        intent.fixedMessage != null || intent.messages.isNotEmpty,
     mood: 'neutral',
-    action: _inferAction(active?.imagePath ?? state.baseIntent?.imagePath),
-    module: module,
+    action: _inferAction(intent.imagePath),
+    module: intent.module ?? module,
   );
+}
+
+PetDisplayIntent? _visibleActiveIntent(
+  PetRuntimeState state,
+  PetSurface surface,
+  String? module,
+) {
+  final active = state.activeIntent;
+  if (active == null || active.isExpired) return null;
+  final activeModule = active.module;
+
+  switch (surface) {
+    case PetSurface.dashboard:
+      return activeModule == null ? active : null;
+    case PetSurface.petCenter:
+      return active;
+    case PetSurface.modulePage:
+      if (activeModule == null || activeModule == module) {
+        return active;
+      }
+      return null;
+  }
 }
 
 String _inferAction(String? imagePath) {

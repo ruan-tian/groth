@@ -24,10 +24,6 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   bool _isCorrupted = false;
   String _restoreWarning = '';
 
-  bool get _isBackupFileValid =>
-      _selectedFile?.extension == 'json' &&
-      (_selectedFile?.size ?? 0) < 100 * 1024 * 1024;
-
   Future<void> _pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -80,9 +76,9 @@ class _RestorePageState extends ConsumerState<RestorePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('文件选择失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('文件选择失败: $e')));
       }
     }
   }
@@ -103,7 +99,9 @@ class _RestorePageState extends ConsumerState<RestorePage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFD4A574)),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFD4A574),
+            ),
             child: const Text('确定恢复'),
           ),
         ],
@@ -133,9 +131,9 @@ class _RestorePageState extends ConsumerState<RestorePage> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('恢复失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('恢复失败: $e')));
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
@@ -276,7 +274,10 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildFilePicker() {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择备份文件',
+      child: GestureDetector(
       onTap: _pickFile,
       child: Container(
         padding: const EdgeInsets.all(32),
@@ -315,13 +316,11 @@ class _RestorePageState extends ConsumerState<RestorePage> {
             const SizedBox(height: 4),
             const Text(
               '支持 .json 格式的备份文件',
-              style: TextStyle(
-                fontSize: 12,
-                color: Color(0xFFB0A09A),
-              ),
+              style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -352,8 +351,12 @@ class _RestorePageState extends ConsumerState<RestorePage> {
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
-              _isCorrupted ? Icons.error_outline_rounded : Icons.check_circle_outline_rounded,
-              color: _isCorrupted ? const Color(0xFFFF6B6B) : const Color(0xFF35C976),
+              _isCorrupted
+                  ? Icons.error_outline_rounded
+                  : Icons.check_circle_outline_rounded,
+              color: _isCorrupted
+                  ? const Color(0xFFFF6B6B)
+                  : const Color(0xFF35C976),
               size: 24,
             ),
           ),
@@ -383,7 +386,10 @@ class _RestorePageState extends ConsumerState<RestorePage> {
               ],
             ),
           ),
-          GestureDetector(
+          Semantics(
+            button: true,
+            label: '移除选中文件',
+            child: GestureDetector(
             onTap: () {
               setState(() {
                 _selectedFile = null;
@@ -398,6 +404,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
                 color: Color(0xFFB0A09A),
                 size: 18,
               ),
+            ),
             ),
           ),
         ],
@@ -430,10 +437,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
           Expanded(
             child: Text(
               _restoreWarning,
-              style: const TextStyle(
-                fontSize: 13,
-                color: Color(0xFFFF6B6B),
-              ),
+              style: const TextStyle(fontSize: 13, color: Color(0xFFFF6B6B)),
             ),
           ),
         ],
@@ -446,7 +450,10 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildRestoreButton() {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '开始恢复数据',
+      child: GestureDetector(
       onTap: _isRestoring ? null : _restoreData,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -497,6 +504,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
                 ),
         ),
       ),
+      ),
     );
   }
 
@@ -516,25 +524,13 @@ class _RestorePageState extends ConsumerState<RestorePage> {
       ),
       child: Column(
         children: [
-          _buildInstructionItem(
-            '1',
-            '点击上方区域选择备份文件',
-          ),
+          _buildInstructionItem('1', '点击上方区域选择备份文件'),
           const SizedBox(height: 12),
-          _buildInstructionItem(
-            '2',
-            '系统会自动验证文件格式',
-          ),
+          _buildInstructionItem('2', '系统会自动验证文件格式'),
           const SizedBox(height: 12),
-          _buildInstructionItem(
-            '3',
-            '确认无误后点击"开始恢复"',
-          ),
+          _buildInstructionItem('3', '确认无误后点击"开始恢复"'),
           const SizedBox(height: 12),
-          _buildInstructionItem(
-            '4',
-            '恢复完成后会自动刷新数据',
-          ),
+          _buildInstructionItem('4', '恢复完成后会自动刷新数据'),
         ],
       ),
     );
@@ -565,10 +561,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF8B6F5E),
-            ),
+            style: const TextStyle(fontSize: 13, color: Color(0xFF8B6F5E)),
           ),
         ),
       ],

@@ -12,14 +12,14 @@ class FocusAssets {
       '$_root/backgrounds/bg_focus_session_landscape.webp';
 
   static const deskPortrait = '$_root/foregrounds/fg_focus_desk_portrait.png';
-  static const deskLandscape = '$_root/foregrounds/fg_focus_desk_landscape.png';
+  static const deskLandscape = '$_root/foregrounds/fg_focus_desk_landscape.webp';
 
-  static const catIdle = '$_root/cats/focus_cat_idle.png';
-  static const catReading = '$_root/cats/focus_cat_reading.png';
-  static const catWriting = '$_root/cats/focus_cat_writing.png';
-  static const catThinking = '$_root/cats/focus_cat_thinking.png';
-  static const catRest = '$_root/cats/focus_cat_rest.png';
-  static const catDone = '$_root/cats/focus_cat_done.png';
+  static const catIdle = '$_root/cats/focus_cat_idle.webp';
+  static const catReading = '$_root/cats/focus_cat_reading.webp';
+  static const catWriting = '$_root/cats/focus_cat_writing.webp';
+  static const catThinking = '$_root/cats/focus_cat_thinking.webp';
+  static const catRest = '$_root/cats/focus_cat_rest.webp';
+  static const catDone = '$_root/cats/focus_cat_done.webp';
 
   static const iconPomodoro = '$_root/icons/icon_focus_pomodoro.png';
   static const iconDeep = '$_root/icons/icon_focus_deep.png';
@@ -33,7 +33,7 @@ class FocusAssets {
   static const soundWhiteNoise = '$_root/sounds/icon_sound_white_noise.png';
   static const soundNone = '$_root/sounds/icon_sound_none.png';
 
-  static const roomGlow = '$_root/lights/light_focus_room_glow.png';
+  static const roomGlow = '$_root/lights/light_focus_room_glow.webp';
   static const ringGlow = '$_root/lights/light_focus_ring_glow.png';
   static const restGlow = '$_root/lights/light_focus_rest_glow.png';
 

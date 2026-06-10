@@ -75,7 +75,8 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
         return dailyGoals
             .firstWhere(
               (g) => g.name == '学习',
-              orElse: () => const DailyGoal(name: '学习', target: 120, unit: '分钟'),
+              orElse: () =>
+                  const DailyGoal(name: '学习', target: 120, unit: '分钟'),
             )
             .target;
       case 'fitness':
@@ -178,9 +179,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
               Navigator.pop(context);
               _removeCard(cardId);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.danger,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
             child: const Text('确定移除'),
           ),
         ],
@@ -231,53 +230,65 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
   Widget _buildHeader(int cardCount) {
     return Row(
       children: [
-        // 标题装饰
         Container(
-          width: 4,
-          height: 18,
+          width: 34,
+          height: 34,
           decoration: BoxDecoration(
-            color: AppColors.accent,
-            borderRadius: BorderRadius.circular(2),
+            color: const Color(0xFFFFF0F7),
+            borderRadius: BorderRadius.circular(13),
+            border: Border.all(color: const Color(0xFFF3DCE8)),
+          ),
+          child: const Icon(
+            Icons.grid_view_rounded,
+            color: Color(0xFFE37AA4),
+            size: 19,
           ),
         ),
-        const SizedBox(width: 8),
+        const SizedBox(width: 10),
         const Text(
           '今日概览',
-          style: AppTextStyles.sectionTitle,
+          style: TextStyle(
+            color: Color(0xFF37314E),
+            fontSize: 20,
+            fontWeight: FontWeight.w900,
+          ),
         ),
         const Spacer(),
-        // 卡片数量提示
-        Text(
-          '$cardCount/8',
-          style: const TextStyle(
-            fontSize: 12,
-            color: AppColors.textTertiary,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFF0E7DB)),
+          ),
+          child: Text(
+            '$cardCount/8',
+            style: const TextStyle(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         const SizedBox(width: 8),
-        // 管理按钮
         GestureDetector(
           onTap: _showAddCardSheet,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
             decoration: BoxDecoration(
-              color: AppColors.primaryLight,
-              borderRadius: BorderRadius.circular(8),
+              color: const Color(0xFFEEEAFE),
+              borderRadius: BorderRadius.circular(999),
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.add_rounded,
-                  size: 14,
-                  color: AppColors.primary,
-                ),
+                Icon(Icons.add_rounded, size: 14, color: AppColors.primary),
                 SizedBox(width: 4),
                 Text(
                   '添加',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w900,
                     color: AppColors.primary,
                   ),
                 ),
@@ -301,15 +312,13 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
         crossAxisCount: 2,
         crossAxisSpacing: AppSpacing.md,
         mainAxisSpacing: AppSpacing.md,
-        childAspectRatio: 1.4,
+        childAspectRatio: 1.12,
       ),
       itemCount: cardIds.length + (cardIds.length < 8 ? 1 : 0),
       itemBuilder: (context, index) {
         // 最后一个是添加按钮（如果未满8个）
         if (index == cardIds.length) {
-          return AddDashboardCardButton(
-            onTap: _showAddCardSheet,
-          );
+          return AddDashboardCardButton(onTap: _showAddCardSheet);
         }
 
         final cardId = cardIds[index];
@@ -338,7 +347,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
                   scale: Tween<double>(begin: 1.0, end: 0.8).animate(
                     CurvedAnimation(
                       parent: _deleteController!,
-                    curve: Curves.easeIn,
+                      curve: Curves.easeIn,
                     ),
                   ),
                   child: child,
@@ -369,8 +378,8 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
         color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border, width: 0.6),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: const Color(0xFFF0E7DB), width: 1),
       ),
       child: Column(
         children: [
@@ -391,10 +400,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
           const SizedBox(height: AppSpacing.sm),
           const Text(
             '点击下方按钮添加数据卡片',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.textTertiary,
-            ),
+            style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.lg),
           FilledButton.icon(
@@ -413,7 +419,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       crossAxisCount: 2,
       crossAxisSpacing: AppSpacing.md,
       mainAxisSpacing: AppSpacing.md,
-      childAspectRatio: 1.4,
+      childAspectRatio: 1.24,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       children: List.generate(
@@ -447,7 +453,11 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       child: const Center(
         child: Column(
           children: [
-            Icon(Icons.error_outline_rounded, size: 32, color: AppColors.textTertiary),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 32,
+              color: AppColors.textTertiary,
+            ),
             SizedBox(height: AppSpacing.sm),
             Text('加载失败', style: TextStyle(color: AppColors.textSecondary)),
           ],

@@ -7,6 +7,7 @@ import '../features/plan/plan_page.dart';
 import '../features/fitness/pages/add_fitness_record_page.dart';
 import '../features/fitness/pages/add_body_metric_page.dart';
 import '../features/fitness/pages/body_metric_detail_page.dart';
+import '../features/fitness/pages/fitness_training_timer_page.dart';
 import '../features/fitness/pages/fitness_record_detail_page.dart';
 import '../features/fitness/pages/weekly_fitness_page.dart';
 import '../features/fitness/pages/all_fitness_records_page.dart';
@@ -14,6 +15,8 @@ import '../features/focus/focus_page.dart';
 import '../features/focus/pages/focus_session_page.dart';
 import '../features/health/pages/add_diet_record_page.dart';
 import '../features/health/pages/add_sleep_record_page.dart';
+import '../features/health/pages/sleep_reminder_timer_page.dart';
+import '../features/health/pages/water_reminder_timer_page.dart';
 import '../features/journal/pages/journal_detail_page.dart';
 import '../features/journal/pages/write_journal_page.dart';
 import '../features/journal/pages/edit_journal_page.dart';
@@ -208,12 +211,27 @@ final goRouter = GoRouter(
                   path: 'fitness/add',
                   pageBuilder: (context, state) {
                     final mode = state.uri.queryParameters['mode'] ?? 'simple';
+                    final duration = int.tryParse(
+                      state.uri.queryParameters['duration'] ?? '',
+                    );
                     return buildShellSlideTransition(
                       context,
                       state,
-                      AddFitnessRecordPage(initialMode: mode),
+                      AddFitnessRecordPage(
+                        initialMode: mode,
+                        initialDurationMinutes: duration,
+                      ),
                     );
                   },
+                ),
+                GoRoute(
+                  parentNavigatorKey: _rootNavigatorKey,
+                  path: 'fitness/timer',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const FitnessTrainingTimerPage(),
+                  ),
                 ),
                 GoRoute(
                   path: 'fitness/detail/:id',
@@ -299,6 +317,15 @@ final goRouter = GoRouter(
                   ),
                 ),
                 GoRoute(
+                  parentNavigatorKey: _rootNavigatorKey,
+                  path: 'diet/water-reminder',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const WaterReminderTimerPage(),
+                  ),
+                ),
+                GoRoute(
                   path: 'diet/records',
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
@@ -313,6 +340,15 @@ final goRouter = GoRouter(
                     context,
                     state,
                     const AddSleepRecordPage(),
+                  ),
+                ),
+                GoRoute(
+                  parentNavigatorKey: _rootNavigatorKey,
+                  path: 'sleep/reminder',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const SleepReminderTimerPage(),
                   ),
                 ),
                 GoRoute(

@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
 
 /// 记录身体数据页面（褐色渐变风格）
@@ -267,6 +267,7 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
       ),
       child: TextField(
         controller: controller,
+        textInputAction: TextInputAction.next,
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [
           FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d{0,1}')),
@@ -302,6 +303,7 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
       ),
       child: TextField(
         controller: _noteController,
+        textInputAction: TextInputAction.newline,
         maxLines: 3,
         decoration: InputDecoration(
           hintText: '记录今天的感受...',

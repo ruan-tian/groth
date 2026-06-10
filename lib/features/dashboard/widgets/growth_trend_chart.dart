@@ -57,7 +57,9 @@ class GrowthTrendChart extends StatelessWidget {
                         ),
                       ),
                     )
-                  : LineChart(_buildChartData(yMax)),
+                  : RepaintBoundary(
+                      child: LineChart(_buildChartData(yMax)),
+                    ),
             ),
           ),
         ],

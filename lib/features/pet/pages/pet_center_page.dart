@@ -6,9 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../../core/services/exp_service.dart';
+import '../../../shared/providers/dashboard_provider.dart'
+    hide expServiceProvider;
 import '../../../shared/providers/pet_provider.dart';
-import '../utils/pet_assets.dart';
+import '../../../shared/providers/service_providers.dart';
+import '../../../core/constants/pet_assets.dart';
 import '../widgets/pet_floating_asset.dart';
 import '../widgets/pet_journal_section.dart';
 import '../widgets/pet_scene_hero.dart';
@@ -24,8 +27,12 @@ class PetCenterPage extends ConsumerWidget {
 
     final dashboard = dashboardAsync.valueOrNull;
     final profile = profileAsync.valueOrNull;
+    final expService = ref.watch(expServiceProvider);
     final name = normalizePetName(profile?.name);
-    final level = dashboard?.currentLevel ?? profile?.level ?? 1;
+    final level = dashboard?.currentLevel ?? 1;
+    final levelProgress = dashboard == null
+        ? null
+        : expService.calculateLevelProgress(dashboard.totalExp);
     final title = petTitleForLevel(level);
     final appearance = petAppearanceForLevel(level);
     final heroHeight = math.min(
@@ -100,6 +107,7 @@ class PetCenterPage extends ConsumerWidget {
                     appearance: appearance,
                     ageDays: ageDays,
                     dashboard: dashboard,
+                    levelProgress: levelProgress,
                     loading: dashboardAsync.isLoading,
                   ),
                   const SizedBox(height: 16),
@@ -126,6 +134,7 @@ class _GrowthIdentityCard extends StatelessWidget {
     required this.appearance,
     required this.ageDays,
     required this.dashboard,
+    required this.levelProgress,
     required this.loading,
   });
 
@@ -135,15 +144,13 @@ class _GrowthIdentityCard extends StatelessWidget {
   final String appearance;
   final int ageDays;
   final DashboardData? dashboard;
+  final GrowthLevelProgress? levelProgress;
   final bool loading;
 
   @override
   Widget build(BuildContext context) {
-    final expBase = (level - 1) * (level - 1) * 100;
-    final expNext = level * level * 100;
-    final expNeeded = math.max(1, expNext - expBase);
-    final expProgress = dashboard?.expProgress ?? 0;
-    final progress = math.min(1.0, math.max(0.0, expProgress / expNeeded));
+    final progress = levelProgress?.progressRatio ?? 0;
+    final expRemaining = levelProgress?.expRemaining ?? 0;
 
     return _PaperCard(
       child: Column(
@@ -242,7 +249,7 @@ class _GrowthIdentityCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 7),
                     Text(
-                      '距离 Lv.${level + 1} 还差 ${math.max(0, expNeeded - expProgress)} EXP',
+                      '距离 Lv.${level + 1} 还差 $expRemaining EXP',
                       style: const TextStyle(
                         fontSize: 12,
                         color: AppColors.textSecondary,
@@ -647,7 +654,10 @@ class _RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: icon == Icons.arrow_back_rounded ? '返回' : '设置',
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         width: 40,
@@ -666,6 +676,7 @@ class _RoundIconButton extends StatelessWidget {
         ),
         child: Icon(icon, color: AppColors.textPrimary, size: 20),
       ),
+    ),
     );
   }
 }

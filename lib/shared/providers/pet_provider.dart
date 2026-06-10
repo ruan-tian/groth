@@ -1,141 +1,15 @@
-import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
-import '../../features/pet/utils/pet_assets.dart';
-import 'dashboard_provider.dart';
+import '../../core/repositories/pet_repository.dart';
+import '../../core/constants/pet_assets.dart';
+import 'database_provider.dart';
+import 'repository_providers.dart';
+import 'service_providers.dart';
+
+export '../../core/repositories/pet_repository.dart' show PetRepository, normalizePetName;
 
 enum PetStateType { idle, peek, happy, sleepy }
-
-class PetRepository {
-  PetRepository(this._db);
-
-  final AppDatabase _db;
-
-  Future<PetProfile?> getProfile() async {
-    final profiles = await (_db.select(_db.petProfiles)..limit(1)).get();
-    return profiles.isNotEmpty ? profiles.first : null;
-  }
-
-  Future<void> initProfile() async {
-    final existing = await getProfile();
-    if (existing == null) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await _db
-          .into(_db.petProfiles)
-          .insert(
-            PetProfilesCompanion(
-              name: const Value('甜甜'),
-              level: const Value(1),
-              createdAt: Value(now),
-              updatedAt: Value(now),
-            ),
-          );
-    }
-  }
-
-  Future<void> updateName(String name) async {
-    final profile = await getProfile();
-    final cleanName = normalizePetName(name);
-    final now = DateTime.now().millisecondsSinceEpoch;
-    if (profile == null) {
-      await _db
-          .into(_db.petProfiles)
-          .insert(
-            PetProfilesCompanion(
-              name: Value(cleanName),
-              level: const Value(1),
-              createdAt: Value(now),
-              updatedAt: Value(now),
-            ),
-          );
-      return;
-    }
-
-    await (_db.update(
-      _db.petProfiles,
-    )..where((t) => t.id.equals(profile.id))).write(
-      PetProfilesCompanion(name: Value(cleanName), updatedAt: Value(now)),
-    );
-  }
-
-  Future<void> updateLevel(int level) async {
-    final profile = await getProfile();
-    if (profile != null) {
-      await (_db.update(
-        _db.petProfiles,
-      )..where((t) => t.id.equals(profile.id))).write(
-        PetProfilesCompanion(
-          level: Value(level),
-          updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-        ),
-      );
-    }
-  }
-
-  Future<PetState?> getState() async {
-    final states = await (_db.select(_db.petStates)..limit(1)).get();
-    return states.isNotEmpty ? states.first : null;
-  }
-
-  Future<void> initState() async {
-    final existing = await getState();
-    if (existing == null) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await _db
-          .into(_db.petStates)
-          .insert(
-            PetStatesCompanion(
-              currentState: const Value('idle'),
-              lastInteractionTime: Value(now),
-              createdAt: Value(now),
-              updatedAt: Value(now),
-            ),
-          );
-    }
-  }
-
-  Future<void> updateState(String state) async {
-    final existing = await getState();
-    if (existing != null) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await (_db.update(
-        _db.petStates,
-      )..where((t) => t.id.equals(existing.id))).write(
-        PetStatesCompanion(
-          currentState: Value(state),
-          lastInteractionTime: Value(now),
-          updatedAt: Value(now),
-        ),
-      );
-    }
-  }
-
-  Future<void> recordHappyTime() async {
-    final existing = await getState();
-    if (existing != null) {
-      await (_db.update(
-        _db.petStates,
-      )..where((t) => t.id.equals(existing.id))).write(
-        PetStatesCompanion(
-          lastHappyTime: Value(DateTime.now().millisecondsSinceEpoch),
-          updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
-        ),
-      );
-    }
-  }
-
-  Future<bool> shouldShowSleepy() async {
-    final state = await getState();
-    if (state == null) return false;
-
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final hoursSinceInteraction =
-        (now - state.lastInteractionTime) / (1000 * 60 * 60);
-
-    return hoursSinceInteraction >= 48;
-  }
-}
 
 final petRepositoryProvider = Provider<PetRepository>((ref) {
   return PetRepository(ref.watch(databaseProvider));
@@ -156,21 +30,16 @@ final petStateTypeProvider = StateProvider<PetStateType>((ref) {
 });
 
 final petLevelProvider = FutureProvider<int>((ref) async {
-  final dashboard = await ref.watch(dashboardProvider.future);
-  return dashboard.currentLevel;
+  final expRepo = ref.watch(expRepositoryProvider);
+  final expService = ref.watch(expServiceProvider);
+  final totalExp = await expRepo.getTotalExp();
+  return expService.calculateLevelProgress(totalExp).level;
 });
 
 final petNameProvider = FutureProvider<String>((ref) async {
   final profile = await ref.watch(petProfileProvider.future);
   return normalizePetName(profile?.name);
 });
-
-String normalizePetName(String? name) {
-  final clean = name?.trim();
-  if (clean == null || clean.isEmpty) return '甜甜';
-  if (clean.contains('鐢滅敎')) return '甜甜';
-  return clean;
-}
 
 String petTitleForLevel(int level) {
   if (level <= 5) return '萌芽';
@@ -238,18 +107,18 @@ final petAgeDaysProvider = Provider<int>((ref) {
 });
 
 final petTitleProvider = Provider<String>((ref) {
-  final dashboard = ref.watch(dashboardProvider);
-  return dashboard.when(
-    data: (data) => petTitleForLevel(data.currentLevel),
+  final level = ref.watch(petLevelProvider);
+  return level.when(
+    data: petTitleForLevel,
     loading: () => '萌芽',
     error: (_, _) => '萌芽',
   );
 });
 
 final petAppearanceProvider = Provider<String>((ref) {
-  final dashboard = ref.watch(dashboardProvider);
-  return dashboard.when(
-    data: (data) => petAppearanceForLevel(data.currentLevel),
+  final level = ref.watch(petLevelProvider);
+  return level.when(
+    data: petAppearanceForLevel,
     loading: () => '普通甜甜',
     error: (_, _) => '普通甜甜',
   );

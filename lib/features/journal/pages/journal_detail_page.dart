@@ -147,7 +147,7 @@ class _DetailContent extends ConsumerWidget {
                               width: 100,
                               height: 100,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Container(
+                              errorBuilder: (_, _, _) => Container(
                                 width: 100,
                                 height: 100,
                                 decoration: BoxDecoration(

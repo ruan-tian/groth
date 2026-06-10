@@ -16,13 +16,13 @@ class FitnessRecordDetailPage extends ConsumerWidget {
   final int recordId;
 
   // ── 主题色常量 ──
-  static const _fitness = AppColors.fitness;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final recordAsync = ref.watch(fitnessRecordByIdProvider(recordId));
-    final exercisesAsync =
-        ref.watch(fitnessExercisesByRecordIdProvider(recordId));
+    final exercisesAsync = ref.watch(
+      fitnessExercisesByRecordIdProvider(recordId),
+    );
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -93,16 +93,16 @@ class FitnessRecordDetailPage extends ConsumerWidget {
         await repo.deleteFitnessExercisesByRecordId(record.id);
         await repo.deleteFitnessRecord(record.id);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已删除')));
           context.pop();
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
         }
       }
     }
@@ -123,9 +123,6 @@ class _DetailBody extends StatelessWidget {
   final FitnessRecord record;
   final AsyncValue<List<FitnessExercise>> exercisesAsync;
   final VoidCallback onDelete;
-
-  static const _fitness = AppColors.fitness;
-  static const _fitnessFaded = Color(0x1AFF8A3D);
 
   @override
   Widget build(BuildContext context) {
@@ -186,7 +183,8 @@ class _DetailBody extends StatelessWidget {
                   title: '专业信息',
                 ),
                 const SizedBox(height: 12),
-                if (record.intensityLevel != null || record.fatigueLevel != null)
+                if (record.intensityLevel != null ||
+                    record.fatigueLevel != null)
                   _ProfessionalMetrics(
                     intensityLevel: record.intensityLevel,
                     fatigueLevel: record.fatigueLevel,
@@ -196,10 +194,7 @@ class _DetailBody extends StatelessWidget {
               // ── 训练动作列表 ──
               if (isProfessional) ...[
                 const SizedBox(height: 28),
-                _SectionHeader(
-                  icon: Icons.format_list_numbered,
-                  title: '训练动作',
-                ),
+                _SectionHeader(icon: Icons.format_list_numbered, title: '训练动作'),
                 const SizedBox(height: 12),
                 exercisesAsync.when(
                   data: (exercises) {
@@ -219,18 +214,15 @@ class _DetailBody extends StatelessWidget {
                     padding: EdgeInsets.all(24),
                     child: Center(child: CircularProgressIndicator()),
                   ),
-                  error: (e, _) => Text('加载动作失败: $e',
-                      style: AppTextStyles.caption),
+                  error: (e, _) =>
+                      Text('加载动作失败: $e', style: AppTextStyles.caption),
                 ),
               ],
 
               // ── 训练感受 ──
               if (record.feeling != null && record.feeling!.isNotEmpty) ...[
                 const SizedBox(height: 28),
-                _SectionHeader(
-                  icon: Icons.favorite_outline,
-                  title: '训练感受',
-                ),
+                _SectionHeader(icon: Icons.favorite_outline, title: '训练感受'),
                 const SizedBox(height: 12),
                 _NoteCard(text: record.feeling!),
               ],
@@ -238,10 +230,7 @@ class _DetailBody extends StatelessWidget {
               // ── 备注 ──
               if (record.note != null && record.note!.isNotEmpty) ...[
                 const SizedBox(height: 28),
-                _SectionHeader(
-                  icon: Icons.notes_outlined,
-                  title: '备注',
-                ),
+                _SectionHeader(icon: Icons.notes_outlined, title: '备注'),
                 const SizedBox(height: 12),
                 _NoteCard(text: record.note!),
               ],
@@ -292,9 +281,7 @@ class _GradientHeader extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(28),
-        ),
+        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(28)),
       ),
       child: SafeArea(
         bottom: false,
@@ -306,14 +293,18 @@ class _GradientHeader extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white),
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                    ),
                     onPressed: () => context.pop(),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(Icons.delete_outline,
-                        color: Colors.white70),
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.white70,
+                    ),
                     onPressed: onDelete,
                   ),
                 ],
@@ -365,8 +356,10 @@ class _GradientHeader extends StatelessWidget {
               children: [
                 // EXP 徽章
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
@@ -374,8 +367,11 @@ class _GradientHeader extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star_rounded,
-                          color: Colors.amber, size: 18),
+                      const Icon(
+                        Icons.star_rounded,
+                        color: Colors.amber,
+                        size: 18,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         '+$expGained EXP',
@@ -392,8 +388,10 @@ class _GradientHeader extends StatelessWidget {
                 if (isProfessional) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
@@ -487,11 +485,7 @@ class _InfoTile extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  item.label,
-                  style: AppTextStyles.caption,
-                  maxLines: 1,
-                ),
+                Text(item.label, style: AppTextStyles.caption, maxLines: 1),
                 const SizedBox(height: 2),
                 Text(
                   item.value,
@@ -513,10 +507,7 @@ class _InfoTile extends StatelessWidget {
 // =============================================================================
 
 class _SectionHeader extends StatelessWidget {
-  const _SectionHeader({
-    required this.icon,
-    required this.title,
-  });
+  const _SectionHeader({required this.icon, required this.title});
 
   final IconData icon;
   final String title;
@@ -556,7 +547,6 @@ class _ProfessionalMetrics extends StatelessWidget {
   final int? fatigueLevel;
 
   static const _fitness = AppColors.fitness;
-  static const _fitnessFaded = Color(0x1AFF8A3D);
 
   @override
   Widget build(BuildContext context) {
@@ -706,23 +696,11 @@ class _ExerciseCard extends StatelessWidget {
             runSpacing: 8,
             children: [
               if (exercise.weight != null)
-                _ExerciseParam(
-                  label: '重量',
-                  value: '${exercise.weight} kg',
-                ),
-              _ExerciseParam(
-                label: '组数',
-                value: '${exercise.sets}',
-              ),
-              _ExerciseParam(
-                label: '次数',
-                value: '${exercise.reps}',
-              ),
+                _ExerciseParam(label: '重量', value: '${exercise.weight} kg'),
+              _ExerciseParam(label: '组数', value: '${exercise.sets}'),
+              _ExerciseParam(label: '次数', value: '${exercise.reps}'),
               if (exercise.restSeconds != null)
-                _ExerciseParam(
-                  label: '休息',
-                  value: '${exercise.restSeconds}s',
-                ),
+                _ExerciseParam(label: '休息', value: '${exercise.restSeconds}s'),
             ],
           ),
         ],
@@ -732,10 +710,7 @@ class _ExerciseCard extends StatelessWidget {
 }
 
 class _ExerciseParam extends StatelessWidget {
-  const _ExerciseParam({
-    required this.label,
-    required this.value,
-  });
+  const _ExerciseParam({required this.label, required this.value});
 
   final String label;
   final String value;
@@ -796,10 +771,7 @@ class _NoteCard extends StatelessWidget {
 // =============================================================================
 
 class _EmptyCard extends StatelessWidget {
-  const _EmptyCard({
-    required this.icon,
-    required this.text,
-  });
+  const _EmptyCard({required this.icon, required this.text});
 
   final IconData icon;
   final String text;

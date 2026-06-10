@@ -53,38 +53,34 @@ class _DashboardCardState extends State<DashboardCard>
     super.initState();
 
     // 使用外部传入的控制器或创建本地控制器
-    _localAnimController = widget.animationController ??
+    _localAnimController =
+        widget.animationController ??
         AnimationController(
           vsync: this,
           duration: const Duration(milliseconds: 400),
         );
 
     // 缩放动画：从 0.8 到 1.0，带弹性效果
-    _scaleAnimation = Tween<double>(
-      begin: 0.8,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _localAnimController,
-      curve: Curves.easeOutBack,
-    ));
+    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
+      CurvedAnimation(parent: _localAnimController, curve: Curves.easeOutBack),
+    );
 
     // 淡入动画
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _localAnimController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _localAnimController,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
+      ),
+    );
 
     // 滑入动画：从下方滑入
-    _slideAnimation = Tween<Offset>(
-      begin: const Offset(0, 0.3),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _localAnimController,
-      curve: Curves.easeOutCubic,
-    ));
+    _slideAnimation =
+        Tween<Offset>(begin: const Offset(0, 0.3), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _localAnimController,
+            curve: Curves.easeOutCubic,
+          ),
+        );
 
     // 如果使用外部控制器则不由这里控制动画；否则直接跳到 1.0 避免回退时反复缩放
     if (widget.animationController == null) {
@@ -114,14 +110,14 @@ class _DashboardCardState extends State<DashboardCard>
           position: _slideAnimation,
           child: FadeTransition(
             opacity: _fadeAnimation,
-            child: ScaleTransition(
-              scale: _scaleAnimation,
-              child: child,
-            ),
+            child: ScaleTransition(scale: _scaleAnimation, child: child),
           ),
         );
       },
-      child: GestureDetector(
+      child: Semantics(
+        button: true,
+        label: '${widget.config.name}卡片，当前${widget.currentValue}${widget.config.unit}',
+        child: GestureDetector(
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),
@@ -134,19 +130,26 @@ class _DashboardCardState extends State<DashboardCard>
           duration: const Duration(milliseconds: 100),
           curve: Curves.easeOutCubic,
           child: Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white,
+                  widget.config.softColor.withValues(alpha: 0.48),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: AppColors.border,
-                width: 0.6,
+                color: widget.config.color.withValues(alpha: 0.13),
+                width: 1,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: widget.config.color.withValues(alpha: 0.08),
-                  blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  color: widget.config.color.withValues(alpha: 0.10),
+                  blurRadius: 18,
+                  offset: const Offset(0, 9),
                 ),
               ],
             ),
@@ -156,11 +159,11 @@ class _DashboardCardState extends State<DashboardCard>
               children: [
                 // 顶部：图标 + 长按提示
                 _buildHeader(),
-                const SizedBox(height: 8),
+                const Spacer(),
 
                 // 数值
                 _buildValue(),
-                const SizedBox(height: 8),
+                const SizedBox(height: 10),
 
                 // 进度条
                 _buildProgressBar(progress),
@@ -168,6 +171,7 @@ class _DashboardCardState extends State<DashboardCard>
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -177,19 +181,31 @@ class _DashboardCardState extends State<DashboardCard>
       children: [
         // 图标容器
         Container(
-          width: 32,
-          height: 32,
+          width: 38,
+          height: 38,
           decoration: BoxDecoration(
-            color: widget.config.softColor,
-            borderRadius: BorderRadius.circular(8),
+            color: Colors.white.withValues(alpha: 0.72),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: widget.config.color.withValues(alpha: 0.10),
+            ),
           ),
-          child: Icon(
-            widget.config.icon,
-            size: 18,
-            color: widget.config.color,
+          child: Icon(widget.config.icon, size: 21, color: widget.config.color),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            widget.config.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 14,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
-        const Spacer(),
+        const SizedBox(width: 8),
         // 长按删除提示（小圆点）
         Container(
           width: 6,
@@ -204,38 +220,26 @@ class _DashboardCardState extends State<DashboardCard>
   }
 
   Widget _buildValue() {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.baseline,
-      textBaseline: TextBaseline.alphabetic,
-      children: [
-        // 数值（带动画）
-        TweenAnimationBuilder<int>(
-          tween: IntTween(begin: 0, end: widget.currentValue),
-          duration: const Duration(milliseconds: 600),
-          curve: Curves.easeOutCubic,
-          builder: (context, value, _) {
-            return Text(
-              '$value',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: widget.config.color,
-                height: 1.1,
-              ),
-            );
-          },
-        ),
-        const SizedBox(width: 4),
-        // 单位
-        Text(
-          widget.config.unit,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: widget.config.color.withValues(alpha: 0.7),
+    return TweenAnimationBuilder<int>(
+      tween: IntTween(begin: 0, end: widget.currentValue),
+      duration: const Duration(milliseconds: 600),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, _) {
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: Alignment.centerLeft,
+          child: Text(
+            '$value ${widget.config.unit}',
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: widget.config.color,
+              height: 1.05,
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -253,8 +257,8 @@ class _DashboardCardState extends State<DashboardCard>
             builder: (context, value, _) {
               return LinearProgressIndicator(
                 value: value,
-                minHeight: 4,
-                backgroundColor: widget.config.softColor,
+                minHeight: 7,
+                backgroundColor: Colors.white.withValues(alpha: 0.72),
                 valueColor: AlwaysStoppedAnimation<Color>(widget.config.color),
               );
             },
@@ -265,8 +269,9 @@ class _DashboardCardState extends State<DashboardCard>
         Text(
           '目标 ${widget.targetValue}${widget.config.unit}',
           style: const TextStyle(
-            fontSize: 10,
-            color: AppColors.textTertiary,
+            fontSize: 11,
+            color: AppColors.textSecondary,
+            fontWeight: FontWeight.w700,
           ),
         ),
       ],
@@ -301,10 +306,7 @@ class _AddDashboardCardButtonState extends State<AddDashboardCardButton>
     _scaleAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
   }
@@ -320,12 +322,12 @@ class _AddDashboardCardButtonState extends State<AddDashboardCardButton>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
-        return ScaleTransition(
-          scale: _scaleAnimation,
-          child: child,
-        );
+        return ScaleTransition(scale: _scaleAnimation, child: child);
       },
-      child: GestureDetector(
+      child: Semantics(
+        button: true,
+        label: '添加卡片',
+        child: GestureDetector(
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) {
           setState(() => _isPressed = false);
@@ -339,11 +341,11 @@ class _AddDashboardCardButtonState extends State<AddDashboardCardButton>
           child: Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.circular(AppRadius.md),
+              color: Colors.white.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(24),
               border: Border.all(
-                color: AppColors.border,
-                width: 1.5,
+                color: const Color(0xFFDCD4F7),
+                width: 1.2,
                 strokeAlign: BorderSide.strokeAlignInside,
               ),
             ),
@@ -357,7 +359,7 @@ class _AddDashboardCardButtonState extends State<AddDashboardCardButton>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.textHint,
+                      color: AppColors.primary.withValues(alpha: 0.55),
                       width: 1.5,
                       strokeAlign: BorderSide.strokeAlignInside,
                     ),
@@ -365,7 +367,7 @@ class _AddDashboardCardButtonState extends State<AddDashboardCardButton>
                   child: const Icon(
                     Icons.add_rounded,
                     size: 18,
-                    color: AppColors.textTertiary,
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -373,14 +375,15 @@ class _AddDashboardCardButtonState extends State<AddDashboardCardButton>
                   '添加',
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.textTertiary,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.primary,
                   ),
                 ),
               ],
             ),
           ),
         ),
+      ),
       ),
     );
   }

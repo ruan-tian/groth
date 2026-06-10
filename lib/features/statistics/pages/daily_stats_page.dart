@@ -115,8 +115,9 @@ class _DateNavigator extends ConsumerWidget {
         // 左箭头 — 前一天
         IconButton(
           onPressed: () {
-            ref.read(selectedDateProvider.notifier).state =
-                date.subtract(const Duration(days: 1));
+            ref.read(selectedDateProvider.notifier).state = date.subtract(
+              const Duration(days: 1),
+            );
           },
           icon: const Icon(Icons.chevron_left_rounded),
           tooltip: '前一天',
@@ -138,8 +139,9 @@ class _DateNavigator extends ConsumerWidget {
           onPressed: isToday
               ? null
               : () {
-                  ref.read(selectedDateProvider.notifier).state =
-                      date.add(const Duration(days: 1));
+                  ref.read(selectedDateProvider.notifier).state = date.add(
+                    const Duration(days: 1),
+                  );
                 },
           icon: const Icon(Icons.chevron_right_rounded),
           tooltip: '后一天',
@@ -280,13 +282,11 @@ class _StatCard extends StatelessWidget {
     required this.value,
     required this.color,
     required this.backgroundColor,
-    this.unit,
   });
 
   final IconData icon;
   final String label;
   final String value;
-  final String? unit;
   final Color color;
   final Color backgroundColor;
 
@@ -327,15 +327,6 @@ class _StatCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (unit != null) ...[
-                  const SizedBox(width: 2),
-                  Text(
-                    unit!,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: color.withValues(alpha: 0.7),
-                    ),
-                  ),
-                ],
               ],
             ),
 
@@ -382,9 +373,7 @@ class _DailySummary extends StatelessWidget {
       parts.add('任务完成 ${stats.taskCompleted}/${stats.taskTotal}');
     }
 
-    final summary = parts.isEmpty
-        ? '今天还没有记录，开始你的成长之旅吧！'
-        : parts.join(' · ');
+    final summary = parts.isEmpty ? '今天还没有记录，开始你的成长之旅吧！' : parts.join(' · ');
 
     return Card(
       child: Padding(
@@ -439,10 +428,7 @@ class _ErrorView extends StatelessWidget {
             const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.md),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('重试'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('重试')),
           ],
         ),
       ),

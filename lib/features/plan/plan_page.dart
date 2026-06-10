@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/design/design.dart';
-import '../../features/pet/models/pet_event.dart';
-import '../../features/pet/services/pet_event_bus.dart';
+import '../../core/domain/pet/pet_event.dart';
+import '../../core/services/pet_event_bus.dart';
 import '../study/study_page.dart';
 import '../fitness/fitness_page.dart';
 import '../journal/journal_page.dart';
@@ -24,6 +24,7 @@ class PlanPage extends ConsumerStatefulWidget {
 class _PlanPageState extends ConsumerState<PlanPage> {
   int _currentIndex = 0;
   late final PageController _pageController;
+  static const _paperBackground = Color(0xFFFFFBF6);
 
   final List<_PlanTab> _tabs = [
     const _PlanTab(label: '学习', color: AppColors.study),
@@ -64,7 +65,7 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: _paperBackground,
       body: Column(
         children: [
           _buildCapsuleNav(),
@@ -89,16 +90,29 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   /// 构建胶囊导航栏
   Widget _buildCapsuleNav() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.sm, AppSpacing.lg, 0),
-      color: AppColors.background,
+      padding: const EdgeInsets.fromLTRB(
+        AppSpacing.lg,
+        AppSpacing.md,
+        AppSpacing.lg,
+        AppSpacing.sm,
+      ),
+      color: _paperBackground,
       child: SafeArea(
         bottom: false,
         child: Container(
-          height: 40,
-          padding: const EdgeInsets.all(3),
+          height: 58,
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: AppColors.border.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(AppRadius.xxl),
+            color: const Color(0xFFFFF3E8),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFFFE5D3)),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF8A3D).withValues(alpha: 0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -117,12 +131,14 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(AppRadius.xxl),
+                        borderRadius: BorderRadius.circular(999),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 6,
-                            offset: const Offset(0, 1),
+                            color: _tabs[_currentIndex].color.withValues(
+                              alpha: 0.10,
+                            ),
+                            blurRadius: 14,
+                            offset: const Offset(0, 5),
                           ),
                         ],
                       ),
@@ -143,9 +159,14 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                             child: Text(
                               tab.label,
                               style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                                color: isSelected ? tab.color : AppColors.textSecondary,
+                                fontSize: 17,
+                                fontWeight: isSelected
+                                    ? FontWeight.w800
+                                    : FontWeight.w700,
+                                color: isSelected
+                                    ? tab.color
+                                    : const Color(0xFF8A7568),
+                                letterSpacing: 0,
                               ),
                             ),
                           ),

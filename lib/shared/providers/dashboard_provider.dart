@@ -7,6 +7,8 @@ import 'service_providers.dart';
 
 // Re-export canonical providers so existing imports of dashboard_provider.dart
 // continue to work without changes.
+// Legacy compatibility only — new code should import directly from
+// database_provider.dart, repository_providers.dart, or service_providers.dart.
 export 'database_provider.dart' show appDatabaseProvider, databaseProvider;
 export 'repository_providers.dart';
 export 'service_providers.dart';
@@ -75,58 +77,45 @@ class DashboardData {
 
 /// Dashboard 主 Provider：聚合今日概览、经验值、等级、周统计、饮食、睡眠、专注
 final dashboardProvider = FutureProvider<DashboardData>((ref) async {
-  final studyRepo = ref.watch(studyRepositoryProvider);
-  final fitnessRepo = ref.watch(fitnessRepositoryProvider);
-  final journalRepo = ref.watch(journalRepositoryProvider);
   final expRepo = ref.watch(expRepositoryProvider);
   final dietRepo = ref.watch(dietRepositoryProvider);
   final sleepRepo = ref.watch(sleepRepositoryProvider);
-  final focusRepo = ref.watch(focusRepositoryProvider);
   final expService = ref.watch(expServiceProvider);
   final statsService = ref.watch(statisticsServiceProvider);
 
   final now = DateTime.now();
 
-  // 并行获取今日各项数据
-  final results = await Future.wait([
-    studyRepo.getTotalStudyMinutesByDate(now),       // [0]
-    fitnessRepo.getTotalFitnessMinutesByDate(now),    // [1]
-    journalRepo.getJournalsByDate(now),               // [2]
-    expRepo.getTotalExp(),                            // [3]
-    statsService.getWeeklyStats(),                    // [4]
-    dietRepo.getDietCountByDate(now),                 // [5]
-    dietRepo.getAvgHealthScoreByDate(now),            // [6]
-    sleepRepo.getSleepRecordByDate(
-      DateTime(now.year, now.month, now.day - 1),
-    ),                                                // [7]
-    focusRepo.getTotalFocusMinutesByDate(now),        // [8]
+  // 周统计已经包含今天的学习、健身、日记、饮食次数、专注和任务数据，
+  // 首页直接复用，避免同一次刷新里重复执行多条今日查询。
+  final results = await Future.wait<Object?>([
+    statsService.getWeeklyStats(),
+    expRepo.getTotalExp(),
+    dietRepo.getAvgHealthScoreByDate(now),
+    sleepRepo.getSleepRecordByDate(DateTime(now.year, now.month, now.day - 1)),
   ]);
 
-  final todayStudyMinutes = results[0] as int;
-  final todayFitnessMinutes = results[1] as int;
-  final todayJournals = results[2] as List<dynamic>;
-  final totalExp = results[3] as int;
-  final weeklyStats = results[4] as List<DailyStats>;
-  final todayDietCount = results[5] as int;
-  final todayAvgHealthScore = results[6] as double?;
-  final lastNightSleep = results[7] as SleepRecord?;
-  final todayFocusMinutes = results[8] as int;
+  final weeklyStats = results[0] as List<DailyStats>;
+  final todayStats = weeklyStats.isNotEmpty
+      ? weeklyStats.last
+      : DailyStats.empty(now);
+  final totalExp = results[1] as int;
+  final todayAvgHealthScore = results[2] as double?;
+  final lastNightSleep = results[3] as SleepRecord?;
 
-  final currentLevel = expService.calculateLevel(totalExp);
-  final expProgress = expService.getExpProgress(totalExp, currentLevel);
+  final levelProgress = expService.calculateLevelProgress(totalExp);
 
   return DashboardData(
-    todayStudyMinutes: todayStudyMinutes,
-    todayFitnessMinutes: todayFitnessMinutes,
-    todayJournalCount: todayJournals.length,
+    todayStudyMinutes: todayStats.studyMinutes,
+    todayFitnessMinutes: todayStats.fitnessMinutes,
+    todayJournalCount: todayStats.journalCount,
     totalExp: totalExp,
-    currentLevel: currentLevel,
-    expProgress: expProgress,
+    currentLevel: levelProgress.level,
+    expProgress: levelProgress.expProgress,
     weeklyStats: weeklyStats,
-    todayDietCount: todayDietCount,
+    todayDietCount: todayStats.dietCount,
     todayAvgHealthScore: todayAvgHealthScore,
     lastNightSleepDuration: lastNightSleep?.durationMinutes,
     lastNightSleepQuality: lastNightSleep?.qualityLevel,
-    todayFocusMinutes: todayFocusMinutes,
+    todayFocusMinutes: todayStats.focusMinutes,
   );
 });

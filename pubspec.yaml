@@ -53,6 +53,7 @@ dependencies:
   markdown: ^7.3.0
   flutter_quill: ^11.0.0
   flutter_quill_extensions: ^11.0.0
+  crypto: ^3.0.6
   encrypt: ^5.0.3
   geolocator: ^13.0.0
   flutter_slidable: ^3.1.1
@@ -98,7 +99,6 @@ flutter:
     - assets/pet/travel/
     - assets/pet/concerts/
     - assets/audio/noise/
-    - assets/audio/bell/
     - assets/data/
     - assets/images/weather/cats/
     - assets/images/weather/backgrounds/
@@ -121,6 +121,11 @@ flutter:
     - assets/images/focus/lights/
     - assets/images/focus/particles/
     - assets/images/focus/status/
+    - assets/images/fitness_timer/
+    - assets/images/timer_common/
+    - assets/images/health_timer/water/
+    - assets/images/health_timer/sleep/
+    - assets/images/music/
     - assets/images/journal/backgrounds/
     - assets/images/journal/cats/
     - assets/images/journal/decor/
@@ -135,6 +140,16 @@ flutter:
     - assets/images/plan_modules/diet/timer/
     - assets/images/plan_modules/sleep/hero/
     - assets/images/plan_modules/sleep/timer/
+    - assets/images/plan_modules/study/premium/
+    - assets/images/plan_modules/fitness/premium/
+    - assets/images/plan_modules/journal/premium/
+    - assets/images/plan_modules/diet/premium/
+    - assets/images/plan_modules/sleep/premium/
+    - assets/images/plan_modules/study/premium_v2/
+    - assets/images/plan_modules/fitness/premium_v2/
+    - assets/images/plan_modules/journal/premium_v2/
+    - assets/images/plan_modules/diet/premium_v2/
+    - assets/images/plan_modules/sleep/premium_v2/
     - assets/journal/banners/
 
   # To add assets to your application, add an assets section, like this:

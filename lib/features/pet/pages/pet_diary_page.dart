@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/pet_diary_provider.dart';
 import '../../../shared/providers/service_providers.dart';
-import '../models/pet_diary_draft.dart';
+import '../../../core/domain/pet/pet_diary_draft.dart';
 import '../widgets/pet_diary_data_preview_sheet.dart';
 
 class PetDiaryPage extends ConsumerStatefulWidget {

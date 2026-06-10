@@ -65,10 +65,7 @@ class ExpRepository {
   /// 获取日期范围 [start, end] 内的全部经验日志。
   ///
   /// [start] 和 [end] 均会被归一化到当天的起止毫秒时间戳。
-  Future<List<GrowthExpLog>> getExpLogsByRange(
-    DateTime start,
-    DateTime end,
-  ) {
+  Future<List<GrowthExpLog>> getExpLogsByRange(DateTime start, DateTime end) {
     final startRange = _dayRange(start);
     final endRange = _dayRange(end);
     return (_db.select(_db.growthExpLogs)
@@ -91,16 +88,41 @@ class ExpRepository {
   /// 获取最近连续活跃天数（从昨天开始往前数，直到中断）
   Future<int> getConsecutiveActiveDays() async {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    int count = 0;
-    for (int i = 0; i < 365; i++) {
+    final start = DateTime(
+      yesterday.year,
+      yesterday.month,
+      yesterday.day,
+    ).subtract(const Duration(days: 364));
+    final end = DateTime(
+      yesterday.year,
+      yesterday.month,
+      yesterday.day,
+      23,
+      59,
+      59,
+      999,
+    );
+    final logs =
+        await (_db.select(_db.growthExpLogs)..where(
+              (t) =>
+                  t.createdAt.isBiggerOrEqualValue(
+                    start.millisecondsSinceEpoch,
+                  ) &
+                  t.createdAt.isSmallerOrEqualValue(end.millisecondsSinceEpoch),
+            ))
+            .get();
+    final activeDays = <String>{};
+    for (final log in logs) {
+      final date = DateTime.fromMillisecondsSinceEpoch(log.createdAt);
+      activeDays.add('${date.year}-${date.month}-${date.day}');
+    }
+
+    for (var i = 0; i < 365; i++) {
       final date = yesterday.subtract(Duration(days: i));
-      final total = await getTotalExpByDate(date);
-      if (total > 0) {
-        count++;
-      } else {
-        break;
+      if (!activeDays.contains('${date.year}-${date.month}-${date.day}')) {
+        return i;
       }
     }
-    return count;
+    return 365;
   }
 }

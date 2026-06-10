@@ -8,27 +8,33 @@ import '../../../../core/database/app_database.dart';
 import '../../../../shared/providers/dashboard_provider.dart';
 import '../../../../shared/providers/fitness_provider.dart';
 import '../../../../shared/widgets/common/common_widgets.dart';
-import '../../pet/models/pet_event.dart';
-import '../../pet/services/pet_event_bus.dart';
+import '../../../core/domain/pet/pet_event.dart';
+import '../../../core/services/pet_event_bus.dart';
 
 /// 添加健身记录页面
 class AddFitnessRecordPage extends ConsumerStatefulWidget {
-  const AddFitnessRecordPage({super.key, this.initialMode = 'simple'});
+  const AddFitnessRecordPage({
+    super.key,
+    this.initialMode = 'simple',
+    this.initialDurationMinutes,
+  });
 
   final String initialMode;
+  final int? initialDurationMinutes;
 
   @override
-  ConsumerState<AddFitnessRecordPage> createState() => _AddFitnessRecordPageState();
+  ConsumerState<AddFitnessRecordPage> createState() =>
+      _AddFitnessRecordPageState();
 }
 
 class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   late int _modeIndex;
-  
+
   // 简单模式字段
   final _bodyPartController = TextEditingController();
   final _durationController = TextEditingController();
   final _notesController = TextEditingController();
-  
+
   // 专业模式字段
   final _titleController = TextEditingController();
   DateTime _startTime = DateTime.now();
@@ -37,7 +43,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   int _fatigue = 3;
   final _feelingController = TextEditingController();
   final List<_ExerciseItem> _exercises = [];
-  
+
   bool _saving = false;
 
   // 预设部位
@@ -47,6 +53,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   void initState() {
     super.initState();
     _modeIndex = widget.initialMode == 'professional' ? 1 : 0;
+    final duration = widget.initialDurationMinutes;
+    if (duration != null && duration > 0) {
+      _durationController.text = '$duration';
+      _endTime = _startTime.add(Duration(minutes: duration));
+    }
   }
 
   @override
@@ -84,7 +95,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-                child: _modeIndex == 0 ? _buildSimpleForm() : _buildProfessionalForm(),
+                child: _modeIndex == 0
+                    ? _buildSimpleForm()
+                    : _buildProfessionalForm(),
               ),
             ),
 
@@ -236,9 +249,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     required IconData icon,
     TextInputType? keyboardType,
     int maxLines = 1,
+    TextInputAction? textInputAction,
   }) {
     return TextField(
       controller: controller,
+      textInputAction: textInputAction ?? (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
       keyboardType: keyboardType,
       maxLines: maxLines,
       decoration: InputDecoration(
@@ -297,10 +312,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // 左侧：部位选择
-        Expanded(
-          flex: 3,
-          child: _buildBodyPartSelector(),
-        ),
+        Expanded(flex: 3, child: _buildBodyPartSelector()),
         const SizedBox(width: AppSpacing.md),
         // 右侧：身体模型占位
         Expanded(
@@ -316,7 +328,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.accessibility_new, size: 48, color: AppColors.fitness),
+                  Icon(
+                    Icons.accessibility_new,
+                    size: 48,
+                    color: AppColors.fitness,
+                  ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     _bodyPartController.text.isEmpty
@@ -352,8 +368,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               if (picked != null) {
                 setState(() {
                   _startTime = DateTime(
-                    _startTime.year, _startTime.month, _startTime.day,
-                    picked.hour, picked.minute,
+                    _startTime.year,
+                    _startTime.month,
+                    _startTime.day,
+                    picked.hour,
+                    picked.minute,
                   );
                 });
               }
@@ -376,8 +395,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               if (picked != null) {
                 setState(() {
                   _endTime = DateTime(
-                    _endTime.year, _endTime.month, _endTime.day,
-                    picked.hour, picked.minute,
+                    _endTime.year,
+                    _endTime.month,
+                    _endTime.day,
+                    picked.hour,
+                    picked.minute,
                   );
                 });
               }
@@ -427,9 +449,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: AppColors.border),
         ),
-        child: Center(
-          child: Text('暂无动作', style: AppTextStyles.caption),
-        ),
+        child: Center(child: Text('暂无动作', style: AppTextStyles.caption)),
       );
     }
 
@@ -525,21 +545,58 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSheetField('动作名称', nameController, '例如：卧推', Icons.fitness_center),
+            _buildSheetField(
+              '动作名称',
+              nameController,
+              '例如：卧推',
+              Icons.fitness_center,
+            ),
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                Expanded(child: _buildSheetField('组数', setsController, '3', Icons.repeat, TextInputType.number)),
+                Expanded(
+                  child: _buildSheetField(
+                    '组数',
+                    setsController,
+                    '3',
+                    Icons.repeat,
+                    TextInputType.number,
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.md),
-                Expanded(child: _buildSheetField('次数', repsController, '12', Icons.tag, TextInputType.number)),
+                Expanded(
+                  child: _buildSheetField(
+                    '次数',
+                    repsController,
+                    '12',
+                    Icons.tag,
+                    TextInputType.number,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                Expanded(child: _buildSheetField('重量 (kg)', weightController, '60', Icons.monitor_weight, TextInputType.number)),
+                Expanded(
+                  child: _buildSheetField(
+                    '重量 (kg)',
+                    weightController,
+                    '60',
+                    Icons.monitor_weight,
+                    TextInputType.number,
+                  ),
+                ),
                 const SizedBox(width: AppSpacing.md),
-                Expanded(child: _buildSheetField('休息 (秒)', restController, '90', Icons.timer, TextInputType.number)),
+                Expanded(
+                  child: _buildSheetField(
+                    '休息 (秒)',
+                    restController,
+                    '90',
+                    Icons.timer,
+                    TextInputType.number,
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -549,13 +606,15 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               onTap: () {
                 if (nameController.text.isNotEmpty) {
                   setState(() {
-                    _exercises.add(_ExerciseItem(
-                      name: nameController.text.trim(),
-                      sets: int.tryParse(setsController.text) ?? 3,
-                      reps: int.tryParse(repsController.text) ?? 12,
-                      weight: double.tryParse(weightController.text),
-                      restSeconds: int.tryParse(restController.text),
-                    ));
+                    _exercises.add(
+                      _ExerciseItem(
+                        name: nameController.text.trim(),
+                        sets: int.tryParse(setsController.text) ?? 3,
+                        reps: int.tryParse(repsController.text) ?? 12,
+                        weight: double.tryParse(weightController.text),
+                        restSeconds: int.tryParse(restController.text),
+                      ),
+                    );
                   });
                   Navigator.pop(ctx);
                 }
@@ -581,6 +640,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         const SizedBox(height: 4),
         TextField(
           controller: controller,
+          textInputAction: TextInputAction.done,
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
@@ -603,24 +663,24 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     if (_modeIndex == 0) {
       // 简单模式验证
       if (_bodyPartController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('请选择训练部位')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('请选择训练部位')));
         return;
       }
       if (_durationController.text.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('请输入训练时长')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('请输入训练时长')));
         return;
       }
     }
 
     final duration = int.tryParse(_durationController.text) ?? 0;
     if (duration <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入有效的训练时长')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入有效的训练时长')));
       return;
     }
 
@@ -634,19 +694,25 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       final recordId = await repo.insertFitnessRecord(
         FitnessRecordsCompanion(
           mode: Value(_modeIndex == 0 ? 'simple' : 'professional'),
-          title: Value(_titleController.text.trim().isEmpty
-              ? null
-              : _titleController.text.trim()),
+          title: Value(
+            _titleController.text.trim().isEmpty
+                ? null
+                : _titleController.text.trim(),
+          ),
           bodyPart: Value(_bodyPartController.text.trim()),
           startTime: Value(_startTime.millisecondsSinceEpoch),
           endTime: Value(_endTime.millisecondsSinceEpoch),
           durationMinutes: Value(duration),
           fatigueLevel: Value(_modeIndex == 1 ? _fatigue : null),
           intensityLevel: Value(_modeIndex == 1 ? _intensity : null),
-          feeling: Value(_modeIndex == 1 ? _feelingController.text.trim() : null),
-          note: Value(_notesController.text.trim().isEmpty
-              ? null
-              : _notesController.text.trim()),
+          feeling: Value(
+            _modeIndex == 1 ? _feelingController.text.trim() : null,
+          ),
+          note: Value(
+            _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+          ),
           createdAt: Value(now.millisecondsSinceEpoch),
           updatedAt: Value(now.millisecondsSinceEpoch),
         ),
@@ -675,7 +741,8 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         durationMinutes: duration,
         intensityLevel: _modeIndex == 1 ? _intensity : 0,
         exerciseCount: _exercises.length,
-        hasFeeling: _modeIndex == 1 && _feelingController.text.trim().isNotEmpty,
+        hasFeeling:
+            _modeIndex == 1 && _feelingController.text.trim().isNotEmpty,
       );
 
       // 更新经验值
@@ -698,10 +765,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       final newTotal = oldTotal + exp;
       final newLevel = expService.calculateLevel(newTotal);
       if (newLevel > oldLevel) {
-        PetEventBus.instance.emit(PetEvent.levelUp(
-          oldLevel: oldLevel,
-          newLevel: newLevel,
-        ));
+        PetEventBus.instance.emit(
+          PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
+        );
       }
 
       // 刷新数据
@@ -716,22 +782,24 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       if (mounted) {
         // 发送宠物事件
         final eventId = 'fitness_${DateTime.now().millisecondsSinceEpoch}';
-        PetEventBus.instance.emit(PetEvent.moduleCompleted(
-          eventId: eventId,
-          type: PetEventType.fitnessCompleted,
-          module: 'fitness',
-        ));
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已保存，获得 $exp EXP')),
+        PetEventBus.instance.emit(
+          PetEvent.moduleCompleted(
+            eventId: eventId,
+            type: PetEventType.fitnessCompleted,
+            module: 'fitness',
+          ),
         );
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('已保存，获得 $exp EXP')));
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

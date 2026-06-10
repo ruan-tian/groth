@@ -1,4 +1,4 @@
-﻿import '../models/pet_ai_result.dart';
+﻿import '../../../core/domain/pet/pet_ai_result.dart';
 
 /// AI 结果解析器
 ///

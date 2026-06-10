@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/settings_provider.dart';
-import '../models/pet_ai_result.dart';
+import '../../../core/domain/pet/pet_ai_result.dart';
 import '../services/pet_ai_privacy_guard.dart';
 
 /// AI 数据预览弹窗

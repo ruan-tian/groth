@@ -5,10 +5,11 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/repository_providers.dart' show sleepRepositoryProvider;
+import '../../../shared/providers/repository_providers.dart' show sleepRepositoryProvider, expRepositoryProvider;
+import '../../../shared/providers/service_providers.dart' show expServiceProvider;
 import '../../../shared/providers/sleep_provider.dart';
-import '../../pet/models/pet_event.dart';
-import '../../pet/services/pet_event_bus.dart';
+import '../../../core/domain/pet/pet_event.dart';
+import '../../../core/services/pet_event_bus.dart';
 
 /// 添加睡眠记录页面
 class AddSleepRecordPage extends ConsumerStatefulWidget {
@@ -117,7 +118,35 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
       );
 
       final repo = ref.read(sleepRepositoryProvider);
-      await repo.insertSleepRecord(companion);
+      final recordId = await repo.insertSleepRecord(companion);
+
+      // 计算并写入睡眠经验值
+      final expService = ref.read(expServiceProvider);
+      final expRepo = ref.read(expRepositoryProvider);
+      final oldTotal = await expRepo.getTotalExp();
+      final oldLevel = expService.calculateLevel(oldTotal);
+      final sleepExp = expService.calculateSleepExp(
+        durationMinutes: duration,
+        qualityLevel: _qualityLevel,
+        targetMinutes: 480,
+      );
+      if (sleepExp > 0) {
+        await expRepo.insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'sleep',
+            sourceId: recordId,
+            expValue: sleepExp,
+            reason: '睡眠: $duration分钟 质量$_qualityLevel',
+            createdAt: now.millisecondsSinceEpoch,
+          ),
+        );
+        final newLevel = expService.calculateLevel(oldTotal + sleepExp);
+        if (newLevel > oldLevel) {
+          PetEventBus.instance.emit(
+            PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
+          );
+        }
+      }
 
       if (mounted) {
         ref.invalidate(lastNightSleepRecordProvider);
@@ -297,6 +326,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
             const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: _dreamController,
+              textInputAction: TextInputAction.newline,
               maxLines: 2,
               decoration: const InputDecoration(
                 hintText: '记录梦境内容（选填）',
@@ -310,6 +340,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
             const SizedBox(height: AppSpacing.sm),
             TextFormField(
               controller: _noteController,
+              textInputAction: TextInputAction.newline,
               maxLines: 2,
               decoration: const InputDecoration(
                 hintText: '其他信息（选填）',

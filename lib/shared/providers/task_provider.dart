@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/repositories/task_repository.dart';
-import 'dashboard_provider.dart';
+import 'database_provider.dart';
 
 // =============================================================================
 // Repository Providers
@@ -53,13 +53,13 @@ final todayIncompleteTaskCountProvider = FutureProvider<int>((ref) async {
 /// 所有任务 Provider（用于历史页面）
 final allTasksProvider = FutureProvider<List<DailyTask>>((ref) async {
   final db = ref.watch(databaseProvider);
-  final tasks = await (db.select(db.dailyTasks)
-        ..orderBy([
-          (t) => OrderingTerm.desc(t.taskDate),
-          (t) => OrderingTerm.asc(t.startHour),
-          (t) => OrderingTerm.asc(t.startMinute),
-        ]))
-      .get();
+  final tasks =
+      await (db.select(db.dailyTasks)..orderBy([
+            (t) => OrderingTerm.desc(t.taskDate),
+            (t) => OrderingTerm.asc(t.startHour),
+            (t) => OrderingTerm.asc(t.startMinute),
+          ]))
+          .get();
   return tasks;
 });
 
@@ -70,7 +70,9 @@ final taskTemplatesProvider = FutureProvider<List<TaskTemplate>>((ref) async {
 });
 
 /// 常用任务模板 Provider（Top 5）
-final popularTemplatesProvider = FutureProvider<List<TaskTemplate>>((ref) async {
+final popularTemplatesProvider = FutureProvider<List<TaskTemplate>>((
+  ref,
+) async {
   final repo = ref.watch(taskTemplateRepositoryProvider);
   return repo.getPopularTemplates(limit: 5);
 });

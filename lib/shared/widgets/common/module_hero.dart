@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../features/pet/utils/pet_assets.dart';
+import '../../../core/constants/pet_assets.dart';
 
 import '../../../app/design/design.dart';
 import 'growth_card.dart';
@@ -177,7 +177,10 @@ class ModuleHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      button: onTap != null,
+      label: title,
+      child: GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -208,7 +211,10 @@ class ModuleHeroCard extends StatelessWidget {
                   ),
                 ),
                 if (onTargetTap != null)
-                  GestureDetector(
+                  Semantics(
+                    button: true,
+                    label: '设置目标',
+                    child: GestureDetector(
                     onTap: onTargetTap,
                     child: Container(
                       width: 32,
@@ -218,6 +224,7 @@ class ModuleHeroCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                       ),
                       child: Icon(Icons.settings_rounded, size: 16, color: color),
+                    ),
                     ),
                   ),
               ],
@@ -307,6 +314,7 @@ class ModuleHeroCard extends StatelessWidget {
           ],
         ),
       ),
+      ),
     );
   }
 }
@@ -380,7 +388,10 @@ class ModuleRecordsCard extends StatelessWidget {
           ...children,
           if (_hasExpand && onToggleExpand != null) ...[
             const SizedBox(height: AppSpacing.sm),
-            GestureDetector(
+            Semantics(
+              button: true,
+              label: isExpanded ? '收起' : '查看更多',
+              child: GestureDetector(
               onTap: onToggleExpand,
               child: Container(
                 width: double.infinity,
@@ -410,6 +421,7 @@ class ModuleRecordsCard extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
               ),
             ),
           ],

@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart' show rootBundle;
 
-import 'pet_assets.dart';
+import '../../../core/constants/pet_assets.dart';
 
 /// 宠物资源完整性验证工具
 ///

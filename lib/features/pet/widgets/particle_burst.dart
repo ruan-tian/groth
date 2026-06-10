@@ -133,8 +133,8 @@ class _Particle {
 /// - **hearts** – drawn via [Path] (two cubic Bézier arcs).
 /// - **stars**   – drawn via [Path] (five-pointed star outline).
 /// - **sparkles** – drawn via [Path] (diamond / rotated square).
-class ParticleBurstPainter extends CustomPainter {
-  ParticleBurstPainter({
+class _ParticleBurstPainter extends CustomPainter {
+  _ParticleBurstPainter({
     required this.particles,
     required this.progress,
     required this.type,
@@ -267,7 +267,7 @@ class ParticleBurstPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant ParticleBurstPainter oldDelegate) {
+  bool shouldRepaint(covariant _ParticleBurstPainter oldDelegate) {
     // Always repaint — particle positions change every frame.
     return oldDelegate.progress != progress ||
         oldDelegate.type != type ||
@@ -414,7 +414,7 @@ class _ParticleBurstState extends State<ParticleBurst>
     return IgnorePointer(
       child: CustomPaint(
         size: Size.infinite,
-        painter: ParticleBurstPainter(
+        painter: _ParticleBurstPainter(
           particles: _particles,
           progress: _controller.value,
           type: _activeType,

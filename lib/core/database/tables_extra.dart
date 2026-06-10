@@ -12,8 +12,8 @@ class FocusSessions extends Table {
   IntColumn get durationMinutes => integer()();
   BoolColumn get completed => boolean().withDefault(const Constant(false))();
   TextColumn get soundType => text().nullable()();
-  IntColumn get roundIndex => integer().nullable()();      // 第几轮 (1-based)
-  TextColumn get sessionGroupId => text().nullable()();    // cycle UUID，串联多轮
+  IntColumn get roundIndex => integer().nullable()(); // 第几轮 (1-based)
+  TextColumn get sessionGroupId => text().nullable()(); // cycle UUID，串联多轮
   IntColumn get createdAt => integer()(); // timestamp ms
 }
 
@@ -77,7 +77,8 @@ class DailyTasks extends Table {
   IntColumn get endHour => integer()(); // 结束时间（小时 0-23）
   IntColumn get endMinute => integer()(); // 结束时间（分钟 0-59）
   BoolColumn get isCompleted => boolean().withDefault(const Constant(false))();
-  IntColumn get priority => integer().withDefault(const Constant(0))(); // 0=无, 1=低, 2=中, 3=高
+  IntColumn get priority =>
+      integer().withDefault(const Constant(0))(); // 0=无, 1=低, 2=中, 3=高
   IntColumn get templateId => integer().nullable()(); // 关联模板 ID
   IntColumn get sortOrder => integer().withDefault(const Constant(0))();
   IntColumn get createdAt => integer()(); // timestamp ms
@@ -108,4 +109,19 @@ class TaskTemplates extends Table {
   IntColumn get usageCount => integer().withDefault(const Constant(0))();
   IntColumn get createdAt => integer()(); // timestamp ms
   IntColumn get updatedAt => integer()(); // timestamp ms
+}
+
+@DataClassName('MusicTrack')
+class MusicTracks extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get title => text()();
+  TextColumn get artist => text().nullable()();
+  TextColumn get filePath => text()();
+  TextColumn get originalPath => text().nullable()();
+  IntColumn get durationMs => integer().nullable()();
+  TextColumn get coverAsset => text().nullable()();
+  BoolColumn get isFavorite => boolean().withDefault(const Constant(false))();
+  IntColumn get lastPlayedAt => integer().nullable()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
 }

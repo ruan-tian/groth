@@ -109,6 +109,7 @@ class FocusCycleState {
     this.phaseEndAt,
     this.remainingSeconds = 0,
     this.isRunning = false,
+    this.phaseCompleted = false,
     this.autoStartNextRound = true,
     this.focusSeconds = 25 * 60,
     this.shortBreakSeconds = 5 * 60,
@@ -127,6 +128,7 @@ class FocusCycleState {
   final DateTime? phaseEndAt;
   final int remainingSeconds;
   final bool isRunning;
+  final bool phaseCompleted;
   final bool autoStartNextRound;
   final int focusSeconds;
   final int shortBreakSeconds;
@@ -162,6 +164,7 @@ class FocusCycleState {
     DateTime? phaseEndAt,
     int? remainingSeconds,
     bool? isRunning,
+    bool? phaseCompleted,
     bool? autoStartNextRound,
     int? focusSeconds,
     int? shortBreakSeconds,
@@ -180,6 +183,7 @@ class FocusCycleState {
       phaseEndAt: phaseEndAt ?? this.phaseEndAt,
       remainingSeconds: remainingSeconds ?? this.remainingSeconds,
       isRunning: isRunning ?? this.isRunning,
+      phaseCompleted: phaseCompleted ?? this.phaseCompleted,
       autoStartNextRound: autoStartNextRound ?? this.autoStartNextRound,
       focusSeconds: focusSeconds ?? this.focusSeconds,
       shortBreakSeconds: shortBreakSeconds ?? this.shortBreakSeconds,
@@ -203,6 +207,7 @@ class FocusCycleState {
     'phaseEndAt': phaseEndAt?.millisecondsSinceEpoch,
     'remainingSeconds': remainingSeconds,
     'isRunning': isRunning,
+    'phaseCompleted': phaseCompleted,
     'autoStartNextRound': autoStartNextRound,
     'focusSeconds': focusSeconds,
     'shortBreakSeconds': shortBreakSeconds,
@@ -228,6 +233,7 @@ class FocusCycleState {
           : null,
       remainingSeconds: json['remainingSeconds'] as int? ?? 0,
       isRunning: json['isRunning'] as bool? ?? false,
+      phaseCompleted: json['phaseCompleted'] as bool? ?? false,
       autoStartNextRound: json['autoStartNextRound'] as bool? ?? true,
       focusSeconds: json['focusSeconds'] as int? ?? 25 * 60,
       shortBreakSeconds: json['shortBreakSeconds'] as int? ?? 5 * 60,
@@ -290,6 +296,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
 
   /// 暂停
   void pause() {
+    if (!state.isRunning) return;
     _tickTimer?.cancel();
     state = state.copyWith(isRunning: false);
     _persist();
@@ -297,10 +304,12 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
 
   /// 继续
   void resume() {
+    if (state.phaseCompleted || state.remainingSeconds <= 0) return;
     final now = DateTime.now();
     final newEnd = now.add(Duration(seconds: state.remainingSeconds));
     state = state.copyWith(
       isRunning: true,
+      phaseCompleted: false,
       phaseStartAt: now,
       phaseEndAt: newEnd,
     );
@@ -343,6 +352,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
           phaseEndAt: now.add(Duration(seconds: s.longBreakSeconds)),
           remainingSeconds: s.longBreakSeconds,
           isRunning: true,
+          phaseCompleted: false,
         );
         _startTick();
         _persist();
@@ -356,6 +366,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
           phaseEndAt: now.add(Duration(seconds: s.shortBreakSeconds)),
           remainingSeconds: s.shortBreakSeconds,
           isRunning: true,
+          phaseCompleted: false,
         );
         _startTick();
         _persist();
@@ -373,6 +384,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
         phaseEndAt: now.add(Duration(seconds: s.focusSeconds)),
         remainingSeconds: s.focusSeconds,
         isRunning: true,
+        phaseCompleted: false,
       );
       _startTick();
       _persist();
@@ -382,7 +394,11 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
     if (s.phase == FocusPhase.longBreak) {
       // 长休息结束 → cycle 完成
       _tickTimer?.cancel();
-      state = s.copyWith(isRunning: false);
+      state = s.copyWith(
+        remainingSeconds: 0,
+        isRunning: false,
+        phaseCompleted: false,
+      );
       _clearPersist();
       return true;
     }
@@ -415,7 +431,13 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
 
     if (remaining <= 0) {
       // 阶段结束
-      state = state.copyWith(remainingSeconds: 0);
+      _tickTimer?.cancel();
+      state = state.copyWith(
+        remainingSeconds: 0,
+        isRunning: false,
+        phaseCompleted: true,
+      );
+      _persist();
       // 不在这里自动推进，由 focus_session_page 控制
       // （需要先保存记录、发宠物事件等）
     } else {
@@ -428,9 +450,18 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
     if (state.phaseEndAt == null) return;
     final remaining = state.phaseEndAt!.difference(DateTime.now()).inSeconds;
     if (remaining <= 0) {
-      state = state.copyWith(remainingSeconds: 0);
+      _tickTimer?.cancel();
+      state = state.copyWith(
+        remainingSeconds: 0,
+        isRunning: false,
+        phaseCompleted: true,
+      );
+      _persist();
     } else {
-      state = state.copyWith(remainingSeconds: remaining);
+      state = state.copyWith(
+        remainingSeconds: remaining,
+        phaseCompleted: false,
+      );
     }
   }
 

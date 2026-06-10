@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:growth_os/features/pet/utils/pet_assets.dart';
+import 'package:growth_os/core/constants/pet_assets.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +19,7 @@ void main() {
       PetAssets.commonEmpty,
       PetCenterAssets.bubbleTail,
       'assets/pet/empty/empty_task.png',
-      'assets/pet/concerts/参加ChrisJames演唱会.png',
+      'assets/pet/concerts/参加ChrisJames演唱会.webp',
     ];
 
     for (final asset in assets) {

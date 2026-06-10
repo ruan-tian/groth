@@ -97,7 +97,10 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
                   ),
                 ),
                 const Spacer(),
-                GestureDetector(
+                Semantics(
+                  button: true,
+                  label: '关闭弹窗',
+                  child: GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: Container(
                     width: 32,
@@ -111,6 +114,7 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
                       size: 18,
                       color: AppColors.textSecondary,
                     ),
+                  ),
                   ),
                 ),
               ],
@@ -261,6 +265,7 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
                   const SizedBox(height: AppSpacing.sm),
                   TextField(
                     controller: _notesController,
+                    textInputAction: TextInputAction.newline,
                     maxLines: 3,
                     decoration: InputDecoration(
                       hintText: '记录一下睡眠情况或梦境...',
@@ -290,7 +295,10 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
   }
 
   Widget _buildDateField() {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择日期',
+      child: GestureDetector(
       onTap: () async {
         final picked = await showDatePicker(
           context: context,
@@ -320,12 +328,16 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
           ],
         ),
       ),
+      ),
     );
   }
 
   Widget _buildTimeField(
       String label, TimeOfDay time, ValueChanged<TimeOfDay> onChanged) {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择$label',
+      child: GestureDetector(
       onTap: () async {
         final picked =
             await showTimePicker(context: context, initialTime: time);
@@ -350,6 +362,7 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
             ),
           ],
         ),
+      ),
       ),
     );
   }
@@ -419,7 +432,11 @@ class _QualityChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: label,
+      selected: selected,
+      child: GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
@@ -441,6 +458,7 @@ class _QualityChip extends StatelessWidget {
             color: selected ? AppColors.sleep : AppColors.textSecondary,
           ),
         ),
+      ),
       ),
     );
   }

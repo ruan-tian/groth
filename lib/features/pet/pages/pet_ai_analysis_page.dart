@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/pet_scene_provider.dart';
-import '../models/pet_ai_result.dart';
-import '../models/pet_scene_model.dart';
+import '../../../core/domain/pet/pet_ai_result.dart';
+import '../../../core/domain/pet/pet_scene_model.dart';
 import '../services/pet_ai_service.dart';
-import '../utils/pet_assets.dart';
+import '../../../core/constants/pet_assets.dart';
 import '../utils/pet_data_collector.dart';
 import '../widgets/pet_ai_data_preview_sheet.dart';
 import '../widgets/pet_ai_result_sheet.dart';

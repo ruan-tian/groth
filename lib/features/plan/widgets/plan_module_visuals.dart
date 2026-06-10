@@ -1,31 +1,246 @@
-import 'package:flutter/material.dart';
+import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui' as ui;
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../../../app/design/design.dart';
+import '../../../shared/providers/pet_ai_result_provider.dart';
+import '../../../shared/providers/pet_orchestrator_provider.dart';
+import '../../../shared/providers/pet_projection_provider.dart';
+import '../../../core/domain/pet/pet_scene_model.dart';
+import '../../../core/constants/pet_assets.dart';
 import '../utils/plan_module_assets.dart';
 
-class PlanModuleVisualHeader extends StatefulWidget {
+class PlanModuleVisualHeader extends ConsumerStatefulWidget {
   const PlanModuleVisualHeader({
     super.key,
     required this.module,
     required this.color,
-    this.height = 168,
+    this.height,
   });
 
   final PlanModuleType module;
   final Color color;
-  final double height;
+  final double? height;
 
   @override
-  State<PlanModuleVisualHeader> createState() => _PlanModuleVisualHeaderState();
+  ConsumerState<PlanModuleVisualHeader> createState() =>
+      _PlanModuleVisualHeaderState();
 }
 
-class _PlanModuleVisualHeaderState extends State<PlanModuleVisualHeader> {
-  late final PageController _controller;
+class _PlanModuleVisualHeaderState
+    extends ConsumerState<PlanModuleVisualHeader> {
+  final _random = math.Random();
+  Timer? _timer;
   int _index = 0;
 
   @override
   void initState() {
     super.initState();
-    _controller = PageController(viewportFraction: 0.94);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _registerAmbient();
+    });
+    _scheduleNextRotation();
+  }
+
+  @override
+  void didUpdateWidget(covariant PlanModuleVisualHeader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.module != widget.module) {
+      _index = 0;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        _registerAmbient();
+      });
+      _scheduleNextRotation();
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleNextRotation() {
+    _timer?.cancel();
+    // Match the pet scene idle rhythm: slow, random, and system-driven.
+    final seconds = 25 + _random.nextInt(21);
+    _timer = Timer(Duration(seconds: seconds), () {
+      if (!mounted) return;
+      final states = _petModule.idleStates;
+      if (states.length <= 1) return;
+      var next = _random.nextInt(states.length);
+      if (next == _index) next = (next + 1) % states.length;
+      setState(() => _index = next);
+      _registerAmbient();
+      _scheduleNextRotation();
+    });
+  }
+
+  void _registerAmbient() {
+    final definition = _petModule.definition;
+    final idleStates = definition.idleStates;
+    final state = idleStates[_index.clamp(0, idleStates.length - 1).toInt()];
+    ref
+        .read(petOrchestratorProvider.notifier)
+        .setModuleAmbient(
+          _petModule.name,
+          state.assetPath,
+          definition.ambientMessages,
+        );
+  }
+
+  PetModuleType get _petModule => widget.module.petModuleType;
+
+  @override
+  Widget build(BuildContext context) {
+    final module = _petModule;
+    final definition = module.definition;
+    final view = ref.watch(modulePetViewProvider(module.name));
+    final latestAnalysis = ref.watch(latestPetAnalysisProvider(module.name));
+    final idleStates = definition.idleStates;
+    final fallbackImage =
+        idleStates[_index.clamp(0, idleStates.length - 1).toInt()].assetPath;
+    final imagePath = fallbackImage;
+    final message =
+        latestAnalysis.valueOrNull?.petMessage ??
+        view?.bubbleText ??
+        definition.welcomeMessage;
+
+    return Semantics(
+      button: true,
+      label: '打开宠物中心',
+      child: GestureDetector(
+        onTap: () => context.push('/pet-center'),
+        child: Container(
+          height: widget.height ?? 132,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(26),
+            border: Border.all(color: widget.color.withValues(alpha: 0.16)),
+            boxShadow: [
+              BoxShadow(
+                color: widget.color.withValues(alpha: 0.12),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  PlanModuleAssets.premiumV2PetBanner(widget.module),
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Image.asset(
+                    PlanModuleAssets.premiumPetBanner(widget.module),
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.white,
+                            _parseColor(definition.softColorHex),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(18, 11, 18, 11),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 128,
+                        child: _FloatingPetImage(
+                          imagePath: imagePath,
+                          color: widget.color,
+                          fallbackImagePath: definition.defaultImagePath,
+                          size: 112,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: _PetSpeechBubble(
+                            moduleLabel: definition.label,
+                            message: message,
+                            color: widget.color,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Color _parseColor(String hex) {
+    return Color(int.parse(hex.replaceFirst('#', '0xFF')));
+  }
+}
+
+class _FloatingPetImage extends StatefulWidget {
+  const _FloatingPetImage({
+    required this.imagePath,
+    required this.color,
+    required this.fallbackImagePath,
+    this.size = 104,
+  });
+
+  final String imagePath;
+  final Color color;
+  final String fallbackImagePath;
+  final double size;
+
+  @override
+  State<_FloatingPetImage> createState() => _FloatingPetImageState();
+}
+
+class _FloatingPetImageState extends State<_FloatingPetImage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _float;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+    _float = Tween<double>(
+      begin: -3,
+      end: 3,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    if (reduceMotion) {
+      _controller.stop();
+      _controller.value = 0;
+    } else if (!_controller.isAnimating) {
+      _controller.repeat(reverse: true);
+    }
   }
 
   @override
@@ -36,46 +251,255 @@ class _PlanModuleVisualHeaderState extends State<PlanModuleVisualHeader> {
 
   @override
   Widget build(BuildContext context) {
-    final images = PlanModuleAssets.heroImages(widget.module);
-    return Column(
-      children: [
-        SizedBox(
-          height: widget.height,
-          child: PageView.builder(
-            controller: _controller,
-            itemCount: images.length,
-            onPageChanged: (index) => setState(() => _index = index),
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: _ImageShell(
-                  image: images[index],
-                  color: widget.color,
-                  aspectRatio: 1200 / 520,
+    return AnimatedBuilder(
+      animation: _float,
+      builder: (context, child) {
+        return Transform.translate(
+          offset: Offset(0, _float.value),
+          child: child,
+        );
+      },
+      child: SizedBox(
+        width: widget.size,
+        height: widget.size,
+        child: Stack(
+          alignment: Alignment.center,
+          clipBehavior: Clip.none,
+          children: [
+            Positioned(
+              bottom: widget.size * 0.04,
+              child: Container(
+                width: widget.size * 0.78,
+                height: widget.size * 0.18,
+                decoration: BoxDecoration(
+                  color: widget.color.withValues(alpha: 0.10),
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: widget.color.withValues(alpha: 0.10),
+                      blurRadius: 14,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-              );
-            },
+              ),
+            ),
+            Container(
+              width: widget.size * 0.98,
+              height: widget.size * 0.98,
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.96),
+                borderRadius: BorderRadius.circular(widget.size * 0.30),
+                border: Border.all(color: Colors.white, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.white.withValues(alpha: 0.90),
+                    blurRadius: 16,
+                    spreadRadius: 4,
+                  ),
+                  BoxShadow(
+                    color: widget.color.withValues(alpha: 0.10),
+                    blurRadius: 18,
+                    offset: const Offset(0, 7),
+                  ),
+                ],
+              ),
+            ),
+            ImageFiltered(
+              imageFilter: ui.ImageFilter.blur(sigmaX: 2.2, sigmaY: 2.2),
+              child: Transform.scale(
+                scale: 1.08,
+                child: ColorFiltered(
+                  colorFilter: const ColorFilter.mode(
+                    Colors.white,
+                    BlendMode.srcIn,
+                  ),
+                  child: _PetAssetImage(
+                    imagePath: widget.imagePath,
+                    fallbackImagePath: widget.fallbackImagePath,
+                    size: widget.size * 0.90,
+                  ),
+                ),
+              ),
+            ),
+            _PetAssetImage(
+              imagePath: widget.imagePath,
+              fallbackImagePath: widget.fallbackImagePath,
+              size: widget.size * 0.88,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PetAssetImage extends StatelessWidget {
+  const _PetAssetImage({
+    required this.imagePath,
+    required this.fallbackImagePath,
+    required this.size,
+  });
+
+  final String imagePath;
+  final String fallbackImagePath;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      imagePath,
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (_, _, _) => Image.asset(
+        fallbackImagePath,
+        width: size,
+        height: size,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.medium,
+        errorBuilder: (_, _, _) => Image.asset(
+          PetAssets.commonFallback,
+          width: size,
+          height: size,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.medium,
+        ),
+      ),
+    );
+  }
+}
+
+class _PetSpeechBubble extends StatelessWidget {
+  const _PetSpeechBubble({
+    required this.moduleLabel,
+    required this.message,
+    required this.color,
+  });
+
+  final String moduleLabel;
+  final String message;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 272),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.93),
+            borderRadius: BorderRadius.circular(28),
+            border: Border.all(color: Colors.white),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.10),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Text(
+                    '甜甜',
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      moduleLabel,
+                      style: TextStyle(
+                        fontSize: 10,
+                        height: 1,
+                        fontWeight: FontWeight.w700,
+                        color: color,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 5),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 260),
+                child: Text(
+                  message,
+                  key: ValueKey(message),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(images.length, (index) {
-            final selected = index == _index;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              width: selected ? 18 : 6,
-              height: 6,
-              margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                color: selected ? widget.color : widget.color.withValues(alpha: 0.22),
-                borderRadius: BorderRadius.circular(999),
-              ),
-            );
-          }),
+        Positioned(
+          left: -8,
+          top: 48,
+          child: CustomPaint(
+            size: const Size(9, 14),
+            painter: _BubbleTailPainter(),
+          ),
         ),
       ],
     );
+  }
+}
+
+class _BubbleTailPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withValues(alpha: 0.93)
+      ..style = PaintingStyle.fill;
+    final path = Path()
+      ..moveTo(size.width, 0)
+      ..lineTo(0, size.height / 2)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+extension PlanModulePetModuleX on PlanModuleType {
+  PetModuleType get petModuleType {
+    return switch (this) {
+      PlanModuleType.study => PetModuleType.study,
+      PlanModuleType.fitness => PetModuleType.fitness,
+      PlanModuleType.journal => PetModuleType.journal,
+      PlanModuleType.diet => PetModuleType.diet,
+      PlanModuleType.sleep => PetModuleType.sleep,
+    };
   }
 }
 
@@ -85,26 +509,131 @@ class PlanModuleActionImageCard extends StatelessWidget {
     required this.module,
     required this.color,
     required this.onTap,
-    this.height = 136,
+    this.title,
+    this.caption,
+    this.buttonLabel,
+    this.height,
   });
 
   final PlanModuleType module;
   final Color color;
   final VoidCallback onTap;
-  final double height;
+  final String? title;
+  final String? caption;
+  final String? buttonLabel;
+  final double? height;
 
   @override
   Widget build(BuildContext context) {
     return Semantics(
       button: true,
+      label: title ?? PlanModuleAssets.actionTitle(module),
       child: GestureDetector(
         onTap: onTap,
         child: SizedBox(
-          height: height,
-          child: _ImageShell(
-            image: PlanModuleAssets.timerImage(module),
-            color: color,
-            aspectRatio: 1200 / 520,
+          height: height ?? 160,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isCompact = constraints.maxWidth < 360;
+
+              return DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: color.withValues(alpha: 0.18)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.12),
+                      blurRadius: 20,
+                      offset: const Offset(0, 9),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.asset(
+                        PlanModuleAssets.premiumV2HeroScene(module),
+                        fit: BoxFit.cover,
+                        alignment: Alignment.bottomCenter,
+                        errorBuilder: (_, _, _) => Image.asset(
+                          PlanModuleAssets.premiumHeroScene(module),
+                          fit: BoxFit.cover,
+                          alignment: Alignment.bottomCenter,
+                          errorBuilder: (_, _, _) => DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  color.withValues(alpha: 0.12),
+                                  Colors.white,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // 文字区渐变遮罩 — 左侧重白 → 右侧透明
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.82),
+                              Colors.white.withValues(alpha: 0.55),
+                              Colors.transparent,
+                            ],
+                            stops: const [0, 0.45, 1],
+                          ),
+                        ),
+                      ),
+                      // 底部微弱渐变 — 增加层次感
+                      DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.bottomCenter,
+                            end: Alignment.topCenter,
+                            colors: [
+                              Colors.white.withValues(alpha: 0.25),
+                              Colors.transparent,
+                            ],
+                            stops: const [0, 0.5],
+                          ),
+                        ),
+                      ),
+                      Positioned.fill(
+                        child: Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            isCompact ? 20 : 24,
+                            18,
+                            isCompact ? 100 : 140,
+                            16,
+                          ),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _ActionCardCopy(
+                                  module: module,
+                                  color: color,
+                                  compact: isCompact,
+                                  title: title,
+                                  caption: caption,
+                                  buttonLabel: buttonLabel,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -112,44 +641,373 @@ class PlanModuleActionImageCard extends StatelessWidget {
   }
 }
 
-class _ImageShell extends StatelessWidget {
-  const _ImageShell({
-    required this.image,
+class PlanModuleRecordEntryCard extends StatelessWidget {
+  const PlanModuleRecordEntryCard({
+    super.key,
     required this.color,
-    required this.aspectRatio,
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.buttonLabel,
+    required this.onTap,
   });
 
-  final String image;
   final Color color;
-  final double aspectRatio;
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String buttonLabel;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: color.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.12),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(23),
-        child: Image.asset(
-          image,
-          width: double.infinity,
-          height: double.infinity,
-          fit: BoxFit.cover,
-          errorBuilder: (_, _, _) => Container(
-            color: color.withValues(alpha: 0.1),
-            child: Icon(Icons.image_not_supported_outlined, color: color),
+    return Semantics(
+      button: true,
+      label: title,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+          decoration: _premiumCardDecoration(color),
+          child: Row(
+            children: [
+              _SoftIconTile(color: color, icon: icon, size: 58),
+              const SizedBox(width: 18),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        height: 1.12,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1.2,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.textSecondary,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(999),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.18),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 19,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      buttonLabel,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        height: 1,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+}
+
+class PlanModuleWeeklyCard extends StatelessWidget {
+  const PlanModuleWeeklyCard({
+    super.key,
+    required this.color,
+    required this.icon,
+    required this.title,
+    required this.count,
+    required this.goal,
+    required this.unit,
+    required this.onTap,
+    this.onLongPress,
+  });
+
+  final Color color;
+  final IconData icon;
+  final String title;
+  final int? count;
+  final int goal;
+  final String unit;
+  final VoidCallback onTap;
+  final VoidCallback? onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final safeCount = count ?? 0;
+    final weekdays = const ['一', '二', '三', '四', '五', '六', '日'];
+    return Semantics(
+      button: true,
+      label: title,
+      child: GestureDetector(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
+          decoration: _premiumCardDecoration(color),
+          child: Column(
+            children: [
+              Row(
+                children: [
+                  _SoftIconTile(color: color, icon: icon, size: 48),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        height: 1.1,
+                        fontWeight: FontWeight.w900,
+                        color: AppColors.textPrimary,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                  Text(
+                    count == null ? '--' : '$safeCount/$goal $unit',
+                    style: TextStyle(
+                      fontSize: 19,
+                      height: 1,
+                      fontWeight: FontWeight.w900,
+                      color: color,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textTertiary,
+                    size: 24,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 22),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(7, (index) {
+                  final completed = index < safeCount;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 180),
+                    width: 39,
+                    height: 39,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: completed
+                          ? color.withValues(alpha: 0.16)
+                          : color.withValues(alpha: 0.08),
+                      border: Border.all(
+                        color: completed
+                            ? color.withValues(alpha: 0.22)
+                            : color.withValues(alpha: 0.08),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        weekdays[index],
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: completed
+                              ? FontWeight.w900
+                              : FontWeight.w700,
+                          color: completed ? color : AppColors.textSecondary,
+                          letterSpacing: 0,
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SoftIconTile extends StatelessWidget {
+  const _SoftIconTile({
+    required this.color,
+    required this.icon,
+    required this.size,
+  });
+
+  final Color color;
+  final IconData icon;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(size * 0.30),
+      ),
+      child: Icon(icon, color: color, size: size * 0.46),
+    );
+  }
+}
+
+BoxDecoration _premiumCardDecoration(Color color) {
+  return BoxDecoration(
+    color: Colors.white.withValues(alpha: 0.96),
+    borderRadius: BorderRadius.circular(26),
+    border: Border.all(color: color.withValues(alpha: 0.13)),
+    boxShadow: [
+      BoxShadow(
+        color: color.withValues(alpha: 0.08),
+        blurRadius: 18,
+        offset: const Offset(0, 8),
+      ),
+    ],
+  );
+}
+
+class _ActionCardCopy extends StatelessWidget {
+  const _ActionCardCopy({
+    required this.module,
+    required this.color,
+    required this.compact,
+    this.title,
+    this.caption,
+    this.buttonLabel,
+  });
+
+  final PlanModuleType module;
+  final Color color;
+  final bool compact;
+  final String? title;
+  final String? caption;
+  final String? buttonLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title ?? PlanModuleAssets.actionTitle(module),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: const Color(0xFF5B3525),
+            fontSize: compact ? 20 : 24,
+            height: 1.12,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 0,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          caption ?? PlanModuleAssets.actionCaption(module),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(
+            color: const Color(0xFF7B5A49),
+            fontSize: compact ? 12 : 13,
+            height: 1.35,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0,
+          ),
+        ),
+        const Spacer(),
+        Container(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 18 : 24,
+            vertical: compact ? 11 : 13,
+          ),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.94),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: Colors.white),
+            boxShadow: [
+              BoxShadow(
+                color: color.withValues(alpha: 0.16),
+                blurRadius: 14,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_actionIcon(module), color: color, size: compact ? 18 : 21),
+              SizedBox(width: compact ? 8 : 10),
+              Flexible(
+                child: Text(
+                  buttonLabel ?? PlanModuleAssets.actionButtonLabel(module),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: compact ? 14 : 17,
+                    height: 1,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  IconData _actionIcon(PlanModuleType module) {
+    return switch (module) {
+      PlanModuleType.study => Icons.timer_rounded,
+      PlanModuleType.fitness => Icons.fitness_center_rounded,
+      PlanModuleType.journal => Icons.edit_note_rounded,
+      PlanModuleType.diet => Icons.water_drop_rounded,
+      PlanModuleType.sleep => Icons.bedtime_rounded,
+    };
   }
 }

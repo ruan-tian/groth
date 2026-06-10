@@ -61,67 +61,71 @@ class StatsChart extends StatelessWidget {
     // 将 EXP 归一化到时长范围内（1 EXP ≈ 1 分钟的比例）
     final expScale = expMax > 0 ? scale.maxY / expMax : 1.0;
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── 标题 ──
-            Row(
-              children: [
-                Icon(
-                  Icons.bar_chart_rounded,
-                  size: 20,
-                  color: colorScheme.primary,
-                ),
-                const SizedBox(width: AppSpacing.sm),
-                Text('数据趋势', style: theme.textTheme.titleMedium),
-                const Spacer(),
-                // ── 单位提示 ──
-                Text(
-                  scale.useHours ? '单位：小时' : '单位：分钟',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: colorScheme.onSurfaceVariant,
+    return RepaintBoundary(
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── 标题 ──
+              Row(
+                children: [
+                  Icon(
+                    Icons.bar_chart_rounded,
+                    size: 20,
+                    color: colorScheme.primary,
                   ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Text(
-                  '${data.length} 天',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: colorScheme.onSurfaceVariant,
+                  const SizedBox(width: AppSpacing.sm),
+                  Text('数据趋势', style: theme.textTheme.titleMedium),
+                  const Spacer(),
+                  // ── 单位提示 ──
+                  Text(
+                    scale.useHours ? '单位：小时' : '单位：分钟',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-
-            // ── 图例 ──
-            _Legend(
-              showStudy: showStudy,
-              showFitness: showFitness,
-              showExp: showExp,
-            ),
-            const SizedBox(height: AppSpacing.sm),
-
-            // ── 折线图 ──
-            ClipRect(
-              child: SizedBox(
-                height: height,
-                child: data.isEmpty
-                    ? Center(
-                        child: Text(
-                          '暂无数据',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      )
-                    : LineChart(_buildChartData(colorScheme, scale, expScale)),
+                  const SizedBox(width: AppSpacing.md),
+                  Text(
+                    '${data.length} 天',
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              const SizedBox(height: AppSpacing.md),
+
+              // ── 图例 ──
+              _Legend(
+                showStudy: showStudy,
+                showFitness: showFitness,
+                showExp: showExp,
+              ),
+              const SizedBox(height: AppSpacing.sm),
+
+              // ── 折线图 ──
+              ClipRect(
+                child: SizedBox(
+                  height: height,
+                  child: data.isEmpty
+                      ? Center(
+                          child: Text(
+                            '暂无数据',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      : LineChart(
+                          _buildChartData(colorScheme, scale, expScale),
+                        ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -190,9 +194,7 @@ class StatsChart extends StatelessWidget {
             },
           ),
         ),
-        topTitles: const AxisTitles(
-          sideTitles: SideTitles(showTitles: false),
-        ),
+        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
         rightTitles: const AxisTitles(
           sideTitles: SideTitles(showTitles: false),
         ),
@@ -246,26 +248,36 @@ class StatsChart extends StatelessWidget {
     final lines = <LineChartBarData>[];
 
     if (showStudy) {
-      lines.add(_buildLine(
-        values: data.map((d) => scale.convertMinutes(d.studyMinutes)).toList(),
-        color: AppColors.study,
-        surfaceColor: colorScheme.surface,
-      ));
+      lines.add(
+        _buildLine(
+          values: data
+              .map((d) => scale.convertMinutes(d.studyMinutes))
+              .toList(),
+          color: AppColors.study,
+          surfaceColor: colorScheme.surface,
+        ),
+      );
     }
     if (showFitness) {
-      lines.add(_buildLine(
-        values: data.map((d) => scale.convertMinutes(d.fitnessMinutes)).toList(),
-        color: AppColors.fitness,
-        surfaceColor: colorScheme.surface,
-      ));
+      lines.add(
+        _buildLine(
+          values: data
+              .map((d) => scale.convertMinutes(d.fitnessMinutes))
+              .toList(),
+          color: AppColors.fitness,
+          surfaceColor: colorScheme.surface,
+        ),
+      );
     }
     if (showExp) {
       // EXP 归一化到时长范围
-      lines.add(_buildLine(
-        values: data.map((d) => d.expGained * expScale).toList(),
-        color: AppColors.primary,
-        surfaceColor: colorScheme.surface,
-      ));
+      lines.add(
+        _buildLine(
+          values: data.map((d) => d.expGained * expScale).toList(),
+          color: AppColors.primary,
+          surfaceColor: colorScheme.surface,
+        ),
+      );
     }
 
     return lines;
@@ -301,10 +313,7 @@ class StatsChart extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            color.withValues(alpha: 0.2),
-            color.withValues(alpha: 0.0),
-          ],
+          colors: [color.withValues(alpha: 0.2), color.withValues(alpha: 0.0)],
         ),
       ),
     );
@@ -382,11 +391,7 @@ class _Legend extends StatelessWidget {
 }
 
 class _LegendItem extends StatelessWidget {
-  const _LegendItem({
-    required this.color,
-    required this.label,
-    this.textStyle,
-  });
+  const _LegendItem({required this.color, required this.label, this.textStyle});
 
   final Color color;
   final String label;

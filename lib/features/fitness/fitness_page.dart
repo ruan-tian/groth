@@ -13,11 +13,11 @@ import '../../shared/providers/fitness_provider.dart';
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
-import '../../shared/widgets/common/recent_record_tile.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
-import 'package:go_router/go_router.dart';
-import '../pet/models/pet_scene_model.dart';
-import '../pet/widgets/pet_scene_banner.dart';
+import '../plan/utils/plan_module_assets.dart';
+import '../plan/widgets/plan_module_visuals.dart';
+
+part 'widgets/fitness_page_widgets.dart';
 
 /// 健身首页
 class FitnessPage extends ConsumerStatefulWidget {
@@ -58,7 +58,8 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
               actions: [
                 IconButton(
                   tooltip: '身体数据',
-                  onPressed: () => context.push('/plan/fitness/body-metric/detail'),
+                  onPressed: () =>
+                      context.push('/plan/fitness/body-metric/detail'),
                   icon: const Icon(Icons.monitor_weight_outlined),
                 ),
               ],
@@ -80,10 +81,15 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
               if (widget.capsuleNav != null) widget.capsuleNav!,
 
               // ── 1. 提示条 ──
-              PetSceneBanner(
-                module: PetModuleType.fitness,
-                hasRecords: (todayMinutes.whenOrNull(data: (m) => m) ?? 0) > 0,
-                onTap: () => context.push('/pet-center'),
+              PlanModuleVisualHeader(
+                module: PlanModuleType.fitness,
+                color: AppColors.fitness,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              PlanModuleActionImageCard(
+                module: PlanModuleType.fitness,
+                color: AppColors.fitness,
+                onTap: () => context.push('/plan/fitness/timer'),
               ),
               const SizedBox(height: AppSpacing.lg),
 
@@ -113,7 +119,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                   if (records.isEmpty) {
                     return _buildEmptyState();
                   }
-                  final displayCount = _isRecordsExpanded ? records.length : (records.length > 5 ? 5 : records.length);
+                  final displayCount = _isRecordsExpanded
+                      ? records.length
+                      : (records.length > 5 ? 5 : records.length);
                   return ModuleRecordsCard(
                     title: '最近训练',
                     action: '查看全部',
@@ -122,10 +130,15 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                     recordCount: records.length,
                     maxVisible: 5,
                     isExpanded: _isRecordsExpanded,
-                    onToggleExpand: () => setState(() => _isRecordsExpanded = !_isRecordsExpanded),
+                    onToggleExpand: () => setState(
+                      () => _isRecordsExpanded = !_isRecordsExpanded,
+                    ),
                     children: records.take(displayCount).map((r) {
-                      final dt = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
-                      final dateStr = '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                      final dt = DateTime.fromMillisecondsSinceEpoch(
+                        r.createdAt,
+                      );
+                      final dateStr =
+                          '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
                       return SwipeDeleteTile(
                         key: ValueKey('fitness_${r.id}'),
                         onConfirmDelete: () async {
@@ -138,10 +151,13 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                           iconColor: Colors.white,
                           iconBackgroundColor: AppColors.fitness,
                           title: r.title ?? r.bodyPart,
-                          subtitle: '${r.bodyPart} · ${r.durationMinutes}分钟 · $dateStr',
+                          subtitle:
+                              '${r.bodyPart} · ${r.durationMinutes}分钟 · $dateStr',
                           primaryBadge: '+${r.expGained} EXP',
                           primaryBadgeColor: AppColors.fitness,
-                          secondaryBadge: '${r.mode == 'professional' ? '专业' : '简单'}',
+                          secondaryBadge: r.mode == 'professional'
+                              ? '专业'
+                              : '简单',
                           secondaryBadgeColor: AppColors.textSecondary,
                           onTap: () => _showFitnessRecordDetail(context, r),
                         ),
@@ -149,8 +165,24 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                     }).toList(),
                   );
                 },
-                loading: () => Container(padding: const EdgeInsets.all(AppSpacing.xl), decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(AppRadius.lg)), child: const Center(child: CircularProgressIndicator())),
-                error: (e, _) => Container(padding: const EdgeInsets.all(AppSpacing.xl), decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(AppRadius.lg)), child: Center(child: Text('加载失败: $e', style: AppTextStyles.caption))),
+                loading: () => Container(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+                error: (e, _) => Container(
+                  padding: const EdgeInsets.all(AppSpacing.xl),
+                  decoration: BoxDecoration(
+                    color: AppColors.card,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: Center(
+                    child: Text('加载失败: $e', style: AppTextStyles.caption),
+                  ),
+                ),
               ),
             ],
           ),
@@ -172,174 +204,79 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
   ) {
     return todayMinutes.when(
       data: (minutes) {
-        final progress = fitnessGoal.target > 0 ? (minutes / fitnessGoal.target).clamp(0.0, 1.0) : 0.0;
+        final progress = fitnessGoal.target > 0
+            ? (minutes / fitnessGoal.target).clamp(0.0, 1.0)
+            : 0.0;
         final calories = (minutes * 7.5).toInt();
         final hasData = minutes > 0;
         return ModuleHeroCard(
           icon: Icons.fitness_center_rounded,
           title: hasData ? '今日训练' : '开始今日训练',
-          primaryValue: hasData ? '${minutes}分钟' : '--',
+          primaryValue: hasData ? '$minutes分钟' : '--',
           primaryLabel: hasData ? '今日已训练' : '还没有训练记录',
           color: AppColors.fitness,
           progress: hasData ? progress : null,
           targetLabel: hasData ? '目标 ${fitnessGoal.target}分钟' : null,
-          metrics: hasData ? [
-            ModuleMetricChip(icon: Icons.local_fire_department_outlined, value: '$calories', label: 'kcal'),
-            ModuleMetricChip(icon: Icons.track_changes_outlined, value: '${(progress * 100).toInt()}%', label: '达成率'),
-            ModuleMetricChip(icon: Icons.timer_outlined, value: '${fitnessGoal.target}', label: '目标分钟'),
-          ] : [],
+          metrics: hasData
+              ? [
+                  ModuleMetricChip(
+                    icon: Icons.local_fire_department_outlined,
+                    value: '$calories',
+                    label: 'kcal',
+                  ),
+                  ModuleMetricChip(
+                    icon: Icons.track_changes_outlined,
+                    value: '${(progress * 100).toInt()}%',
+                    label: '达成率',
+                  ),
+                  ModuleMetricChip(
+                    icon: Icons.timer_outlined,
+                    value: '${fitnessGoal.target}',
+                    label: '目标分钟',
+                  ),
+                ]
+              : [],
           onTargetTap: () => _showGoalEditSheet(context, fitnessGoal),
         );
       },
       loading: () => Container(
         height: 200,
-        decoration: BoxDecoration(color: AppColors.card, borderRadius: BorderRadius.circular(AppRadius.lg), border: Border.all(color: AppColors.border)),
+        decoration: BoxDecoration(
+          color: AppColors.card,
+          borderRadius: BorderRadius.circular(AppRadius.lg),
+          border: Border.all(color: AppColors.border),
+        ),
         child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
     );
   }
 
   // ─── 记录训练入口 ────────────────────────────────────────────────────────
 
   Widget _buildRecordTrainingEntry(BuildContext context) {
-    return GestureDetector(
+    return PlanModuleRecordEntryCard(
+      color: AppColors.fitness,
+      icon: Icons.edit_note_rounded,
+      title: '记录训练',
+      subtitle: '手动添加训练记录',
+      buttonLabel: '添加',
       onTap: () => context.push('/plan/fitness/add'),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.fitness.withValues(alpha: 0.2)),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.fitness.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: AppColors.softOrange,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(Icons.edit_note_rounded, color: AppColors.fitness, size: 26),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '记录训练',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '手动添加训练记录',
-                    style: AppTextStyles.caption,
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.fitness,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add_rounded, color: Colors.white, size: 18),
-                  SizedBox(width: 4),
-                  Text(
-                    '添加',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
   // ─── 本周训练卡片 ────────────────────────────────────────────────────────
 
   Widget _buildWeeklyTrainingCard(AsyncValue<int> weeklyCount, int weeklyGoal) {
-    return GestureDetector(
+    return PlanModuleWeeklyCard(
+      color: AppColors.fitness,
+      icon: Icons.calendar_month_rounded,
+      title: '本周训练',
+      count: weeklyCount.whenOrNull(data: (count) => count),
+      goal: weeklyGoal,
+      unit: '次',
       onTap: () => context.push('/plan/fitness/weekly'),
       onLongPress: () => _showWeeklyGoalEditSheet(weeklyGoal),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.softOrange,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(Icons.calendar_today, size: 15, color: AppColors.fitness),
-                ),
-                const SizedBox(width: 10),
-                Text('本周训练', style: AppTextStyles.cardTitle),
-                const Spacer(),
-                weeklyCount.when(
-                  data: (count) => Text(
-                    '$count/$weeklyGoal 次',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.fitness,
-                    ),
-                  ),
-                  loading: () => Text('--', style: AppTextStyles.caption),
-                  error: (_, _) => Text('--', style: AppTextStyles.caption),
-                ),
-                const SizedBox(width: 6),
-                Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: List.generate(7, (index) {
-                final isCompleted =
-                    index < (weeklyCount.whenOrNull(data: (c) => c) ?? 0);
-                return _DayDot(
-                  label: ['一', '二', '三', '四', '五', '六', '日'][index],
-                  completed: isCompleted,
-                );
-              }),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -366,8 +303,14 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
 
   // ─── 今日进度卡片 ────────────────────────────────────────────────────────
 
-  Widget _buildTodayProgress(AsyncValue<int> todayMinutes, DailyGoal fitnessGoal) {
-    return GestureDetector(
+  Widget _buildTodayProgress(
+    AsyncValue<int> todayMinutes,
+    DailyGoal fitnessGoal,
+  ) {
+    return Semantics(
+      button: true,
+      label: '今日进度，点击编辑目标',
+      child: GestureDetector(
       onTap: () => _showGoalEditSheet(context, fitnessGoal),
       child: Container(
         padding: const EdgeInsets.all(16),
@@ -388,12 +331,20 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                     color: AppColors.softOrange,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Icon(Icons.trending_up, size: 15, color: AppColors.fitness),
+                  child: Icon(
+                    Icons.trending_up,
+                    size: 15,
+                    color: AppColors.fitness,
+                  ),
                 ),
                 const SizedBox(width: 10),
                 Text('今日进度', style: AppTextStyles.cardTitle),
                 const Spacer(),
-                Icon(Icons.edit_outlined, color: AppColors.textTertiary, size: 18),
+                Icon(
+                  Icons.edit_outlined,
+                  color: AppColors.textTertiary,
+                  size: 18,
+                ),
               ],
             ),
             const SizedBox(height: AppSpacing.md),
@@ -428,6 +379,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
           ],
         ),
       ),
+    ),
     );
   }
 
@@ -436,7 +388,10 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
   Widget _buildWeightCurveCard() {
     final chartData = ref.watch(fitnessChartDataProvider(_selectedRange));
 
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '健身趋势，查看详情',
+      child: GestureDetector(
       onTap: () => context.push('/plan/fitness/body-metric/detail'),
       child: Container(
         decoration: BoxDecoration(
@@ -465,12 +420,13 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                     ),
                   ),
                   const SizedBox(width: 10),
-                  Text(
-                    '健身趋势',
-                    style: AppTextStyles.cardTitle,
-                  ),
+                  Text('健身趋势', style: AppTextStyles.cardTitle),
                   const Spacer(),
-                  Icon(Icons.chevron_right, color: AppColors.textTertiary, size: 20),
+                  Icon(
+                    Icons.chevron_right,
+                    color: AppColors.textTertiary,
+                    size: 20,
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
@@ -511,6 +467,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
           ),
         ),
       ),
+    ),
     );
   }
 
@@ -529,10 +486,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         const SizedBox(width: 4),
         Text(
           label,
-          style: TextStyle(
-            fontSize: 11,
-            color: AppColors.textTertiary,
-          ),
+          style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
         ),
       ],
     );
@@ -556,7 +510,11 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         mainAxisSize: MainAxisSize.min,
         children: ranges.map((r) {
           final isSelected = _selectedRange == r['days'];
-          return GestureDetector(
+          return Semantics(
+            button: true,
+            label: '显示${r['label']}数据',
+            selected: isSelected,
+            child: GestureDetector(
             onTap: () => setState(() => _selectedRange = r['days'] as int),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
@@ -574,6 +532,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 ),
               ),
             ),
+          ),
           );
         }).toList(),
       ),
@@ -674,7 +633,10 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                         ),
                         Text(
                           '分钟/天',
-                          style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppColors.textSecondary,
+                          ),
                         ),
                       ],
                     ),
@@ -823,7 +785,11 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.notes_rounded, size: 16, color: AppColors.fitness),
+                    Icon(
+                      Icons.notes_rounded,
+                      size: 16,
+                      color: AppColors.fitness,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       '备注',
@@ -859,7 +825,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         primaryMetricValue: '${record.durationMinutes} 分钟',
         detailItems: detailItems,
         accentColor: AppColors.fitness,
-        extraCard: noteCard,
+        extraCards: noteCard,
       ),
     );
   }
@@ -899,472 +865,17 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         ref.invalidate(weeklyFitnessCountProvider);
         ref.invalidate(dashboardProvider);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已删除')));
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
         }
       }
     }
-  }
-}
-
-// ─── 私有 Widget ────────────────────────────────────────────────────────────
-
-class _DayDot extends StatelessWidget {
-  const _DayDot({required this.label, required this.completed});
-
-  final String label;
-  final bool completed;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Container(
-          width: 32,
-          height: 32,
-          decoration: BoxDecoration(
-            color: completed ? AppColors.fitness : AppColors.softOrange,
-            shape: BoxShape.circle,
-          ),
-          child: Center(
-            child: completed
-                ? const Icon(Icons.check, color: Colors.white, size: 16)
-                : Text(
-                    label,
-                    style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
-                  ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ProgressBar extends StatelessWidget {
-  const _ProgressBar({
-    required this.label,
-    required this.current,
-    required this.target,
-    required this.color,
-    required this.progress,
-  });
-
-  final String label;
-  final int current;
-  final int target;
-  final Color color;
-  final double progress;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label, style: AppTextStyles.caption),
-            Text(
-              '$current / $target',
-              style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xs),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          child: LinearProgressIndicator(
-            value: progress,
-            minHeight: 8,
-            backgroundColor: color.withValues(alpha: 0.12),
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-
-
-class _ModeOption extends StatelessWidget {
-  const _ModeOption({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.softOrange,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(icon, color: AppColors.fitness),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(subtitle, style: AppTextStyles.caption),
-                    ],
-                  ),
-                ),
-                Icon(Icons.chevron_right, color: AppColors.textTertiary),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── 健身趋势图表（锻炼时间 + 消耗 + 体重）──────────────────────────────────
-
-class _FitnessTrendChart extends StatefulWidget {
-  const _FitnessTrendChart({required this.data});
-
-  final List<FitnessChartData> data;
-
-  @override
-  State<_FitnessTrendChart> createState() => _FitnessTrendChartState();
-}
-
-class _FitnessTrendChartState extends State<_FitnessTrendChart> {
-  int? _touchedIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    return LineChart(
-      _buildChartData(),
-      duration: const Duration(milliseconds: 200),
-    );
-  }
-
-  LineChartData _buildChartData() {
-    final data = widget.data;
-
-    // 使用 DurationChartScale 计算健身时长的缩放
-    final minutesList = data.map((d) => d.minutes).toList();
-    final scale = buildDurationChartScale(minutesList);
-
-    // 计算卡路里和体重的归一化范围
-    final maxCalories = data.map((d) => d.calories).fold<int>(0, (a, b) => a > b ? a : b);
-    final weights = data.where((d) => d.weight != null).map((d) => d.weight!).toList();
-    final maxWeight = weights.isNotEmpty
-        ? weights.reduce((a, b) => a > b ? a : b)
-        : 0.0;
-    final minWeight = weights.isNotEmpty
-        ? weights.reduce((a, b) => a < b ? a : b)
-        : 0.0;
-
-    // 卡路里和体重归一化到 scale.maxY 范围内
-    final caloriesTop = maxCalories > 0 ? maxCalories.toDouble() : 500.0;
-    final weightRange = maxWeight - minWeight;
-    final weightPadding = weightRange < 0.5 ? 1.0 : weightRange * 0.15;
-    final weightMin = (minWeight - weightPadding).floorToDouble();
-    final weightMax = (maxWeight + weightPadding).ceilToDouble();
-
-    FlSpot minutesSpot(FitnessChartData d, int i) =>
-        FlSpot(i.toDouble(), scale.convertMinutes(d.minutes));
-
-    FlSpot caloriesSpot(FitnessChartData d, int i) =>
-        FlSpot(i.toDouble(), caloriesTop > 0 ? (d.calories / caloriesTop) * scale.maxY : 0);
-
-    FlSpot weightSpot(FitnessChartData d, int i) {
-      if (d.weight == null || weightMax == weightMin) {
-        return FlSpot(i.toDouble(), scale.maxY * 0.5);
-      }
-      return FlSpot(i.toDouble(), ((d.weight! - weightMin) / (weightMax - weightMin)) * scale.maxY);
-    }
-
-    final minutesSpots = <FlSpot>[];
-    final caloriesSpots = <FlSpot>[];
-    final weightSpots = <FlSpot>[];
-
-    for (int i = 0; i < data.length; i++) {
-      minutesSpots.add(minutesSpot(data[i], i));
-      caloriesSpots.add(caloriesSpot(data[i], i));
-      if (data[i].weight != null) {
-        weightSpots.add(weightSpot(data[i], i));
-      }
-    }
-
-    return LineChartData(
-      minY: 0,
-      maxY: scale.maxY,
-      // ── 触摸交互 ──
-      lineTouchData: LineTouchData(
-        touchSpotThreshold: 20,
-        handleBuiltInTouches: true,
-        touchCallback: (event, response) {
-          setState(() {
-            if (event is FlPanEndEvent || event is FlLongPressEnd) {
-              _touchedIndex = null;
-            } else if (response?.lineBarSpots != null &&
-                response!.lineBarSpots!.isNotEmpty) {
-              _touchedIndex = response.lineBarSpots!.first.x.toInt();
-            }
-          });
-        },
-        touchTooltipData: LineTouchTooltipData(
-          tooltipRoundedRadius: 10,
-          tooltipPadding:
-              const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          maxContentWidth: 200,
-          getTooltipColor: (_) => Colors.white.withValues(alpha: 0.95),
-          fitInsideHorizontally: true,
-          fitInsideVertically: true,
-          getTooltipItems: (touchedSpots) {
-            if (touchedSpots.isEmpty) return [];
-            final idx = touchedSpots.first.x.toInt();
-            if (idx < 0 || idx >= data.length) return [];
-            final d = data[idx];
-            final dateStr = '${d.date.month}/${d.date.day}';
-
-            final items = <LineTooltipItem>[];
-
-            // 锻炼时间
-            final minutesSpot = touchedSpots.where((s) => s.barIndex == 0).firstOrNull;
-            if (minutesSpot != null) {
-              items.add(LineTooltipItem(
-                '$dateStr 锻炼 ${scale.formatTooltipValue(d.minutes.toDouble())}',
-                TextStyle(
-                  color: AppColors.fitness,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ));
-            }
-
-            // 消耗
-            final caloriesSpot = touchedSpots.where((s) => s.barIndex == 1).firstOrNull;
-            if (caloriesSpot != null) {
-              items.add(LineTooltipItem(
-                '$dateStr 消耗 ${d.calories}kcal',
-                TextStyle(
-                  color: AppColors.warning,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ));
-            }
-
-            // 体重
-            final wSpot = touchedSpots.where((s) => s.barIndex == 2).firstOrNull;
-            if (wSpot != null && d.weight != null) {
-              items.add(LineTooltipItem(
-                '$dateStr 体重 ${d.weight!.toStringAsFixed(1)}kg',
-                TextStyle(
-                  color: AppColors.textTertiary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                ),
-              ));
-            }
-
-            return items;
-          },
-        ),
-      ),
-      lineBarsData: [
-        // 锻炼时间线
-        LineChartBarData(
-          spots: minutesSpots,
-          isCurved: true,
-          preventCurveOverShooting: true,
-          color: AppColors.fitness,
-          barWidth: 2,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, barData, index) =>
-                FlDotCirclePainter(
-              radius: _touchedIndex == index ? 5 : 3,
-              color: AppColors.fitness,
-              strokeWidth: 1.5,
-              strokeColor: Colors.white,
-            ),
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            color: AppColors.fitness.withValues(alpha: 0.06),
-          ),
-        ),
-        // 消耗线
-        LineChartBarData(
-          spots: caloriesSpots,
-          isCurved: true,
-          preventCurveOverShooting: true,
-          color: AppColors.warning,
-          barWidth: 2,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, barData, index) =>
-                FlDotCirclePainter(
-              radius: _touchedIndex == index ? 5 : 3,
-              color: AppColors.warning,
-              strokeWidth: 1.5,
-              strokeColor: Colors.white,
-            ),
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            color: AppColors.warning.withValues(alpha: 0.06),
-          ),
-        ),
-        // 体重线
-        if (weightSpots.isNotEmpty)
-          LineChartBarData(
-            spots: weightSpots,
-            isCurved: true,
-            preventCurveOverShooting: true,
-            color: AppColors.textTertiary,
-            barWidth: 2,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(
-                radius: _touchedIndex == index ? 5 : 3,
-                color: AppColors.textTertiary,
-                strokeWidth: 1.5,
-                strokeColor: Colors.white,
-              ),
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              color: AppColors.textTertiary.withValues(alpha: 0.06),
-            ),
-          ),
-      ],
-      titlesData: FlTitlesData(
-        // 左 Y 轴：分钟
-        leftTitles: AxisTitles(
-          axisNameWidget: Text(
-            scale.useHours ? '小时' : '分钟',
-            style: const TextStyle(fontSize: 9, color: AppColors.fitness),
-          ),
-          axisNameSize: 20,
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 38,
-            interval: scale.interval,
-            getTitlesWidget: (value, meta) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Text(
-                  scale.formatAxisLabel(value),
-                  style: const TextStyle(fontSize: 9, color: AppColors.fitness),
-                  textAlign: TextAlign.right,
-                ),
-              );
-            },
-          ),
-        ),
-        // 右 Y 轴：kcal
-        rightTitles: AxisTitles(
-          axisNameWidget: const Text(
-            'kcal',
-            style: TextStyle(fontSize: 9, color: AppColors.warning),
-          ),
-          axisNameSize: 20,
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 38,
-            interval: scale.interval,
-            getTitlesWidget: (value, meta) {
-              final kcal = (value / scale.maxY * caloriesTop).round();
-              return Text(
-                '$kcal',
-                style: const TextStyle(fontSize: 9, color: AppColors.warning),
-                textAlign: TextAlign.left,
-              );
-            },
-          ),
-        ),
-        topTitles:
-            const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        // X 轴：日期标签
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 30,
-            interval: 1,
-            getTitlesWidget: (value, meta) {
-              final idx = value.toInt();
-              if (idx < 0 || idx >= data.length) {
-                return const SizedBox.shrink();
-              }
-              final d = data[idx];
-              return Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${d.date.month}/${d.date.day}',
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: AppColors.textTertiary,
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-      gridData: FlGridData(
-        show: true,
-        drawVerticalLine: false,
-        horizontalInterval: scale.interval,
-        getDrawingHorizontalLine: (value) => FlLine(
-          color: AppColors.border.withValues(alpha: 0.5),
-          strokeWidth: 0.5,
-        ),
-      ),
-      borderData: FlBorderData(show: false),
-    );
   }
 }

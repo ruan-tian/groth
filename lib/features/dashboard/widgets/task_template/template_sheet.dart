@@ -382,6 +382,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
           // 模板名称
           TextField(
             controller: _nameController,
+            textInputAction: TextInputAction.next,
             decoration: const InputDecoration(
               labelText: '模板名称 *',
               hintText: '例如：晨间学习',
@@ -394,6 +395,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
           // 模板描述
           TextField(
             controller: _descriptionController,
+            textInputAction: TextInputAction.newline,
             decoration: const InputDecoration(
               labelText: '描述（可选）',
               hintText: '例如：每天早上学习新技能',

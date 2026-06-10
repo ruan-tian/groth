@@ -4,10 +4,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
+import '../../../core/constants/pet_assets.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/pet_provider.dart';
 import '../../../shared/providers/dashboard_provider.dart';
-import '../../pet/models/pet_ai_result.dart';
+import '../../../core/domain/pet/pet_ai_result.dart';
 import '../../pet/utils/pet_data_collector.dart';
 import '../../pet/widgets/pet_ai_data_preview_sheet.dart';
 import '../../pet/pages/pet_ai_analysis_page.dart';
@@ -59,7 +60,7 @@ class PetPartnerSheet extends ConsumerWidget {
           _buildDragHandle(),
 
           // 头部：猫咪头像 + 等级 + 亲密度条
-          _buildHeader(context, petProfile, petState),
+          _buildHeader(context, petProfile, petState, dashboardData),
 
           const Divider(height: 1, color: Color(0xFFF0F0F0)),
 
@@ -108,13 +109,18 @@ class PetPartnerSheet extends ConsumerWidget {
   }
 
   /// 头部：猫咪头像 + 等级 + 亲密度条
-  Widget _buildHeader(BuildContext context, AsyncValue<PetProfile?> profileAsync, AsyncValue<PetState?> stateAsync) {
+  Widget _buildHeader(
+    BuildContext context,
+    AsyncValue<PetProfile?> profileAsync,
+    AsyncValue<PetState?> stateAsync,
+    AsyncValue<DashboardData?> dashboardAsync,
+  ) {
     return profileAsync.when(
       loading: () => const SizedBox(height: 100),
       error: (_, e) => const SizedBox(height: 100),
       data: (profile) {
         final name = profile?.name ?? '甜甜';
-        final level = profile?.level ?? 1;
+        final level = dashboardAsync.valueOrNull?.currentLevel ?? 1;
 
         return Padding(
           padding: const EdgeInsets.all(16),
@@ -175,11 +181,11 @@ class PetPartnerSheet extends ConsumerWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(18),
           child: Image.asset(
-            'assets/pet/common/common_happy.png',
+            PetAssets.commonHappy,
             width: 68,
             height: 68,
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Center(
+            errorBuilder: (_, _, _) => Center(
               child: Text(
                 '🐱',
                 style: TextStyle(fontSize: 36 + (level * 0.2).clamp(0, 12)),
@@ -204,10 +210,7 @@ class PetPartnerSheet extends ConsumerWidget {
           children: [
             const Text(
               '亲密度',
-              style: TextStyle(
-                fontSize: 12,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),
             Text(
               '$intimacy%',
@@ -226,9 +229,7 @@ class PetPartnerSheet extends ConsumerWidget {
             value: progress,
             minHeight: 6,
             backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-            valueColor: const AlwaysStoppedAnimation<Color>(
-              AppColors.primary,
-            ),
+            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
           ),
         ),
       ],
@@ -253,10 +254,7 @@ class PetPartnerSheet extends ConsumerWidget {
           ),
           child: Row(
             children: [
-              Text(
-                moodEmoji,
-                style: const TextStyle(fontSize: 32),
-              ),
+              Text(moodEmoji, style: const TextStyle(fontSize: 32)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -309,10 +307,7 @@ class PetPartnerSheet extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Text(
-                    '💬',
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  const Text('💬', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
                   const Text(
                     '甜甜说',
@@ -466,17 +461,49 @@ class PetPartnerSheet extends ConsumerWidget {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.study, '学习分析', AppColors.study)),
+              Expanded(
+                child: _buildAnalysisButton(
+                  context,
+                  ref,
+                  PetAIAnalysisType.study,
+                  '学习分析',
+                  AppColors.study,
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.fitness, '健身分析', AppColors.fitness)),
+              Expanded(
+                child: _buildAnalysisButton(
+                  context,
+                  ref,
+                  PetAIAnalysisType.fitness,
+                  '健身分析',
+                  AppColors.fitness,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.diet, '饮食分析', AppColors.diet)),
+              Expanded(
+                child: _buildAnalysisButton(
+                  context,
+                  ref,
+                  PetAIAnalysisType.diet,
+                  '饮食分析',
+                  AppColors.diet,
+                ),
+              ),
               const SizedBox(width: 8),
-              Expanded(child: _buildAnalysisButton(context, ref, PetAIAnalysisType.sleep, '睡眠分析', const Color(0xFF7058F5))),
+              Expanded(
+                child: _buildAnalysisButton(
+                  context,
+                  ref,
+                  PetAIAnalysisType.sleep,
+                  '睡眠分析',
+                  const Color(0xFF7058F5),
+                ),
+              ),
             ],
           ),
         ],
@@ -484,7 +511,13 @@ class PetPartnerSheet extends ConsumerWidget {
     );
   }
 
-  Widget _buildAnalysisButton(BuildContext context, WidgetRef ref, PetAIAnalysisType type, String label, Color color) {
+  Widget _buildAnalysisButton(
+    BuildContext context,
+    WidgetRef ref,
+    PetAIAnalysisType type,
+    String label,
+    Color color,
+  ) {
     return GestureDetector(
       onTap: () => _startAnalysis(context, ref, type),
       child: Container(
@@ -499,24 +532,47 @@ class PetPartnerSheet extends ConsumerWidget {
           children: [
             Icon(Icons.auto_awesome_rounded, size: 16, color: color),
             const SizedBox(width: 6),
-            Text(label, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color)),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: color,
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _startAnalysis(BuildContext context, WidgetRef ref, PetAIAnalysisType type) async {
-      final collector = PetDataCollector(ProviderScope.containerOf(context));
+  Future<void> _startAnalysis(
+    BuildContext context,
+    WidgetRef ref,
+    PetAIAnalysisType type,
+  ) async {
+    final collector = PetDataCollector(ProviderScope.containerOf(context));
     Map<String, dynamic> data;
     try {
       switch (type) {
-        case PetAIAnalysisType.study: data = await collector.collectStudyData(); break;
-        case PetAIAnalysisType.fitness: data = await collector.collectFitnessData(); break;
-        case PetAIAnalysisType.diet: data = await collector.collectDietData(); break;
-        case PetAIAnalysisType.sleep: data = await collector.collectSleepData(); break;
-        case PetAIAnalysisType.weeklyReport: data = await collector.collectWeeklyReportData(); break;
-        case PetAIAnalysisType.monthlyReport: data = await collector.collectMonthlyReportData(); break;
+        case PetAIAnalysisType.study:
+          data = await collector.collectStudyData();
+          break;
+        case PetAIAnalysisType.fitness:
+          data = await collector.collectFitnessData();
+          break;
+        case PetAIAnalysisType.diet:
+          data = await collector.collectDietData();
+          break;
+        case PetAIAnalysisType.sleep:
+          data = await collector.collectSleepData();
+          break;
+        case PetAIAnalysisType.weeklyReport:
+          data = await collector.collectWeeklyReportData();
+          break;
+        case PetAIAnalysisType.monthlyReport:
+          data = await collector.collectMonthlyReportData();
+          break;
       }
     } catch (e) {
       if (context.mounted) {

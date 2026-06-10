@@ -3,15 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/repository_providers.dart';
-import '../../../shared/providers/service_providers.dart';
-import '../models/pet_ai_result.dart';
-import '../models/pet_event.dart';
+import '../../../core/domain/pet/pet_ai_result.dart';
+import '../../../core/domain/pet/pet_event.dart';
 import '../utils/pet_data_collector.dart';
 import '../utils/pet_prompt_builder.dart';
 import '../utils/pet_ai_result_parser.dart';
 import 'pet_ai_privacy_guard.dart';
-import 'pet_event_bus.dart';
+import '../../../core/services/pet_event_bus.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/providers/pet_ai_result_provider.dart';
 

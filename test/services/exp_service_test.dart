@@ -15,17 +15,11 @@ void main() {
   group('calculateStudyExp', () {
     test('returns base exp from duration (floor division by 10)', () {
       // 60 min ~/ 10 = 6
-      expect(
-        service.calculateStudyExp(durationMinutes: 60),
-        equals(6),
-      );
+      expect(service.calculateStudyExp(durationMinutes: 60), equals(6));
     });
 
     test('returns 0 for duration < 10 minutes', () {
-      expect(
-        service.calculateStudyExp(durationMinutes: 9),
-        equals(0),
-      );
+      expect(service.calculateStudyExp(durationMinutes: 9), equals(0));
     });
 
     test('adds focus bonus (focusLevel * 2)', () {
@@ -74,17 +68,11 @@ void main() {
 
     test('uses default values when optional params omitted', () {
       // 30~/10 = 3, no bonuses
-      expect(
-        service.calculateStudyExp(durationMinutes: 30),
-        equals(3),
-      );
+      expect(service.calculateStudyExp(durationMinutes: 30), equals(3));
     });
 
     test('handles zero duration', () {
-      expect(
-        service.calculateStudyExp(durationMinutes: 0),
-        equals(0),
-      );
+      expect(service.calculateStudyExp(durationMinutes: 0), equals(0));
     });
   });
 
@@ -95,17 +83,11 @@ void main() {
   group('calculateFitnessExp', () {
     test('returns base exp from duration (floor division by 10)', () {
       // 60 min ~/ 10 = 6
-      expect(
-        service.calculateFitnessExp(durationMinutes: 60),
-        equals(6),
-      );
+      expect(service.calculateFitnessExp(durationMinutes: 60), equals(6));
     });
 
     test('returns 0 for duration < 10 minutes', () {
-      expect(
-        service.calculateFitnessExp(durationMinutes: 7),
-        equals(0),
-      );
+      expect(service.calculateFitnessExp(durationMinutes: 7), equals(0));
     });
 
     test('adds intensity bonus (intensityLevel * 3)', () {
@@ -162,63 +144,168 @@ void main() {
   });
 
   // ===========================================================================
+  // calculateFocusExp
+  // ===========================================================================
+
+  group('calculateFocusExp', () {
+    test('uses the shared focus rule for completed rounds', () {
+      expect(service.calculateFocusExp(durationMinutes: 50), equals(10));
+    });
+
+    test('returns 0 for interrupted rounds', () {
+      expect(
+        service.calculateFocusExp(durationMinutes: 50, completed: false),
+        equals(0),
+      );
+    });
+  });
+
+  // ===========================================================================
+  // Reserved health EXP formulas
+  // ===========================================================================
+
+  group('reserved health exp formulas', () {
+    test('calculateDietExp rewards complete meals and reasonable target', () {
+      expect(
+        service.calculateDietExp(
+          hasCompleteMeals: true,
+          hasReasonableTarget: true,
+        ),
+        equals(10),
+      );
+      expect(
+        service.calculateDietExp(hasCompleteMeals: false),
+        equals(4),
+      );
+      expect(
+        service.calculateDietExp(
+          hasCompleteMeals: true,
+          hasReasonableTarget: false,
+        ),
+        equals(8),
+      );
+    });
+
+    test('calculateDietExp caps at 12 (single record max is 10)', () {
+      // base 4 + completeMeals 4 + reasonableTarget 2 = 10
+      // cap 12 is the daily limit, single record cannot exceed 10
+      expect(
+        service.calculateDietExp(
+          hasCompleteMeals: true,
+          hasReasonableTarget: true,
+        ),
+        equals(10),
+      );
+    });
+
+    test('calculateWaterExp rewards drink count, goal, and reminders', () {
+      expect(
+        service.calculateWaterExp(drinkCount: 0, reachedGoal: false),
+        equals(0),
+      );
+      expect(
+        service.calculateWaterExp(drinkCount: 3, reachedGoal: false),
+        equals(3),
+      );
+      expect(
+        service.calculateWaterExp(drinkCount: 5, reachedGoal: true),
+        equals(10),
+      );
+      expect(
+        service.calculateWaterExp(
+          drinkCount: 3,
+          reachedGoal: true,
+          completedReminders: true,
+        ),
+        equals(10),
+      );
+    });
+
+    test('calculateWaterExp caps at 10', () {
+      expect(
+        service.calculateWaterExp(
+          drinkCount: 10,
+          reachedGoal: true,
+          completedReminders: true,
+        ),
+        equals(10),
+      );
+    });
+
+    test('calculateSleepExp rewards record, duration, quality, and schedule', () {
+      expect(
+        service.calculateSleepExp(
+          durationMinutes: 480,
+          qualityLevel: 5,
+          targetMinutes: 480,
+          isRegularSchedule: true,
+        ),
+        equals(14),
+      );
+      expect(
+        service.calculateSleepExp(durationMinutes: 0, qualityLevel: 5),
+        equals(0),
+      );
+      expect(
+        service.calculateSleepExp(
+          durationMinutes: 480,
+          qualityLevel: 3,
+          targetMinutes: 480,
+        ),
+        equals(9),
+      );
+    });
+
+    test('calculateSleepExp caps at 14', () {
+      expect(
+        service.calculateSleepExp(
+          durationMinutes: 480,
+          qualityLevel: 5,
+          targetMinutes: 480,
+          isRegularSchedule: true,
+        ),
+        equals(14),
+      );
+    });
+  });
+
+  // ===========================================================================
   // calculateJournalExp
   // ===========================================================================
 
   group('calculateJournalExp', () {
     test('returns base 5 for short content', () {
-      expect(
-        service.calculateJournalExp(wordCount: 50),
-        equals(5),
-      );
+      expect(service.calculateJournalExp(wordCount: 50), equals(5));
     });
 
     test('returns base 5 for zero word count', () {
-      expect(
-        service.calculateJournalExp(wordCount: 0),
-        equals(5),
-      );
+      expect(service.calculateJournalExp(wordCount: 0), equals(5));
     });
 
     test('adds word bonus (wordCount ~/ 100)', () {
       // 5 + 300~/100 = 5 + 3 = 8
-      expect(
-        service.calculateJournalExp(wordCount: 300),
-        equals(8),
-      );
+      expect(service.calculateJournalExp(wordCount: 300), equals(8));
     });
 
     test('caps at 20 exp', () {
       // 5 + 2000~/100 = 5 + 20 = 25, but capped at 20
-      expect(
-        service.calculateJournalExp(wordCount: 2000),
-        equals(20),
-      );
+      expect(service.calculateJournalExp(wordCount: 2000), equals(20));
     });
 
     test('caps at 20 for very large word count', () {
       // 5 + 10000~/100 = 5 + 100 = 105, but capped at 20
-      expect(
-        service.calculateJournalExp(wordCount: 10000),
-        equals(20),
-      );
+      expect(service.calculateJournalExp(wordCount: 10000), equals(20));
     });
 
     test('returns exactly 20 when word bonus reaches cap', () {
       // 5 + 1500~/100 = 5 + 15 = 20 → exactly cap
-      expect(
-        service.calculateJournalExp(wordCount: 1500),
-        equals(20),
-      );
+      expect(service.calculateJournalExp(wordCount: 1500), equals(20));
     });
 
     test('returns 19 just below cap', () {
       // 5 + 1399~/100 = 5 + 13 = 18 → below cap
       // 5 + 1499~/100 = 5 + 14 = 19 → just below cap
-      expect(
-        service.calculateJournalExp(wordCount: 1499),
-        equals(19),
-      );
+      expect(service.calculateJournalExp(wordCount: 1499), equals(19));
     });
   });
 
@@ -360,6 +447,34 @@ void main() {
   });
 
   // ===========================================================================
+  // calculateLevelProgress
+  // ===========================================================================
+
+  group('calculateLevelProgress', () {
+    test('projects the shared human and pet level from total exp', () {
+      final progress = service.calculateLevelProgress(250);
+
+      expect(progress.totalExp, equals(250));
+      expect(progress.level, equals(2));
+      expect(progress.levelStartExp, equals(100));
+      expect(progress.nextLevelExp, equals(400));
+      expect(progress.levelRange, equals(300));
+      expect(progress.expProgress, equals(150));
+      expect(progress.expRemaining, equals(150));
+      expect(progress.progressRatio, closeTo(0.5, 0.0001));
+    });
+
+    test('clamps progress ratio at level boundaries', () {
+      final progress = service.calculateLevelProgress(100);
+
+      expect(progress.level, equals(2));
+      expect(progress.expProgress, equals(0));
+      expect(progress.expRemaining, equals(300));
+      expect(progress.progressRatio, equals(0));
+    });
+  });
+
+  // ===========================================================================
   // Integration: level + expForNextLevel + expProgress consistency
   // ===========================================================================
 
@@ -375,25 +490,29 @@ void main() {
         expect(
           progress,
           lessThanOrEqualTo(levelRange),
-          reason: 'At totalExp=$totalExp, level=$level: '
+          reason:
+              'At totalExp=$totalExp, level=$level: '
               'progress=$progress should be <= levelRange=$levelRange',
         );
       }
     });
 
-    test('calculateLevel and getExpForNextLevel are inverses at boundaries',
-        () {
-      for (final level in [1, 2, 3, 5, 10]) {
-        final nextLevelExp = service.getExpForNextLevel(level);
-        final computedLevel = service.calculateLevel(nextLevelExp);
-        // At exact boundary, we should be at the NEXT level
-        expect(
-          computedLevel,
-          equals(level + 1),
-          reason: 'At nextLevelExp=$nextLevelExp for level=$level, '
-              'calculateLevel should return ${level + 1}',
-        );
-      }
-    });
+    test(
+      'calculateLevel and getExpForNextLevel are inverses at boundaries',
+      () {
+        for (final level in [1, 2, 3, 5, 10]) {
+          final nextLevelExp = service.getExpForNextLevel(level);
+          final computedLevel = service.calculateLevel(nextLevelExp);
+          // At exact boundary, we should be at the NEXT level
+          expect(
+            computedLevel,
+            equals(level + 1),
+            reason:
+                'At nextLevelExp=$nextLevelExp for level=$level, '
+                'calculateLevel should return ${level + 1}',
+          );
+        }
+      },
+    );
   });
 }

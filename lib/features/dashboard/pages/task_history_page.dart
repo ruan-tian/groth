@@ -72,6 +72,7 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
             padding: const EdgeInsets.all(AppSpacing.md),
             child: TextField(
               controller: _searchController,
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: '搜索任务...',
                 prefixIcon: const Icon(Icons.search),

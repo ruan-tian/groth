@@ -1,6 +1,8 @@
 /// 统计数据格式化工具
 ///
 /// 提供统一的中文格式化方法，用于所有统计页面。
+library;
+
 /// 所有函数均为顶层函数，直接调用即可。
 
 /// 格式化分钟为中文时长
@@ -16,7 +18,7 @@ String formatMinutes(int minutes) {
   final m = minutes % 60;
   if (h == 0) return '$m分钟';
   if (m == 0) return '$h小时';
-  return '$h小时${m}分钟';
+  return '$h小时$m分钟';
 }
 
 /// 格式化分钟为短格式
@@ -112,5 +114,5 @@ String formatMonth(DateTime date) {
 ///
 /// - "2026年度"
 String formatYear(int year) {
-  return '${year}年度';
+  return '$year年度';
 }

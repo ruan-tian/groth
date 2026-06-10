@@ -8,9 +8,10 @@ import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart' show dashboardProvider;
 import '../../../shared/providers/diet_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
-import '../../../shared/providers/repository_providers.dart' show dietRepositoryProvider;
-import '../../pet/models/pet_event.dart';
-import '../../pet/services/pet_event_bus.dart';
+import '../../../shared/providers/repository_providers.dart' show dietRepositoryProvider, expRepositoryProvider;
+import '../../../shared/providers/service_providers.dart' show expServiceProvider;
+import '../../../core/domain/pet/pet_event.dart';
+import '../../../core/services/pet_event_bus.dart';
 
 /// 添加饮食记录页面（牛油果绿风格）
 class AddDietRecordPage extends ConsumerStatefulWidget {
@@ -72,6 +73,35 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
       final repo = ref.read(dietRepositoryProvider);
       await repo.insertDietRecord(companion);
+
+      // 计算并写入饮食经验值
+      final expService = ref.read(expServiceProvider);
+      final expRepo = ref.read(expRepositoryProvider);
+      final oldTotal = await expRepo.getTotalExp();
+      final oldLevel = expService.calculateLevel(oldTotal);
+      final dietExp = expService.calculateDietExp(
+        hasCompleteMeals: _mealType == 'breakfast' ||
+            _mealType == 'lunch' ||
+            _mealType == 'dinner',
+        hasReasonableTarget: _proteinLevel == 'medium' || _proteinLevel == 'high',
+      );
+      if (dietExp > 0) {
+        await expRepo.insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'diet',
+            sourceId: 0,
+            expValue: dietExp,
+            reason: '饮食: ${_foodController.text.trim()}',
+            createdAt: now.millisecondsSinceEpoch,
+          ),
+        );
+        final newLevel = expService.calculateLevel(oldTotal + dietExp);
+        if (newLevel > oldLevel) {
+          PetEventBus.instance.emit(
+            PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
+          );
+        }
+      }
 
       ref.invalidate(todayDietRecordsProvider);
       ref.invalidate(todayDietCountProvider);
@@ -226,7 +256,11 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
   Widget _buildMealTypeChip(String value, String label, IconData icon) {
     final isSelected = _mealType == value;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择$label',
+      selected: isSelected,
+      child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         setState(() => _mealType = value);
@@ -257,6 +291,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           ],
         ),
       ),
+      ),
     );
   }
 
@@ -275,6 +310,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       ),
       child: TextField(
         controller: _foodController,
+        textInputAction: TextInputAction.search,
         decoration: InputDecoration(
           hintText: '例如：鸡胸肉 + 米饭 + 青菜',
           hintStyle: const TextStyle(color: Color(0xFFB0B0A8)),
@@ -316,7 +352,11 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
   Widget _buildPortionChip(String value, String label) {
     final isSelected = _portionLevel == value;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择$label份量',
+      selected: isSelected,
+      child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         setState(() => _portionLevel = value);
@@ -343,6 +383,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -373,7 +414,11 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
   Widget _buildCalorieChip(String value, String label, Color color) {
     final isSelected = _calorieLevel == value;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择$label热量',
+      selected: isSelected,
+      child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         setState(() => _calorieLevel = value);
@@ -398,6 +443,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             ),
           ),
         ),
+      ),
       ),
     );
   }
@@ -428,7 +474,11 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
   Widget _buildProteinChip(String value, String label) {
     final isSelected = _proteinLevel == value;
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '选择$label蛋白质',
+      selected: isSelected,
+      child: GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
         setState(() => _proteinLevel = value);
@@ -456,6 +506,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -477,7 +528,11 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(5, (index) {
           final isSelected = index < _healthScore;
-          return GestureDetector(
+          return Semantics(
+            button: true,
+            label: '评分${index + 1}分',
+            selected: isSelected,
+            child: GestureDetector(
             onTap: () {
               HapticFeedback.lightImpact();
               setState(() => _healthScore = index + 1);
@@ -489,6 +544,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 size: 36,
                 color: isSelected ? const Color(0xFFDAA520) : const Color(0xFFD0D0C8),
               ),
+            ),
             ),
           );
         }),
@@ -511,6 +567,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       ),
       child: TextField(
         controller: _noteController,
+        textInputAction: TextInputAction.newline,
         maxLines: 3,
         decoration: InputDecoration(
           hintText: '记录其他信息...',
@@ -535,7 +592,10 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildSaveButton() {
-    return GestureDetector(
+    return Semantics(
+      button: true,
+      label: '保存饮食记录',
+      child: GestureDetector(
       onTap: _isSaving ? null : _save,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
@@ -578,6 +638,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                   ),
                 ),
         ),
+      ),
       ),
     );
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/design/design.dart';
-import '../models/pet_ai_result.dart';
+import '../../../core/domain/pet/pet_ai_result.dart';
 
 /// AI 分析结果展示弹窗
 class PetAIResultSheet extends StatelessWidget {

@@ -1,10 +1,13 @@
 import 'dart:math';
 
-/// 经验值计算服务
+/// 经验值计算服务。
 ///
-/// 纯计算逻辑，无构造函数依赖。
-/// 负责学习 / 健身 / 日记的经验值计算以及等级系统。
+/// 纯计算逻辑，无构造函数依赖。人物等级和宠物等级都从同一份
+/// GrowthExpLogs 总经验派生，宠物不再拥有独立经验曲线。
 class ExpService {
+  static const int expPerLevelUnit = 100;
+  static const int minutesPerBaseExp = 10;
+
   // ---------------------------------------------------------------------------
   // 学习经验值
   // ---------------------------------------------------------------------------
@@ -21,7 +24,7 @@ class ExpService {
     int difficultyLevel = 0,
     bool hasReview = false,
   }) {
-    final base = durationMinutes ~/ 10;
+    final base = durationMinutes ~/ minutesPerBaseExp;
     final focusBonus = focusLevel * 2;
     final difficultyBonus = difficultyLevel * 2;
     final reviewBonus = hasReview ? 5 : 0;
@@ -44,11 +47,24 @@ class ExpService {
     int exerciseCount = 0,
     bool hasFeeling = false,
   }) {
-    final base = durationMinutes ~/ 10;
+    final base = durationMinutes ~/ minutesPerBaseExp;
     final intensityBonus = intensityLevel * 3;
     final exerciseBonus = exerciseCount * 2;
     final completeBonus = hasFeeling ? 5 : 0;
     return base + intensityBonus + exerciseBonus + completeBonus;
+  }
+
+  // ---------------------------------------------------------------------------
+  // 专注经验值
+  // ---------------------------------------------------------------------------
+
+  /// 计算单轮专注完成获得的经验值。
+  ///
+  /// 专注会同时生成 FocusSession 与一条简单学习记录，但成长经验只写入
+  /// GrowthExpLogs 一次，来源为 `focus`。
+  int calculateFocusExp({required int durationMinutes, bool completed = true}) {
+    if (!completed) return 0;
+    return durationMinutes ~/ minutesPerBaseExp + 5;
   }
 
   // ---------------------------------------------------------------------------
@@ -66,6 +82,49 @@ class ExpService {
   }
 
   // ---------------------------------------------------------------------------
+  // 健康类经验值
+  // ---------------------------------------------------------------------------
+
+  /// 计算单次饮食记录的经验值。
+  int calculateDietExp({
+    required bool hasCompleteMeals,
+    bool hasReasonableTarget = false,
+  }) {
+    const base = 4;
+    final mealBonus = hasCompleteMeals ? 4 : 0;
+    final targetBonus = hasReasonableTarget ? 2 : 0;
+    return min(base + mealBonus + targetBonus, 12);
+  }
+
+  /// 计算每日饮水经验值。
+  int calculateWaterExp({
+    required int drinkCount,
+    required bool reachedGoal,
+    bool completedReminders = false,
+  }) {
+    if (drinkCount <= 0) return 0;
+    final drinkBonus = drinkCount;
+    final goalBonus = reachedGoal ? 5 : 0;
+    final reminderBonus = completedReminders ? 2 : 0;
+    return min(drinkBonus + goalBonus + reminderBonus, 10);
+  }
+
+  /// 计算单次睡眠记录的经验值。
+  int calculateSleepExp({
+    required int durationMinutes,
+    int qualityLevel = 0,
+    int targetMinutes = 480,
+    bool isRegularSchedule = false,
+  }) {
+    if (durationMinutes <= 0) return 0;
+    const recordBonus = 5;
+    final durationBonus = (durationMinutes - targetMinutes).abs() <= 60 ? 4 : 0;
+    final qualityBonus = qualityLevel >= 4 ? 3 : 0;
+    final regularBonus = isRegularSchedule ? 2 : 0;
+    return min(recordBonus + durationBonus + qualityBonus + regularBonus, 14);
+  }
+
+  // ---------------------------------------------------------------------------
   // 等级系统
   // ---------------------------------------------------------------------------
 
@@ -73,21 +132,69 @@ class ExpService {
   ///
   /// 公式：`floor(sqrt(totalExp / 100)) + 1`
   int calculateLevel(int totalExp) {
-    return (sqrt(totalExp / 100)).floor() + 1;
+    return (sqrt(totalExp / expPerLevelUnit)).floor() + 1;
+  }
+
+  /// 获取当前等级起点所需的总经验值。
+  int getExpForLevelStart(int currentLevel) {
+    if (currentLevel <= 1) return 0;
+    return (currentLevel - 1) * (currentLevel - 1) * expPerLevelUnit;
   }
 
   /// 获取升到下一级所需的总经验值。
   ///
   /// 公式：`(currentLevel * currentLevel) * 100`
   int getExpForNextLevel(int currentLevel) {
-    return currentLevel * currentLevel * 100;
+    return currentLevel * currentLevel * expPerLevelUnit;
   }
 
   /// 获取当前等级内的经验值进度。
   ///
   /// 返回值为距离当前等级起点的经验值（即已在本级累积的经验）。
   int getExpProgress(int totalExp, int currentLevel) {
-    final currentLevelStart = (currentLevel - 1) * (currentLevel - 1) * 100;
+    final currentLevelStart = getExpForLevelStart(currentLevel);
     return totalExp - currentLevelStart;
   }
+
+  /// 统一的人物/宠物等级进度投影。
+  GrowthLevelProgress calculateLevelProgress(int totalExp) {
+    final level = calculateLevel(totalExp);
+    final levelStartExp = getExpForLevelStart(level);
+    final nextLevelExp = getExpForNextLevel(level);
+    final levelRange = max(1, nextLevelExp - levelStartExp);
+    final expProgress = (totalExp - levelStartExp).clamp(0, levelRange).toInt();
+    final expRemaining = max(0, nextLevelExp - totalExp);
+
+    return GrowthLevelProgress(
+      totalExp: totalExp,
+      level: level,
+      levelStartExp: levelStartExp,
+      nextLevelExp: nextLevelExp,
+      levelRange: levelRange,
+      expProgress: expProgress,
+      expRemaining: expRemaining,
+    );
+  }
+}
+
+class GrowthLevelProgress {
+  const GrowthLevelProgress({
+    required this.totalExp,
+    required this.level,
+    required this.levelStartExp,
+    required this.nextLevelExp,
+    required this.levelRange,
+    required this.expProgress,
+    required this.expRemaining,
+  });
+
+  final int totalExp;
+  final int level;
+  final int levelStartExp;
+  final int nextLevelExp;
+  final int levelRange;
+  final int expProgress;
+  final int expRemaining;
+
+  double get progressRatio => (expProgress / levelRange).clamp(0.0, 1.0);
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../shared/providers/weather_provider.dart';
+import 'weather_assets.dart';
 import 'weather_card_data.dart';
 import 'weather_particle_layer.dart';
 import 'weather_style_config.dart';
@@ -113,7 +114,7 @@ class _WeatherScene extends StatelessWidget {
                   ),
                   Positioned.fill(
                     child: Image.asset(
-                      'assets/images/weather/common/highlight_overlay.webp',
+                      WeatherAssets.highlightOverlay,
                       fit: BoxFit.cover,
                       opacity: const AlwaysStoppedAnimation(0.34),
                       filterQuality: FilterQuality.low,

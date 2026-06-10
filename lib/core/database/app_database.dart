@@ -14,6 +14,8 @@ part 'app_database.g.dart';
     StudyRecords,
     FitnessRecords,
     FitnessExercises,
+    FitnessWorkoutTemplates,
+    FitnessWorkoutTemplateExercises,
     BodyMetrics,
     DailyJournals,
     FocusSessions,
@@ -33,6 +35,7 @@ part 'app_database.g.dart';
     DailyWeatherTable,
     ApiConfigs,
     WeatherSearchHistoryTable,
+    MusicTracks,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -48,13 +51,14 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 18;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
+        await _createPerformanceIndexes();
       },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
@@ -114,7 +118,52 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(focusSessions, focusSessions.roundIndex);
           await m.addColumn(focusSessions, focusSessions.sessionGroupId);
         }
+        if (from < 16) {
+          await m.createTable(fitnessWorkoutTemplates);
+          await m.createTable(fitnessWorkoutTemplateExercises);
+          await m.addColumn(fitnessExercises, fitnessExercises.exerciseType);
+          await m.addColumn(fitnessExercises, fitnessExercises.durationSeconds);
+          await m.addColumn(fitnessExercises, fitnessExercises.sortOrder);
+        }
+        if (from < 17) {
+          await m.createTable(musicTracks);
+        }
+        if (from < 18) {
+          await _createPerformanceIndexes();
+        }
       },
     );
+  }
+
+  Future<void> _createPerformanceIndexes() async {
+    const statements = [
+      'CREATE INDEX IF NOT EXISTS idx_study_records_created_at ON study_records(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_fitness_records_created_at ON fitness_records(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_focus_sessions_created_at ON focus_sessions(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_growth_exp_logs_created_at ON growth_exp_logs(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_growth_exp_logs_source_created ON growth_exp_logs(source_type, created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_body_metrics_created_at ON body_metrics(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_body_metrics_record_date ON body_metrics(record_date)',
+      'CREATE INDEX IF NOT EXISTS idx_daily_journals_journal_date ON daily_journals(journal_date)',
+      'CREATE INDEX IF NOT EXISTS idx_daily_tasks_task_date ON daily_tasks(task_date)',
+      'CREATE INDEX IF NOT EXISTS idx_daily_tasks_template_id ON daily_tasks(template_id)',
+      'CREATE INDEX IF NOT EXISTS idx_diet_records_meal_date ON diet_records(meal_date)',
+      'CREATE INDEX IF NOT EXISTS idx_sleep_records_sleep_date ON sleep_records(sleep_date)',
+      'CREATE INDEX IF NOT EXISTS idx_daily_weather_date_city ON daily_weather_table(date, city)',
+      'CREATE INDEX IF NOT EXISTS idx_weather_search_history_city ON weather_search_history_table(city_name)',
+      'CREATE INDEX IF NOT EXISTS idx_weather_search_history_created_at ON weather_search_history_table(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_fitness_exercises_record_id ON fitness_exercises(fitness_record_id)',
+      'CREATE INDEX IF NOT EXISTS idx_template_exercises_template_id ON fitness_workout_template_exercises(template_id)',
+      'CREATE INDEX IF NOT EXISTS idx_journal_assets_journal_id ON journal_assets(journal_id)',
+      'CREATE INDEX IF NOT EXISTS idx_pet_messages_source ON pet_messages(source_type, source_range, created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_pet_messages_is_read ON pet_messages(is_read)',
+      'CREATE INDEX IF NOT EXISTS idx_pet_diaries_diary_date ON pet_diaries(diary_date)',
+      'CREATE INDEX IF NOT EXISTS idx_music_tracks_created_at ON music_tracks(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_music_tracks_last_played_at ON music_tracks(last_played_at)',
+    ];
+
+    for (final statement in statements) {
+      await customStatement(statement);
+    }
   }
 }

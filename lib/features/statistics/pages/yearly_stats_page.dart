@@ -368,7 +368,7 @@ class _HeatmapSection extends StatelessWidget {
                 height: 120,
                 child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
               ),
-              error: (_, __) => SizedBox(
+              error: (_, _) => SizedBox(
                 height: 120,
                 child: Center(
                   child: Text(

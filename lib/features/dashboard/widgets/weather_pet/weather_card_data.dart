@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'weather_assets.dart';
+
 enum WeatherType { sunny, cloudy, rainy, heavyRain, snowy, windy, hot, night }
 
 enum WeatherParticleType {
@@ -200,14 +202,13 @@ class WeatherCardData {
       case WeatherType.sunny:
         return const _WeatherStyle(
           tipText: '阳光正好，出门走走吧~',
-          petAssetPath: 'assets/images/weather/cats/cat_sunny.png',
-          sceneAssetPath: 'assets/images/weather/backgrounds/bg_sunny.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_sunny_flower.webp',
-          lightAssetPath: 'assets/images/weather/lights/sun_glow.webp',
+          petAssetPath: WeatherAssets.catSunny,
+          sceneAssetPath: WeatherAssets.bgSunny,
+          foregroundAssetPath: WeatherAssets.fgSunnyFlower,
+          lightAssetPath: WeatherAssets.sunGlow,
           particleAssets: [
-            'assets/images/weather/particles/particle_sparkle_1.png',
-            'assets/images/weather/particles/particle_sparkle_2.png',
+            WeatherAssets.particleSparkle1,
+            WeatherAssets.particleSparkle2,
           ],
           particleType: WeatherParticleType.sparkle,
           bgColors: [Color(0xFFFFF7E8), Color(0xFFE8F2FF)],
@@ -219,14 +220,13 @@ class WeatherCardData {
       case WeatherType.cloudy:
         return const _WeatherStyle(
           tipText: '有点阴天，注意保暖~',
-          petAssetPath: 'assets/images/weather/cats/cat_cloudy.png',
-          sceneAssetPath: 'assets/images/weather/backgrounds/bg_cloudy.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_cloudy_grass.webp',
-          lightAssetPath: 'assets/images/weather/lights/light_cloud_soft.webp',
+          petAssetPath: WeatherAssets.catCloudy,
+          sceneAssetPath: WeatherAssets.bgCloudy,
+          foregroundAssetPath: WeatherAssets.fgCloudyGrass,
+          lightAssetPath: WeatherAssets.lightCloudSoft,
           particleAssets: [
-            'assets/images/weather/particles/particle_cloud_1.png',
-            'assets/images/weather/particles/particle_cloud_2.png',
+            WeatherAssets.particleCloud1,
+            WeatherAssets.particleCloud2,
           ],
           particleType: WeatherParticleType.cloud,
           bgColors: [Color(0xFFF1EDFF), Color(0xFFDDEAFF)],
@@ -238,15 +238,14 @@ class WeatherCardData {
       case WeatherType.rainy:
         return const _WeatherStyle(
           tipText: '记得带伞，别淋湿了~',
-          petAssetPath: 'assets/images/weather/cats/cat_rainy.png',
-          sceneAssetPath: 'assets/images/weather/backgrounds/bg_rainy.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_rainy_puddle.webp',
-          lightAssetPath: 'assets/images/weather/lights/light_rain_glow.webp',
+          petAssetPath: WeatherAssets.catRainy,
+          sceneAssetPath: WeatherAssets.bgRainy,
+          foregroundAssetPath: WeatherAssets.fgRainyPuddle,
+          lightAssetPath: WeatherAssets.lightRainGlow,
           particleAssets: [
-            'assets/images/weather/particles/particle_raindrop_1.png',
-            'assets/images/weather/particles/particle_raindrop_2.png',
-            'assets/images/weather/particles/particle_raindrop_3.png',
+            WeatherAssets.particleRaindrop1,
+            WeatherAssets.particleRaindrop2,
+            WeatherAssets.particleRaindrop3,
           ],
           particleType: WeatherParticleType.raindrop,
           bgColors: [Color(0xFFF3EDFF), Color(0xFFD6E7FF)],
@@ -258,15 +257,13 @@ class WeatherCardData {
       case WeatherType.heavyRain:
         return const _WeatherStyle(
           tipText: '雨太大啦，别出门哦！',
-          petAssetPath: 'assets/images/weather/cats/cat_heavy_rain.png',
-          sceneAssetPath:
-              'assets/images/weather/backgrounds/bg_heavy_rain.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_heavy_rain_window.webp',
-          lightAssetPath: 'assets/images/weather/lights/light_storm_glow.webp',
+          petAssetPath: WeatherAssets.catHeavyRain,
+          sceneAssetPath: WeatherAssets.bgHeavyRain,
+          foregroundAssetPath: WeatherAssets.fgHeavyRainWindow,
+          lightAssetPath: WeatherAssets.lightStormGlow,
           particleAssets: [
-            'assets/images/weather/particles/particle_rain_heavy_1.png',
-            'assets/images/weather/particles/particle_rain_heavy_2.png',
+            WeatherAssets.particleRainHeavy1,
+            WeatherAssets.particleRainHeavy2,
           ],
           particleType: WeatherParticleType.heavyRain,
           bgColors: [Color(0xFFEBE8FF), Color(0xFFCDDAFF)],
@@ -278,15 +275,14 @@ class WeatherCardData {
       case WeatherType.snowy:
         return const _WeatherStyle(
           tipText: '好冷呀，多穿点衣服~',
-          petAssetPath: 'assets/images/weather/cats/cat_snowy.png',
-          sceneAssetPath: 'assets/images/weather/backgrounds/bg_snowy.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_snowy_snowbank.webp',
-          lightAssetPath: 'assets/images/weather/lights/light_snow_glow.webp',
+          petAssetPath: WeatherAssets.catSnowy,
+          sceneAssetPath: WeatherAssets.bgSnowy,
+          foregroundAssetPath: WeatherAssets.fgSnowySnowbank,
+          lightAssetPath: WeatherAssets.lightSnowGlow,
           particleAssets: [
-            'assets/images/weather/particles/particle_snowflake_1.png',
-            'assets/images/weather/particles/particle_snowflake_2.png',
-            'assets/images/weather/particles/particle_snowflake_3.png',
+            WeatherAssets.particleSnowflake1,
+            WeatherAssets.particleSnowflake2,
+            WeatherAssets.particleSnowflake3,
           ],
           particleType: WeatherParticleType.snowflake,
           bgColors: [Color(0xFFF7F5FF), Color(0xFFDFF3FF)],
@@ -298,15 +294,14 @@ class WeatherCardData {
       case WeatherType.windy:
         return const _WeatherStyle(
           tipText: '风好大，戴好帽子~',
-          petAssetPath: 'assets/images/weather/cats/cat_windy.png',
-          sceneAssetPath: 'assets/images/weather/backgrounds/bg_windy.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_windy_leafground.webp',
-          lightAssetPath: 'assets/images/weather/lights/light_windy_glow.webp',
+          petAssetPath: WeatherAssets.catWindy,
+          sceneAssetPath: WeatherAssets.bgWindy,
+          foregroundAssetPath: WeatherAssets.fgWindyLeafground,
+          lightAssetPath: WeatherAssets.lightWindyGlow,
           particleAssets: [
-            'assets/images/weather/particles/particle_wind_line_1.png',
-            'assets/images/weather/particles/particle_wind_line_2.png',
-            'assets/images/weather/particles/particle_leaf.png',
+            WeatherAssets.particleWindLine1,
+            WeatherAssets.particleWindLine2,
+            WeatherAssets.particleLeaf,
           ],
           particleType: WeatherParticleType.wind,
           bgColors: [Color(0xFFF5F7FF), Color(0xFFE8EFFF)],
@@ -318,14 +313,13 @@ class WeatherCardData {
       case WeatherType.hot:
         return const _WeatherStyle(
           tipText: '太热了，多喝水防暑！',
-          petAssetPath: 'assets/images/weather/cats/cat_hot.png',
-          sceneAssetPath: 'assets/images/weather/backgrounds/bg_hot.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_hot_ground.webp',
-          lightAssetPath: 'assets/images/weather/lights/sun_glow_hot.webp',
+          petAssetPath: WeatherAssets.catHot,
+          sceneAssetPath: WeatherAssets.bgHot,
+          foregroundAssetPath: WeatherAssets.fgHotGround,
+          lightAssetPath: WeatherAssets.sunGlowHot,
           particleAssets: [
-            'assets/images/weather/particles/particle_heat_1.png',
-            'assets/images/weather/particles/particle_heat_2.png',
+            WeatherAssets.particleHeat1,
+            WeatherAssets.particleHeat2,
           ],
           particleType: WeatherParticleType.heat,
           bgColors: [Color(0xFFFFF4E8), Color(0xFFFFE8CC)],
@@ -337,15 +331,14 @@ class WeatherCardData {
       case WeatherType.night:
         return const _WeatherStyle(
           tipText: '晚安，做个好梦~',
-          petAssetPath: 'assets/images/weather/cats/cat_night.png',
-          sceneAssetPath: 'assets/images/weather/backgrounds/bg_night.webp',
-          foregroundAssetPath:
-              'assets/images/weather/foregrounds/fg_night_window.webp',
-          lightAssetPath: 'assets/images/weather/lights/light_moon_glow.webp',
+          petAssetPath: WeatherAssets.catNight,
+          sceneAssetPath: WeatherAssets.bgNight,
+          foregroundAssetPath: WeatherAssets.fgNightWindow,
+          lightAssetPath: WeatherAssets.lightMoonGlow,
           particleAssets: [
-            'assets/images/weather/particles/particle_star_1.png',
-            'assets/images/weather/particles/particle_star_2.png',
-            'assets/images/weather/particles/particle_moon_dust.png',
+            WeatherAssets.particleStar1,
+            WeatherAssets.particleStar2,
+            WeatherAssets.particleMoonDust,
           ],
           particleType: WeatherParticleType.star,
           bgColors: [Color(0xFFDFDBFF), Color(0xFFBFD7FF)],

@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/pet_projection_provider.dart';
-import '../utils/pet_assets.dart';
+import '../../../core/constants/pet_assets.dart';
 import 'particle_burst.dart';
 
 const int kMorningStartHour = 6;
