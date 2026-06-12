@@ -21,6 +21,9 @@ void main() {
         return const _GrowthOSErrorWidget();
       };
 
+      // Notifications are initialized via Riverpod provider (reminderNotificationServiceProvider)
+      // when first read by any widget. No standalone initialization needed here.
+
       runApp(const ProviderScope(child: GrowthOSApp()));
     },
     (error, stack) {

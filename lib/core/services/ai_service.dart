@@ -344,41 +344,55 @@ class AiService {
   // ---------------------------------------------------------------------------
 
   static const _studySystemPrompt = '''
-你是一位专业的学习顾问。请根据用户的学习记录数据，给出以下分析：
-1. 学习时间分布与规律性评估
-2. 学习效率分析（结合专注度、难度、掌握度）
-3. 科目均衡性建议
-4. 具体的改进建议（2-3 条可执行的建议）
+你是一位专业的学习顾问。请根据用户的学习记录数据，给出分析和建议。
 
-请用简洁、鼓励的语气回答，使用中文。''';
+分析维度：
+1. 学习时间分布与规律性
+2. 学习效率（结合专注度、难度）
+3. 科目均衡性
+
+输出要求：
+- 使用 Markdown 格式
+- 分为「数据概览」「分析」「建议」三个部分
+- 建议部分给出 2-3 条具体可执行的建议
+- 每条建议用 "- [ ]" 任务清单格式
+- 总字数控制在 300 字以内
+- 使用中文，语气简洁鼓励，不说教''';
 
   String _buildStudyPrompt(List<StudyRecord> records) {
-    if (records.isEmpty) return '最近没有学习记录，请给出通用的学习建议。';
+    if (records.isEmpty) {
+      return '用户最近 7 天没有学习记录。请给出鼓励性建议：1) 可能正在休息，鼓励适度休息后重新开始；2) 建议尝试简单模式快速记录；3) 给一个今天可执行的 10 分钟学习小任务。';
+    }
 
-    final buffer = StringBuffer('以下是用户最近的学习记录：\n\n');
-    for (final r in records) {
+    // 截取最近 15 条，避免 token 溢出
+    final recent = records.length > 15
+        ? records.sublist(records.length - 15)
+        : records;
+
+    final buffer = StringBuffer('用户最近 ${records.length} 条学习记录');
+    if (records.length > 15) buffer.write('（已截取最近 15 条）');
+    buffer.writeln('：\n');
+
+    for (final r in recent) {
       final date = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
-      final dateStr =
-          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      buffer.writeln('- 日期: $dateStr');
-      buffer.writeln('  标题: ${r.title}');
-      if (r.subject != null) buffer.writeln('  科目: ${r.subject}');
-      buffer.writeln('  时长: ${r.durationMinutes} 分钟');
-      buffer.writeln('  模式: ${r.mode}');
-      if (r.focusLevel != null) buffer.writeln('  专注度: ${r.focusLevel}/5');
-      if (r.difficultyLevel != null) {
-        buffer.writeln('  难度: ${r.difficultyLevel}/5');
-      }
-      if (r.masteryLevel != null) buffer.writeln('  掌握度: ${r.masteryLevel}/5');
-      if (r.gain != null && r.gain!.isNotEmpty) {
-        buffer.writeln('  收获: ${r.gain}');
-      }
+      buffer.write('${date.month}/${date.day} | ${r.title} | ${r.durationMinutes}min');
+      if (r.subject != null) buffer.write(' | ${r.subject}');
+      if (r.focusLevel != null) buffer.write(' | 专注${r.focusLevel}/5');
+      if (r.difficultyLevel != null) buffer.write(' | 难度${r.difficultyLevel}/5');
       buffer.writeln();
     }
 
     final totalMinutes = records.fold<int>(0, (s, r) => s + r.durationMinutes);
-    buffer.writeln('共 ${records.length} 条记录，总学习时长 $totalMinutes 分钟。');
-    buffer.writeln('\n请给出分析和建议。');
+    final avgMinutes = (totalMinutes / records.length).round();
+    final studyDays = records
+        .map((r) {
+          final dt = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
+          return '${dt.year}-${dt.month}-${dt.day}';
+        })
+        .toSet()
+        .length;
+    final recordsLength = records.length;
+    buffer.writeln('\n汇总: $recordsLength次, $studyDays天, 共${totalMinutes}min, 平均${avgMinutes}min/次');
 
     return buffer.toString();
   }
@@ -388,44 +402,48 @@ class AiService {
   // ---------------------------------------------------------------------------
 
   static const _fitnessSystemPrompt = '''
-你是一位专业的健身教练。请根据用户的训练记录数据，给出以下分析：
-1. 训练频率与规律性评估
-2. 训练强度与恢复情况分析
-3. 身体部位均衡性建议
-4. 具体的改进建议（2-3 条可执行的建议）
+你是一位专业的健身教练。请根据用户的训练记录数据，给出分析和建议。
 
-请用简洁、专业的语气回答，使用中文。''';
+分析维度：
+1. 训练频率与规律性
+2. 训练强度与恢复情况
+3. 身体部位均衡性
+
+输出要求：
+- 使用 Markdown 格式
+- 分为「数据概览」「分析」「建议」三个部分
+- 建议 2-3 条，用 "- [ ]" 任务清单格式
+- 总字数控制在 300 字以内
+- 使用中文，语气专业鼓励，不说教''';
 
   String _buildFitnessPrompt(List<FitnessRecord> records) {
-    if (records.isEmpty) return '最近没有健身记录，请给出通用的健身建议。';
+    if (records.isEmpty) {
+      return '用户最近 7 天没有健身记录。请给出鼓励性建议：1) 可能需要休息日；2) 建议从轻量训练开始恢复；3) 给一个今天可执行的 10 分钟拉伸任务。';
+    }
 
-    final buffer = StringBuffer('以下是用户最近的健身记录：\n\n');
-    for (final r in records) {
+    final recent = records.length > 15
+        ? records.sublist(records.length - 15)
+        : records;
+
+    final buffer = StringBuffer('用户最近 ${records.length} 条健身记录');
+    if (records.length > 15) buffer.write('（已截取最近 15 条）');
+    buffer.writeln('：\n');
+
+    for (final r in recent) {
       final date = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
-      final dateStr =
-          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-      buffer.writeln('- 日期: $dateStr');
-      if (r.title != null && r.title!.isNotEmpty) {
-        buffer.writeln('  标题: ${r.title}');
-      }
-      buffer.writeln('  训练部位: ${r.bodyPart}');
-      buffer.writeln('  时长: ${r.durationMinutes} 分钟');
-      buffer.writeln('  模式: ${r.mode}');
-      if (r.intensityLevel != null) {
-        buffer.writeln('  强度: ${r.intensityLevel}/5');
-      }
-      if (r.fatigueLevel != null) {
-        buffer.writeln('  疲劳度: ${r.fatigueLevel}/5');
-      }
-      if (r.feeling != null && r.feeling!.isNotEmpty) {
-        buffer.writeln('  感受: ${r.feeling}');
-      }
+      buffer.write('${date.month}/${date.day} | ${r.bodyPart} | ${r.durationMinutes}min');
+      if (r.title != null && r.title!.isNotEmpty) buffer.write(' | ${r.title}');
+      if (r.intensityLevel != null) buffer.write(' | 强度${r.intensityLevel}/5');
       buffer.writeln();
     }
 
     final totalMinutes = records.fold<int>(0, (s, r) => s + r.durationMinutes);
-    buffer.writeln('共 ${records.length} 条记录，总训练时长 $totalMinutes 分钟。');
-    buffer.writeln('\n请给出分析和建议。');
+    final bodyParts = <String, int>{};
+    for (final r in records) {
+      bodyParts[r.bodyPart] = (bodyParts[r.bodyPart] ?? 0) + 1;
+    }
+    final partSummary = bodyParts.entries.map((e) => '${e.key}${e.value}次').join(', ');
+    buffer.writeln('\n汇总: ${records.length}次, 共${totalMinutes}min | 部位: $partSummary');
 
     return buffer.toString();
   }
@@ -435,38 +453,46 @@ class AiService {
   // ---------------------------------------------------------------------------
 
   static const _dietSystemPrompt = '''
-你是一位专业的营养顾问。请根据用户的饮食记录数据，给出以下分析：
-1. 饮食规律性评估（三餐是否规律）
-2. 营养均衡性分析（蛋白质、热量摄入情况）
-3. 健康饮食评分趋势分析
-4. 具体的改进建议（2-3 条可执行的建议）
+你是一位专业的营养顾问。请根据用户的饮食记录数据，给出分析和建议。
 
-请用简洁、友好的语气回答，使用中文。''';
+分析维度：
+1. 饮食规律性（三餐是否规律）
+2. 营养均衡性（蛋白质、热量摄入）
+3. 健康评分趋势
+
+输出要求：
+- 使用 Markdown 格式
+- 分为「数据概览」「分析」「建议」三个部分
+- 建议 2-3 条，用 "- [ ]" 任务清单格式
+- 总字数控制在 300 字以内
+- 使用中文，语气友好鼓励，不说教''';
 
   String _buildDietPrompt(List<DietRecord> records) {
-    if (records.isEmpty) return '最近没有饮食记录，请给出通用的健康饮食建议。';
-
-    final buffer = StringBuffer('以下是用户最近的饮食记录：\n\n');
-    for (final r in records) {
-      buffer.writeln('- 日期: ${r.mealDate}');
-      buffer.writeln('  餐次: ${_getMealTypeName(r.mealType)}');
-      buffer.writeln('  食物: ${r.foodText}');
-      buffer.writeln('  份量: ${_getPortionName(r.portionLevel)}');
-      buffer.writeln('  热量: ${_getCalorieName(r.calorieLevel)}');
-      buffer.writeln('  蛋白质: ${_getProteinName(r.proteinLevel)}');
-      buffer.writeln('  健康评分: ${r.healthScore}/5');
-      if (r.note != null && r.note!.isNotEmpty) {
-        buffer.writeln('  备注: ${r.note}');
-      }
-      buffer.writeln();
+    if (records.isEmpty) {
+      return '用户最近 7 天没有饮食记录。请给出鼓励性建议：1) 建议从记录一顿早餐开始；2) 简单记录比完美记录更重要；3) 给一个今天可以尝试的健康饮食小建议。';
     }
 
-    final avgScore =
-        records.fold<double>(0, (s, r) => s + r.healthScore) / records.length;
-    buffer.writeln(
-      '共 ${records.length} 条记录，平均健康评分 ${avgScore.toStringAsFixed(1)}/5。',
-    );
-    buffer.writeln('\n请给出分析和建议。');
+    final recent = records.length > 20
+        ? records.sublist(records.length - 20)
+        : records;
+
+    final buffer = StringBuffer('用户最近 ${records.length} 条饮食记录');
+    if (records.length > 20) buffer.write('（已截取最近 20 条）');
+    buffer.writeln('：\n');
+
+    for (final r in recent) {
+      buffer.write('${r.mealDate} | ${_getMealTypeName(r.mealType)} | ${r.foodText}');
+      buffer.write(' | ${_getPortionName(r.portionLevel)} | ${_getCalorieName(r.calorieLevel)}');
+      buffer.writeln(' | 评分${r.healthScore}/5');
+    }
+
+    final avgScore = records.fold<double>(0, (s, r) => s + r.healthScore) / records.length;
+    final mealTypes = <String, int>{};
+    for (final r in records) {
+      mealTypes[r.mealType] = (mealTypes[r.mealType] ?? 0) + 1;
+    }
+    final mealSummary = mealTypes.entries.map((e) => '${_getMealTypeName(e.key)}${e.value}次').join(', ');
+    buffer.writeln('\n汇总: ${records.length}条, 平均评分${avgScore.toStringAsFixed(1)}/5 | $mealSummary');
 
     return buffer.toString();
   }
@@ -512,63 +538,52 @@ class AiService {
     }
   }
 
-  String _getProteinName(String level) {
-    switch (level) {
-      case 'low':
-        return '低';
-      case 'medium':
-        return '中';
-      case 'high':
-        return '高';
-      default:
-        return level;
-    }
-  }
-
   // ---------------------------------------------------------------------------
   // Prompt 构建 — 睡眠
   // ---------------------------------------------------------------------------
 
   static const _sleepSystemPrompt = '''
-你是一位专业的睡眠专家。请根据用户的睡眠记录数据，给出以下分析：
-1. 睡眠时长是否充足（建议7-9小时）
-2. 睡眠质量评估
-3. 作息规律性分析（入睡/起床时间是否稳定）
-4. 入睡问题分析（入睡耗时、夜醒情况）
-5. 具体的改善建议（2-3 条可执行的建议）
+你是一位专业的睡眠专家。请根据用户的睡眠记录数据，给出分析和建议。
 
-请用简洁、关怀的语气回答，使用中文。''';
+分析维度：
+1. 睡眠时长是否充足（建议 7-9 小时）
+2. 睡眠质量评估
+3. 作息规律性（入睡/起床时间是否稳定）
+4. 入睡问题（入睡耗时、夜醒情况）
+
+输出要求：
+- 使用 Markdown 格式
+- 分为「数据概览」「分析」「建议」三个部分
+- 建议 2-3 条，用 "- [ ]" 任务清单格式
+- 总字数控制在 300 字以内
+- 使用中文，语气关怀鼓励，不说教''';
 
   String _buildSleepPrompt(List<SleepRecord> records) {
-    if (records.isEmpty) return '最近没有睡眠记录，请给出通用的健康睡眠建议。';
+    if (records.isEmpty) {
+      return '用户最近 7 天没有睡眠记录。请给出鼓励性建议：1) 建议设置固定的就寝提醒；2) 记录睡眠可以帮助发现规律；3) 给一个今天可以尝试的助眠小建议。';
+    }
 
-    final buffer = StringBuffer('以下是用户最近的睡眠记录：\n\n');
-    for (final r in records) {
-      buffer.writeln('- 日期: ${r.sleepDate}');
-      buffer.writeln('  上床时间: ${r.bedTime}');
-      buffer.writeln('  入睡时间: ${r.sleepTime}');
-      buffer.writeln('  起床时间: ${r.wakeTime}');
+    final recent = records.length > 14
+        ? records.sublist(records.length - 14)
+        : records;
+
+    final buffer = StringBuffer('用户最近 ${records.length} 条睡眠记录');
+    if (records.length > 14) buffer.write('（已截取最近 14 条）');
+    buffer.writeln('：\n');
+
+    for (final r in recent) {
       final hours = r.durationMinutes ~/ 60;
       final minutes = r.durationMinutes % 60;
-      buffer.writeln('  睡眠时长: $hours小时$minutes分钟');
-      buffer.writeln('  睡眠质量: ${r.qualityLevel}/5');
-      buffer.writeln('  入睡耗时: ${r.fallAsleepMinutes}分钟');
-      buffer.writeln('  夜醒次数: ${r.wakeCount}次');
-      buffer.writeln('  醒后精力: ${r.energyLevel}/5');
-      if (r.dreamNote != null && r.dreamNote!.isNotEmpty) {
-        buffer.writeln('  梦境: ${r.dreamNote}');
-      }
+      buffer.write('${r.sleepDate} | ${r.bedTime}-${r.wakeTime} | ${hours}h${minutes}m');
+      buffer.write(' | 质量${r.qualityLevel}/5 | 入睡${r.fallAsleepMinutes}min');
+      if (r.wakeCount > 0) buffer.write(' | 夜醒${r.wakeCount}次');
       buffer.writeln();
     }
 
-    final avgDuration =
-        records.fold<int>(0, (s, r) => s + r.durationMinutes) / records.length;
-    final avgQuality =
-        records.fold<double>(0, (s, r) => s + r.qualityLevel) / records.length;
-    buffer.writeln(
-      '共 ${records.length} 条记录，平均睡眠时长 ${(avgDuration ~/ 60)}小时${(avgDuration % 60).toInt()}分钟，平均质量 ${avgQuality.toStringAsFixed(1)}/5。',
-    );
-    buffer.writeln('\n请给出分析和建议。');
+    final avgDuration = records.fold<int>(0, (s, r) => s + r.durationMinutes) / records.length;
+    final avgQuality = records.fold<double>(0, (s, r) => s + r.qualityLevel) / records.length;
+    final avgFallAsleep = records.fold<int>(0, (s, r) => s + r.fallAsleepMinutes) / records.length;
+    buffer.writeln('\n汇总: ${records.length}条 | 平均${(avgDuration ~/ 60)}h${(avgDuration % 60).toInt()}m | 质量${avgQuality.toStringAsFixed(1)}/5 | 入睡${avgFallAsleep.toStringAsFixed(0)}min');
 
     return buffer.toString();
   }
@@ -580,13 +595,16 @@ class AiService {
   static const _reportSystemPrompt = '''
 你是一位成长教练。请根据用户提供的统计数据，生成一份结构清晰的成长报告。
 
-报告应包含：
+报告结构：
 1. 数据总览（用简洁的数字概括）
 2. 亮点与进步（找出做得好的地方）
 3. 不足与改进空间
-4. 下一周期的具体目标建议
+4. 下一周期的具体目标建议（用 "- [ ]" 任务清单格式）
 
-请使用 Markdown 格式，用中文回答，语气积极鼓励。''';
+输出要求：
+- 使用 Markdown 格式
+- 总字数控制在 400 字以内
+- 使用中文，语气积极鼓励''';
 
   String _buildWeeklyReportPrompt(Map<String, dynamic> data) {
     final buffer = StringBuffer('以下是用户本周的成长数据：\n\n');

@@ -1,100 +1,73 @@
 part of '../pages/quill_editor_page.dart';
 
-// ---------------------------------------------------------------------------
-// Toolbar panel enum
-// ---------------------------------------------------------------------------
-
-enum _ToolbarPanel { none, font, list, more, paragraph }
-
-// ---------------------------------------------------------------------------
-// Keyboard toolbar (bottom bar)
-// ---------------------------------------------------------------------------
+enum _ToolbarPanel { none, font, list, paragraph, insert, more }
 
 class _KeyboardToolbar extends StatelessWidget {
   const _KeyboardToolbar({
-    required this.activePanel,
+    required this.pickingImage,
+    required this.toolsActive,
     required this.onPickImage,
     required this.onTask,
-    required this.onList,
     required this.onQuote,
-    required this.onFont,
-    required this.onMore,
+    required this.onTools,
   });
 
-  final _ToolbarPanel activePanel;
+  final bool pickingImage;
+  final bool toolsActive;
   final VoidCallback onPickImage;
   final VoidCallback onTask;
-  final VoidCallback onList;
   final VoidCallback onQuote;
-  final VoidCallback onFont;
-  final VoidCallback onMore;
+  final VoidCallback onTools;
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(18, 0, 18, 12),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.84),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: JournalColors.pinkMain.withValues(alpha: 0.08),
-              blurRadius: 18,
-              offset: const Offset(0, -4),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            _ToolbarItem(
-              icon: Icons.image_outlined,
-              label: '图片',
-              onTap: onPickImage,
-            ),
-            _ToolbarItem(
-              icon: Icons.check_box_outlined,
-              label: '任务',
-              onTap: onTask,
-            ),
-            _ToolbarItem(
-              icon: Icons.format_list_bulleted_rounded,
-              label: '列表',
-              active: activePanel == _ToolbarPanel.list,
-              onTap: onList,
-            ),
-            _ToolbarItem(
-              icon: Icons.format_quote_rounded,
-              label: '引用',
-              onTap: onQuote,
-            ),
-            _ToolbarItem(
-              icon: Icons.text_fields_rounded,
-              label: '字体',
-              active: activePanel == _ToolbarPanel.font,
-              onTap: onFont,
-            ),
-            _ToolbarItem(
-              icon: Icons.more_horiz_rounded,
-              label: '更多',
-              active: activePanel == _ToolbarPanel.more,
-              onTap: onMore,
-            ),
-          ],
-        ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: JournalColors.pinkBorder),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.pinkMain.withValues(alpha: 0.10),
+            blurRadius: 22,
+            offset: const Offset(0, -6),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _BottomToolButton(
+            icon: pickingImage
+                ? Icons.hourglass_top_rounded
+                : Icons.image_outlined,
+            label: pickingImage ? '选择中' : '图片',
+            onTap: pickingImage ? null : onPickImage,
+          ),
+          _BottomToolButton(
+            icon: Icons.check_box_outlined,
+            label: '待办',
+            onTap: onTask,
+          ),
+          _BottomToolButton(
+            icon: Icons.format_quote_rounded,
+            label: '引用',
+            onTap: onQuote,
+          ),
+          _BottomToolButton(
+            icon: Icons.auto_fix_high_rounded,
+            label: '工具',
+            active: toolsActive,
+            onTap: onTools,
+          ),
+        ],
       ),
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Single toolbar button
-// ---------------------------------------------------------------------------
-
-class _ToolbarItem extends StatelessWidget {
-  const _ToolbarItem({
+class _BottomToolButton extends StatelessWidget {
+  const _BottomToolButton({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -103,39 +76,134 @@ class _ToolbarItem extends StatelessWidget {
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final bool active;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onTap != null;
     return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 6),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 25,
-                color: active
-                    ? JournalColors.pinkMain
-                    : JournalColors.textSecondary,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
+      child: Opacity(
+        opacity: enabled ? 1 : 0.46,
+        child: GrowthPressable(
+          onTap: onTap,
+          semanticLabel: label,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.symmetric(vertical: 7),
+            decoration: BoxDecoration(
+              color: active ? JournalColors.pinkBg : Colors.transparent,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: 23,
                   color: active
                       ? JournalColors.pinkMain
                       : JournalColors.textSecondary,
-                  fontSize: 12,
-                  fontWeight: active ? FontWeight.w800 : FontWeight.w500,
                 ),
+                const SizedBox(height: 3),
+                Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: active
+                        ? JournalColors.pinkMain
+                        : JournalColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: active ? FontWeight.w900 : FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToolRail extends StatelessWidget {
+  const _ToolRail({
+    required this.activePanel,
+    required this.bottomOffset,
+    required this.onFont,
+    required this.onList,
+    required this.onParagraph,
+    required this.onInsert,
+    required this.onMore,
+  });
+
+  final _ToolbarPanel activePanel;
+  final double bottomOffset;
+  final VoidCallback onFont;
+  final VoidCallback onList;
+  final VoidCallback onParagraph;
+  final VoidCallback onInsert;
+  final VoidCallback onMore;
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = activePanel != _ToolbarPanel.none;
+    return AnimatedPositioned(
+      duration: AppMotion.duration(context, AppMotion.normal),
+      curve: AppMotion.standard,
+      left: visible ? 14 : -76,
+      bottom: bottomOffset,
+      child: AnimatedOpacity(
+        duration: AppMotion.duration(context, AppMotion.fast),
+        opacity: visible ? 1 : 0,
+        child: Container(
+          width: 64,
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: JournalColors.pinkBorder),
+            boxShadow: [
+              BoxShadow(
+                color: JournalColors.pinkMain.withValues(alpha: 0.10),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _RailButton(
+                icon: Icons.text_fields_rounded,
+                label: '字体',
+                active: activePanel == _ToolbarPanel.font,
+                onTap: onFont,
+              ),
+              _RailButton(
+                icon: Icons.format_list_bulleted_rounded,
+                label: '列表',
+                active: activePanel == _ToolbarPanel.list,
+                onTap: onList,
+              ),
+              _RailButton(
+                icon: Icons.notes_rounded,
+                label: '段落',
+                active: activePanel == _ToolbarPanel.paragraph,
+                onTap: onParagraph,
+              ),
+              _RailButton(
+                icon: Icons.add_photo_alternate_outlined,
+                label: '插入',
+                active: activePanel == _ToolbarPanel.insert,
+                onTap: onInsert,
+              ),
+              _RailButton(
+                icon: Icons.more_horiz_rounded,
+                label: '更多',
+                active: activePanel == _ToolbarPanel.more,
+                onTap: onMore,
               ),
             ],
           ),
@@ -145,9 +213,83 @@ class _ToolbarItem extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Font formatting panel
-// ---------------------------------------------------------------------------
+class _RailButton extends StatelessWidget {
+  const _RailButton({
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: label,
+      child: GrowthPressable(
+        onTap: onTap,
+        semanticLabel: label,
+        borderRadius: BorderRadius.circular(18),
+        child: Container(
+          width: 48,
+          height: 48,
+          margin: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(
+            color: active ? JournalColors.pinkMain : Colors.transparent,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Icon(
+            icon,
+            color: active ? Colors.white : JournalColors.textSecondary,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ToolPopover extends StatelessWidget {
+  const _ToolPopover({
+    required this.activePanel,
+    required this.bottomOffset,
+    required this.child,
+  });
+
+  final _ToolbarPanel activePanel;
+  final double bottomOffset;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = activePanel != _ToolbarPanel.none;
+    return AnimatedPositioned(
+      duration: AppMotion.duration(context, AppMotion.normal),
+      curve: AppMotion.standard,
+      left: visible ? 88 : 64,
+      right: 18,
+      bottom: bottomOffset,
+      child: IgnorePointer(
+        ignoring: !visible,
+        child: AnimatedOpacity(
+          duration: AppMotion.duration(context, AppMotion.fast),
+          opacity: visible ? 1 : 0,
+          child: AnimatedScale(
+            duration: AppMotion.duration(context, AppMotion.normal),
+            curve: AppMotion.standard,
+            alignment: Alignment.bottomLeft,
+            scale: visible ? 1 : 0.96,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _FontPanel extends StatelessWidget {
   const _FontPanel({required this.controller, required this.onClear});
@@ -159,8 +301,10 @@ class _FontPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final style = controller.getSelectionStyle();
     return _PanelShell(
+      title: '字体',
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
@@ -169,7 +313,7 @@ class _FontPanel extends StatelessWidget {
                 final current = style.attributes[Attribute.size.key];
                 final selected = current?.value == size.toString();
                 return Padding(
-                  padding: const EdgeInsets.only(right: 10),
+                  padding: const EdgeInsets.only(right: 8),
                   child: _ChipButton(
                     label: '$size',
                     active: selected,
@@ -181,27 +325,26 @@ class _FontPanel extends StatelessWidget {
               }).toList(),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
               _ChipButton(
                 label: 'B',
                 active: style.containsKey(Attribute.bold.key),
                 onTap: () => _toggle(controller, Attribute.bold),
               ),
-              const SizedBox(width: 8),
               _ChipButton(
                 label: 'I',
                 active: style.containsKey(Attribute.italic.key),
                 onTap: () => _toggle(controller, Attribute.italic),
               ),
-              const SizedBox(width: 8),
               _ChipButton(
                 label: 'U',
                 active: style.containsKey(Attribute.underline.key),
                 onTap: () => _toggle(controller, Attribute.underline),
               ),
-              const SizedBox(width: 8),
               _ChipButton(
                 label: '高亮',
                 active: style.containsKey(Attribute.background.key),
@@ -215,7 +358,6 @@ class _FontPanel extends StatelessWidget {
                   }
                 },
               ),
-              const Spacer(),
               _ChipButton(label: '清除', active: false, onTap: onClear),
             ],
           ),
@@ -232,10 +374,6 @@ class _FontPanel extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// List formatting panel
-// ---------------------------------------------------------------------------
-
 class _ListPanel extends StatelessWidget {
   const _ListPanel({required this.controller, required this.onToggle});
 
@@ -245,29 +383,31 @@ class _ListPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = controller.getSelectionStyle();
+    final listValue = style.attributes[Attribute.list.key]?.value;
     return _PanelShell(
-      child: Row(
+      title: '列表',
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
         children: [
           _PanelIconButton(
             icon: Icons.format_list_bulleted,
             label: '无序',
-            active: style.containsKey(Attribute.ul.key),
+            active: listValue == Attribute.ul.value,
             onTap: () => onToggle('ul'),
           ),
-          const SizedBox(width: 12),
           _PanelIconButton(
             icon: Icons.format_list_numbered,
             label: '有序',
-            active: style.containsKey(Attribute.ol.key),
+            active: listValue == Attribute.ol.value,
             onTap: () => onToggle('ol'),
           ),
-          const SizedBox(width: 12),
           _PanelIconButton(
             icon: Icons.check_box_outlined,
-            label: '任务',
+            label: '待办',
             active:
-                style.containsKey(Attribute.checked.key) ||
-                style.containsKey(Attribute.unchecked.key),
+                listValue == Attribute.checked.value ||
+                listValue == Attribute.unchecked.value,
             onTap: () => onToggle('check'),
           ),
         ],
@@ -275,54 +415,6 @@ class _ListPanel extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// More options panel
-// ---------------------------------------------------------------------------
-
-class _MorePanel extends StatelessWidget {
-  const _MorePanel({
-    required this.onInsertLink,
-    required this.onCodeBlock,
-    required this.onUndo,
-    required this.onRedo,
-    required this.onDismissKeyboard,
-    required this.onParagraph,
-  });
-
-  final VoidCallback onInsertLink;
-  final VoidCallback onCodeBlock;
-  final VoidCallback? onUndo;
-  final VoidCallback? onRedo;
-  final VoidCallback onDismissKeyboard;
-  final VoidCallback onParagraph;
-
-  @override
-  Widget build(BuildContext context) {
-    return _PanelShell(
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          _PanelIconButton(icon: Icons.notes, label: '段落', onTap: onParagraph),
-          _PanelIconButton(icon: Icons.code, label: '代码', onTap: onCodeBlock),
-          _PanelIconButton(icon: Icons.link, label: '链接', onTap: onInsertLink),
-          _PanelIconButton(icon: Icons.undo, label: '撤销', onTap: onUndo),
-          _PanelIconButton(icon: Icons.redo, label: '重做', onTap: onRedo),
-          _PanelIconButton(
-            icon: Icons.keyboard_hide_outlined,
-            label: '收起键盘',
-            onTap: onDismissKeyboard,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Paragraph / heading panel
-// ---------------------------------------------------------------------------
 
 class _ParagraphPanel extends StatelessWidget {
   const _ParagraphPanel({required this.controller});
@@ -332,36 +424,35 @@ class _ParagraphPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final style = controller.getSelectionStyle();
+    final headerValue = style.attributes[Attribute.header.key]?.value;
     return _PanelShell(
+      title: '段落',
       child: Wrap(
         spacing: 8,
         runSpacing: 8,
         children: [
           _ChipButton(
             label: '正文',
-            active:
-                !style.containsKey(Attribute.h1.key) &&
-                !style.containsKey(Attribute.h2.key) &&
-                !style.containsKey(Attribute.h3.key),
+            active: headerValue == null,
             onTap: () {
-              controller.formatSelection(Attribute.clone(Attribute.h1, null));
-              controller.formatSelection(Attribute.clone(Attribute.h2, null));
-              controller.formatSelection(Attribute.clone(Attribute.h3, null));
+              controller.formatSelection(
+                Attribute.clone(Attribute.header, null),
+              );
             },
           ),
           _ChipButton(
             label: 'H1',
-            active: style.containsKey(Attribute.h1.key),
+            active: headerValue == Attribute.h1.value,
             onTap: () => controller.formatSelection(Attribute.h1),
           ),
           _ChipButton(
             label: 'H2',
-            active: style.containsKey(Attribute.h2.key),
+            active: headerValue == Attribute.h2.value,
             onTap: () => controller.formatSelection(Attribute.h2),
           ),
           _ChipButton(
             label: 'H3',
-            active: style.containsKey(Attribute.h3.key),
+            active: headerValue == Attribute.h3.value,
             onTap: () => controller.formatSelection(Attribute.h3),
           ),
           _PanelIconButton(
@@ -380,34 +471,125 @@ class _ParagraphPanel extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Reusable panel shell
-// ---------------------------------------------------------------------------
+class _InsertPanel extends StatelessWidget {
+  const _InsertPanel({
+    required this.pickingImage,
+    required this.onPickImage,
+    required this.onInsertLink,
+    required this.onCodeBlock,
+  });
 
-class _PanelShell extends StatelessWidget {
-  const _PanelShell({required this.child});
-
-  final Widget child;
+  final bool pickingImage;
+  final VoidCallback onPickImage;
+  final VoidCallback onInsertLink;
+  final VoidCallback onCodeBlock;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(18, 0, 18, 8),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: JournalColors.pinkBorder),
+    return _PanelShell(
+      title: '插入',
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _PanelIconButton(
+            icon: pickingImage
+                ? Icons.hourglass_top_rounded
+                : Icons.image_outlined,
+            label: pickingImage ? '选择中' : '图片',
+            onTap: pickingImage ? null : onPickImage,
+          ),
+          _PanelIconButton(icon: Icons.link, label: '链接', onTap: onInsertLink),
+          _PanelIconButton(icon: Icons.code, label: '代码', onTap: onCodeBlock),
+        ],
       ),
-      child: child,
     );
   }
 }
 
-// ---------------------------------------------------------------------------
-// Reusable icon + label button for panels
-// ---------------------------------------------------------------------------
+class _MorePanel extends StatelessWidget {
+  const _MorePanel({
+    required this.onDismissKeyboard,
+    required this.onClearFormat,
+  });
+
+  final VoidCallback onDismissKeyboard;
+  final VoidCallback onClearFormat;
+
+  @override
+  Widget build(BuildContext context) {
+    return _PanelShell(
+      title: '更多',
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: [
+          _PanelIconButton(
+            icon: Icons.cleaning_services_outlined,
+            label: '清除格式',
+            onTap: onClearFormat,
+          ),
+          _PanelIconButton(
+            icon: Icons.keyboard_hide_outlined,
+            label: '收起键盘',
+            onTap: onDismissKeyboard,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PanelShell extends StatelessWidget {
+  const _PanelShell({required this.title, required this.child});
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.sizeOf(context).height * 0.42,
+      ),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: JournalColors.pinkBorder),
+          boxShadow: [
+            BoxShadow(
+              color: JournalColors.pinkMain.withValues(alpha: 0.10),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: JournalColors.textDark,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 10),
+              child,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _PanelIconButton extends StatelessWidget {
   const _PanelIconButton({
@@ -427,14 +609,15 @@ class _PanelIconButton extends StatelessWidget {
     final enabled = onTap != null;
     return Opacity(
       opacity: enabled ? 1 : 0.45,
-      child: InkWell(
+      child: GrowthPressable(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        semanticLabel: label,
+        borderRadius: BorderRadius.circular(14),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
             color: active ? JournalColors.pinkBg : Colors.white,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: active ? JournalColors.pinkSoft : JournalColors.pinkBorder,
             ),
@@ -456,7 +639,7 @@ class _PanelIconButton extends StatelessWidget {
                   color: active
                       ? JournalColors.pinkMain
                       : JournalColors.textSecondary,
-                  fontWeight: active ? FontWeight.w800 : FontWeight.w500,
+                  fontWeight: active ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
             ],
@@ -466,10 +649,6 @@ class _PanelIconButton extends StatelessWidget {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Reusable chip button
-// ---------------------------------------------------------------------------
 
 class _ChipButton extends StatelessWidget {
   const _ChipButton({
@@ -484,14 +663,15 @@ class _ChipButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GrowthPressable(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      semanticLabel: label,
+      borderRadius: BorderRadius.circular(14),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
           color: active ? JournalColors.pinkMain : Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: active ? JournalColors.pinkMain : JournalColors.pinkBorder,
           ),
@@ -500,7 +680,7 @@ class _ChipButton extends StatelessWidget {
           label,
           style: TextStyle(
             color: active ? Colors.white : JournalColors.textDark,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),

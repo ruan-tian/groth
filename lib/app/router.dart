@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
+import 'design/design.dart';
 import '../features/dashboard/dashboard_page.dart';
 import '../features/dashboard/pages/task_history_page.dart';
 import '../features/plan/plan_page.dart';
@@ -72,30 +73,41 @@ CustomTransitionPage<void> buildSlideTransition(
   Widget child, {
   bool useSecondaryShift = true,
 }) {
+  final reduceMotion = AppMotion.reduceMotion(context);
+
   return CustomTransitionPage<void>(
     key: state.pageKey,
+    transitionDuration: reduceMotion ? Duration.zero : AppMotion.page,
+    reverseTransitionDuration: reduceMotion ? Duration.zero : AppMotion.normal,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      final primaryOffset = Tween<Offset>(
-        begin: const Offset(1.0, 0.0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOut));
+      if (reduceMotion) return child;
 
-      Widget result = SlideTransition(position: primaryOffset, child: child);
+      final primaryOffset = Tween<Offset>(
+        begin: const Offset(0.0, 0.035),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: AppMotion.pageEnter));
+
+      final primaryOpacity = CurvedAnimation(
+        parent: animation,
+        curve: AppMotion.pageEnter,
+        reverseCurve: AppMotion.pageExit,
+      );
+
+      Widget result = FadeTransition(
+        opacity: primaryOpacity,
+        child: SlideTransition(position: primaryOffset, child: child),
+      );
 
       if (useSecondaryShift) {
-        final secondaryOffset =
-            Tween<Offset>(
-              begin: Offset.zero,
-              end: const Offset(-0.15, 0.0),
-            ).animate(
-              CurvedAnimation(
-                parent: secondaryAnimation,
-                curve: Curves.easeOut,
-              ),
-            );
+        final secondaryOpacity = Tween<double>(begin: 1, end: 0.96).animate(
+          CurvedAnimation(
+            parent: secondaryAnimation,
+            curve: AppMotion.pageExit,
+          ),
+        );
 
-        result = SlideTransition(position: secondaryOffset, child: result);
+        result = FadeTransition(opacity: secondaryOpacity, child: result);
       }
 
       return result;
@@ -129,10 +141,12 @@ class MainShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: navigationShell,
-      bottomNavigationBar: AdvancedBottomNav(
-        currentIndex: navigationShell.currentIndex,
-        onTap: _onTap,
+      body: RepaintBoundary(child: navigationShell),
+      bottomNavigationBar: RepaintBoundary(
+        child: AdvancedBottomNav(
+          currentIndex: navigationShell.currentIndex,
+          onTap: _onTap,
+        ),
       ),
     );
   }

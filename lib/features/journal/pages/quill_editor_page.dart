@@ -4,9 +4,12 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/services/image_service.dart';
+import '../../../shared/widgets/common/common_widgets.dart';
 import '../utils/journal_assets.dart' as journal_images;
 import '../widgets/journal_colors.dart';
+import '../widgets/journal_safe_image.dart';
 
 part '../widgets/quill_editor_toolbar.dart';
 part '../widgets/quill_editor_surface.dart';
@@ -56,14 +59,18 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
   void initState() {
     super.initState();
     _titleController = TextEditingController(text: widget.initialTitle);
+    _titleController.addListener(_rebuildForTitle);
     _quillController = _createQuillController();
     _quillController.addListener(_onQuillChanged);
+    _editorFocus.addListener(_onFocusChanged);
     _wordCount = _countWords(_plainText);
   }
 
   @override
   void dispose() {
+    _titleController.removeListener(_rebuildForTitle);
     _quillController.removeListener(_onQuillChanged);
+    _editorFocus.removeListener(_onFocusChanged);
     _titleController.dispose();
     _quillController.dispose();
     _editorFocus.dispose();
@@ -97,6 +104,14 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
   }
 
   String get _plainText => _quillController.document.toPlainText().trim();
+
+  void _rebuildForTitle() {
+    if (mounted) setState(() {});
+  }
+
+  void _onFocusChanged() {
+    if (mounted) setState(() {});
+  }
 
   void _onQuillChanged() {
     final newCount = _countWords(_plainText);
@@ -133,14 +148,29 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
   void _handleSave() {
     final deltaJson = jsonEncode(_quillController.document.toDelta().toJson());
     final plainText = _plainText;
+    final imagePaths = <String>{
+      ..._pickedImagePaths,
+      ..._extractImagePaths(),
+    }.toList(growable: false);
     widget.onSave(
       _titleController.text.trim(),
       deltaJson,
       plainText,
       _countWords(plainText),
-      List<String>.from(_pickedImagePaths),
+      imagePaths,
     );
     Navigator.pop(context);
+  }
+
+  List<String> _extractImagePaths() {
+    final paths = <String>[];
+    for (final op in _quillController.document.toDelta().toJson()) {
+      final insert = op['insert'];
+      if (insert is Map && insert['image'] is String) {
+        paths.add(insert['image'] as String);
+      }
+    }
+    return paths;
   }
 
   void _handleBack() {
@@ -177,11 +207,13 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
 
   Future<void> _pickImage() async {
     if (_pickingImage) return;
-    _pickingImage = true;
+    setState(() => _pickingImage = true);
     try {
       final path = await _imageService.pickAndSaveImage();
       if (path == null || !mounted) return;
-      _pickedImagePaths.add(path);
+      if (!_pickedImagePaths.contains(path)) {
+        _pickedImagePaths.add(path);
+      }
       final index = _selectionOffset();
       _quillController.replaceText(
         index,
@@ -196,7 +228,7 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
         ).showSnackBar(SnackBar(content: Text('选择图片失败: $e')));
       }
     } finally {
-      _pickingImage = false;
+      if (mounted) setState(() => _pickingImage = false);
     }
   }
 
@@ -204,6 +236,11 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     setState(() {
       _activePanel = _activePanel == panel ? _ToolbarPanel.none : panel;
     });
+  }
+
+  void _closePanel() {
+    if (_activePanel == _ToolbarPanel.none) return;
+    setState(() => _activePanel = _ToolbarPanel.none);
   }
 
   void _toggleAttribute(Attribute<dynamic> attr) {
@@ -239,6 +276,8 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
       Attribute.h1,
       Attribute.h2,
       Attribute.h3,
+      Attribute.blockQuote,
+      Attribute.codeBlock,
     ];
     for (final attr in attrs) {
       _quillController.formatSelection(Attribute.clone(attr, null));
@@ -251,11 +290,7 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
       onConfirm: (text, url) {
         final index = _selectionOffset();
         _quillController.document.insert(index, text);
-        _quillController.formatText(
-          index,
-          text.length,
-          LinkAttribute(url),
-        );
+        _quillController.formatText(index, text.length, LinkAttribute(url));
         _quillController.updateSelection(
           TextSelection.collapsed(offset: index + text.length),
           ChangeSource.local,
@@ -270,42 +305,97 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
     final dateStr =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} '
         '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final keyboardBottom = MediaQuery.viewInsetsOf(context).bottom;
+    final keyboardVisible = keyboardBottom > 0;
+    final compactMode = keyboardVisible || _editorFocus.hasFocus;
+    final bottomOffset = keyboardVisible ? keyboardBottom + 8.0 : 12.0;
 
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       backgroundColor: JournalColors.bg,
       body: SafeArea(
+        bottom: false,
         child: Center(
           child: ConstrainedBox(
             constraints: const BoxConstraints(maxWidth: 900),
-            child: Column(
+            child: Stack(
               children: [
-                _TopBar(onBack: _handleBack, onSave: _handleSave),
-                _TitleSection(
-                  titleController: _titleController,
-                  dateStr: dateStr,
-                  wordCount: _wordCount,
-                ),
-                Expanded(
-                  child: _PaperEditorSurface(
-                    controller: _quillController,
-                    scrollController: _scrollController,
-                    focusNode: _editorFocus,
+                Positioned.fill(
+                  child: Column(
+                    children: [
+                      AnimatedContainer(
+                        duration: AppMotion.duration(context, AppMotion.normal),
+                        curve: AppMotion.standard,
+                        height: compactMode ? 74 : 88,
+                      ),
+                      AnimatedSwitcher(
+                        duration: AppMotion.duration(context, AppMotion.normal),
+                        switchInCurve: AppMotion.standard,
+                        switchOutCurve: AppMotion.pageExit,
+                        child: compactMode
+                            ? const SizedBox.shrink()
+                            : _TitleSection(
+                                titleController: _titleController,
+                                dateStr: dateStr,
+                                wordCount: _wordCount,
+                              ),
+                      ),
+                      Expanded(
+                        child: _PaperEditorSurface(
+                          controller: _quillController,
+                          scrollController: _scrollController,
+                          focusNode: _editorFocus,
+                          compactMode: compactMode,
+                          keyboardBottom: keyboardBottom,
+                          onTap: _closePanel,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOutCubic,
-                  alignment: Alignment.topCenter,
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  top: 8,
+                  child: _EditorTopBar(
+                    titleController: _titleController,
+                    compactMode: compactMode,
+                    dateStr: dateStr,
+                    wordCount: _wordCount,
+                    hasUndo: _hasUndo,
+                    hasRedo: _hasRedo,
+                    onBack: _handleBack,
+                    onSave: _handleSave,
+                    onUndo: _hasUndo ? _quillController.undo : null,
+                    onRedo: _hasRedo ? _quillController.redo : null,
+                  ),
+                ),
+                _ToolRail(
+                  activePanel: _activePanel,
+                  bottomOffset: bottomOffset + 78,
+                  onFont: () => _togglePanel(_ToolbarPanel.font),
+                  onList: () => _togglePanel(_ToolbarPanel.list),
+                  onParagraph: () => _togglePanel(_ToolbarPanel.paragraph),
+                  onInsert: () => _togglePanel(_ToolbarPanel.insert),
+                  onMore: () => _togglePanel(_ToolbarPanel.more),
+                ),
+                _ToolPopover(
+                  activePanel: _activePanel,
+                  bottomOffset: bottomOffset + 78,
                   child: _buildActivePanel(),
                 ),
-                _KeyboardToolbar(
-                  activePanel: _activePanel,
-                  onPickImage: _pickImage,
-                  onTask: () => _toggleAttribute(Attribute.unchecked),
-                  onList: () => _togglePanel(_ToolbarPanel.list),
-                  onQuote: () => _toggleAttribute(Attribute.blockQuote),
-                  onFont: () => _togglePanel(_ToolbarPanel.font),
-                  onMore: () => _togglePanel(_ToolbarPanel.more),
+                Positioned(
+                  left: 18,
+                  right: 18,
+                  bottom: bottomOffset,
+                  child: _KeyboardToolbar(
+                    pickingImage: _pickingImage,
+                    toolsActive: _activePanel != _ToolbarPanel.none,
+                    onPickImage: _pickImage,
+                    onTask: () => _toggleAttribute(Attribute.unchecked),
+                    onQuote: () => _toggleAttribute(Attribute.blockQuote),
+                    onTools: () => _togglePanel(_ToolbarPanel.font),
+                  ),
                 ),
               ],
             ),
@@ -323,47 +413,143 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
         return _FontPanel(controller: _quillController, onClear: _clearFormat);
       case _ToolbarPanel.list:
         return _ListPanel(controller: _quillController, onToggle: _toggleList);
-      case _ToolbarPanel.more:
-        return _MorePanel(
-          onInsertLink: _insertLink,
-          onCodeBlock: () => _toggleAttribute(Attribute.codeBlock),
-          onUndo: _hasUndo ? _quillController.undo : null,
-          onRedo: _hasRedo ? _quillController.redo : null,
-          onDismissKeyboard: _editorFocus.unfocus,
-          onParagraph: () => _togglePanel(_ToolbarPanel.paragraph),
-        );
       case _ToolbarPanel.paragraph:
         return _ParagraphPanel(controller: _quillController);
+      case _ToolbarPanel.insert:
+        return _InsertPanel(
+          pickingImage: _pickingImage,
+          onPickImage: _pickImage,
+          onInsertLink: _insertLink,
+          onCodeBlock: () => _toggleAttribute(Attribute.codeBlock),
+        );
+      case _ToolbarPanel.more:
+        return _MorePanel(
+          onDismissKeyboard: _editorFocus.unfocus,
+          onClearFormat: _clearFormat,
+        );
     }
   }
 }
 
-// ---------------------------------------------------------------------------
-// Top navigation bar
-// ---------------------------------------------------------------------------
+class _EditorTopBar extends StatelessWidget {
+  const _EditorTopBar({
+    required this.titleController,
+    required this.compactMode,
+    required this.dateStr,
+    required this.wordCount,
+    required this.hasUndo,
+    required this.hasRedo,
+    required this.onBack,
+    required this.onSave,
+    required this.onUndo,
+    required this.onRedo,
+  });
 
-class _TopBar extends StatelessWidget {
-  const _TopBar({required this.onBack, required this.onSave});
-
+  final TextEditingController titleController;
+  final bool compactMode;
+  final String dateStr;
+  final int wordCount;
+  final bool hasUndo;
+  final bool hasRedo;
   final VoidCallback onBack;
   final VoidCallback onSave;
+  final VoidCallback? onUndo;
+  final VoidCallback? onRedo;
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(22, 10, 22, 4),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.86),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: JournalColors.pinkBorder),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.pinkMain.withValues(alpha: 0.08),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
       child: Row(
         children: [
-          _TopIconButton(icon: Icons.chevron_left_rounded, onTap: onBack),
-          const Spacer(),
-          TextButton(
-            onPressed: onSave,
-            style: TextButton.styleFrom(
-              foregroundColor: JournalColors.pinkMain,
+          _TopIconButton(
+            icon: Icons.chevron_left_rounded,
+            tooltip: '返回',
+            onTap: onBack,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: AnimatedSwitcher(
+              duration: AppMotion.duration(context, AppMotion.normal),
+              child: compactMode
+                  ? Column(
+                      key: const ValueKey('compact-title'),
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          titleController.text.trim().isEmpty
+                              ? '标题'
+                              : titleController.text.trim(),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: JournalColors.textDark,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '$dateStr · $wordCount字',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: JournalColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    )
+                  : const SizedBox(key: ValueKey('top-spacer')),
             ),
-            child: const Text(
-              '完成',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          _TopIconButton(
+            icon: Icons.undo_rounded,
+            tooltip: '撤销',
+            onTap: onUndo,
+            enabled: hasUndo,
+          ),
+          const SizedBox(width: 6),
+          _TopIconButton(
+            icon: Icons.redo_rounded,
+            tooltip: '重做',
+            onTap: onRedo,
+            enabled: hasRedo,
+          ),
+          const SizedBox(width: 6),
+          GrowthPressable(
+            onTap: onSave,
+            semanticLabel: '完成',
+            borderRadius: BorderRadius.circular(18),
+            child: Container(
+              height: 44,
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: JournalColors.pinkMain,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: const Text(
+                '完成',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
         ],
@@ -372,28 +558,39 @@ class _TopBar extends StatelessWidget {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Top bar icon button
-// ---------------------------------------------------------------------------
-
 class _TopIconButton extends StatelessWidget {
-  const _TopIconButton({required this.icon, required this.onTap});
+  const _TopIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+    this.enabled = true,
+  });
 
   final IconData icon;
-  final VoidCallback onTap;
+  final String tooltip;
+  final VoidCallback? onTap;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white.withValues(alpha: 0.8),
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: SizedBox(
-          width: 52,
-          height: 52,
-          child: Icon(icon, color: JournalColors.textDark),
+    return Tooltip(
+      message: tooltip,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.42,
+        child: GrowthPressable(
+          onTap: enabled ? onTap : null,
+          semanticLabel: tooltip,
+          borderRadius: BorderRadius.circular(16),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.78),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: JournalColors.pinkBorder),
+            ),
+            child: Icon(icon, color: JournalColors.textDark, size: 22),
+          ),
         ),
       ),
     );

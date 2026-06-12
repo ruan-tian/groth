@@ -52,6 +52,7 @@ class MusicImportService {
         '${DateTime.now().millisecondsSinceEpoch}_${index++}_$safeBase$extension',
       );
       await source.copy(targetPath);
+      await _copySidecarLyrics(sourcePath, targetPath);
       imported.add(
         ImportedMusicFile(
           title: title,
@@ -80,5 +81,38 @@ class MusicImportService {
   String _safeFileName(String input) {
     final cleaned = input.replaceAll(RegExp(r'[^a-zA-Z0-9._-]+'), '_');
     return cleaned.isEmpty ? 'track' : cleaned;
+  }
+
+  Future<String?> pickAndCopyLrcForTrack(String audioFilePath) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['lrc'],
+    );
+    if (result == null) return null;
+
+    final sourcePath = result.files.first.path;
+    if (sourcePath == null) return null;
+
+    final source = File(sourcePath);
+    if (!await source.exists()) return null;
+
+    // 复制LRC文件到音频文件旁边
+    final targetDir = p.dirname(audioFilePath);
+    final targetName = '${p.basenameWithoutExtension(audioFilePath)}.lrc';
+    final targetPath = p.join(targetDir, targetName);
+    await source.copy(targetPath);
+    return targetPath;
+  }
+
+  Future<void> _copySidecarLyrics(String sourcePath, String targetPath) async {
+    final sourceLyrics = File(
+      p.join(p.dirname(sourcePath), '${p.basenameWithoutExtension(sourcePath)}.lrc'),
+    );
+    if (!await sourceLyrics.exists()) return;
+
+    final targetLyrics = File(
+      p.join(p.dirname(targetPath), '${p.basenameWithoutExtension(targetPath)}.lrc'),
+    );
+    await sourceLyrics.copy(targetLyrics.path);
   }
 }

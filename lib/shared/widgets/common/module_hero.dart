@@ -149,6 +149,33 @@ class ModuleMetricChip {
   final String label;
 }
 
+BoxDecoration _moduleCardDecoration(Color color) {
+  return BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        Colors.white.withValues(alpha: 0.98),
+        color.withValues(alpha: 0.045),
+      ],
+    ),
+    borderRadius: BorderRadius.circular(AppRadius.xxxl),
+    border: Border.all(color: color.withValues(alpha: 0.14)),
+    boxShadow: [
+      BoxShadow(
+        color: color.withValues(alpha: 0.08),
+        blurRadius: 24,
+        offset: const Offset(0, 10),
+      ),
+      BoxShadow(
+        color: Colors.black.withValues(alpha: 0.025),
+        blurRadius: 18,
+        offset: const Offset(0, 7),
+      ),
+    ],
+  );
+}
+
 class ModuleHeroCard extends StatelessWidget {
   const ModuleHeroCard({
     super.key,
@@ -181,139 +208,159 @@ class ModuleHeroCard extends StatelessWidget {
       button: onTap != null,
       label: title,
       child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: Icon(icon, color: color, size: 22),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
-                  ),
-                ),
-                if (onTargetTap != null)
-                  Semantics(
-                    button: true,
-                    label: '设置目标',
-                    child: GestureDetector(
-                    onTap: onTargetTap,
-                    child: Container(
-                      width: 32,
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(AppRadius.sm),
-                      ),
-                      child: Icon(Icons.settings_rounded, size: 16, color: color),
-                    ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              primaryValue,
-              style: AppTextStyles.numberLarge.copyWith(color: color, fontSize: 30),
-            ),
-            const SizedBox(height: 4),
-            Text(primaryLabel, style: AppTextStyles.caption),
-            if (progress != null || targetLabel != null) ...[
-              const SizedBox(height: AppSpacing.md),
-              if (progress != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 6),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: progress!.clamp(0.0, 1.0),
-                      minHeight: 6,
-                      backgroundColor: color.withValues(alpha: 0.10),
-                      valueColor: AlwaysStoppedAnimation<Color>(color),
-                    ),
-                  ),
-                ),
-              if (targetLabel != null)
-                Row(
-                  children: [
-                    if (progress != null)
-                      Text(
-                        '${(progress! * 100).toInt()}%',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: color,
-                        ),
-                      ),
-                    if (progress != null) const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        targetLabel!,
-                        style: AppTextStyles.caption,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-            if (metrics.isNotEmpty) ...[
-              const SizedBox(height: AppSpacing.lg),
-              Container(
-                height: 1,
-                color: AppColors.divider,
-              ),
-              const SizedBox(height: AppSpacing.md),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          decoration: _moduleCardDecoration(color),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Row(
-                children: metrics.map((m) {
-                  return Expanded(
-                    child: Column(
-                      children: [
-                        Icon(m.icon, size: 18, color: color.withValues(alpha: 0.7)),
-                        const SizedBox(height: 4),
-                        Text(
-                          m.value,
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          m.label,
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: AppColors.textTertiary,
-                          ),
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.92),
+                      borderRadius: BorderRadius.circular(AppRadius.mlg),
+                      boxShadow: [
+                        BoxShadow(
+                          color: color.withValues(alpha: 0.10),
+                          blurRadius: 12,
+                          offset: const Offset(0, 5),
                         ),
                       ],
                     ),
-                  );
-                }).toList(),
+                    child: Icon(icon, color: color, size: 23),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
+                    ),
+                  ),
+                  if (onTargetTap != null)
+                    Semantics(
+                      button: true,
+                      label: '设置目标',
+                      child: GestureDetector(
+                        onTap: onTargetTap,
+                        child: Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.82),
+                            borderRadius: BorderRadius.circular(AppRadius.smd),
+                            border: Border.all(
+                              color: color.withValues(alpha: 0.14),
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.settings_rounded,
+                            size: 16,
+                            color: color,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
               ),
+              const SizedBox(height: AppSpacing.md),
+              Text(
+                primaryValue,
+                style: AppTextStyles.numberLarge.copyWith(
+                  color: color,
+                  fontSize: 30,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(primaryLabel, style: AppTextStyles.caption),
+              if (progress != null || targetLabel != null) ...[
+                const SizedBox(height: AppSpacing.md),
+                if (progress != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(999),
+                      child: LinearProgressIndicator(
+                        value: progress!.clamp(0.0, 1.0),
+                        minHeight: 7,
+                        backgroundColor: color.withValues(alpha: 0.10),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                      ),
+                    ),
+                  ),
+                if (targetLabel != null)
+                  Row(
+                    children: [
+                      if (progress != null)
+                        Text(
+                          '${(progress! * 100).toInt()}%',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                          ),
+                        ),
+                      if (progress != null) const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          targetLabel!,
+                          style: AppTextStyles.caption,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+              if (metrics.isNotEmpty) ...[
+                const SizedBox(height: AppSpacing.lg),
+                Container(height: 1, color: color.withValues(alpha: 0.10)),
+                const SizedBox(height: AppSpacing.md),
+                Row(
+                  children: metrics.map((m) {
+                    return Expanded(
+                      child: Column(
+                        children: [
+                          Icon(
+                            m.icon,
+                            size: 18,
+                            color: color.withValues(alpha: 0.72),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            m.value,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            m.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -348,11 +395,7 @@ class ModuleRecordsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-      ),
+      decoration: _moduleCardDecoration(color),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,17 +403,21 @@ class ModuleRecordsCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 4,
-                height: 18,
+                width: 34,
+                height: 34,
                 decoration: BoxDecoration(
-                  color: color,
-                  borderRadius: BorderRadius.circular(999),
+                  color: Colors.white.withValues(alpha: 0.84),
+                  borderRadius: BorderRadius.circular(AppRadius.smd),
+                  border: Border.all(color: color.withValues(alpha: 0.12)),
                 ),
+                child: Icon(Icons.history_rounded, size: 18, color: color),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 10),
               Expanded(
                 child: Text(
                   title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.sectionTitle.copyWith(
                     fontWeight: FontWeight.w800,
                   ),
@@ -379,8 +426,17 @@ class ModuleRecordsCard extends StatelessWidget {
               TextButton.icon(
                 onPressed: onActionTap,
                 iconAlignment: IconAlignment.end,
+                style: TextButton.styleFrom(
+                  foregroundColor: color,
+                  visualDensity: VisualDensity.compact,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                ),
                 icon: const Icon(Icons.chevron_right_rounded, size: 18),
-                label: Text(action),
+                label: Text(
+                  action,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -392,36 +448,39 @@ class ModuleRecordsCard extends StatelessWidget {
               button: true,
               label: isExpanded ? '收起' : '查看更多',
               child: GestureDetector(
-              onTap: onToggleExpand,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      isExpanded ? '收起' : '查看更多 (${recordCount - maxVisible})',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
+                onTap: onToggleExpand,
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.72),
+                    borderRadius: BorderRadius.circular(AppRadius.mlg),
+                    border: Border.all(color: color.withValues(alpha: 0.10)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        isExpanded
+                            ? '收起'
+                            : '查看更多 (${recordCount - maxVisible})',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      Icon(
+                        isExpanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        size: 18,
                         color: color,
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      isExpanded
-                          ? Icons.keyboard_arrow_up
-                          : Icons.keyboard_arrow_down,
-                      size: 18,
-                      color: color,
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
               ),
             ),
           ],

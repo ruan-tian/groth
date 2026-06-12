@@ -149,6 +149,7 @@ class _FakePetOrchestrator extends PetOrchestrator {
 
   static AppDatabase get _db => _sharedDb ??= AppDatabase();
 
+  // ignore: unused_element
   static Future<void> disposeSharedDb() async {
     final db = _sharedDb;
     if (db != null) {

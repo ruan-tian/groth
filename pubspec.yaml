@@ -98,6 +98,8 @@ flutter:
     - assets/pet/social/
     - assets/pet/travel/
     - assets/pet/concerts/
+    - assets/pet/experience/
+    - assets/pet/sports/
     - assets/audio/noise/
     - assets/data/
     - assets/images/weather/cats/
@@ -123,6 +125,7 @@ flutter:
     - assets/images/focus/status/
     - assets/images/fitness_timer/
     - assets/images/timer_common/
+    - assets/images/ai_providers/
     - assets/images/health_timer/water/
     - assets/images/health_timer/sleep/
     - assets/images/music/

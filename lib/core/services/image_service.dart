@@ -4,46 +4,55 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 
-/// 图片选取与本地存储服务
-///
-/// 从系统图库选取图片，复制到应用私有目录，返回本地路径。
+class ImageImportException implements Exception {
+  const ImageImportException(this.message, [this.cause]);
+
+  final String message;
+  final Object? cause;
+
+  @override
+  String toString() => cause == null ? message : '$message: $cause';
+}
+
 class ImageService {
   ImageService({ImagePicker? picker}) : _picker = picker ?? ImagePicker();
 
   final ImagePicker _picker;
 
-  /// 选取单张图片并复制到应用目录，返回本地文件路径。
-  ///
-  /// 用户取消时返回 `null`。
+  static const double targetLongEdge = 1600;
+  static const int imageQuality = 85;
+
   Future<String?> pickAndSaveImage() async {
-    final xFile = await _picker.pickImage(source: ImageSource.gallery);
+    final xFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: targetLongEdge,
+      maxHeight: targetLongEdge,
+      imageQuality: imageQuality,
+      requestFullMetadata: false,
+    );
     if (xFile == null) return null;
 
-    final savedPath = await _copyToAppDir(xFile.path);
-    return savedPath;
+    return _copyToAppDir(xFile.path);
   }
 
-  /// 选取多张图片（最多 [maxImages] 张），返回本地文件路径列表。
-  ///
-  /// 用户取消时返回空列表。
-  Future<List<String>> pickAndSaveMultipleImages({
-    int maxImages = 9,
-  }) async {
-    final xFiles = await _picker.pickMultiImage(limit: maxImages);
+  Future<List<String>> pickAndSaveMultipleImages({int maxImages = 9}) async {
+    final xFiles = await _picker.pickMultiImage(
+      limit: maxImages,
+      maxWidth: targetLongEdge,
+      maxHeight: targetLongEdge,
+      imageQuality: imageQuality,
+      requestFullMetadata: false,
+    );
     if (xFiles.isEmpty) return [];
 
     final paths = <String>[];
     for (final xFile in xFiles) {
-      final savedPath = await _copyToAppDir(xFile.path);
-      if (savedPath != null) {
-        paths.add(savedPath);
-      }
+      paths.add(await _copyToAppDir(xFile.path));
     }
     return paths;
   }
 
-  /// 将 [sourcePath] 复制到 `journal_images/` 子目录，返回目标路径。
-  Future<String?> _copyToAppDir(String sourcePath) async {
+  Future<String> _copyToAppDir(String sourcePath) async {
     try {
       final appDir = await getApplicationDocumentsDirectory();
       final imagesDir = Directory(p.join(appDir.path, 'journal_images'));
@@ -51,15 +60,16 @@ class ImageService {
         await imagesDir.create(recursive: true);
       }
 
-      final ts = DateTime.now().millisecondsSinceEpoch;
-      final ext = p.extension(sourcePath); // e.g. ".jpg"
+      final ts = DateTime.now().microsecondsSinceEpoch;
+      final sourceExt = p.extension(sourcePath);
+      final ext = sourceExt.isEmpty ? '.jpg' : sourceExt;
       final fileName = 'img_$ts$ext';
       final destPath = p.join(imagesDir.path, fileName);
 
       await File(sourcePath).copy(destPath);
       return destPath;
-    } catch (_) {
-      return null;
+    } catch (error) {
+      throw ImageImportException('图片导入失败', error);
     }
   }
 }

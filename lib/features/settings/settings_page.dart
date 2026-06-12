@@ -494,7 +494,7 @@ class SettingsPage extends ConsumerWidget {
         label: '每日摄入热量',
         icon: Icons.local_fire_department_rounded,
         color: const Color(0xFFFF6B6B),
-        value: 2000,
+        value: ref.read(dailyCalorieGoalProvider),
         unit: 'kcal',
       ),
       _GoalItem(
@@ -503,7 +503,7 @@ class SettingsPage extends ConsumerWidget {
         label: '每日饮水量',
         icon: Icons.water_drop_rounded,
         color: const Color(0xFF4FC3F7),
-        value: 2000,
+        value: ref.read(dailyWaterGoalProvider),
         unit: 'ml',
       ),
       _GoalItem(
@@ -512,7 +512,7 @@ class SettingsPage extends ConsumerWidget {
         label: '每日睡眠时长',
         icon: Icons.bedtime_rounded,
         color: const Color(0xFF7E57C2),
-        value: 8,
+        value: ref.read(sleepGoalProvider),
         unit: '小时',
       ),
       // ── 长期目标（占位） ──
@@ -590,15 +590,25 @@ class SettingsPage extends ConsumerWidget {
 
     // Persist remaining goals individually
     final otherKeys = {
-      'daily_calorie_goal',
-      'daily_water_goal',
-      'daily_sleep_goal',
       'target_weight',
       'total_study_hours',
     };
     for (final g in updatedGoals) {
       if (otherKeys.contains(g.key)) {
         await repo.setSetting(g.key, g.value.toString());
+      }
+      // 更新全局 Provider
+      if (g.key == 'daily_sleep_goal') {
+        ref.read(sleepGoalProvider.notifier).state = g.value;
+        await repo.setSetting('sleep_goal_hours', g.value.toString());
+      }
+      if (g.key == 'daily_calorie_goal') {
+        ref.read(dailyCalorieGoalProvider.notifier).state = g.value;
+        await repo.setSetting('daily_calorie_goal', g.value.toString());
+      }
+      if (g.key == 'daily_water_goal') {
+        ref.read(dailyWaterGoalProvider.notifier).state = g.value;
+        await repo.setSetting('daily_water_goal', g.value.toString());
       }
     }
   }

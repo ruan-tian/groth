@@ -300,7 +300,7 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
       label: '选择日期',
       child: GestureDetector(
       onTap: () async {
-        final picked = await showDatePicker(
+        final picked = await showGrowthDatePicker(
           context: context,
           initialDate: _selectedDate,
           firstDate: DateTime(2020),
@@ -340,7 +340,7 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
       child: GestureDetector(
       onTap: () async {
         final picked =
-            await showTimePicker(context: context, initialTime: time);
+            await showGrowthTimePicker(context: context, initialTime: time);
         if (picked != null) onChanged(picked);
       },
       child: Container(

@@ -17,6 +17,7 @@ part 'app_database.g.dart';
     FitnessWorkoutTemplates,
     FitnessWorkoutTemplateExercises,
     BodyMetrics,
+    JournalFolders,
     DailyJournals,
     FocusSessions,
     GrowthExpLogs,
@@ -51,7 +52,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 18;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration {
@@ -131,6 +132,15 @@ class AppDatabase extends _$AppDatabase {
         if (from < 18) {
           await _createPerformanceIndexes();
         }
+        if (from < 19) {
+          // 为健身记录表添加运动类型列
+          await m.addColumn(fitnessRecords, fitnessRecords.activityType);
+        }
+        if (from < 20) {
+          await m.createTable(journalFolders);
+          await m.addColumn(dailyJournals, dailyJournals.folderId);
+          await _createPerformanceIndexes();
+        }
       },
     );
   }
@@ -145,6 +155,9 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_body_metrics_created_at ON body_metrics(created_at)',
       'CREATE INDEX IF NOT EXISTS idx_body_metrics_record_date ON body_metrics(record_date)',
       'CREATE INDEX IF NOT EXISTS idx_daily_journals_journal_date ON daily_journals(journal_date)',
+      'CREATE INDEX IF NOT EXISTS idx_daily_journals_folder_id ON daily_journals(folder_id)',
+      'CREATE INDEX IF NOT EXISTS idx_daily_journals_date_folder ON daily_journals(journal_date, folder_id)',
+      'CREATE INDEX IF NOT EXISTS idx_journal_folders_sort ON journal_folders(sort_order, created_at)',
       'CREATE INDEX IF NOT EXISTS idx_daily_tasks_task_date ON daily_tasks(task_date)',
       'CREATE INDEX IF NOT EXISTS idx_daily_tasks_template_id ON daily_tasks(template_id)',
       'CREATE INDEX IF NOT EXISTS idx_diet_records_meal_date ON diet_records(meal_date)',

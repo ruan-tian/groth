@@ -66,20 +66,13 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.softBlue,
+      backgroundColor: AppColors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
-              title: const Text(
-                '学习',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primaryDark,
-                ),
-              ),
+              title: Text('学习', style: AppTextStyles.pageTitle),
               centerTitle: false,
-              backgroundColor: AppColors.softBlue,
+              backgroundColor: AppColors.paper,
               actions: [
                 IconButton(
                   tooltip: '专注计时',
@@ -91,61 +84,64 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 ),
               ],
             ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(todayStudyMinutesProvider);
-          ref.invalidate(todayStudyRecordsProvider);
-          ref.invalidate(weeklyStudyMinutesProvider);
-          ref.invalidate(weeklyDailyStudyProvider);
-          ref.invalidate(monthlyDailyStudyProvider);
-          ref.invalidate(yearlyMonthlyStudyProvider);
-          ref.invalidate(recentStudyRecordsProvider);
-          ref.invalidate(subjectDistributionProvider);
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── 小猫提示条 ──
-              PlanModuleVisualHeader(
-                module: PlanModuleType.study,
-                color: AppColors.study,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              PlanModuleActionImageCard(
-                module: PlanModuleType.study,
-                color: AppColors.study,
-                onTap: () => context.push('/focus'),
-              ),
-              const SizedBox(height: AppSpacing.lg),
+      body: ModulePageSurface(
+        color: AppColors.study,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(todayStudyMinutesProvider);
+            ref.invalidate(todayStudyRecordsProvider);
+            ref.invalidate(weeklyStudyMinutesProvider);
+            ref.invalidate(weeklyDailyStudyProvider);
+            ref.invalidate(monthlyDailyStudyProvider);
+            ref.invalidate(yearlyMonthlyStudyProvider);
+            ref.invalidate(recentStudyRecordsProvider);
+            ref.invalidate(subjectDistributionProvider);
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── 小猫提示条 ──
+                PlanModuleVisualHeader(
+                  module: PlanModuleType.study,
+                  color: AppColors.study,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                PlanModuleActionImageCard(
+                  module: PlanModuleType.study,
+                  color: AppColors.study,
+                  onTap: () => context.push('/focus'),
+                ),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 顶部数据卡片 ──
-              _buildStatsCards(
-                context,
-                ref,
-                todayMinutes,
-                todayRecords,
-                studyGoal,
-              ),
-              const SizedBox(height: AppSpacing.xl),
+                // ── 顶部数据卡片 ──
+                _buildStatsCards(
+                  context,
+                  ref,
+                  todayMinutes,
+                  todayRecords,
+                  studyGoal,
+                ),
+                const SizedBox(height: AppSpacing.xl),
 
-              // ── 学习趋势 ──
-              _buildStudyTrendSection(context),
-              const SizedBox(height: AppSpacing.xl),
+                // ── 学习趋势 ──
+                _buildStudyTrendSection(context),
+                const SizedBox(height: AppSpacing.xl),
 
-              // ── 快捷操作 ──
-              _buildQuickActions(context),
-              const SizedBox(height: AppSpacing.xl),
+                // ── 快捷操作 ──
+                _buildQuickActions(context),
+                const SizedBox(height: AppSpacing.xl),
 
-              // ── 科目分布 ──
-              _buildSubjectDistribution(context, subjectDist),
-              const SizedBox(height: AppSpacing.xl),
+                // ── 科目分布 ──
+                _buildSubjectDistribution(context, subjectDist),
+                const SizedBox(height: AppSpacing.xl),
 
-              // ── 最近记录 ──
-              _buildRecentRecords(context, ref, recentRecords),
-              const SizedBox(height: AppSpacing.xl),
-            ],
+                // ── 最近记录 ──
+                _buildRecentRecords(context, ref, recentRecords),
+                const SizedBox(height: AppSpacing.xl),
+              ],
+            ),
           ),
         ),
       ),
@@ -271,8 +267,9 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return Container(
       height: 36,
       decoration: BoxDecoration(
-        color: AppColors.softBlue,
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        color: Colors.white.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(AppRadius.mlg),
+        border: Border.all(color: AppColors.study.withValues(alpha: 0.10)),
       ),
       child: Row(
         children: [

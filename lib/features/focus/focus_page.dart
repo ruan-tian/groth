@@ -4,9 +4,12 @@ import 'package:go_router/go_router.dart';
 
 import '../../core/database/app_database.dart';
 import '../../shared/providers/focus_provider.dart';
+import '../../shared/providers/settings_provider.dart';
+import 'models/study_mode.dart';
 import 'utils/focus_assets.dart';
 import 'utils/focus_options.dart';
 import 'widgets/sound_selector.dart';
+import 'widgets/study_mode_sheet.dart';
 
 part 'widgets/focus_setup_helpers.dart';
 part 'widgets/focus_setup_widgets.dart';
@@ -38,6 +41,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(focusStudyModeInitProvider);
     final setup = ref.watch(focusSetupProvider);
     final todayMinutes = ref.watch(todayFocusMinutesProvider);
     final recentSessions = ref.watch(recentFocusSessionsProvider);

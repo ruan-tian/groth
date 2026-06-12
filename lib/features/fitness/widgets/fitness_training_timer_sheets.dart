@@ -200,12 +200,19 @@ class _EditableExerciseTile extends StatelessWidget {
                 ),
               ],
             ),
-            Row(
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Expanded(
+                SizedBox(
+                  width: 100,
                   child: DropdownButtonFormField<WorkoutExerciseType>(
                     initialValue: exercise.type,
-                    decoration: const InputDecoration(labelText: '类型'),
+                    decoration: const InputDecoration(
+                      labelText: '类型',
+                      isDense: true,
+                    ),
                     items: const [
                       DropdownMenuItem(
                         value: WorkoutExerciseType.reps,
@@ -222,14 +229,12 @@ class _EditableExerciseTile extends StatelessWidget {
                     },
                   ),
                 ),
-                const SizedBox(width: 8),
                 _SmallNumberField(
                   label: '组',
                   value: exercise.targetSets,
                   onChanged: (value) =>
                       onChanged(exercise.copyWith(targetSets: value)),
                 ),
-                const SizedBox(width: 8),
                 if (exercise.type == WorkoutExerciseType.reps)
                   _SmallNumberField(
                     label: '次',
@@ -244,9 +249,8 @@ class _EditableExerciseTile extends StatelessWidget {
                     onChanged: (value) =>
                         onChanged(exercise.copyWith(targetSeconds: value)),
                   ),
-                const SizedBox(width: 8),
                 _SmallNumberField(
-                  label: '休息',
+                  label: '休息(s)',
                   value: exercise.restSeconds,
                   onChanged: (value) =>
                       onChanged(exercise.copyWith(restSeconds: value)),
@@ -274,11 +278,14 @@ class _SmallNumberField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 58,
+      width: 72,
       child: TextFormField(
         initialValue: '$value',
         textInputAction: TextInputAction.next,
-        decoration: InputDecoration(labelText: label),
+        decoration: InputDecoration(
+          labelText: label,
+          isDense: true,
+        ),
         keyboardType: TextInputType.number,
         onChanged: (value) => onChanged(int.tryParse(value) ?? 0),
       ),

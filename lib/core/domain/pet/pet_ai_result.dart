@@ -79,13 +79,20 @@ class PetAIResult {
       final map = jsonDecode(jsonStr) as Map<String, dynamic>;
       return PetAIResult.fromJson(map);
     } catch (_) {
+      // JSON 解析失败，尝试从纯文本中提取关键信息
+      final lines = raw.split('\n').where((l) => l.trim().isNotEmpty).toList();
+      final summary = lines.isNotEmpty ? _cleanMarkdown(lines.first) : '分析结果解析失败';
+      final suggestions = lines.length > 1
+          ? lines.sublist(1).take(3).map(_cleanMarkdown).toList()
+          : <String>[];
+
       return PetAIResult(
         title: _cleanMarkdown(fallbackTitle),
-        summary: _cleanMarkdown(raw),
+        summary: summary.length > 60 ? '${summary.substring(0, 60)}...' : summary,
         highlights: [],
         risks: [],
-        suggestions: [],
-        petMessage: _cleanMarkdown(raw.length > 50 ? '${raw.substring(0, 50)}...' : raw),
+        suggestions: suggestions,
+        petMessage: '甜甜下次会更仔细地分析~',
       );
     }
   }

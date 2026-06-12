@@ -97,9 +97,9 @@ class LifeSessionManager {
 
   /// 按时间段选择图片（带概率池）
   ///
-  /// 常规生活池 (emotions/life): 80%
-  /// 社交池 (social): 15% (周末更高)
-  /// 彩蛋池 (travel/concerts): 5%
+  /// 常规生活池 (emotions/life): 70%
+  /// 彩蛋池 (travel/concerts/experience/sports): 20%
+  /// 社交池 (social): 10%
   String _selectImageByTime(DateTime now) {
     final hour = now.hour;
     final weekday = now.weekday;
@@ -109,17 +109,17 @@ class LifeSessionManager {
     final roll = Random().nextInt(100);
     List<String> pool;
 
-    if (roll < 80) {
-      // 80% - 常规生活池
+    if (roll < 70) {
+      // 70% - 常规生活池
       pool = isWeekend
           ? PetImageMessages.getWeekendPool()
           : PetImageMessages.getTimePool(hour);
-    } else if (roll < 95) {
-      // 15% - 社交池
-      pool = PetImageMessages.getSocialPool();
-    } else {
-      // 5% - 彩蛋池（旅行/演唱会）
+    } else if (roll < 90) {
+      // 20% - 彩蛋池（旅行/演唱会/体验/赛事）
       pool = PetImageMessages.getEasterEggPool();
+    } else {
+      // 10% - 社交池
+      pool = PetImageMessages.getSocialPool();
     }
 
     // 排除最近使用过的图片

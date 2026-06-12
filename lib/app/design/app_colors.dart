@@ -4,6 +4,7 @@ class AppColors {
   AppColors._();
 
   static const Color background = Color(0xFFF8F8FF);
+  static const Color paper = Color(0xFFFFFBF6);
   static const Color card = Color(0xFFFFFFFF);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF1F2FF);

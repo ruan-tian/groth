@@ -48,13 +48,13 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     final weeklyGoal = ref.watch(weeklyFitnessGoalProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.softOrange,
+      backgroundColor: AppColors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
               title: Text('健身', style: AppTextStyles.pageTitle),
               centerTitle: false,
-              backgroundColor: AppColors.softOrange,
+              backgroundColor: AppColors.paper,
               actions: [
                 IconButton(
                   tooltip: '身体数据',
@@ -64,127 +64,130 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 ),
               ],
             ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(todayFitnessMinutesProvider);
-          ref.invalidate(weeklyFitnessCountProvider);
-          ref.invalidate(recentFitnessRecordsProvider);
-          ref.invalidate(fitnessChartDataProvider(7));
-          ref.invalidate(fitnessChartDataProvider(30));
-          ref.invalidate(fitnessChartDataProvider(365));
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (widget.capsuleNav != null) widget.capsuleNav!,
+      body: ModulePageSurface(
+        color: AppColors.fitness,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(todayFitnessMinutesProvider);
+            ref.invalidate(weeklyFitnessCountProvider);
+            ref.invalidate(recentFitnessRecordsProvider);
+            ref.invalidate(fitnessChartDataProvider(7));
+            ref.invalidate(fitnessChartDataProvider(30));
+            ref.invalidate(fitnessChartDataProvider(365));
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.capsuleNav != null) widget.capsuleNav!,
 
-              // ── 1. 提示条 ──
-              PlanModuleVisualHeader(
-                module: PlanModuleType.fitness,
-                color: AppColors.fitness,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              PlanModuleActionImageCard(
-                module: PlanModuleType.fitness,
-                color: AppColors.fitness,
-                onTap: () => context.push('/plan/fitness/timer'),
-              ),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 1. 提示条 ──
+                PlanModuleVisualHeader(
+                  module: PlanModuleType.fitness,
+                  color: AppColors.fitness,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                PlanModuleActionImageCard(
+                  module: PlanModuleType.fitness,
+                  color: AppColors.fitness,
+                  onTap: () => context.push('/plan/fitness/timer'),
+                ),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 2. 今日训练（合并计时器）──
-              _buildTodayTrainingCard(todayMinutes, fitnessGoal),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 2. 今日训练（合并计时器）──
+                _buildTodayTrainingCard(todayMinutes, fitnessGoal),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 3. 记练训练入口 ──
-              _buildRecordTrainingEntry(context),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 3. 记练训练入口 ──
+                _buildRecordTrainingEntry(context),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 4. 本周训练 ──
-              _buildWeeklyTrainingCard(weeklyCount, weeklyGoal),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 4. 本周训练 ──
+                _buildWeeklyTrainingCard(weeklyCount, weeklyGoal),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 5. 今日进度 ──
-              _buildTodayProgress(todayMinutes, fitnessGoal),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 5. 今日进度 ──
+                _buildTodayProgress(todayMinutes, fitnessGoal),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 6. 体重曲线 ──
-              _buildWeightCurveCard(),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 6. 体重曲线 ──
+                _buildWeightCurveCard(),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 7. 最近记录 ──
-              recentRecords.when(
-                data: (records) {
-                  if (records.isEmpty) {
-                    return _buildEmptyState();
-                  }
-                  final displayCount = _isRecordsExpanded
-                      ? records.length
-                      : (records.length > 5 ? 5 : records.length);
-                  return ModuleRecordsCard(
-                    title: '最近训练',
-                    action: '查看全部',
-                    onActionTap: () => context.push('/plan/fitness/records'),
-                    color: AppColors.fitness,
-                    recordCount: records.length,
-                    maxVisible: 5,
-                    isExpanded: _isRecordsExpanded,
-                    onToggleExpand: () => setState(
-                      () => _isRecordsExpanded = !_isRecordsExpanded,
+                // ── 7. 最近记录 ──
+                recentRecords.when(
+                  data: (records) {
+                    if (records.isEmpty) {
+                      return _buildEmptyState();
+                    }
+                    final displayCount = _isRecordsExpanded
+                        ? records.length
+                        : (records.length > 5 ? 5 : records.length);
+                    return ModuleRecordsCard(
+                      title: '最近训练',
+                      action: '查看全部',
+                      onActionTap: () => context.push('/plan/fitness/records'),
+                      color: AppColors.fitness,
+                      recordCount: records.length,
+                      maxVisible: 5,
+                      isExpanded: _isRecordsExpanded,
+                      onToggleExpand: () => setState(
+                        () => _isRecordsExpanded = !_isRecordsExpanded,
+                      ),
+                      children: records.take(displayCount).map((r) {
+                        final dt = DateTime.fromMillisecondsSinceEpoch(
+                          r.createdAt,
+                        );
+                        final dateStr =
+                            '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                        return SwipeDeleteTile(
+                          key: ValueKey('fitness_${r.id}'),
+                          onConfirmDelete: () async {
+                            _deleteRecord(context, ref, r);
+                            return false;
+                          },
+                          onDismissed: () {},
+                          child: RecentRecordTile(
+                            icon: Icons.fitness_center,
+                            iconColor: Colors.white,
+                            iconBackgroundColor: AppColors.fitness,
+                            title: r.title ?? r.bodyPart,
+                            subtitle:
+                                '${r.bodyPart} · ${r.durationMinutes}分钟 · $dateStr',
+                            primaryBadge: '+${r.expGained} EXP',
+                            primaryBadgeColor: AppColors.fitness,
+                            secondaryBadge: r.mode == 'professional'
+                                ? '专业'
+                                : '简单',
+                            secondaryBadgeColor: AppColors.textSecondary,
+                            onTap: () => _showFitnessRecordDetail(context, r),
+                          ),
+                        );
+                      }).toList(),
+                    );
+                  },
+                  loading: () => Container(
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
-                    children: records.take(displayCount).map((r) {
-                      final dt = DateTime.fromMillisecondsSinceEpoch(
-                        r.createdAt,
-                      );
-                      final dateStr =
-                          '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
-                      return SwipeDeleteTile(
-                        key: ValueKey('fitness_${r.id}'),
-                        onConfirmDelete: () async {
-                          _deleteRecord(context, ref, r);
-                          return false;
-                        },
-                        onDismissed: () {},
-                        child: RecentRecordTile(
-                          icon: Icons.fitness_center,
-                          iconColor: Colors.white,
-                          iconBackgroundColor: AppColors.fitness,
-                          title: r.title ?? r.bodyPart,
-                          subtitle:
-                              '${r.bodyPart} · ${r.durationMinutes}分钟 · $dateStr',
-                          primaryBadge: '+${r.expGained} EXP',
-                          primaryBadgeColor: AppColors.fitness,
-                          secondaryBadge: r.mode == 'professional'
-                              ? '专业'
-                              : '简单',
-                          secondaryBadgeColor: AppColors.textSecondary,
-                          onTap: () => _showFitnessRecordDetail(context, r),
-                        ),
-                      );
-                    }).toList(),
-                  );
-                },
-                loading: () => Container(
-                  padding: const EdgeInsets.all(AppSpacing.xl),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    child: const Center(child: CircularProgressIndicator()),
                   ),
-                  child: const Center(child: CircularProgressIndicator()),
-                ),
-                error: (e, _) => Container(
-                  padding: const EdgeInsets.all(AppSpacing.xl),
-                  decoration: BoxDecoration(
-                    color: AppColors.card,
-                    borderRadius: BorderRadius.circular(AppRadius.lg),
-                  ),
-                  child: Center(
-                    child: Text('加载失败: $e', style: AppTextStyles.caption),
+                  error: (e, _) => Container(
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    decoration: BoxDecoration(
+                      color: AppColors.card,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                    child: Center(
+                      child: Text('加载失败: $e', style: AppTextStyles.caption),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -301,7 +304,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     );
   }
 
-  // ─── 今日进度卡片 ────────────────────────────────────────────────────────
+  // ─── 训练目标细节 ────────────────────────────────────────────────────────
 
   Widget _buildTodayProgress(
     AsyncValue<int> todayMinutes,
@@ -309,77 +312,93 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
   ) {
     return Semantics(
       button: true,
-      label: '今日进度，点击编辑目标',
+      label: '训练目标进度，点击编辑目标',
       child: GestureDetector(
-      onTap: () => _showGoalEditSheet(context, fitnessGoal),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  width: 28,
-                  height: 28,
-                  decoration: BoxDecoration(
-                    color: AppColors.softOrange,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(
-                    Icons.trending_up,
-                    size: 15,
-                    color: AppColors.fitness,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Text('今日进度', style: AppTextStyles.cardTitle),
-                const Spacer(),
-                Icon(
-                  Icons.edit_outlined,
-                  color: AppColors.textTertiary,
-                  size: 18,
-                ),
+        onTap: () => _showGoalEditSheet(context, fitnessGoal),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.98),
+                AppColors.fitness.withValues(alpha: 0.045),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            todayMinutes.when(
-              data: (minutes) {
-                final progress = fitnessGoal.target > 0
-                    ? (minutes / fitnessGoal.target).clamp(0.0, 1.0)
-                    : 0.0;
-                return Column(
-                  children: [
-                    _ProgressBar(
-                      label: '训练时长',
-                      current: minutes,
-                      target: fitnessGoal.target,
-                      color: AppColors.fitness,
-                      progress: progress,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    _ProgressBar(
-                      label: '消耗卡路里',
-                      current: (minutes * 7.5).toInt(),
-                      target: (fitnessGoal.target * 7.5).toInt(),
-                      color: AppColors.warning,
-                      progress: progress,
-                    ),
-                  ],
-                );
-              },
-              loading: () => const LinearProgressIndicator(value: 0),
-              error: (_, _) => const SizedBox.shrink(),
+            borderRadius: BorderRadius.circular(AppRadius.xxxl),
+            border: Border.all(
+              color: AppColors.fitness.withValues(alpha: 0.14),
             ),
-          ],
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.fitness.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: AppColors.softOrange,
+                      borderRadius: BorderRadius.circular(AppRadius.smd),
+                    ),
+                    child: Icon(
+                      Icons.trending_up,
+                      size: 15,
+                      color: AppColors.fitness,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text('训练目标', style: AppTextStyles.cardTitle),
+                  const Spacer(),
+                  Icon(
+                    Icons.edit_outlined,
+                    color: AppColors.textTertiary,
+                    size: 18,
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.md),
+              todayMinutes.when(
+                data: (minutes) {
+                  final progress = fitnessGoal.target > 0
+                      ? (minutes / fitnessGoal.target).clamp(0.0, 1.0)
+                      : 0.0;
+                  return Column(
+                    children: [
+                      _ProgressBar(
+                        label: '训练时长',
+                        current: minutes,
+                        target: fitnessGoal.target,
+                        color: AppColors.fitness,
+                        progress: progress,
+                      ),
+                      const SizedBox(height: AppSpacing.md),
+                      _ProgressBar(
+                        label: '消耗卡路里',
+                        current: (minutes * 7.5).toInt(),
+                        target: (fitnessGoal.target * 7.5).toInt(),
+                        color: AppColors.warning,
+                        progress: progress,
+                      ),
+                    ],
+                  );
+                },
+                loading: () => const LinearProgressIndicator(value: 0),
+                error: (_, _) => const SizedBox.shrink(),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -392,82 +411,98 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
       button: true,
       label: '健身趋势，查看详情',
       child: GestureDetector(
-      onTap: () => context.push('/plan/fitness/body-metric/detail'),
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.softOrange,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.show_chart_rounded,
-                      size: 15,
-                      color: AppColors.fitness,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text('健身趋势', style: AppTextStyles.cardTitle),
-                  const Spacer(),
-                  Icon(
-                    Icons.chevron_right,
-                    color: AppColors.textTertiary,
-                    size: 20,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // ── 时间范围选择器 ──
-              _buildRangeSelector(),
-              const SizedBox(height: 12),
-              // ── 图例 ──
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _buildChartLegend(AppColors.fitness, '锻炼(分钟)'),
-                  const SizedBox(width: 16),
-                  _buildChartLegend(AppColors.warning, '消耗(kcal)'),
-                  const SizedBox(width: 16),
-                  _buildChartLegend(AppColors.textTertiary, '体重(kg)'),
-                ],
-              ),
-              const SizedBox(height: 12),
-              chartData.when(
-                data: (data) {
-                  if (data.isEmpty) {
-                    return _buildWeightEmptyState();
-                  }
-                  return ClipRect(
-                    child: SizedBox(
-                      height: 180,
-                      child: _FitnessTrendChart(data: data),
-                    ),
-                  );
-                },
-                loading: () => const SizedBox(
-                  height: 180,
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-                error: (_, _) => _buildWeightEmptyState(),
+        onTap: () => context.push('/plan/fitness/body-metric/detail'),
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.98),
+                AppColors.fitness.withValues(alpha: 0.04),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(AppRadius.xxxl),
+            border: Border.all(
+              color: AppColors.fitness.withValues(alpha: 0.14),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.fitness.withValues(alpha: 0.08),
+                blurRadius: 24,
+                offset: const Offset(0, 10),
               ),
             ],
           ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: AppColors.softOrange,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.show_chart_rounded,
+                        size: 15,
+                        color: AppColors.fitness,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text('健身趋势', style: AppTextStyles.cardTitle),
+                    const Spacer(),
+                    Icon(
+                      Icons.chevron_right,
+                      color: AppColors.textTertiary,
+                      size: 20,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                // ── 时间范围选择器 ──
+                _buildRangeSelector(),
+                const SizedBox(height: 12),
+                // ── 图例 ──
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 12,
+                  runSpacing: 6,
+                  children: [
+                    _buildChartLegend(AppColors.fitness, '锻炼(分钟)'),
+                    _buildChartLegend(AppColors.warning, '消耗(kcal)'),
+                    _buildChartLegend(AppColors.textTertiary, '体重(kg)'),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                chartData.when(
+                  data: (data) {
+                    if (data.isEmpty) {
+                      return _buildWeightEmptyState();
+                    }
+                    return ClipRect(
+                      child: SizedBox(
+                        height: 180,
+                        child: _FitnessTrendChart(data: data),
+                      ),
+                    );
+                  },
+                  loading: () => const SizedBox(
+                    height: 180,
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                  error: (_, _) => _buildWeightEmptyState(),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -515,24 +550,27 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
             label: '显示${r['label']}数据',
             selected: isSelected,
             child: GestureDetector(
-            onTap: () => setState(() => _selectedRange = r['days'] as int),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.fitness : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Text(
-                r['label'] as String,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+              onTap: () => setState(() => _selectedRange = r['days'] as int),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.fitness : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  r['label'] as String,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                  ),
                 ),
               ),
             ),
-          ),
           );
         }).toList(),
       ),

@@ -27,6 +27,11 @@ class MusicPlayerService {
 
   Future<void> pause() => _player.pause();
 
+  Future<void> stop() async {
+    await _player.pause();
+    await _player.seek(Duration.zero);
+  }
+
   Future<void> seek(Duration position) => _player.seek(position);
 
   Future<void> setVolume(double volume) {

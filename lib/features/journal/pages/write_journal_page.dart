@@ -32,6 +32,8 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
 
   String? _selectedMood = 'happy';
   final Set<String> _selectedTags = {};
+  int? _folderId;
+  String? _folderName;
   bool _saving = false;
   bool _pickingImage = false;
   final List<String> _pendingImagePaths = [];
@@ -97,37 +99,44 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         tags: Value(
           _selectedTags.isEmpty ? null : jsonEncode(_selectedTags.toList()),
         ),
+        folderId: Value(_folderId),
         wordCount: Value(wordCount),
         expGained: Value(exp),
         createdAt: nowMs,
         updatedAt: nowMs,
       );
 
-      final journalId = await journalRepo.insertJournal(companion);
-
-      for (var i = 0; i < _pendingImagePaths.length; i++) {
-        await journalRepo.insertJournalAsset(
-          JournalAssetsCompanion.insert(
-            journalId: journalId,
-            localPath: _pendingImagePaths[i],
-            sortOrder: Value(i),
-            createdAt: nowMs,
-          ),
-        );
-      }
-
+      // 原子操作：插入日记 + 图片 + 经验日志
+      final db = ref.read(databaseProvider);
       final expRepo = ref.read(expRepositoryProvider);
       final oldTotal = await expRepo.getTotalExp();
       final oldLevel = expService.calculateLevel(oldTotal);
-      await expRepo.insertExpLog(
-        GrowthExpLogsCompanion.insert(
-          sourceType: 'journal',
-          sourceId: journalId,
-          expValue: exp,
-          reason: '日记: ${_titleController.text.trim()} ($wordCount字)',
-          createdAt: nowMs,
-        ),
-      );
+      late final int journalId;
+      await db.transaction(() async {
+        journalId = await journalRepo.insertJournal(companion);
+
+        final imagePaths = _pendingImagePaths.toSet().toList(growable: false);
+        for (var i = 0; i < imagePaths.length; i++) {
+          await journalRepo.insertJournalAsset(
+            JournalAssetsCompanion.insert(
+              journalId: journalId,
+              localPath: imagePaths[i],
+              sortOrder: Value(i),
+              createdAt: nowMs,
+            ),
+          );
+        }
+
+        await expRepo.insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'journal',
+            sourceId: journalId,
+            expValue: exp,
+            reason: '日记: ${_titleController.text.trim()} ($wordCount字)',
+            createdAt: nowMs,
+          ),
+        );
+      });
 
       final newLevel = expService.calculateLevel(oldTotal + exp);
       if (newLevel > oldLevel) {
@@ -137,9 +146,13 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       }
 
       ref.invalidate(recentJournalsProvider);
+      ref.invalidate(journalsByFolderProvider);
       ref.invalidate(todayJournalCountProvider);
       ref.invalidate(allJournalTagsProvider);
       ref.invalidate(journalStreakProvider);
+      ref.invalidate(totalJournalCountProvider);
+      ref.invalidate(monthlyJournalCountProvider);
+      ref.invalidate(journalHeatmapProvider);
       ref.invalidate(dashboardProvider);
 
       if (!mounted) return;
@@ -201,11 +214,14 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
           initialPlainText: _contentController.text,
           initialDeltaJson: _quillDeltaJson,
           onSave: (title, deltaJson, plainText, wordCount, imagePaths) {
+            final mergedImagePaths = {..._pendingImagePaths, ...imagePaths};
             setState(() {
               _titleController.text = title;
               _contentController.text = plainText.trim();
               _quillDeltaJson = deltaJson;
-              _pendingImagePaths.addAll(imagePaths);
+              _pendingImagePaths
+                ..clear()
+                ..addAll(mergedImagePaths);
             });
           },
         ),
@@ -223,7 +239,9 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       if (path == null) return;
 
       setState(() {
-        _pendingImagePaths.add(path);
+        if (!_pendingImagePaths.contains(path)) {
+          _pendingImagePaths.add(path);
+        }
         final current = _contentController.text;
         final prefix = current.isEmpty ? '' : '\n';
         _contentController.text = '$current$prefix![image]($path)\n';
@@ -236,6 +254,12 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('图片已添加')));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('图片导入失败: $e')));
       }
     } finally {
       if (mounted) setState(() => _pickingImage = false);
@@ -360,6 +384,13 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
                                 : _selectedTags.add(tag);
                           });
                         },
+                        onCustom: _showCustomTagDialog,
+                      ),
+                      const SizedBox(height: 18),
+                      _FolderSaveSection(
+                        folderName: _folderName,
+                        selectedFolderId: _folderId,
+                        onTap: _showFolderPicker,
                       ),
                       const SizedBox(height: 18),
                       _WritingSummary(
@@ -399,5 +430,118 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _showCustomTagDialog() async {
+    final controller = TextEditingController();
+    final tag = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('添加自定义标签'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 12,
+          textInputAction: TextInputAction.done,
+          decoration: const InputDecoration(
+            hintText: '例如：旅行、灵感、复盘',
+            counterText: '',
+          ),
+          onSubmitted: (value) => Navigator.pop(context, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('添加'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    final value = tag?.trim();
+    if (value == null || value.isEmpty) return;
+    setState(() => _selectedTags.add(value));
+  }
+
+  Future<void> _showFolderPicker() async {
+    final folders = await ref.read(journalFoldersProvider.future);
+    if (!mounted) return;
+    final selected = await showModalBottomSheet<int?>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _FolderPickerSheet(
+        folders: folders,
+        selectedFolderId: _folderId,
+        onCreate: () async {
+          Navigator.pop(context, -1);
+        },
+      ),
+    );
+    if (selected == -1) {
+      await _createFolderFromWriter();
+      return;
+    }
+    if (!mounted || selected == null) return;
+    final folderId = selected == 0 ? null : selected;
+    if (folderId == _folderId) return;
+    final folderName = folderId == null
+        ? null
+        : folders
+              .where((folder) => folder.id == folderId)
+              .map((folder) => folder.name)
+              .first;
+    setState(() {
+      _folderId = folderId;
+      _folderName = folderName;
+    });
+  }
+
+  Future<void> _createFolderFromWriter() async {
+    final controller = TextEditingController();
+    final name = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('新建文件夹'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          maxLength: 16,
+          textInputAction: TextInputAction.done,
+          decoration: const InputDecoration(
+            hintText: '给这组日记起个名字',
+            counterText: '',
+          ),
+          onSubmitted: (value) => Navigator.pop(context, value),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('取消'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('创建'),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    final value = name?.trim();
+    if (value == null || value.isEmpty) return;
+    final id = await ref
+        .read(journalRepositoryProvider)
+        .createFolder(name: value);
+    ref.invalidate(journalFoldersProvider);
+    if (!mounted) return;
+    setState(() {
+      _folderId = id;
+      _folderName = value;
+    });
   }
 }

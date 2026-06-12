@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/focus/models/study_mode.dart';
 import 'repository_providers.dart';
 
 // =============================================================================
@@ -232,6 +233,25 @@ final weeklyFitnessGoalInitProvider = FutureProvider<void>((ref) async {
     final goal = int.tryParse(value);
     if (goal != null && goal > 0) {
       ref.read(weeklyFitnessGoalProvider.notifier).state = goal;
+    }
+  }
+});
+
+// =============================================================================
+// 睡眠目标 Provider
+// =============================================================================
+
+/// 每日睡眠目标（小时）
+final sleepGoalProvider = StateProvider<int>((ref) => 8);
+
+/// 从数据库初始化睡眠目标
+final sleepGoalInitProvider = FutureProvider<void>((ref) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final value = await repo.getSetting('sleep_goal_hours');
+  if (value != null) {
+    final goal = int.tryParse(value);
+    if (goal != null && goal > 0) {
+      ref.read(sleepGoalProvider.notifier).state = goal;
     }
   }
 });
@@ -490,5 +510,19 @@ final journalUploadInitProvider = FutureProvider<void>((ref) async {
   final value = await repo.getSetting('journal_upload');
   if (value != null) {
     ref.read(journalUploadProvider.notifier).state = value == 'true';
+  }
+});
+
+/// 番茄钟学习模式（默认高中生）
+final focusStudyModeProvider =
+    StateProvider<StudyMode>((ref) => StudyMode.highSchool);
+
+/// 从数据库初始化番茄钟学习模式
+final focusStudyModeInitProvider = FutureProvider<void>((ref) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final value = await repo.getSetting('focus_study_mode');
+  if (value != null) {
+    ref.read(focusStudyModeProvider.notifier).state =
+        StudyMode.fromName(value);
   }
 });

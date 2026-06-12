@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../app/design/design.dart';
+import 'growth_motion.dart';
 
 class PrimaryButton extends StatelessWidget {
   const PrimaryButton({
@@ -26,8 +27,11 @@ class PrimaryButton extends StatelessWidget {
 
     return Opacity(
       opacity: disabled ? 0.56 : 1,
-      child: GestureDetector(
+      child: GrowthPressable(
         onTap: disabled ? null : onTap,
+        semanticLabel: text,
+        borderRadius: BorderRadius.circular(borderRadius),
+        scale: 0.98,
         child: Container(
           height: height,
           width: double.infinity,

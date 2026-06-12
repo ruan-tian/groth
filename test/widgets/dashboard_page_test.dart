@@ -159,7 +159,7 @@ void main() {
       expect(find.byKey(const ValueKey('expanded_music_card')), findsOneWidget);
       expect(find.text('甜甜音乐'), findsOneWidget);
       expect(find.text('导入'), findsOneWidget);
-      expect(find.text('播放列表'), findsOneWidget);
+      expect(find.byTooltip('播放列表'), findsOneWidget);
       expect(find.text('收藏'), findsOneWidget);
     });
 

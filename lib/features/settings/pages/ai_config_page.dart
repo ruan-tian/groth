@@ -14,6 +14,7 @@ class AIProvider {
   final String id;
   final String name;
   final String icon;
+  final String imagePath;
   final String defaultBaseUrl;
   final List<String> models;
 
@@ -21,6 +22,7 @@ class AIProvider {
     required this.id,
     required this.name,
     required this.icon,
+    required this.imagePath,
     required this.defaultBaseUrl,
     required this.models,
   });
@@ -50,82 +52,85 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   double _temperature = 0.7;
   int _maxTokens = 2048;
 
-  // AI 服务提供商列表（11个 + 自定义）
+  // AI 服务提供商列表（9个 + 自定义）
   static const _providers = <AIProvider>[
-    AIProvider(
-      id: 'openai',
-      name: 'OpenAI',
-      icon: '🤖',
-      defaultBaseUrl: 'https://api.openai.com/v1',
-      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
-    ),
     AIProvider(
       id: 'deepseek',
       name: 'DeepSeek',
       icon: '🔮',
+      imagePath: 'assets/images/ai_providers/deepseek.webp',
       defaultBaseUrl: 'https://api.deepseek.com/v1',
-      models: ['deepseek-chat', 'deepseek-coder', 'deepseek-reasoner'],
-    ),
-    AIProvider(
-      id: 'gemini',
-      name: 'Gemini',
-      icon: '✨',
-      defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1',
-      models: ['gemini-pro', 'gemini-pro-vision', 'gemini-ultra'],
+      models: ['deepseek-chat', 'deepseek-reasoner'],
     ),
     AIProvider(
       id: 'qwen',
       name: '通义千问',
       icon: '☁️',
+      imagePath: 'assets/images/ai_providers/qwen.webp',
       defaultBaseUrl: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
-      models: ['qwen-turbo', 'qwen-plus', 'qwen-max', 'qwen-long'],
+      models: ['qwen-max', 'qwen-plus', 'qwen-turbo'],
     ),
     AIProvider(
       id: 'zhipu',
       name: '智谱',
       icon: '🧠',
+      imagePath: 'assets/images/ai_providers/zhipu.webp',
       defaultBaseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-      models: ['glm-4', 'glm-4-flash', 'glm-4v', 'glm-3-turbo'],
-    ),
-    AIProvider(
-      id: 'baichuan',
-      name: '百川',
-      icon: '🌊',
-      defaultBaseUrl: 'https://api.baichuan-ai.com/v1',
-      models: ['Baichuan4', 'Baichuan3-Turbo', 'Baichuan2-Turbo'],
+      models: ['glm-4-plus', 'glm-4-flash', 'glm-4-long'],
     ),
     AIProvider(
       id: 'moonshot',
       name: 'Moonshot',
       icon: '🌙',
+      imagePath: 'assets/images/ai_providers/moonshot.webp',
       defaultBaseUrl: 'https://api.moonshot.cn/v1',
-      models: ['moonshot-v1-8k', 'moonshot-v1-32k', 'moonshot-v1-128k'],
-    ),
-    AIProvider(
-      id: 'minimax',
-      name: 'MiniMax',
-      icon: '🎯',
-      defaultBaseUrl: 'https://api.minimax.chat/v1',
-      models: ['abab6.5-chat', 'abab6.5s-chat', 'abab5.5-chat'],
+      models: ['moonshot-v1-128k', 'moonshot-v1-32k'],
     ),
     AIProvider(
       id: 'spark',
       name: '讯飞星火',
       icon: '🔥',
+      imagePath: 'assets/images/ai_providers/spark.webp',
       defaultBaseUrl: 'https://spark-api-open.xf-yun.com/v1',
-      models: ['spark-max', 'spark-pro', 'spark-lite'],
+      models: ['spark-max', 'spark-pro'],
     ),
     AIProvider(
-      id: 'wenxin',
-      name: '文心一言',
-      icon: '📝',
-      defaultBaseUrl: 'https://aip.baidubce.com/rpc/2.0/ai_custom/v1',
-      models: ['ernie-4.0', 'ernie-3.5', 'ernie-speed'],
+      id: 'baichuan',
+      name: '百川',
+      icon: '🌊',
+      imagePath: 'assets/images/ai_providers/baichuan.webp',
+      defaultBaseUrl: 'https://api.baichuan-ai.com/v1',
+      models: ['Baichuan4', 'Baichuan3-Turbo'],
+    ),
+    AIProvider(
+      id: 'minimax',
+      name: 'MiniMax',
+      icon: '🎯',
+      imagePath: 'assets/images/ai_providers/minimax.webp',
+      defaultBaseUrl: 'https://api.minimax.chat/v1',
+      models: ['abab6.5-chat', 'abab6.5s-chat'],
+    ),
+    AIProvider(
+      id: 'openai',
+      name: 'OpenAI',
+      icon: '🤖',
+      imagePath: 'assets/images/ai_providers/openai.webp',
+      defaultBaseUrl: 'https://api.openai.com/v1',
+      models: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+    ),
+    AIProvider(
+      id: 'gemini',
+      name: 'Gemini',
+      icon: '✨',
+      imagePath: 'assets/images/ai_providers/gemini.webp',
+      defaultBaseUrl: 'https://generativelanguage.googleapis.com/v1',
+      models: ['gemini-pro', 'gemini-pro-vision'],
     ),
     AIProvider(
       id: 'custom',
       name: '自定义',
       icon: '⚙️',
+      imagePath: 'assets/images/ai_providers/custom.webp',
       defaultBaseUrl: '',
       models: [],
     ),
@@ -165,6 +170,10 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
       } else if (mounted) {
         setState(() {
           _selectedProvider = _providers.first;
+          _apiAddressController.text = _providers.first.defaultBaseUrl;
+          _selectedModel = _providers.first.models.isNotEmpty
+              ? _providers.first.models.first
+              : '';
           _isLoading = false;
         });
       }
@@ -521,7 +530,36 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(provider.icon, style: const TextStyle(fontSize: 28)),
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.asset(
+                  provider.imagePath,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => Container(
+                    color: const Color(0xFFF0F0F0),
+                    child: Center(
+                      child: Text(
+                        provider.icon,
+                        style: const TextStyle(fontSize: 24),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
             const SizedBox(height: 6),
             Text(
               provider.name,

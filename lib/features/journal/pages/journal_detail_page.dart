@@ -9,18 +9,19 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/journal_provider.dart';
+import '../providers/journal_stats_provider.dart';
+import '../widgets/journal_colors.dart';
+import '../widgets/journal_safe_image.dart';
 import '../widgets/markdown_preview.dart';
 
-/// 心情 emoji 映射
 const _moodEmojiMap = {
   'happy': '😊',
   'neutral': '😐',
   'sad': '😢',
-  'angry': '😡',
+  'angry': '😠',
   'thinking': '🤔',
 };
 
-/// 心情文字映射
 const _moodLabelMap = {
   'happy': '开心',
   'neutral': '平静',
@@ -29,9 +30,6 @@ const _moodLabelMap = {
   'thinking': '思考',
 };
 
-/// 日记详情页
-///
-/// 沉浸式阅读体验，参考苹果备忘录风格。
 class JournalDetailPage extends ConsumerWidget {
   const JournalDetailPage({super.key, required this.journalId});
 
@@ -42,21 +40,29 @@ class JournalDetailPage extends ConsumerWidget {
     final journalAsync = ref.watch(journalByIdProvider(journalId));
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: JournalColors.bg,
       body: journalAsync.when(
         data: (journal) {
           if (journal == null) {
-            return _buildErrorState(context, '日记不存在');
+            return _ErrorState(message: '日记不存在', onBack: context.pop);
           }
           return _DetailContent(journal: journal);
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => _buildErrorState(context, '加载失败: $e'),
+        error: (e, _) => _ErrorState(message: '加载失败: $e', onBack: context.pop),
       ),
     );
   }
+}
 
-  Widget _buildErrorState(BuildContext context, String message) {
+class _ErrorState extends StatelessWidget {
+  const _ErrorState({required this.message, required this.onBack});
+
+  final String message;
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -65,10 +71,7 @@ class JournalDetailPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.md),
           Text(message, style: AppTextStyles.body),
           const SizedBox(height: AppSpacing.lg),
-          OutlinedButton(
-            onPressed: () => context.pop(),
-            child: const Text('返回'),
-          ),
+          OutlinedButton(onPressed: onBack, child: const Text('返回')),
         ],
       ),
     );
@@ -87,119 +90,151 @@ class _DetailContent extends ConsumerWidget {
     final moodEmoji = _moodEmojiMap[journal.mood];
     final moodLabel = _moodLabelMap[journal.mood];
 
-    return Column(
+    return Stack(
       children: [
-        // ── 顶部栏 ──
-        _buildTopBar(context, ref),
-
-        // ── 内容区域 ──
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
-
-                // ── 标题 ──
-                Text(
-                  journal.title,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2329),
-                    height: 1.2,
+        CustomScrollView(
+          physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics(),
+          ),
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 96, 24, 36),
+              sliver: SliverToBoxAdapter(
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 760),
+                    child: _ReadingCard(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            journal.title,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1F2329),
+                              height: 1.22,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _MetaRow(
+                            date: createdDt,
+                            wordCount: journal.wordCount,
+                            moodEmoji: moodEmoji,
+                            moodLabel: moodLabel,
+                          ),
+                          const SizedBox(height: 16),
+                          Container(height: 1, color: JournalColors.pinkBorder),
+                          const SizedBox(height: 20),
+                          _JournalBody(journal: journal),
+                          const SizedBox(height: 24),
+                          _JournalAssetsWrap(journalId: journal.id),
+                          if (tags.isNotEmpty) ...[
+                            const SizedBox(height: 18),
+                            _TagWrap(tags: tags),
+                          ],
+                          const SizedBox(height: 20),
+                          _ExpBadge(exp: journal.expGained),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-
-                // ── 元信息行 ──
-                _buildMetaRow(createdDt, journal.wordCount, moodEmoji, moodLabel),
-                const SizedBox(height: 16),
-
-                // ── 分割线 ──
-                Container(
-                  height: 1,
-                  color: const Color(0xFFE5E7EB),
-                ),
-                const SizedBox(height: 20),
-
-                // ── 正文 ──
-                _buildContent(journal),
-                const SizedBox(height: 24),
-
-                // ── 图片附件 ──
-                FutureBuilder<List<JournalAsset>>(
-                  future: ref.read(journalRepositoryProvider).getJournalAssets(journal.id),
-                  builder: (context, snapshot) {
-                    final assets = snapshot.data ?? [];
-                    if (assets.isEmpty) return const SizedBox.shrink();
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 16),
-                      child: Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: assets.map((asset) {
-                          return ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: Image.asset(
-                              asset.localPath,
-                              width: 100,
-                              height: 100,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => Container(
-                                width: 100,
-                                height: 100,
-                                decoration: BoxDecoration(
-                                  color: AppColors.border,
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(Icons.image_not_supported_rounded, size: 24),
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    );
-                  },
-                ),
-
-                // ── 标签 ──
-                if (tags.isNotEmpty) ...[
-                  _buildTags(tags),
-                  const SizedBox(height: 16),
-                ],
-
-                // ── 经验值 ──
-                _buildExpBadge(journal.expGained),
-                const SizedBox(height: 32),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
+        _FloatingTopBar(journal: journal),
       ],
     );
   }
 
-  Widget _buildTopBar(BuildContext context, WidgetRef ref) {
+  List<String> _parseTags(String? raw) {
+    if (raw == null || raw.isEmpty) return const [];
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      return list.map((e) => e.toString()).toList();
+    } catch (_) {
+      return raw.split(',').where((tag) => tag.trim().isNotEmpty).toList();
+    }
+  }
+}
+
+class _ReadingCard extends StatelessWidget {
+  const _ReadingCard({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFFBF7),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: JournalColors.pinkBorder),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.pinkMain.withValues(alpha: 0.06),
+            blurRadius: 26,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 24, 22, 30),
+        child: child,
+      ),
+    );
+  }
+}
+
+class _FloatingTopBar extends ConsumerWidget {
+  const _FloatingTopBar({required this.journal});
+
+  final DailyJournal journal;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
     return SafeArea(
       child: Container(
-        height: 56,
+        height: 58,
+        margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
         padding: const EdgeInsets.symmetric(horizontal: 8),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.90),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: JournalColors.pinkBorder),
+          boxShadow: [
+            BoxShadow(
+              color: JournalColors.pinkMain.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
         child: Row(
           children: [
             IconButton(
+              tooltip: '返回',
               onPressed: () => context.pop(),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
               color: const Color(0xFF1F2329),
             ),
             const Spacer(),
             IconButton(
+              tooltip: '移动到文件夹',
+              onPressed: () => _showMoveSheet(context, ref),
+              icon: const Icon(Icons.folder_copy_outlined, size: 20),
+              color: JournalColors.pinkMain,
+            ),
+            IconButton(
+              tooltip: '编辑',
               onPressed: () => context.push('/plan/journal/edit/${journal.id}'),
               icon: const Icon(Icons.edit_outlined, size: 20),
               color: AppColors.primary,
             ),
             IconButton(
+              tooltip: '删除',
               onPressed: () => _confirmDelete(context, ref),
               icon: const Icon(Icons.delete_outline, size: 20),
               color: AppColors.danger,
@@ -210,43 +245,223 @@ class _DetailContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildMetaRow(DateTime date, int wordCount, String? moodEmoji, String? moodLabel) {
-    final dateStr = '${date.month}月${date.day}日 ${_getWeekday(date.weekday)}';
-    
-    return Row(
+  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('删除确认'),
+        content: Text('确定要删除「${journal.title}」吗？\n此操作不可撤销。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+    try {
+      final repo = ref.read(journalRepositoryProvider);
+      await repo.deleteJournal(journal.id);
+      _invalidateJournalProviders(ref);
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('已删除')));
+        context.pop();
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+      }
+    }
+  }
+
+  Future<void> _showMoveSheet(BuildContext context, WidgetRef ref) async {
+    final folders = await ref.read(journalFoldersProvider.future);
+    if (!context.mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return SafeArea(
+          top: false,
+          child: Container(
+            margin: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: JournalColors.bg,
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: JournalColors.pinkBorder),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '移动日记',
+                  style: AppTextStyles.cardTitle.copyWith(fontSize: 18),
+                ),
+                const SizedBox(height: 12),
+                _MoveTargetListTile(
+                  title: '未分类',
+                  selected: journal.folderId == null,
+                  onTap: () => _moveToFolder(sheetContext, ref, null),
+                ),
+                ...folders.map(
+                  (folder) => _MoveTargetListTile(
+                    title: folder.name,
+                    selected: journal.folderId == folder.id,
+                    onTap: () => _moveToFolder(sheetContext, ref, folder.id),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _moveToFolder(
+    BuildContext context,
+    WidgetRef ref,
+    int? folderId,
+  ) async {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    try {
+      await ref
+          .read(journalRepositoryProvider)
+          .moveJournalToFolder(journal.id, folderId);
+      ref.invalidate(journalByIdProvider(journal.id));
+      ref.invalidate(journalsByFolderProvider);
+      ref.invalidate(recentJournalsProvider);
+      ref.invalidate(dashboardProvider);
+      if (context.mounted) Navigator.pop(context);
+      messenger?.showSnackBar(const SnackBar(content: Text('已移动日记')));
+    } catch (e) {
+      messenger?.showSnackBar(SnackBar(content: Text('移动失败: $e')));
+    }
+  }
+
+  void _invalidateJournalProviders(WidgetRef ref) {
+    ref.invalidate(recentJournalsProvider);
+    ref.invalidate(journalsByFolderProvider);
+    ref.invalidate(todayJournalCountProvider);
+    ref.invalidate(dashboardProvider);
+    ref.invalidate(allJournalTagsProvider);
+    ref.invalidate(totalJournalCountProvider);
+    ref.invalidate(monthlyJournalCountProvider);
+    ref.invalidate(journalHeatmapProvider);
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  const _MetaRow({
+    required this.date,
+    required this.wordCount,
+    required this.moodEmoji,
+    required this.moodLabel,
+  });
+
+  final DateTime date;
+  final int wordCount;
+  final String? moodEmoji;
+  final String? moodLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final dateStr = '${date.month}月${date.day}日 ${_weekday(date.weekday)}';
+    return Wrap(
+      spacing: 12,
+      runSpacing: 6,
+      crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
           dateStr,
           style: const TextStyle(fontSize: 13, color: Color(0xFF86909C)),
         ),
-        const SizedBox(width: 12),
         Text(
           '$wordCount字',
           style: const TextStyle(fontSize: 13, color: Color(0xFF86909C)),
         ),
-        if (moodEmoji != null) ...[
-          const SizedBox(width: 12),
+        if (moodEmoji != null)
           Tooltip(
             message: moodLabel ?? '',
-            child: Text(moodEmoji, style: const TextStyle(fontSize: 18)),
+            child: Text(moodEmoji!, style: const TextStyle(fontSize: 18)),
           ),
-        ],
       ],
     );
   }
 
-  Widget _buildContent(DailyJournal journal) {
+  String _weekday(int weekday) {
+    const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return days[weekday - 1];
+  }
+}
+
+class _JournalBody extends StatelessWidget {
+  const _JournalBody({required this.journal});
+
+  final DailyJournal journal;
+
+  @override
+  Widget build(BuildContext context) {
     if (journal.contentType == 'quill' && journal.quillDeltaJson != null) {
       return _QuillReadOnlyContent(deltaJson: journal.quillDeltaJson!);
     }
+    return JournalMarkdownPreview(markdown: journal.content);
+  }
+}
 
-    // Use MarkdownPreview for markdown content
-    return JournalMarkdownPreview(
-      markdown: journal.content,
+class _JournalAssetsWrap extends ConsumerWidget {
+  const _JournalAssetsWrap({required this.journalId});
+
+  final int journalId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return FutureBuilder<List<JournalAsset>>(
+      future: ref.read(journalRepositoryProvider).getJournalAssets(journalId),
+      builder: (context, snapshot) {
+        final assets = snapshot.data ?? [];
+        if (assets.isEmpty) return const SizedBox.shrink();
+        return Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: assets.map((asset) {
+            return JournalSafeImage(
+              path: asset.localPath,
+              width: 100,
+              height: 100,
+              maxHeight: 100,
+              fit: BoxFit.cover,
+              borderRadius: 12,
+              cacheWidth: 300,
+            );
+          }).toList(),
+        );
+      },
     );
   }
+}
 
-  Widget _buildTags(List<String> tags) {
+class _TagWrap extends StatelessWidget {
+  const _TagWrap({required this.tags});
+
+  final List<String> tags;
+
+  @override
+  Widget build(BuildContext context) {
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -269,8 +484,15 @@ class _DetailContent extends ConsumerWidget {
       }).toList(),
     );
   }
+}
 
-  Widget _buildExpBadge(int exp) {
+class _ExpBadge extends StatelessWidget {
+  const _ExpBadge({required this.exp});
+
+  final int exp;
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -296,72 +518,38 @@ class _DetailContent extends ConsumerWidget {
       ),
     );
   }
-
-  String _getWeekday(int weekday) {
-    const days = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    return days[weekday - 1];
-  }
-
-  List<String> _parseTags(String? tagsJson) {
-    if (tagsJson == null || tagsJson.isEmpty) return const [];
-    try {
-      final list = jsonDecode(tagsJson) as List<dynamic>;
-      return list.map((e) => e.toString()).toList();
-    } catch (_) {
-      return const [];
-    }
-  }
-
-  Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('删除确认'),
-        content: Text('确定要删除「${journal.title}」吗？\n此操作不可撤销。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
-            child: const Text('删除'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed == true && context.mounted) {
-      try {
-        final repo = ref.read(journalRepositoryProvider);
-        await repo.deleteJournal(journal.id);
-
-        ref.invalidate(recentJournalsProvider);
-        ref.invalidate(todayJournalCountProvider);
-        ref.invalidate(dashboardProvider);
-        ref.invalidate(allJournalTagsProvider);
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
-          context.pop();
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
-        }
-      }
-    }
-  }
 }
 
-// =============================================================================
-// Quill 只读渲染
-// =============================================================================
+class _MoveTargetListTile extends StatelessWidget {
+  const _MoveTargetListTile({
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        selected ? Icons.folder_rounded : Icons.folder_outlined,
+        color: selected ? JournalColors.pinkMain : AppColors.textTertiary,
+      ),
+      title: Text(title),
+      trailing: selected
+          ? const Icon(
+              Icons.check_circle_rounded,
+              color: JournalColors.pinkMain,
+            )
+          : null,
+      onTap: onTap,
+    );
+  }
+}
 
 class _QuillReadOnlyContent extends StatefulWidget {
   const _QuillReadOnlyContent({required this.deltaJson});
@@ -374,6 +562,8 @@ class _QuillReadOnlyContent extends StatefulWidget {
 
 class _QuillReadOnlyContentState extends State<_QuillReadOnlyContent> {
   late final QuillController _controller;
+  final ScrollController _scrollController = ScrollController();
+  final FocusNode _focusNode = FocusNode();
 
   @override
   void initState() {
@@ -385,6 +575,8 @@ class _QuillReadOnlyContentState extends State<_QuillReadOnlyContent> {
   @override
   void dispose() {
     _controller.dispose();
+    _scrollController.dispose();
+    _focusNode.dispose();
     super.dispose();
   }
 
@@ -406,11 +598,16 @@ class _QuillReadOnlyContentState extends State<_QuillReadOnlyContent> {
 
   @override
   Widget build(BuildContext context) {
-    return IgnorePointer(
+    return RepaintBoundary(
       child: QuillEditor(
         controller: _controller,
-        scrollController: ScrollController(),
-        focusNode: FocusNode(),
+        scrollController: _scrollController,
+        focusNode: _focusNode,
+        config: const QuillEditorConfig(
+          scrollPhysics: NeverScrollableScrollPhysics(),
+          padding: EdgeInsets.zero,
+          embedBuilders: [JournalQuillImageEmbedBuilder()],
+        ),
       ),
     );
   }

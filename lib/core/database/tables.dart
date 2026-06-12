@@ -73,6 +73,10 @@ class FitnessRecords extends Table {
   /// 训练部位
   TextColumn get bodyPart => text()();
 
+  /// 运动类型 (strength/running/ballSports/yoga/swimming/cycling/outdoor/other)
+  TextColumn get activityType =>
+      text().withDefault(const Constant('strength'))();
+
   /// 开始时间 (Unix 毫秒)
   IntColumn get startTime => integer()();
 
@@ -255,6 +259,22 @@ class BodyMetrics extends Table {
 /// 每日成长日记表
 ///
 /// 保存每日复盘和写作内容。
+@DataClassName('JournalFolder')
+class JournalFolders extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  IntColumn get colorValue =>
+      integer().withDefault(const Constant(0xFFEFA6BA))();
+  IntColumn get iconCodePoint =>
+      integer().withDefault(const Constant(0xe2c7))();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+}
+
+/// 每日成长日记表
+///
+/// 保存每日复盘和写作内容。
 @DataClassName('DailyJournal')
 class DailyJournals extends Table {
   IntColumn get id => integer().autoIncrement()();
@@ -286,6 +306,10 @@ class DailyJournals extends Table {
 
   /// 标签 (JSON 字符串数组)
   TextColumn get tags => text().nullable()();
+
+  /// 所属文件夹 ID，null = 未分类
+  IntColumn get folderId =>
+      integer().nullable().references(JournalFolders, #id)();
 
   /// 字数
   IntColumn get wordCount => integer().withDefault(const Constant(0))();

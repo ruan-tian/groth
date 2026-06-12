@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/task_provider.dart';
+import '../../../shared/widgets/common/growth_date_picker.dart';
+import '../../../shared/widgets/common/growth_time_picker.dart';
 import 'task_priority.dart';
 
 // =============================================================================
@@ -63,48 +65,48 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFF8F0), Colors.white],
-          ),
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFF5C3D2E).withValues(alpha: 0.15),
-              blurRadius: 24,
-              offset: const Offset(0, 8),
-            ),
-          ],
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          20,
+          12,
+          20,
+          20 + MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 24),
-                _buildTitleField(),
-                const SizedBox(height: 16),
-                _buildDescriptionField(),
-                const SizedBox(height: 16),
-                _buildPriorityPicker(),
-                const SizedBox(height: 16),
-                _buildDatePicker(context),
-                const SizedBox(height: 16),
-                _buildTimePickers(context),
-                const SizedBox(height: 24),
-                _buildActions(context),
-              ],
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 拖拽条
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE0E0E0),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(height: 16),
+            _buildHeader(context),
+            const SizedBox(height: 20),
+            _buildTitleField(),
+            const SizedBox(height: 14),
+            _buildDescriptionField(),
+            const SizedBox(height: 14),
+            _buildPriorityPicker(),
+            const SizedBox(height: 14),
+            _buildDatePicker(context),
+            const SizedBox(height: 14),
+            _buildTimePickers(context),
+            const SizedBox(height: 20),
+            _buildActions(context),
+          ],
         ),
       ),
     );
@@ -283,7 +285,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
           label: '选择日期',
           child: GestureDetector(
           onTap: () async {
-            final picked = await showDatePicker(
+            final picked = await showGrowthDatePicker(
               context: context,
               initialDate: _selectedDate,
               firstDate: DateTime.now().subtract(const Duration(days: 7)),
@@ -411,7 +413,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       label: '选择$label时间',
       child: GestureDetector(
       onTap: () async {
-        final picked = await showTimePicker(
+        final picked = await showGrowthTimePicker(
           context: context,
           initialTime: time,
         );
@@ -569,6 +571,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
       ref.invalidate(todayTasksProvider);
       ref.invalidate(todayIncompleteTaskCountProvider);
+      ref.invalidate(tasksByDateProvider(dateStr));
 
       if (mounted) {
         final messenger = ScaffoldMessenger.of(context);

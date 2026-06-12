@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../core/database/app_database.dart';
+import '../../features/plan/services/reminder_notification_service.dart';
 import 'repository_providers.dart';
 
 // =============================================================================
@@ -253,9 +254,11 @@ const Object _focusCycleUnset = Object();
 // =============================================================================
 
 class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
-  FocusCycleNotifier() : super(const FocusCycleState());
+  FocusCycleNotifier(this._notificationService) : super(const FocusCycleState());
   Timer? _tickTimer;
   static const _persistKey = 'focus_cycle_state';
+  static const _notificationId = 5205;
+  final ReminderNotificationService _notificationService;
 
   /// 开始新的专注循环
   void start({
@@ -292,6 +295,9 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
 
     _startTick();
     _persist();
+
+    // 预调度通知：如果用户在后台不回来，OS 会自动弹出
+    _schedulePhaseNotification();
   }
 
   /// 暂停
@@ -332,8 +338,32 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
   /// 取消整个循环
   void cancel() {
     _tickTimer?.cancel();
+    _notificationService.cancel(_notificationId);
     state = const FocusCycleState();
     _clearPersist();
+  }
+
+  /// 预调度当前阶段的完成通知
+  ///
+  /// 使用 zonedSchedule 让 OS 管理定时器，不依赖 Dart 进程。
+  /// 用户在后台时，OS 会自动弹出通知。
+  void _schedulePhaseNotification() {
+    if (state.phaseEndAt == null) return;
+    final phaseName = state.phase == FocusPhase.focus ? '专注' : '休息';
+    _notificationService.scheduleReminder(
+      id: _notificationId,
+      scheduledAt: state.phaseEndAt!,
+      title: '$phaseName时间到啦',
+      body: state.phase == FocusPhase.focus
+          ? '第${state.currentRound}轮专注完成！休息一下吧～'
+          : '休息结束，开始下一轮专注！',
+      payload: 'focus_complete',
+    );
+  }
+
+  /// 取消预调度通知（用户主动完成或取消时调用）
+  void cancelScheduledNotification() {
+    _notificationService.cancel(_notificationId);
   }
 
   /// 核心状态机：推进到下一个阶段
@@ -356,6 +386,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
         );
         _startTick();
         _persist();
+        _schedulePhaseNotification();
         return false;
       } else {
         // 非最后一轮 → 短休息
@@ -370,6 +401,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
         );
         _startTick();
         _persist();
+        _schedulePhaseNotification();
         return false;
       }
     }
@@ -526,5 +558,6 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
 /// 专注循环 Provider
 final focusCycleProvider =
     StateNotifierProvider<FocusCycleNotifier, FocusCycleState>((ref) {
-      return FocusCycleNotifier();
+      final notificationService = ref.read(reminderNotificationServiceProvider);
+      return FocusCycleNotifier(notificationService);
     });

@@ -22,22 +22,23 @@ class PetPromptBuilder {
 6. 用"甜甜"第一人称说话，比如"甜甜发现..."、"甜甜建议..."。
 7. 输出不要太长。
 
-请严格输出以下 JSON 格式，不要添加其他内容：
+输出示例：
 {
-  "title": "甜甜的分析标题（10字以内）",
-  "summary": "一句话总结（30字以内）",
-  "highlights": ["亮点1（15字以内）", "亮点2"],
-  "risks": ["注意点1（15字以内）"],
-  "suggestions": ["建议1（15字以内）", "建议2"],
-  "pet_message": "甜甜对用户说的鼓励话（20字以内，用甜甜口吻）"
+  "title": "学习小达人",
+  "summary": "这周学习很稳定，每天都有坚持记录",
+  "highlights": ["连续5天学习", "专注度提升到4分"],
+  "risks": ["数学时间偏少"],
+  "suggestions": ["每天加15分钟数学", "试试番茄钟提高效率"],
+  "pet_message": "甜甜看到你这么努力，好开心呀~"
 }
 
 注意：
-- pet_message 必须用甜甜的第一人称，语气温暖鼓励。
-- pet_message 不超过 20 个字。
-- title 不超过 10 个字。
-- highlights、risks、suggestions 每条不超过 15 个字。
-- 输出必须是合法的 JSON。''';
+- 输出必须是合法的 JSON，不要添加其他内容
+- pet_message 必须用甜甜的第一人称，语气温暖鼓励
+- title 不超过 10 个字
+- summary 不超过 30 个字
+- highlights、risks、suggestions 每条不超过 15 个字
+- pet_message 不超过 20 个字''';
   }
 
   /// 构建用户 Prompt
@@ -48,23 +49,13 @@ class PetPromptBuilder {
     final typeLabel = _getTypeLabel(type);
     final rangeLabel = _getRangeLabel(type);
 
-    return '''以下是用户的$typeLabel数据。
-
-数据类型：$typeLabel
+    return '''数据类型：$typeLabel
 时间范围：$rangeLabel
 
 用户数据：
 ${_formatData(data)}
 
-请输出 JSON：
-{
-  "title": "",
-  "summary": "",
-  "highlights": [],
-  "risks": [],
-  "suggestions": [],
-  "pet_message": ""
-}''';
+请按照系统提示中的 JSON 格式输出分析结果。''';
   }
 
   static String _getTypeLabel(PetAIAnalysisType type) {

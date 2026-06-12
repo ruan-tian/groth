@@ -1,4 +1,4 @@
-﻿part of '../study_page.dart';
+part of '../study_page.dart';
 
 // ── 图表用格式化：30m / 1.5h ──
 String _formatMinutesCompact(int minutes) {
@@ -82,9 +82,23 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.98),
+            AppColors.study.withValues(alpha: 0.045),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        border: Border.all(color: AppColors.study.withValues(alpha: 0.14)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.study.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -115,17 +129,17 @@ class _StudyBarChartState extends State<_StudyBarChart> {
               height: 240,
               child: RepaintBoundary(
                 child: BarChart(
-                BarChartData(
-                  maxY: yMax * 1.25, // extra space for value labels
-                  alignment: BarChartAlignment.spaceAround,
-                  barTouchData: _buildTouchData(),
-                  titlesData: _buildTitles(scale, yMax),
-                  gridData: _buildGrid(scale),
-                  borderData: FlBorderData(show: false),
-                  barGroups: List.generate(widget.stats.length, (i) {
-                    return _buildBarGroup(i, yMax);
-                  }),
-                ),
+                  BarChartData(
+                    maxY: yMax * 1.25, // extra space for value labels
+                    alignment: BarChartAlignment.spaceAround,
+                    barTouchData: _buildTouchData(),
+                    titlesData: _buildTitles(scale, yMax),
+                    gridData: _buildGrid(scale),
+                    borderData: FlBorderData(show: false),
+                    barGroups: List.generate(widget.stats.length, (i) {
+                      return _buildBarGroup(i, yMax);
+                    }),
+                  ),
                 ),
               ),
             ),
@@ -506,11 +520,21 @@ class _QuickActionCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppSpacing.md,
+          horizontal: AppSpacing.xs,
+        ),
         decoration: BoxDecoration(
-          color: AppColors.card,
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border),
+          color: Colors.white.withValues(alpha: 0.82),
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          border: Border.all(color: color.withValues(alpha: 0.12)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
         ),
         child: Column(
           children: [
@@ -518,6 +542,8 @@ class _QuickActionCard extends StatelessWidget {
             const SizedBox(height: AppSpacing.sm),
             Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 12,
                 color: color,
@@ -586,9 +612,23 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.98),
+            AppColors.study.withValues(alpha: 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        border: Border.all(color: AppColors.study.withValues(alpha: 0.14)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.study.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,

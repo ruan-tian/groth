@@ -1,17 +1,7 @@
 part of '../focus_page.dart';
 
-const _presetSubjects = [
-  '数学',
-  '英语',
-  '物理',
-  '化学',
-  '编程',
-  '语文',
-  '历史',
-  '地理',
-  '生物',
-  '其他',
-];
+/// 获取当前学习模式的科目列表
+List<String> _presetSubjects(StudyMode mode) => mode.subjects;
 
 // ---------------------------------------------------------------------------
 // Portrait layout
@@ -153,15 +143,51 @@ class _SetupForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final currentMode = ref.watch(focusStudyModeProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionTitle(icon: Icons.menu_book_rounded, title: '学习科目'),
+        Row(
+          children: [
+            const _SectionTitle(icon: Icons.menu_book_rounded, title: '学习科目'),
+            const Spacer(),
+            GestureDetector(
+              onTap: () => showStudyModeSheet(context, ref),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: _focusMint.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(99),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      currentMode.icon,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      currentMode.label,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: _focusMintDark,
+                      ),
+                    ),
+                    const SizedBox(width: 2),
+                    Icon(Icons.expand_more_rounded, size: 14, color: _focusMintDark),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 10),
         Wrap(
           spacing: compact ? 10 : 12,
           runSpacing: compact ? 10 : 12,
-          children: _presetSubjects
+          children: _presetSubjects(currentMode)
               .map((subject) {
                 return _PillButton(
                   label: subject,

@@ -230,49 +230,71 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
   }
 
   Widget _buildSpeechBubble(String bubbleText) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.93),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFF0E8F5)),
-        boxShadow: [
-          BoxShadow(
-            color: _DashboardHeroColors.primary.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, 7),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '甜甜',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w900,
-              color: _DashboardHeroColors.ink,
+    return GestureDetector(
+      onTap: () => _showFullMessage(context, bubbleText),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.93),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: const Color(0xFFF0E8F5)),
+          boxShadow: [
+            BoxShadow(
+              color: _DashboardHeroColors.primary.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 7),
             ),
-          ),
-          const SizedBox(height: 4),
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: Text(
-              bubbleText,
-              key: ValueKey(bubbleText),
-              style: const TextStyle(
-                fontSize: 13,
-                color: _DashboardHeroColors.text,
-                fontWeight: FontWeight.w700,
-                height: 1.35,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Text(
+                  '甜甜',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w900,
+                    color: _DashboardHeroColors.ink,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.touch_app_rounded,
+                  size: 12,
+                  color: _DashboardHeroColors.muted.withValues(alpha: 0.5),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: Text(
+                bubbleText,
+                key: ValueKey(bubbleText),
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: _DashboardHeroColors.text,
+                  fontWeight: FontWeight.w700,
+                  height: 1.35,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
             ),
-          ),
-        ],
+          ],
+        ),
       ),
+    );
+  }
+
+  void _showFullMessage(BuildContext context, String message) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => _PetMessageSheet(message: message),
     );
   }
 
@@ -500,4 +522,204 @@ class _DashboardHeroColors {
   static const ink = Color(0xFF37314E);
   static const text = Color(0xFF5C5670);
   static const muted = Color(0xFF8D869A);
+}
+
+class _PetMessageSheet extends StatelessWidget {
+  const _PetMessageSheet({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.45,
+      ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 顶部拖拽条
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE0E0E0),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          // 内容区域
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // 头像和名称
+                  Row(
+                    children: [
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFB8A9FF), Color(0xFF8B75F6)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF8B75F6).withValues(alpha: 0.3),
+                              blurRadius: 12,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: const Center(
+                          child: Text(
+                            '🐱',
+                            style: TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              '甜甜',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xFF37314E),
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              '你的成长伙伴',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: const Color(0xFF8D869A).withValues(alpha: 0.8),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // 关闭按钮
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF5F5F5),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 20,
+                            color: Color(0xFF8D869A),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  // 消息气泡
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFF8F5FF),
+                          const Color(0xFFFFF8F0),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: const Color(0xFFEDEBFF),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8B75F6).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome_rounded,
+                                    size: 14,
+                                    color: Color(0xFF8B75F6),
+                                  ),
+                                  SizedBox(width: 4),
+                                  Text(
+                                    '甜甜说',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF8B75F6),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 14),
+                        Text(
+                          message,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            height: 1.6,
+                            color: Color(0xFF37314E),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  // 底部提示
+                  Center(
+                    child: Text(
+                      '点击空白处关闭',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: const Color(0xFF8D869A).withValues(alpha: 0.6),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

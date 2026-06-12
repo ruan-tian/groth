@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/domain/pet/pet_display_intent.dart';
 import '../../core/domain/pet/pet_intent.dart';
 import '../../core/domain/pet/pet_runtime_state.dart';
+import 'pet_ai_result_provider.dart';
 import 'pet_orchestrator_provider.dart';
 
 /// 宠物视图状态 —— 从 UnifiedState 投影到具体 Surface
@@ -25,31 +26,57 @@ class PetViewState {
 }
 
 /// Dashboard 专用投影
+///
+/// 优先使用 AI 分析的 petMessage，其次 orchestrator 投影，最后 LifeSession。
 final dashboardPetViewProvider = Provider<PetViewState?>((ref) {
   final state = ref.watch(petOrchestratorProvider);
-  return _project(state, PetSurface.dashboard, null);
+  final aiResult = ref.watch(latestPetAnalysisOverallProvider);
+  return _project(
+    state,
+    PetSurface.dashboard,
+    null,
+    aiPetMessage: aiResult.valueOrNull?.petMessage,
+  );
 });
 
 /// 模块页专用投影 family
+///
+/// 优先使用该模块最新 AI 分析的 petMessage，其次 orchestrator 投影。
 final modulePetViewProvider = Provider.family<PetViewState?, String>((
   ref,
   module,
 ) {
   final state = ref.watch(petOrchestratorProvider);
-  return _project(state, PetSurface.modulePage, module);
+  final aiResult = ref.watch(latestPetAnalysisProvider(module));
+  return _project(
+    state,
+    PetSurface.modulePage,
+    module,
+    aiPetMessage: aiResult.valueOrNull?.petMessage,
+  );
 });
 
 /// 宠物中心专用投影
 final petCenterViewProvider = Provider<PetViewState?>((ref) {
   final state = ref.watch(petOrchestratorProvider);
-  return _project(state, PetSurface.petCenter, null);
+  final aiResult = ref.watch(latestPetAnalysisOverallProvider);
+  return _project(
+    state,
+    PetSurface.petCenter,
+    null,
+    aiPetMessage: aiResult.valueOrNull?.petMessage,
+  );
 });
 
+/// 核心投影逻辑
+///
+/// 优先级：activeIntent.fixedMessage > aiPetMessage > intent.displayMessage
 PetViewState? _project(
   PetRuntimeState state,
   PetSurface surface,
-  String? module,
-) {
+  String? module, {
+  String? aiPetMessage,
+}) {
   final active = _visibleActiveIntent(state, surface, module);
   final fallback = switch (surface) {
     PetSurface.modulePage => module != null ? state.moduleIntents[module] : null,
@@ -58,16 +85,21 @@ PetViewState? _project(
   };
   final intent = active ?? fallback;
 
-  if (intent == null) return null;
+  if (intent == null && aiPetMessage == null) return null;
+
+  // 优先级：临时事件 fixedMessage > AI petMessage > intent displayMessage
+  final fixedMsg = intent?.fixedMessage;
+  final displayMsg = intent?.displayMessage;
+  final bubbleText = fixedMsg ?? aiPetMessage ?? displayMsg;
 
   return PetViewState(
-    imagePath: intent.imagePath,
-    bubbleText: intent.displayMessage,
+    imagePath: intent?.imagePath,
+    bubbleText: bubbleText,
     isBubbleVisible:
-        intent.fixedMessage != null || intent.messages.isNotEmpty,
+        fixedMsg != null || (intent?.messages.isNotEmpty ?? false),
     mood: 'neutral',
-    action: _inferAction(intent.imagePath),
-    module: intent.module ?? module,
+    action: _inferAction(intent?.imagePath),
+    module: intent?.module ?? module,
   );
 }
 

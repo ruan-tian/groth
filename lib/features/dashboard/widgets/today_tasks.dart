@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/task_provider.dart';
+import '../../../shared/widgets/common/growth_date_picker.dart';
+import '../../../shared/widgets/common/growth_motion.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
 import '../../../core/constants/pet_assets.dart';
@@ -44,9 +46,60 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     super.dispose();
   }
 
+  /// 当前选中的日期
+  DateTime get _selectedDate {
+    final dateStr = ref.read(selectedTaskDateProvider);
+    return DateTime.tryParse(dateStr) ?? DateTime.now();
+  }
+
+  /// 是否是今天
+  bool get _isToday {
+    final now = DateTime.now();
+    final selected = _selectedDate;
+    return selected.year == now.year &&
+        selected.month == now.month &&
+        selected.day == now.day;
+  }
+
+  /// 切换到前一天
+  void _goToPreviousDay() {
+    final current = _selectedDate;
+    final prev = current.subtract(const Duration(days: 1));
+    ref.read(selectedTaskDateProvider.notifier).state = formatDateKey(prev);
+    HapticFeedback.lightImpact();
+  }
+
+  /// 切换到后一天
+  void _goToNextDay() {
+    final current = _selectedDate;
+    final next = current.add(const Duration(days: 1));
+    ref.read(selectedTaskDateProvider.notifier).state = formatDateKey(next);
+    HapticFeedback.lightImpact();
+  }
+
+  /// 回到今天
+  void _goToToday() {
+    ref.read(selectedTaskDateProvider.notifier).state = formatDateKey(DateTime.now());
+    HapticFeedback.lightImpact();
+  }
+
+  /// 打开日期选择器
+  Future<void> _pickDate() async {
+    final picked = await showGrowthDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
+      lastDate: DateTime.now().add(const Duration(days: 30)),
+    );
+    if (picked != null) {
+      ref.read(selectedTaskDateProvider.notifier).state = formatDateKey(picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final tasksAsync = ref.watch(todayTasksProvider);
+    final selectedDateStr = ref.watch(selectedTaskDateProvider);
+    final tasksAsync = ref.watch(tasksByDateProvider(selectedDateStr));
 
     return Stack(
       children: [
@@ -118,35 +171,87 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     BuildContext context,
     AsyncValue<List<DailyTask>> tasksAsync,
   ) {
+    final selectedDate = _selectedDate;
+    final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final weekday = weekdays[selectedDate.weekday - 1];
+
+    // 混合模式：今天显示"今天"，其他显示具体日期
+    String dateLabel;
+    if (_isToday) {
+      dateLabel = '今天';
+    } else {
+      dateLabel = '${selectedDate.month}月${selectedDate.day}日 $weekday';
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 18, 16, 8),
       child: Column(
         children: [
           Row(
             children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEDEBFF),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: const Icon(
-                  Icons.checklist_rounded,
-                  size: 20,
-                  color: Color(0xFF8B75F6),
+              // 左箭头
+              _buildNavButton(
+                icon: Icons.chevron_left_rounded,
+                onTap: _goToPreviousDay,
+              ),
+              const SizedBox(width: 4),
+              // 日期显示（点击选择日期）
+              Expanded(
+                child: GestureDetector(
+                  onTap: _pickDate,
+                  child: Column(
+                    children: [
+                      Text(
+                        dateLabel,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                          color: Color(0xFF37314E),
+                        ),
+                      ),
+                      if (!_isToday)
+                        Text(
+                          '${selectedDate.year}',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF8D869A),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
-              const SizedBox(width: 10),
-              const Text(
-                '今日任务',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
-                  color: Color(0xFF37314E),
-                ),
+              // 右箭头
+              _buildNavButton(
+                icon: Icons.chevron_right_rounded,
+                onTap: _goToNextDay,
               ),
+              const SizedBox(width: 8),
+              // 回到今天按钮（仅非今天时显示）
+              if (!_isToday)
+                GestureDetector(
+                  onTap: _goToToday,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF8B75F6).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      '今天',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF8B75F6),
+                      ),
+                    ),
+                  ),
+                ),
               const Spacer(),
+              // 完成统计
               tasksAsync.when(
                 data: (tasks) {
                   final completed = tasks.where((t) => t.isCompleted).length;
@@ -154,7 +259,6 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                   return Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // 完成计数
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -179,7 +283,6 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                       ),
                       if (total > 0) ...[
                         const SizedBox(width: 8),
-                        // 百分比
                         Text(
                           '${(completed / total * 100).round()}%',
                           style: const TextStyle(
@@ -223,6 +326,28 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
           ),
           const SizedBox(height: 8),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNavButton({
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: const Color(0xFFF7F4FA),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: const Color(0xFF8D869A),
+        ),
       ),
     );
   }
@@ -414,67 +539,65 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
         Semantics(
           label: _showCompleted ? '收起已完成任务' : '展开已完成任务',
           button: true,
-          child: GestureDetector(
-          onTap: () {
-            setState(() => _showCompleted = !_showCompleted);
-            HapticFeedback.lightImpact();
-          },
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.check_circle_outline_rounded,
-                  size: 14,
-                  color: Color(0xFF35C976),
-                ),
-                const SizedBox(width: 6),
-                const Text(
-                  '已完成',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          child: GrowthPressable(
+            onTap: () {
+              setState(() => _showCompleted = !_showCompleted);
+              HapticFeedback.lightImpact();
+            },
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline_rounded,
+                    size: 14,
                     color: Color(0xFF35C976),
                   ),
-                ),
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF35C976).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    '${tasks.length}',
-                    style: const TextStyle(
-                      fontSize: 11,
+                  const SizedBox(width: 6),
+                  const Text(
+                    '已完成',
+                    style: TextStyle(
+                      fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF35C976),
                     ),
                   ),
-                ),
-                const Spacer(),
-                AnimatedRotation(
-                  turns: _showCompleted ? 0.5 : 0,
-                  duration: const Duration(milliseconds: 300),
-                  child: const Icon(
-                    Icons.keyboard_arrow_down_rounded,
-                    size: 18,
-                    color: AppColors.textSecondary,
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 1,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF35C976).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '${tasks.length}',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF35C976),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  const Spacer(),
+                  AnimatedRotation(
+                    turns: _showCompleted ? 0.5 : 0,
+                    duration: AppMotion.duration(context, AppMotion.normal),
+                    curve: AppMotion.standard,
+                    child: const Icon(
+                      Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-        ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOutCubic,
-          alignment: Alignment.topCenter,
+        GrowthAnimatedSection(
           child: _showCompleted
               ? Column(
                   children: tasks
@@ -506,33 +629,33 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     return Semantics(
       button: true,
       label: '添加任务',
-      child: GestureDetector(
-      onTap: () => _showAddTaskDialog(context, ref),
-      child: Container(
-        margin: const EdgeInsets.fromLTRB(16, 10, 16, 16),
-        padding: const EdgeInsets.symmetric(vertical: 13),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF6F2FF),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFE8DFFF)),
-        ),
-        child: const Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_rounded, size: 19, color: Color(0xFF8B75F6)),
-            SizedBox(width: 6),
-            Text(
-              '添加任务',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF8B75F6),
+      child: GrowthPressable(
+        onTap: () => _showAddTaskDialog(context, ref),
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+          padding: const EdgeInsets.symmetric(vertical: 13),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF6F2FF),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: const Color(0xFFE8DFFF)),
+          ),
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.add_rounded, size: 19, color: Color(0xFF8B75F6)),
+              SizedBox(width: 6),
+              Text(
+                '添加任务',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w900,
+                  color: Color(0xFF8B75F6),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 
@@ -544,6 +667,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     final repo = ref.read(dailyTaskRepositoryProvider);
     final newCompleted = !task.isCompleted;
     await repo.toggleTaskCompletion(task.id, newCompleted);
+    final selectedDate = ref.read(selectedTaskDateProvider);
+    ref.invalidate(tasksByDateProvider(selectedDate));
     ref.invalidate(todayTasksProvider);
     ref.invalidate(todayIncompleteTaskCountProvider);
     HapticFeedback.mediumImpact();
@@ -556,7 +681,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
           module: 'task',
         ),
       );
-      final tasks = await repo.getTodayTasks();
+      final tasks = await repo.getTasksByDate(selectedDate);
       if (tasks.isNotEmpty && tasks.every((t) => t.isCompleted)) {
         _confettiController.play();
         HapticFeedback.heavyImpact();
@@ -567,6 +692,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
   Future<void> _deleteTask(WidgetRef ref, DailyTask task) async {
     final repo = ref.read(dailyTaskRepositoryProvider);
     await repo.deleteTask(task.id);
+    final selectedDate = ref.read(selectedTaskDateProvider);
+    ref.invalidate(tasksByDateProvider(selectedDate));
     ref.invalidate(todayTasksProvider);
     ref.invalidate(todayIncompleteTaskCountProvider);
     HapticFeedback.lightImpact();
@@ -577,10 +704,10 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     WidgetRef ref,
     DailyTask task,
   ) async {
-    final picked = await showDatePicker(
+    final picked = await showGrowthDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime.now().subtract(const Duration(days: 1)),
+      initialDate: _selectedDate,
+      firstDate: DateTime.now().subtract(const Duration(days: 30)),
       lastDate: DateTime.now().add(const Duration(days: 30)),
     );
     if (picked == null) return;
@@ -606,6 +733,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
+    final selectedDate = ref.read(selectedTaskDateProvider);
+    ref.invalidate(tasksByDateProvider(selectedDate));
     ref.invalidate(todayTasksProvider);
     ref.invalidate(todayIncompleteTaskCountProvider);
     HapticFeedback.lightImpact();
@@ -618,18 +747,26 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
   ) async {
     final repo = ref.read(dailyTaskRepositoryProvider);
     await repo.updateTaskPriority(task.id, priority.value);
-    ref.invalidate(todayTasksProvider);
+    final selectedDate = ref.read(selectedTaskDateProvider);
+    ref.invalidate(tasksByDateProvider(selectedDate));
     HapticFeedback.lightImpact();
   }
 
   void _editTask(BuildContext context, WidgetRef ref, DailyTask task) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (ctx) => AddTaskDialog(editTask: task),
     );
   }
 
   void _showAddTaskDialog(BuildContext context, WidgetRef ref) {
-    showDialog(context: context, builder: (ctx) => const AddTaskDialog());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => const AddTaskDialog(),
+    );
   }
 }

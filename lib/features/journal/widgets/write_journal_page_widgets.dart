@@ -1,4 +1,4 @@
-﻿part of '../pages/write_journal_page.dart';
+part of '../pages/write_journal_page.dart';
 
 class _TopBar extends StatelessWidget {
   const _TopBar({required this.onBack, required this.onSave});
@@ -294,36 +294,235 @@ class _ToolGrid extends StatelessWidget {
 }
 
 class _TagSection extends StatelessWidget {
-  const _TagSection({required this.selectedTags, required this.onToggle});
+  const _TagSection({
+    required this.selectedTags,
+    required this.onToggle,
+    required this.onCustom,
+  });
 
   final Set<String> selectedTags;
   final ValueChanged<String> onToggle;
+  final VoidCallback onCustom;
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: presetTags.map((tag) {
-        final selected = selectedTags.contains(tag);
-        return FilterChip(
-          label: Text(tag),
-          selected: selected,
-          onSelected: (_) => onToggle(tag),
-          backgroundColor: Colors.white,
-          selectedColor: JournalColors.pinkBg,
-          checkmarkColor: JournalColors.pinkMain,
-          side: BorderSide(
-            color: selected ? JournalColors.pinkSoft : JournalColors.pinkBorder,
+    final commonTags = presetTags.take(6).toList();
+    final extraTags = selectedTags.where((tag) => !commonTags.contains(tag));
+    final chips = [...commonTags, ...extraTags];
+
+    return SizedBox(
+      height: 44,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        itemCount: chips.length + 1,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          if (index == chips.length) {
+            return ActionChip(
+              avatar: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('自定义'),
+              onPressed: onCustom,
+              backgroundColor: Colors.white,
+              side: const BorderSide(color: JournalColors.pinkBorder),
+              labelStyle: const TextStyle(
+                color: JournalColors.textSecondary,
+                fontWeight: FontWeight.w700,
+              ),
+            );
+          }
+          final tag = chips[index];
+          final selected = selectedTags.contains(tag);
+          return FilterChip(
+            label: Text(tag),
+            selected: selected,
+            onSelected: (_) => onToggle(tag),
+            backgroundColor: Colors.white,
+            selectedColor: JournalColors.pinkBg,
+            checkmarkColor: JournalColors.pinkMain,
+            side: BorderSide(
+              color: selected
+                  ? JournalColors.pinkSoft
+                  : JournalColors.pinkBorder,
+            ),
+            labelStyle: TextStyle(
+              color: selected
+                  ? JournalColors.pinkMain
+                  : JournalColors.textSecondary,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _FolderSaveSection extends StatelessWidget {
+  const _FolderSaveSection({
+    required this.folderName,
+    required this.selectedFolderId,
+    required this.onTap,
+  });
+
+  final String? folderName;
+  final int? selectedFolderId;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: 0.86),
+      borderRadius: BorderRadius.circular(22),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(22),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: JournalColors.pinkBorder),
           ),
-          labelStyle: TextStyle(
-            color: selected
-                ? JournalColors.pinkMain
-                : JournalColors.textSecondary,
-            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+          child: Row(
+            children: [
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: JournalColors.pinkBg,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.folder_rounded,
+                  color: JournalColors.pinkMain,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '保存到',
+                      style: TextStyle(
+                        color: JournalColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      folderName ?? '未分类',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: JournalColors.textDark,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: JournalColors.textSecondary,
+              ),
+            ],
           ),
-        );
-      }).toList(),
+        ),
+      ),
+    );
+  }
+}
+
+class _FolderPickerSheet extends StatelessWidget {
+  const _FolderPickerSheet({
+    required this.folders,
+    required this.selectedFolderId,
+    required this.onCreate,
+  });
+
+  final List<JournalFolder> folders;
+  final int? selectedFolderId;
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    return _SoftSheet(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '选择保存文件夹',
+            style: TextStyle(
+              color: JournalColors.textDark,
+              fontSize: 18,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          _FolderOptionTile(
+            icon: Icons.inbox_rounded,
+            title: '未分类',
+            selected: selectedFolderId == null,
+            onTap: () => Navigator.pop(context, 0),
+          ),
+          ...folders.map(
+            (folder) => _FolderOptionTile(
+              icon: Icons.folder_rounded,
+              title: folder.name,
+              selected: selectedFolderId == folder.id,
+              onTap: () => Navigator.pop(context, folder.id),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: onCreate,
+              icon: const Icon(Icons.create_new_folder_rounded),
+              label: const Text('新建文件夹'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FolderOptionTile extends StatelessWidget {
+  const _FolderOptionTile({
+    required this.icon,
+    required this.title,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(icon, color: JournalColors.pinkMain),
+      title: Text(
+        title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      trailing: selected
+          ? const Icon(
+              Icons.check_circle_rounded,
+              color: JournalColors.pinkMain,
+            )
+          : null,
+      onTap: onTap,
     );
   }
 }
@@ -354,32 +553,44 @@ class _WritingSummary extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: _SummaryTile(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final tiles = [
+                _SummaryTile(
                   icon: Icons.text_fields_rounded,
                   value: '$wordCount 字',
                   label: '本次字数',
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _SummaryTile(
+                _SummaryTile(
                   icon: Icons.star_rounded,
                   value: '+$exp EXP',
                   label: '获得经验',
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _SummaryTile(
+                _SummaryTile(
                   icon: Icons.local_fire_department_rounded,
                   value: '连续 $streak 天',
                   label: '写作打卡',
                 ),
-              ),
-            ],
+              ];
+              if (constraints.maxWidth < 420) {
+                return Column(
+                  children: [
+                    for (var i = 0; i < tiles.length; i++) ...[
+                      tiles[i],
+                      if (i != tiles.length - 1) const SizedBox(height: 10),
+                    ],
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  for (var i = 0; i < tiles.length; i++) ...[
+                    Expanded(child: tiles[i]),
+                    if (i != tiles.length - 1) const SizedBox(width: 12),
+                  ],
+                ],
+              );
+            },
           ),
         ],
       ),

@@ -45,20 +45,19 @@ class PetAIPrivacyGuard {
 
   /// 检查是否是日记相关字段
   bool _isJournalField(String key) {
-    final lowerKey = key.toLowerCase();
-    return lowerKey.contains('journal') ||
-        lowerKey.contains('diary') ||
-        lowerKey.contains('content') ||
-        lowerKey.contains('text') ||
-        lowerKey.contains('note') ||
-        lowerKey.contains('mood');
+    // 只匹配日记正文字段，不误伤健身/睡眠的 note、mood 字段
+    return key == 'journalContent' ||
+        key == 'diaryText' ||
+        key == 'journalText' ||
+        key == 'contentMarkdown';
   }
 
   /// 脱敏字符串
   String _sanitizeString(String value) {
-    // 移除可能的姓名（2-4个中文字组成的词）
+    // 只匹配明确的人名模式：我/你/他 + 中文名 + 说/告诉/问/叫
+    // 不匹配"学习"、"跑步"等普通动宾短语
     var sanitized = value.replaceAllMapped(
-      RegExp(r'[\u4e00-\u9fa5]{2,4}(?=说|写|做|去|在|是)'),
+      RegExp(r'(?<=[我你他她它])([\u4e00-\u9fa5]{1,3})(?=说|告诉|问|叫|发)'),
       (match) => '***',
     );
 

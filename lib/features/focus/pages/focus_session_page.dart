@@ -18,6 +18,8 @@ import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/study_provider.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
+import '../../plan/services/reminder_notification_service.dart';
+import '../../music/providers/music_player_provider.dart';
 import '../utils/focus_assets.dart';
 import '../utils/focus_options.dart';
 import '../widgets/focus_sound_panel.dart';
@@ -58,12 +60,15 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   final Set<String> _savedRoundKeys = {};
   bool _phaseCompletionHandled = false;
   bool _completionDialogShown = false;
+  bool _musicWasPlayingOnEnter = false;
+  bool _focusStartedMusic = false;
   late FocusAudioStateNotifier _audioNotifier;
 
   @override
   void initState() {
     super.initState();
     _audioNotifier = ref.read(focusAudioStateProvider.notifier);
+    _musicWasPlayingOnEnter = ref.read(musicPlayerProvider).isPlaying;
     WidgetsBinding.instance.addObserver(this);
     Future.microtask(() {
       if (!mounted) return;
@@ -84,7 +89,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    unawaited(_audioNotifier.stopNoise());
+    unawaited(_stopSessionAudioForDispose());
     super.dispose();
   }
 
@@ -97,22 +102,72 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
 
   void _initAudio() {
     final soundType = ref.read(focusCycleProvider).soundType;
+    if (soundType == 'music') {
+      Future.microtask(() async {
+        if (!mounted) return;
+        final state = ref.read(musicPlayerProvider);
+        if (!state.isPlaying && state.currentTrack != null) {
+          _focusStartedMusic = true;
+          await ref.read(musicPlayerProvider.notifier).togglePlayPause();
+        }
+      });
+      return;
+    }
     if (soundType != null && soundType.isNotEmpty && soundType != 'none') {
       Future.microtask(() {
         if (mounted) {
+          ref.read(musicPlayerProvider.notifier).pause();
           ref.read(focusAudioStateProvider.notifier).startNoise(soundType);
         }
       });
     }
   }
 
-  void _pauseTimer() {
+  void _pauseSessionAudio() {
+    final soundType = ref.read(focusCycleProvider).soundType;
+    if (soundType == 'music') {
+      ref.read(musicPlayerProvider.notifier).pause();
+      return;
+    }
     ref.read(focusAudioStateProvider.notifier).pauseNoise();
+  }
+
+  void _resumeSessionAudio() {
+    final soundType = ref.read(focusCycleProvider).soundType;
+    if (soundType == 'music') {
+      final state = ref.read(musicPlayerProvider);
+      if (!state.isPlaying && state.currentTrack != null) {
+        _focusStartedMusic = true;
+        ref.read(musicPlayerProvider.notifier).togglePlayPause();
+      }
+      return;
+    }
+    ref.read(focusAudioStateProvider.notifier).resumeNoise();
+  }
+
+  void _stopSessionAudio() {
+    final soundType = ref.read(focusCycleProvider).soundType;
+    if (soundType == 'music') {
+      ref.read(musicPlayerProvider.notifier).pause();
+      return;
+    }
+    ref.read(focusAudioStateProvider.notifier).stopNoise();
+  }
+
+  Future<void> _stopSessionAudioForDispose() async {
+    await _audioNotifier.stopNoise();
+    if (!_musicWasPlayingOnEnter && _focusStartedMusic) {
+      await ref.read(musicPlayerProvider.notifier).pause();
+    }
+  }
+
+  void _pauseTimer() {
+    _pauseSessionAudio();
     ref.read(focusCycleProvider.notifier).pause();
   }
 
   void _resumeTimer() {
-    ref.read(focusAudioStateProvider.notifier).resumeNoise();
+    _resumeSessionAudio();
     ref.read(focusCycleProvider.notifier).resume();
   }
 
@@ -123,7 +178,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   }
 
   void _cancelSession() {
-    ref.read(focusAudioStateProvider.notifier).stopNoise();
+    _stopSessionAudio();
     _saveFocusRound(completed: false);
     ref.read(focusCycleProvider.notifier).cancel();
     if (mounted) context.pop();
@@ -135,8 +190,23 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     final cycleState = ref.read(focusCycleProvider);
 
     if (cycleState.phase == FocusPhase.focus) {
-      ref.read(focusAudioStateProvider.notifier).stopNoise();
+      _stopSessionAudio();
       ref.read(focusAudioStateProvider.notifier).playBell('gentle_bell');
+
+      // 取消预调度通知（用户已回来，手动处理）
+      ref.read(focusCycleProvider.notifier).cancelScheduledNotification();
+
+      // 发送即时通知
+      // ignore: unawaited_futures
+      ref.read(reminderNotificationServiceProvider).showImmediate(
+        id: 5205,
+        title: '专注时间结束',
+        body: cycleState.isLastRound
+            ? '所有轮次完成！休息一下吧～'
+            : '第${cycleState.currentRound}轮完成！休息一下吧～',
+        payload: 'focus_complete',
+      );
+
       _saveFocusRound(completed: true);
 
       PetEventBus.instance.emit(
@@ -164,7 +234,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     }
 
     ref.read(focusAudioStateProvider.notifier).playBell('gentle_bell');
-    ref.read(focusAudioStateProvider.notifier).stopNoise();
+    _stopSessionAudio();
     final completed = ref
         .read(focusCycleProvider.notifier)
         .advanceToNextPhase();
@@ -287,7 +357,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     ref.invalidate(dashboardProvider);
 
     _savedRoundKeys.add(saveKey);
-    _saved = false;
+    // _saved 保持 true，防止重复保存。新会话开始时才重置。
   }
 
   void _showCancelDialog() {
@@ -422,6 +492,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: (value) {
+                      if (value == 'music') _focusStartedMusic = true;
                       ref.read(focusCycleProvider.notifier).setSoundType(value);
                     },
                   )
@@ -435,6 +506,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: (value) {
+                      if (value == 'music') _focusStartedMusic = true;
                       ref.read(focusCycleProvider.notifier).setSoundType(value);
                     },
                   )
@@ -448,6 +520,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: (value) {
+                      if (value == 'music') _focusStartedMusic = true;
                       ref.read(focusCycleProvider.notifier).setSoundType(value);
                     },
                   ),

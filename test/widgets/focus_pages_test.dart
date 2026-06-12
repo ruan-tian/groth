@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:growth_os/core/database/app_database.dart';
 import 'package:growth_os/features/focus/focus_page.dart';
 import 'package:growth_os/features/focus/pages/focus_session_page.dart';
+import 'package:growth_os/features/plan/services/reminder_notification_service.dart';
 import 'package:growth_os/shared/providers/focus_audio_provider.dart';
 import 'package:growth_os/shared/providers/focus_provider.dart';
 
@@ -55,6 +56,8 @@ Widget _sessionPage() {
 }
 
 class _StaticFocusCycleNotifier extends FocusCycleNotifier {
+  _StaticFocusCycleNotifier() : super(ReminderNotificationService());
+
   @override
   void start({
     required int focusMinutes,
@@ -199,6 +202,17 @@ void main() {
 
     testWidgets('renders landscape timer core controls', (tester) async {
       await setViewport(tester, 1366, 768);
+      await tester.pumpWidget(_sessionPage());
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('English reading'), findsOneWidget);
+      expect(find.text('01:00'), findsOneWidget);
+    });
+
+    testWidgets('renders compact phone landscape without overflow', (
+      tester,
+    ) async {
+      await setViewport(tester, 812, 375);
       await tester.pumpWidget(_sessionPage());
       await tester.pump(const Duration(milliseconds: 100));
 

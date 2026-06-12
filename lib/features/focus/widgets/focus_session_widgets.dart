@@ -1,4 +1,4 @@
-﻿part of '../pages/focus_session_page.dart';
+part of '../pages/focus_session_page.dart';
 
 class _PortraitSession extends StatelessWidget {
   const _PortraitSession({
@@ -106,8 +106,11 @@ class _LandscapeSession extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final height = MediaQuery.sizeOf(context).height;
-    final timerSize = math.min(height * 0.62, 460.0);
+    final size = MediaQuery.sizeOf(context);
+    final height = size.height;
+    final width = size.width;
+    // 横屏时根据高度和宽度综合计算，更保守
+    final timerSize = math.min(math.min(height * 0.5, width * 0.28), 380.0);
     return SafeArea(
       child: Stack(
         children: [
@@ -130,6 +133,7 @@ class _LandscapeSession extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      // 左侧：计时器区域（固定）
                       Expanded(
                         flex: 9,
                         child: Column(
@@ -159,53 +163,60 @@ class _LandscapeSession extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 28),
+                      // 右侧：控制区域（可滚动）
                       Expanded(
                         flex: 10,
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: _SessionControls(
-                                    cycleState: cycleState,
-                                    isCycleDone: isCycleDone,
-                                    onCancel: onCancel,
-                                    onPause: onPause,
-                                    onResume: onResume,
-                                    onSkipBreak: onSkipBreak,
-                                    onReturn: onReturn,
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _SessionControls(
+                                      cycleState: cycleState,
+                                      isCycleDone: isCycleDone,
+                                      onCancel: onCancel,
+                                      onPause: onPause,
+                                      onResume: onResume,
+                                      onSkipBreak: onSkipBreak,
+                                      onReturn: onReturn,
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(width: 18),
-                                Expanded(
-                                  child: _NextPhaseCard(
-                                    cycleState: cycleState,
-                                    compact: true,
+                                  const SizedBox(width: 18),
+                                  Expanded(
+                                    child: _NextPhaseCard(
+                                      cycleState: cycleState,
+                                      compact: true,
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 18),
-                            FocusSoundPanel(
-                              initialSoundType: cycleState.soundType ?? 'none',
-                              dark: true,
-                              onSoundChanged: onSoundChanged,
-                            ),
-                            const SizedBox(height: 20),
-                            Row(
-                              children: [
-                                Expanded(child: _EncourageNote(compact: false)),
-                                Image.asset(
-                                  FocusAssets.catForCycle(cycleState),
-                                  width: 160,
-                                  height: 160,
-                                  fit: BoxFit.contain,
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                              const SizedBox(height: 18),
+                              FocusSoundPanel(
+                                initialSoundType:
+                                    cycleState.soundType ?? 'none',
+                                compact: true,
+                                dark: true,
+                                onSoundChanged: onSoundChanged,
+                              ),
+                              const SizedBox(height: 20),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: _EncourageNote(compact: true),
+                                  ),
+                                  Image.asset(
+                                    FocusAssets.catForCycle(cycleState),
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.contain,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -244,7 +255,13 @@ class _CompactLandscapeSession extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
-    final timerSize = math.min(size.height * 0.72, size.width * 0.34);
+    final availableHeight =
+        size.height - MediaQuery.paddingOf(context).vertical - 22;
+    final timerSize = math.min(
+      math.max(116.0, availableHeight * 0.46),
+      math.min(size.width * 0.27, 220.0),
+    );
+    final leftWidth = math.max(246.0, size.width * 0.36);
     return SafeArea(
       child: Stack(
         children: [
@@ -259,70 +276,98 @@ class _CompactLandscapeSession extends StatelessWidget {
             child: Row(
               children: [
                 SizedBox(
-                  width: math.max(260, size.width * 0.38),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _SessionTopBar(
-                        title: '',
-                        onBack: onCancel,
-                        centered: true,
-                        compact: true,
-                      ),
-                      const SizedBox(height: 8),
-                      _RoundStepper(
-                        cycleState: cycleState,
-                        dark: true,
-                        compact: true,
-                      ),
-                      const SizedBox(height: 6),
-                      _SessionTitleBlock(
-                        cycleState: cycleState,
-                        centered: true,
-                        compact: true,
-                      ),
-                      const SizedBox(height: 6),
-                      TimerDisplay(
-                        remaining: Duration(
-                          seconds: cycleState.remainingSeconds,
+                  width: leftWidth,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return SingleChildScrollView(
+                        physics: const ClampingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _SessionTopBar(
+                                title: '',
+                                onBack: onCancel,
+                                centered: true,
+                                compact: true,
+                              ),
+                              const SizedBox(height: 5),
+                              _RoundStepper(
+                                cycleState: cycleState,
+                                dark: true,
+                                compact: true,
+                              ),
+                              const SizedBox(height: 4),
+                              _SessionTitleBlock(
+                                cycleState: cycleState,
+                                centered: true,
+                                compact: true,
+                              ),
+                              const SizedBox(height: 4),
+                              TimerDisplay(
+                                remaining: Duration(
+                                  seconds: cycleState.remainingSeconds,
+                                ),
+                                total: _totalFor(cycleState),
+                                isBreak: cycleState.isBreak,
+                                size: timerSize,
+                                dark: true,
+                                roundLabel:
+                                    '第 ${cycleState.currentRound} / ${cycleState.totalRounds} 轮',
+                                catAsset: FocusAssets.catForCycle(cycleState),
+                                showCat: false,
+                              ),
+                            ],
+                          ),
                         ),
-                        total: _totalFor(cycleState),
-                        isBreak: cycleState.isBreak,
-                        size: timerSize,
-                        dark: true,
-                        roundLabel:
-                            '第 ${cycleState.currentRound} / ${cycleState.totalRounds} 轮',
-                        catAsset: FocusAssets.catForCycle(cycleState),
-                        showCat: false,
-                      ),
-                    ],
+                      );
+                    },
                   ),
                 ),
-                const SizedBox(width: 14),
+                SizedBox(width: size.width < 760 ? 10 : 14),
                 Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    children: [
-                      _SessionControls(
-                        cycleState: cycleState,
-                        isCycleDone: isCycleDone,
-                        onCancel: onCancel,
-                        onPause: onPause,
-                        onResume: onResume,
-                        onSkipBreak: onSkipBreak,
-                        onReturn: onReturn,
-                        compact: true,
-                      ),
-                      const SizedBox(height: 12),
-                      FocusSoundPanel(
-                        initialSoundType: cycleState.soundType ?? 'none',
-                        compact: true,
-                        dark: true,
-                        onSoundChanged: onSoundChanged,
-                      ),
-                      const SizedBox(height: 12),
-                      _NextPhaseCard(cycleState: cycleState, compact: true),
-                    ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      return Scrollbar(
+                        child: ListView(
+                          padding: EdgeInsets.only(
+                            top: 2,
+                            bottom: MediaQuery.paddingOf(context).bottom + 8,
+                          ),
+                          children: [
+                            _SessionControls(
+                              cycleState: cycleState,
+                              isCycleDone: isCycleDone,
+                              onCancel: onCancel,
+                              onPause: onPause,
+                              onResume: onResume,
+                              onSkipBreak: onSkipBreak,
+                              onReturn: onReturn,
+                              compact: true,
+                            ),
+                            const SizedBox(height: 10),
+                            FocusSoundPanel(
+                              initialSoundType: cycleState.soundType ?? 'none',
+                              compact: true,
+                              dark: true,
+                              onSoundChanged: onSoundChanged,
+                            ),
+                            const SizedBox(height: 10),
+                            _NextPhaseCard(
+                              cycleState: cycleState,
+                              compact: true,
+                            ),
+                            if (constraints.maxHeight > 380) ...[
+                              const SizedBox(height: 10),
+                              _EncourageNote(compact: true),
+                            ],
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

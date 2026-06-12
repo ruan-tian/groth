@@ -29,3 +29,31 @@ final latestPetAnalysisProvider = FutureProvider.family<PetAIResult?, String>((
     petMessage: record.petMessage,
   );
 });
+
+/// Get the latest AI analysis result across ALL modules
+///
+/// Used by dashboard and pet center to show the most recent AI insight
+/// regardless of which module generated it.
+final latestPetAnalysisOverallProvider = FutureProvider<PetAIResult?>((
+  ref,
+) async {
+  final db = ref.read(databaseProvider);
+
+  final query = db.select(db.petMessages)
+    ..where((t) => t.type.equals('analysis'))
+    ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+    ..limit(1);
+
+  final results = await query.get();
+  if (results.isEmpty) return null;
+
+  final record = results.first;
+  return PetAIResult(
+    title: record.title,
+    summary: record.content,
+    highlights: record.highlights?.split('|||') ?? [],
+    risks: record.risks?.split('|||') ?? [],
+    suggestions: record.suggestions?.split('|||') ?? [],
+    petMessage: record.petMessage,
+  );
+});

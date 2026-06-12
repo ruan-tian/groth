@@ -58,6 +58,66 @@ class MusicAssets {
   static const settingScene = '$_root/music_setting_scene.webp';
   static const settingTimer = '$_root/music_setting_timer.webp';
 
+  static String coverForTitle(String title) {
+    final text = title.toLowerCase();
+    if (_containsAny(text, const ['lofi', 'lo-fi', '日常', '轻音', 'chill'])) {
+      return coverLofi;
+    }
+    if (_containsAny(text, const ['sleep', 'night', '晚安', '助眠', '睡眠', '入睡'])) {
+      return coverSleep;
+    }
+    if (_containsAny(text, const [
+      'study',
+      'focus',
+      'learn',
+      '学习',
+      '专注',
+      '阅读',
+      '功课',
+    ])) {
+      return coverStudy;
+    }
+    if (_containsAny(text, const [
+      'fitness',
+      'workout',
+      'sport',
+      'run',
+      '运动',
+      '健身',
+      '训练',
+      '跑步',
+    ])) {
+      return coverFitness;
+    }
+    if (_containsAny(text, const [
+      'rain',
+      'white noise',
+      'noise',
+      '雨',
+      '白噪音',
+      '下雨',
+      '雨声',
+    ])) {
+      return coverRain;
+    }
+    if (_containsAny(text, const [
+      'morning',
+      'sunrise',
+      'wake',
+      '晨间',
+      '清晨',
+      '早晨',
+      '唤醒',
+    ])) {
+      return coverMorning;
+    }
+    return coverDefault;
+  }
+
+  static bool _containsAny(String text, List<String> keywords) {
+    return keywords.any(text.contains);
+  }
+
   static const all = <String>[
     catFavorite,
     catHeadphone,

@@ -7,6 +7,7 @@ import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import 'pages/add_sleep_record_sheet.dart';
@@ -29,7 +30,6 @@ class SleepPage extends ConsumerStatefulWidget {
 }
 
 class _SleepPageState extends ConsumerState<SleepPage> {
-  int _sleepGoalHours = 8;
   int _selectedRange = 7; // 7, 30, 365
   bool _showAllRecentRecords = false;
 
@@ -42,21 +42,12 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   @override
   void initState() {
     super.initState();
-    _loadSleepGoal();
-  }
-
-  Future<void> _loadSleepGoal() async {
-    final repo = ref.read(settingRepositoryProvider);
-    final value = await repo.getSetting('sleep_goal_hours');
-    if (value != null && mounted) {
-      setState(() {
-        _sleepGoalHours = int.tryParse(value) ?? 8;
-      });
-    }
+    ref.read(sleepGoalInitProvider);
   }
 
   @override
   Widget build(BuildContext context) {
+    final sleepGoal = ref.watch(sleepGoalProvider);
     final lastNightRecord = ref.watch(lastNightSleepRecordProvider);
     final weeklyDuration = ref.watch(weeklyAvgSleepDurationProvider);
     final weeklyQuality = ref.watch(weeklyAvgSleepQualityProvider);
@@ -86,13 +77,13 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.softLavender,
+      backgroundColor: AppColors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
               title: Text('睡眠', style: AppTextStyles.pageTitle),
               centerTitle: false,
-              backgroundColor: AppColors.softLavender,
+              backgroundColor: AppColors.paper,
               actions: [
                 IconButton(
                   tooltip: '设置睡眠目标',
@@ -101,68 +92,73 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                 ),
               ],
             ),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          ref.invalidate(lastNightSleepRecordProvider);
-          ref.invalidate(weeklyAvgSleepDurationProvider);
-          ref.invalidate(weeklyAvgSleepQualityProvider);
-          ref.invalidate(weeklySleepDurationProvider);
-          ref.invalidate(weeklySleepQualityProvider);
-          ref.invalidate(monthlySleepDurationProvider);
-          ref.invalidate(monthlySleepQualityProvider);
-          ref.invalidate(yearlySleepDurationProvider);
-          ref.invalidate(yearlySleepQualityProvider);
-          ref.invalidate(recentSleepRecordsProvider(5));
-          ref.invalidate(recentSleepRecordsProvider(10));
-        },
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(AppSpacing.lg),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (widget.capsuleNav != null) widget.capsuleNav!,
+      body: ModulePageSurface(
+        color: AppColors.sleep,
+        child: RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(lastNightSleepRecordProvider);
+            ref.invalidate(weeklyAvgSleepDurationProvider);
+            ref.invalidate(weeklyAvgSleepQualityProvider);
+            ref.invalidate(weeklySleepDurationProvider);
+            ref.invalidate(weeklySleepQualityProvider);
+            ref.invalidate(monthlySleepDurationProvider);
+            ref.invalidate(monthlySleepQualityProvider);
+            ref.invalidate(yearlySleepDurationProvider);
+            ref.invalidate(yearlySleepQualityProvider);
+            ref.invalidate(recentSleepRecordsProvider(5));
+            ref.invalidate(recentSleepRecordsProvider(10));
+          },
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.capsuleNav != null) widget.capsuleNav!,
 
-              // ── 1. 小猫提示条 ──
-              PlanModuleVisualHeader(
-                module: PlanModuleType.sleep,
-                color: AppColors.sleep,
-              ),
-              const SizedBox(height: AppSpacing.md),
-              PlanModuleActionImageCard(
-                module: PlanModuleType.sleep,
-                color: AppColors.sleep,
-                onTap: () => context.push('/plan/sleep/reminder'),
-              ),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 1. 小猫提示条 ──
+                PlanModuleVisualHeader(
+                  module: PlanModuleType.sleep,
+                  color: AppColors.sleep,
+                ),
+                const SizedBox(height: AppSpacing.md),
+                PlanModuleActionImageCard(
+                  module: PlanModuleType.sleep,
+                  color: AppColors.sleep,
+                  onTap: () => context.push('/plan/sleep/reminder'),
+                ),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 2. 昨晚睡眠概况 ──
-              _buildSleepOverview(
-                lastNightRecord,
-                weeklyDuration,
-                weeklyQuality,
-              ),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 2. 昨晚睡眠概况 ──
+                _buildSleepOverview(
+                  lastNightRecord,
+                  weeklyDuration,
+                  weeklyQuality,
+                  sleepGoal,
+                ),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 3. 记录睡眠入口 ──
-              _buildRecordSleepEntry(context),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 3. 记录睡眠入口 ──
+                _buildRecordSleepEntry(context),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 4. 趋势图表 ──
-              _buildTrendSection(
-                durationList,
-                qualityList,
-                weeklyDuration,
-                weeklyQuality,
-              ),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 4. 趋势图表 ──
+                _buildTrendSection(
+                  durationList,
+                  qualityList,
+                  weeklyDuration,
+                  weeklyQuality,
+                  sleepGoal,
+                ),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 5. 睡眠建议 ──
-              _buildSleepSuggestions(lastNightRecord),
-              const SizedBox(height: AppSpacing.lg),
+                // ── 5. 睡眠建议 ──
+                _buildSleepSuggestions(lastNightRecord, sleepGoal),
+                const SizedBox(height: AppSpacing.lg),
 
-              // ── 6. 最近记录 ──
-              _buildRecentRecords(recentRecords),
-            ],
+                // ── 6. 最近记录 ──
+                _buildRecentRecords(recentRecords),
+              ],
+            ),
           ),
         ),
       ),
@@ -182,13 +178,14 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     AsyncValue<SleepRecord?> lastNightRecord,
     AsyncValue<double?> weeklyDuration,
     AsyncValue<double?> weeklyQuality,
+    int sleepGoal,
   ) {
     return lastNightRecord.when(
       data: (record) {
         if (record == null) {
           return _buildNoRecordCard();
         }
-        final progress = (record.durationMinutes / (_sleepGoalHours * 60))
+        final progress = (record.durationMinutes / (sleepGoal * 60))
             .clamp(0.0, 1.0);
         return ModuleHeroCard(
           icon: Icons.bedtime_rounded,
@@ -197,7 +194,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           primaryLabel: '昨晚睡眠时长',
           color: AppColors.sleep,
           progress: progress,
-          targetLabel: '目标 $_sleepGoalHours小时',
+          targetLabel: '目标 $sleepGoal小时',
           metrics: [
             ModuleMetricChip(
               icon: Icons.nightlight_round,
@@ -235,9 +232,23 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _lavender.withValues(alpha: 0.2)),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.98),
+            AppColors.sleep.withValues(alpha: 0.045),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        border: Border.all(color: AppColors.sleep.withValues(alpha: 0.14)),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.sleep.withValues(alpha: 0.08),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
       ),
       child: Center(
         child: Column(
@@ -284,6 +295,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     AsyncValue<List<Map>> qualityList,
     AsyncValue<double?> weeklyDuration,
     AsyncValue<double?> weeklyQuality,
+    int sleepGoal,
   ) {
     final rangeLabel = _selectedRange == 7
         ? '近7天趋势'
@@ -298,22 +310,22 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           children: [
             Text(rangeLabel, style: AppTextStyles.sectionTitle),
             const Spacer(),
-              Semantics(
-                button: true,
-                label: '查看详情',
-                child: GestureDetector(
-                  onTap: () => _navigateToHistory(context),
-                  child: Row(
-                    children: [
-                      Text(
-                        '查看详情',
-                        style: TextStyle(fontSize: 12, color: _lavender),
-                      ),
-                      Icon(Icons.chevron_right, size: 16, color: _lavender),
-                    ],
-                  ),
+            Semantics(
+              button: true,
+              label: '查看详情',
+              child: GestureDetector(
+                onTap: () => _navigateToHistory(context),
+                child: Row(
+                  children: [
+                    Text(
+                      '查看详情',
+                      style: TextStyle(fontSize: 12, color: _lavender),
+                    ),
+                    Icon(Icons.chevron_right, size: 16, color: _lavender),
+                  ],
                 ),
               ),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
@@ -330,87 +342,101 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                   button: true,
                   label: '睡眠趋势，查看详情',
                   child: GestureDetector(
-                  onTap: () => _navigateToHistory(context),
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: _lavender.withValues(alpha: 0.15),
+                    onTap: () => _navigateToHistory(context),
+                    child: Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withValues(alpha: 0.98),
+                            AppColors.sleep.withValues(alpha: 0.045),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+                        border: Border.all(
+                          color: AppColors.sleep.withValues(alpha: 0.14),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.sleep.withValues(alpha: 0.08),
+                            blurRadius: 24,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 标题行
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.bar_chart_rounded,
+                                size: 18,
+                                color: _lavender,
+                              ),
+                              const SizedBox(width: 8),
+                              Text('睡眠趋势', style: AppTextStyles.cardTitle),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          // 图例
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              _buildLegend(_lavender, '睡眠时长'),
+                              const SizedBox(width: 24),
+                              _buildLegend(_sleepPink, '睡眠质量'),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // fl_chart 组合图表
+                          SizedBox(
+                            height: 260,
+                            child: SleepCombinedChart(
+                              durationData: dList,
+                              qualityData: qList,
+                              durationColor: _lavender,
+                              qualityColor: _sleepPink,
+                              goalHours: sleepGoal,
+                              selectedRange: _selectedRange,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          // 平均值
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              weeklyDuration.when(
+                                data: (avg) => _buildAvgItem(
+                                  '平均时长',
+                                  avg != null
+                                      ? formatSleepDuration(avg.toInt())
+                                      : '--',
+                                  _lavender,
+                                ),
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, _) => const SizedBox.shrink(),
+                              ),
+                              weeklyQuality.when(
+                                data: (avg) => _buildAvgItem(
+                                  '平均质量',
+                                  avg != null
+                                      ? '${avg.toStringAsFixed(1)} 分'
+                                      : '--',
+                                  _sleepPink,
+                                ),
+                                loading: () => const SizedBox.shrink(),
+                                error: (_, _) => const SizedBox.shrink(),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 标题行
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.bar_chart_rounded,
-                              size: 18,
-                              color: _lavender,
-                            ),
-                            const SizedBox(width: 8),
-                            Text('睡眠趋势', style: AppTextStyles.cardTitle),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        // 图例
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _buildLegend(_lavender, '睡眠时长'),
-                            const SizedBox(width: 24),
-                            _buildLegend(_sleepPink, '睡眠质量'),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        // fl_chart 组合图表
-                        SizedBox(
-                          height: 260,
-                          child: SleepCombinedChart(
-                            durationData: dList,
-                            qualityData: qList,
-                            durationColor: _lavender,
-                            qualityColor: _sleepPink,
-                            goalHours: _sleepGoalHours,
-                            selectedRange: _selectedRange,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        // 平均值
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            weeklyDuration.when(
-                              data: (avg) => _buildAvgItem(
-                                '平均时长',
-                                avg != null
-                                    ? formatSleepDuration(avg.toInt())
-                                    : '--',
-                                _lavender,
-                              ),
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, _) => const SizedBox.shrink(),
-                            ),
-                            weeklyQuality.when(
-                              data: (avg) => _buildAvgItem(
-                                '平均质量',
-                                avg != null
-                                    ? '${avg.toStringAsFixed(1)} 分'
-                                    : '--',
-                                _sleepPink,
-                              ),
-                              loading: () => const SizedBox.shrink(),
-                              error: (_, _) => const SizedBox.shrink(),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
                   ),
-                ),
                 );
               },
               loading: () => _buildEmptyTrend(),
@@ -428,8 +454,9 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: _lavenderLight,
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(AppRadius.mlg),
+        border: Border.all(color: _lavender.withValues(alpha: 0.10)),
       ),
       child: Row(
         children: [
@@ -449,40 +476,40 @@ class _SleepPageState extends ConsumerState<SleepPage> {
         label: '显示$label数据',
         selected: isSelected,
         child: GestureDetector(
-        onTap: () {
-          if (_selectedRange != days) {
-            setState(() => _selectedRange = days);
-          }
-        },
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: _lavender.withValues(alpha: 0.15),
-                      blurRadius: 4,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? _lavender : AppColors.textSecondary,
+          onTap: () {
+            if (_selectedRange != days) {
+              setState(() => _selectedRange = days);
+            }
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected ? Colors.white : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: _lavender.withValues(alpha: 0.15),
+                        blurRadius: 4,
+                        offset: const Offset(0, 1),
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Center(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected ? _lavender : AppColors.textSecondary,
+                ),
               ),
             ),
           ),
         ),
       ),
-    ),
     );
   }
 
@@ -556,10 +583,10 @@ class _SleepPageState extends ConsumerState<SleepPage> {
 
   // ─── 睡眠建议 ────────────────────────────────────────────────────────────
 
-  Widget _buildSleepSuggestions(AsyncValue<SleepRecord?> lastNightRecord) {
+  Widget _buildSleepSuggestions(AsyncValue<SleepRecord?> lastNightRecord, int sleepGoal) {
     return lastNightRecord.when(
       data: (record) {
-        final suggestions = _getSuggestions(record);
+        final suggestions = _getSuggestions(record, sleepGoal);
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -619,14 +646,14 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     );
   }
 
-  List<String> _getSuggestions(SleepRecord? record) {
+  List<String> _getSuggestions(SleepRecord? record, int sleepGoal) {
     if (record == null) {
       return ['开始记录睡眠，获取个性化建议', '保持规律的作息时间', '睡前 1 小时远离电子屏幕'];
     }
 
     final suggestions = <String>[];
 
-    if (record.durationMinutes < _sleepGoalHours * 60) {
+    if (record.durationMinutes < sleepGoal * 60) {
       suggestions.add('昨晚睡眠不足，建议今天适当提前入睡');
     }
     if (record.fallAsleepMinutes > 30) {
@@ -673,7 +700,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     GoalEditSheet.show(
       context: context,
       title: '设置睡眠目标',
-      currentValue: _sleepGoalHours,
+      currentValue: ref.read(sleepGoalProvider),
       unit: '小时/天',
       min: 4,
       max: 12,
@@ -681,9 +708,9 @@ class _SleepPageState extends ConsumerState<SleepPage> {
       suggestion: '建议每天睡眠 7~9 小时',
       color: _lavender,
       onSave: (value) async {
+        ref.read(sleepGoalProvider.notifier).state = value;
         final repo = ref.read(settingRepositoryProvider);
         await repo.setSetting('sleep_goal_hours', value.toString());
-        setState(() => _sleepGoalHours = value);
       },
     );
   }

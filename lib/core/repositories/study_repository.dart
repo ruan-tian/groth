@@ -97,25 +97,32 @@ class StudyRepository {
   // 内部工具
   // ---------------------------------------------------------------------------
 
-  /// 获取最近30天的科目分布
+  /// 获取最近30天的科目分布（SQL 聚合，不加载全表）
   Future<Map<String, int>> getSubjectDistribution() async {
     final now = DateTime.now();
     final thirtyDaysAgo = now.subtract(const Duration(days: 30));
     final startMs = _startOfDay(thirtyDaysAgo).millisecondsSinceEpoch;
     final endMs = _endOfDay(now).millisecondsSinceEpoch;
 
-    final records = await (_db.select(_db.studyRecords)
-          ..where(
-            (t) =>
-                t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endMs),
-          ))
-        .get();
+    final subjectCol = _db.studyRecords.subject;
+    final durationCol = _db.studyRecords.durationMinutes;
 
+    final query = _db.selectOnly(_db.studyRecords)
+      ..addColumns([subjectCol, durationCol.sum()])
+      ..where(
+        _db.studyRecords.createdAt.isBiggerOrEqualValue(startMs) &
+            _db.studyRecords.createdAt.isSmallerThanValue(endMs),
+      )
+      ..groupBy([subjectCol]);
+
+    final rows = await query.get();
     final dist = <String, int>{};
-    for (final record in records) {
-      final subject = record.subject ?? '未分类';
-      dist[subject] = (dist[subject] ?? 0) + record.durationMinutes;
+    for (final row in rows) {
+      final subject = row.read(subjectCol) ?? '未分类';
+      final total = row.read(durationCol.sum()) ?? 0;
+      if (total > 0) {
+        dist[subject] = total;
+      }
     }
     return dist;
   }

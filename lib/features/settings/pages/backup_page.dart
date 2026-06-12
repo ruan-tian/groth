@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/database_provider.dart';
@@ -164,6 +165,66 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   String _formatDateTime(DateTime dt) {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  // 获取目录路径
+  String _dirPath(String filePath) {
+    final parts = filePath.split(Platform.pathSeparator);
+    if (parts.length <= 1) return filePath;
+    return parts.sublist(0, parts.length - 1).join(Platform.pathSeparator);
+  }
+
+  // 复制路径到剪贴板
+  void _copyPath(String path) {
+    Clipboard.setData(ClipboardData(text: path));
+    HapticFeedback.lightImpact();
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('路径已复制'),
+        backgroundColor: Color(0xFF35C976),
+      ),
+    );
+  }
+
+  // 分享备份文件
+  Future<void> _shareBackup(BackupRecord record) async {
+    try {
+      await Share.shareXFiles(
+        [XFile(record.backupPath)],
+        text: 'Growth OS 备份文件',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('分享失败: $e')),
+        );
+      }
+    }
+  }
+
+  // 构建文字按钮
+  Widget _buildTextButton(String label, Color color, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: color,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -472,57 +533,138 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     final dateTime = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
         ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF5C3D2E).withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: const Color(0xFF35C976).withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.description_outlined,
-            color: Color(0xFF35C976),
-            size: 20,
-          ),
-        ),
-        title: Text(
-          fileName,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w500,
-            color: Color(0xFF5C3D2E),
-          ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
-        subtitle: Text(
-          '$fileSize · ${_formatDateTime(dateTime)}',
-          style: const TextStyle(
-            fontSize: 11,
-            color: Color(0xFFB0A09A),
-          ),
-        ),
-        trailing: GestureDetector(
-          onTap: () => _deleteBackup(record),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            child: const Icon(
-              Icons.delete_outline_rounded,
-              color: Color(0xFFFF6B6B),
-              size: 18,
+      child: Column(
+        children: [
+          // 文件信息
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF35C976), Color(0xFF2DB86A)],
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF35C976).withValues(alpha: 0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.description_outlined,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        fileName,
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF5C3D2E),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        '$fileSize · ${_formatDateTime(dateTime)}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFB0A09A),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+          // 目录路径
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8F4EF),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.folder_outlined,
+                    size: 14,
+                    color: Color(0xFFB0A09A),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      _dirPath(record.backupPath),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFFB0A09A),
+                        fontFamily: 'monospace',
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          // 操作按钮
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                _buildTextButton(
+                  '复制路径',
+                  const Color(0xFF5D68F2),
+                  () => _copyPath(record.backupPath),
+                ),
+                const SizedBox(width: 8),
+                _buildTextButton(
+                  '分享',
+                  const Color(0xFF35C976),
+                  () => _shareBackup(record),
+                ),
+                const Spacer(),
+                _buildTextButton(
+                  '删除',
+                  const Color(0xFFFF6B6B),
+                  () => _deleteBackup(record),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

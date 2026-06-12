@@ -24,7 +24,6 @@ class PlanPage extends ConsumerStatefulWidget {
 class _PlanPageState extends ConsumerState<PlanPage> {
   int _currentIndex = 0;
   late final PageController _pageController;
-  static const _paperBackground = Color(0xFFFFFBF6);
 
   final List<_PlanTab> _tabs = [
     const _PlanTab(label: '学习', color: AppColors.study),
@@ -65,7 +64,7 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: _paperBackground,
+      backgroundColor: AppColors.paper,
       body: Column(
         children: [
           _buildCapsuleNav(),
@@ -96,21 +95,32 @@ class _PlanPageState extends ConsumerState<PlanPage> {
         AppSpacing.lg,
         AppSpacing.sm,
       ),
-      color: _paperBackground,
+      color: AppColors.paper,
       child: SafeArea(
         bottom: false,
         child: Container(
-          height: 58,
-          padding: const EdgeInsets.all(4),
+          height: 44,
+          padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF3E8),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFFFAF5), Color(0xFFFFF5EC)],
+            ),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFFFE5D3)),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.6),
+              width: 0.5,
+            ),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFFF8A3D).withValues(alpha: 0.06),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 12,
+                offset: const Offset(0, 2),
+              ),
+              BoxShadow(
+                color: _tabs[_currentIndex].color.withValues(alpha: 0.06),
+                blurRadius: 8,
               ),
             ],
           ),
@@ -122,8 +132,8 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                 children: [
                   // ── 滑动指示器 ──
                   AnimatedPositioned(
-                    duration: const Duration(milliseconds: 150),
-                    curve: Curves.easeOut,
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
                     left: tabWidth * _currentIndex + 3 * _currentIndex,
                     top: 0,
                     bottom: 0,
@@ -132,13 +142,21 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          width: 0.5,
+                        ),
                         boxShadow: [
                           BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.04),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                          BoxShadow(
                             color: _tabs[_currentIndex].color.withValues(
-                              alpha: 0.10,
+                              alpha: 0.08,
                             ),
-                            blurRadius: 14,
-                            offset: const Offset(0, 5),
+                            blurRadius: 6,
                           ),
                         ],
                       ),
@@ -159,13 +177,13 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                             child: Text(
                               tab.label,
                               style: TextStyle(
-                                fontSize: 17,
+                                fontSize: 15,
                                 fontWeight: isSelected
-                                    ? FontWeight.w800
-                                    : FontWeight.w700,
+                                    ? FontWeight.w700
+                                    : FontWeight.w600,
                                 color: isSelected
                                     ? tab.color
-                                    : const Color(0xFF8A7568),
+                                    : const Color(0xFF9E8E82),
                                 letterSpacing: 0,
                               ),
                             ),

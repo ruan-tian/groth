@@ -1,9 +1,5 @@
 part of '../pages/quill_editor_page.dart';
 
-// ---------------------------------------------------------------------------
-// Title section with date & word count
-// ---------------------------------------------------------------------------
-
 class _TitleSection extends StatelessWidget {
   const _TitleSection({
     required this.titleController,
@@ -18,7 +14,7 @@ class _TitleSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(30, 16, 30, 26),
+      padding: const EdgeInsets.fromLTRB(30, 14, 30, 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -32,9 +28,10 @@ class _TitleSection extends StatelessWidget {
                   child: TextField(
                     controller: titleController,
                     textInputAction: TextInputAction.next,
+                    maxLines: 1,
                     style: const TextStyle(
                       color: JournalColors.pinkMain,
-                      fontSize: 38,
+                      fontSize: 34,
                       fontWeight: FontWeight.w900,
                       height: 1.1,
                     ),
@@ -54,7 +51,7 @@ class _TitleSection extends StatelessWidget {
             '$dateStr  ·  $wordCount字',
             style: const TextStyle(
               color: JournalColors.textSecondary,
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w600,
             ),
           ),

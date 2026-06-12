@@ -176,38 +176,41 @@ class _CurrentExerciseCard extends StatelessWidget {
                   isRest ? '调整呼吸，准备下一组' : exercise?.name ?? '选择训练模板',
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.numberMedium.copyWith(height: 1.08),
+                  style: AppTextStyles.sectionTitle.copyWith(height: 1.2),
                 ),
-                const SizedBox(height: 10),
-                if (exercise != null)
+                if (exercise != null) ...[
+                  const SizedBox(height: 8),
                   Text(
-                    '第 ${session.currentSet} / ${exercise.targetSets} 组 · ${exercise.targetText}',
-                    style: AppTextStyles.cardTitle.copyWith(
+                    '第 ${session.currentSet}/${exercise.targetSets} 组 · ${exercise.targetText}',
+                    style: AppTextStyles.caption.copyWith(
+                      fontWeight: FontWeight.w600,
                       color: AppColors.fitness,
                     ),
                   ),
+                ],
               ],
             ),
           ),
-          SizedBox(
+          const SizedBox(width: 12),
+          Container(
             width: 142,
             height: 142,
-            child: Stack(
-              alignment: Alignment.bottomCenter,
-              children: [
-                Image.asset(
-                  FitnessTimerAssets.softShadowOval,
-                  width: 112,
-                  height: 42,
-                  fit: BoxFit.contain,
-                ),
-                Image.asset(
-                  image,
-                  width: 136,
-                  height: 136,
-                  fit: BoxFit.contain,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.fitness.withValues(alpha: 0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
                 ),
               ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Image.asset(
+                image,
+                fit: BoxFit.cover,
+              ),
             ),
           ),
         ],
@@ -245,57 +248,61 @@ class _TimerPanel extends StatelessWidget {
         : 0.0;
 
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 22),
+      padding: const EdgeInsets.all(24),
       decoration: _cardDecoration(),
       child: Column(
         children: [
-          SizedBox(
-            width: 236,
-            height: 236,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 218,
-                  height: 218,
-                  child: CircularProgressIndicator(
-                    value: progress == 0 ? null : progress,
-                    strokeWidth: 16,
-                    strokeCap: StrokeCap.round,
-                    backgroundColor: AppColors.fitness.withValues(alpha: 0.15),
-                    valueColor: AlwaysStoppedAnimation(
-                      isRest ? AppColors.textSecondary : AppColors.fitness,
+          // 计时器居中
+          Center(
+            child: SizedBox(
+              width: 236,
+              height: 236,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: 220,
+                    height: 220,
+                    child: CircularProgressIndicator(
+                      value: progress == 0 ? null : progress,
+                      strokeWidth: 16,
+                      strokeCap: StrokeCap.round,
+                      backgroundColor: AppColors.fitness.withValues(alpha: 0.15),
+                      valueColor: AlwaysStoppedAnimation(
+                        isRest ? AppColors.textSecondary : AppColors.fitness,
+                      ),
                     ),
                   ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatDuration(shown),
-                      style: const TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                        fontFeatures: [FontFeature.tabularFigures()],
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _formatDuration(shown),
+                        style: const TextStyle(
+                          fontSize: 48,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.textPrimary,
+                          fontFeatures: [FontFeature.tabularFigures()],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      session.isPaused
-                          ? '已暂停'
-                          : isRest
-                          ? '休息中'
-                          : isTimed
-                          ? '本组剩余'
-                          : '本组用时',
-                      style: AppTextStyles.cardTitle.copyWith(
-                        color: AppColors.fitness,
+                      const SizedBox(height: 6),
+                      Text(
+                        session.isPaused
+                            ? '已暂停'
+                            : isRest
+                            ? '休息中'
+                            : isTimed
+                            ? '本组剩余'
+                            : '本组用时',
+                        style: AppTextStyles.body.copyWith(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.fitness,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -310,58 +317,6 @@ class _TimerPanel extends StatelessWidget {
   }
 }
 
-class _NextExerciseCard extends StatelessWidget {
-  const _NextExerciseCard({required this.session});
-
-  final WorkoutSessionState session;
-
-  @override
-  Widget build(BuildContext context) {
-    final next = session.nextExercise;
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: _cardDecoration(),
-      child: Row(
-        children: [
-          Container(
-            width: 58,
-            height: 58,
-            decoration: BoxDecoration(
-              color: AppColors.fitness.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Image.asset(
-              next?.name.contains('平板') == true
-                  ? FitnessTimerAssets.catFitnessPlank
-                  : FitnessTimerAssets.itemDumbbell,
-              fit: BoxFit.contain,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('下一项', style: AppTextStyles.caption),
-                const SizedBox(height: 4),
-                Text(next?.name ?? '训练即将完成', style: AppTextStyles.sectionTitle),
-                if (next != null)
-                  Text(
-                    next.targetText,
-                    style: AppTextStyles.caption.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B6B4A)),
-        ],
-      ),
-    );
-  }
-}
-
 class _StatsStrip extends StatelessWidget {
   const _StatsStrip({required this.session});
 
@@ -370,24 +325,40 @@ class _StatsStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: _cardDecoration(),
       child: Row(
         children: [
-          _StatCell(
-            icon: Icons.local_fire_department_rounded,
-            label: '消耗',
-            value: '${session.estimatedCalories} kcal',
+          Expanded(
+            child: _StatCell(
+              icon: Icons.local_fire_department_rounded,
+              value: '${session.estimatedCalories}',
+              unit: 'kcal',
+            ),
           ),
-          _StatCell(
-            icon: Icons.repeat_rounded,
-            label: '组数',
-            value: '${session.completedSets}/${session.totalTargetSets}',
+          Container(
+            width: 1,
+            height: 32,
+            color: AppColors.border,
           ),
-          _StatCell(
-            icon: Icons.fitness_center_rounded,
-            label: '训练量',
-            value: '${session.totalVolume} kg',
+          Expanded(
+            child: _StatCell(
+              icon: Icons.repeat_rounded,
+              value: '${session.completedSets}/${session.totalTargetSets}',
+              unit: '组',
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 32,
+            color: AppColors.border,
+          ),
+          Expanded(
+            child: _StatCell(
+              icon: Icons.fitness_center_rounded,
+              value: '${session.totalVolume}',
+              unit: 'kg',
+            ),
           ),
         ],
       ),
@@ -398,24 +369,101 @@ class _StatsStrip extends StatelessWidget {
 class _StatCell extends StatelessWidget {
   const _StatCell({
     required this.icon,
-    required this.label,
     required this.value,
+    required this.unit,
   });
 
   final IconData icon;
-  final String label;
   final String value;
+  final String unit;
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: AppColors.fitness, size: 20),
+        const SizedBox(height: 6),
+        Text(
+          value,
+          style: AppTextStyles.cardTitle.copyWith(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          unit,
+          style: AppTextStyles.caption.copyWith(color: AppColors.textTertiary),
+        ),
+      ],
+    );
+  }
+}
+
+class _NextExerciseCard extends StatelessWidget {
+  const _NextExerciseCard({required this.session});
+
+  final WorkoutSessionState session;
+
+  @override
+  Widget build(BuildContext context) {
+    final next = session.nextExercise;
+    final image = next?.name.contains('平板') == true
+        ? FitnessTimerAssets.catFitnessPlank
+        : FitnessTimerAssets.catFitnessDumbbellMain;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: _cardDecoration(),
+      child: Row(
         children: [
-          Icon(icon, color: AppColors.fitness, size: 22),
-          const SizedBox(height: 6),
-          Text(label, style: AppTextStyles.caption),
-          const SizedBox(height: 4),
-          Text(value, style: AppTextStyles.cardTitle),
+          Container(
+            width: 58,
+            height: 58,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              color: AppColors.fitness.withValues(alpha: 0.06),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: next != null
+                  ? Image.asset(image, fit: BoxFit.cover)
+                  : Icon(
+                      Icons.check_circle_outline_rounded,
+                      color: AppColors.fitness,
+                      size: 28,
+                    ),
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '下一项',
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  next?.name ?? '训练即将完成',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.cardTitle,
+                ),
+                if (next != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    next.targetText,
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right_rounded, color: Color(0xFF9B6B4A), size: 20),
         ],
       ),
     );
@@ -435,17 +483,26 @@ class _CompanionBubble extends StatelessWidget {
       _ => '甜甜：动作做稳，比做快更重要。',
     };
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Image.asset(
-          FitnessTimerAssets.catAvatarFitness,
+        Container(
           width: 52,
           height: 52,
-          fit: BoxFit.contain,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.fitness.withValues(alpha: 0.08),
+          ),
+          child: ClipOval(
+            child: Image.asset(
+              FitnessTimerAssets.catAvatarFitness,
+              fit: BoxFit.cover,
+            ),
+          ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 12),
         Expanded(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(22),
@@ -455,7 +512,10 @@ class _CompanionBubble extends StatelessWidget {
             ),
             child: Text(
               text,
-              style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+              style: AppTextStyles.body.copyWith(
+                fontWeight: FontWeight.w500,
+                color: AppColors.textPrimary,
+              ),
             ),
           ),
         ),

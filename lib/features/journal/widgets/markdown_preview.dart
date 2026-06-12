@@ -1,8 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
+
+import 'journal_safe_image.dart';
 
 /// 日记 Markdown 预览组件
 ///
@@ -60,11 +60,7 @@ class _JournalMarkdownPreviewState extends State<JournalMarkdownPreview> {
           height: 1.4,
         ),
         // Body
-        p: const TextStyle(
-          fontSize: 16,
-          height: 1.6,
-          color: Color(0xFF1F2329),
-        ),
+        p: const TextStyle(fontSize: 16, height: 1.6, color: Color(0xFF1F2329)),
         // Bold
         strong: const TextStyle(
           fontWeight: FontWeight.w700,
@@ -113,15 +109,10 @@ class _JournalMarkdownPreviewState extends State<JournalMarkdownPreview> {
         listBullet: const TextStyle(color: Color(0xFF6B7280)),
         // Horizontal rule
         horizontalRuleDecoration: const BoxDecoration(
-          border: Border(
-            top: BorderSide(color: Color(0xFFE5E7EB), width: 1),
-          ),
+          border: Border(top: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
         ),
       ),
-      builders: {
-        'mark': _HighlightBuilder(),
-        'img': _LocalImageBuilder(),
-      },
+      builders: {'mark': _HighlightBuilder(), 'img': _LocalImageBuilder()},
       checkboxBuilder: widget.onContentChanged != null
           ? _buildInteractiveCheckbox
           : _buildStaticCheckbox,
@@ -197,50 +188,13 @@ class _LocalImageBuilder extends MarkdownElementBuilder {
     final src = element.attributes['src'] ?? '';
     if (src.isEmpty) return const SizedBox.shrink();
 
-    final file = File(src);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: FutureBuilder<bool>(
-          future: file.exists(),
-          builder: (context, snapshot) {
-            if (snapshot.data != true) {
-              return _buildPlaceholder();
-            }
-            return ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 300),
-              child: Image.file(
-                file,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => _buildPlaceholder(),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholder() {
-    return Container(
-      height: 120,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF3F4F6),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.broken_image_outlined, size: 32, color: Color(0xFFC4C7D6)),
-            SizedBox(height: 4),
-            Text(
-              '图片无法加载',
-              style: TextStyle(fontSize: 12, color: Color(0xFFC4C7D6)),
-            ),
-          ],
-        ),
+      child: JournalSafeImage(
+        path: src,
+        maxHeight: 300,
+        borderRadius: 8,
+        cacheWidth: 1000,
       ),
     );
   }

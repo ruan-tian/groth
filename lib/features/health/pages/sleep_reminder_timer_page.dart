@@ -7,6 +7,7 @@ import '../../../core/database/app_database.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../models/sleep_plan_state.dart';
 import '../providers/sleep_plan_provider.dart';
+import '../../../shared/widgets/common/growth_time_picker.dart';
 import '../utils/health_timer_assets.dart';
 
 part '../widgets/sleep_reminder_timer_widgets.dart';
@@ -79,10 +80,9 @@ class _SleepReminderTimerPageState
     final current = field == _SleepTimeField.sleep
         ? plan.sleepTime
         : plan.wakeTime;
-    final picked = await showTimePicker(
+    final picked = await showGrowthTimePicker(
       context: context,
       initialTime: _parseTimeOfDay(current),
-      helpText: field == _SleepTimeField.sleep ? '设置入睡目标' : '设置起床目标',
     );
     if (picked == null) return;
 

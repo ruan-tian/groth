@@ -376,6 +376,16 @@ class WeatherService {
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) return null;
 
+      // 请求位置权限
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied ||
+            permission == LocationPermission.deniedForever) {
+          return null;
+        }
+      }
+
       // 1. 先取基站/WiFi 缓存（秒出，室内可用）
       final lastPos = await Geolocator.getLastKnownPosition();
       if (lastPos != null) {

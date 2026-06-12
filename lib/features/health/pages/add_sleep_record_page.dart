@@ -7,7 +7,9 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/repository_providers.dart' show sleepRepositoryProvider, expRepositoryProvider;
 import '../../../shared/providers/service_providers.dart' show expServiceProvider;
+import '../../../shared/providers/database_provider.dart' show databaseProvider;
 import '../../../shared/providers/sleep_provider.dart';
+import '../../../shared/widgets/common/growth_time_picker.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
 
@@ -55,7 +57,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
   }
 
   Future<void> _pickTime(bool isBed, bool isSleep) async {
-    final TimeOfDay? picked = await showTimePicker(
+    final TimeOfDay? picked = await showGrowthTimePicker(
       context: context,
       initialTime: isBed
           ? _bedTime
@@ -117,11 +119,10 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
         updatedAt: Value(now.millisecondsSinceEpoch),
       );
 
-      final repo = ref.read(sleepRepositoryProvider);
-      final recordId = await repo.insertSleepRecord(companion);
-
-      // 计算并写入睡眠经验值
+      // 原子操作：插入记录 + 经验日志
       final expService = ref.read(expServiceProvider);
+      final db = ref.read(databaseProvider);
+      final repo = ref.read(sleepRepositoryProvider);
       final expRepo = ref.read(expRepositoryProvider);
       final oldTotal = await expRepo.getTotalExp();
       final oldLevel = expService.calculateLevel(oldTotal);
@@ -130,16 +131,24 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
         qualityLevel: _qualityLevel,
         targetMinutes: 480,
       );
+      late final int recordId;
+      await db.transaction(() async {
+        recordId = await repo.insertSleepRecord(companion);
+
+        if (sleepExp > 0) {
+          await expRepo.insertExpLog(
+            GrowthExpLogsCompanion.insert(
+              sourceType: 'sleep',
+              sourceId: recordId,
+              expValue: sleepExp,
+              reason: '睡眠: $duration分钟 质量$_qualityLevel',
+              createdAt: now.millisecondsSinceEpoch,
+            ),
+          );
+        }
+      });
+
       if (sleepExp > 0) {
-        await expRepo.insertExpLog(
-          GrowthExpLogsCompanion.insert(
-            sourceType: 'sleep',
-            sourceId: recordId,
-            expValue: sleepExp,
-            reason: '睡眠: $duration分钟 质量$_qualityLevel',
-            createdAt: now.millisecondsSinceEpoch,
-          ),
-        );
         final newLevel = expService.calculateLevel(oldTotal + sleepExp);
         if (newLevel > oldLevel) {
           PetEventBus.instance.emit(

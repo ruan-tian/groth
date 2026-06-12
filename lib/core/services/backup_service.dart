@@ -79,7 +79,15 @@ class BackupService {
     }
 
     await _db.transaction(() async {
+      // 先清除所有业务表（反向顺序避免 FK 冲突），跳过 backupRecords
+      for (final spec in _tableSpecs.reversed) {
+        if (spec.name == 'backupRecords') continue;
+        await spec.deleteAll();
+      }
+      // 再导入
       for (final spec in _tableSpecs) {
+        // 跳过备份记录（设备本地元数据，不应跨设备恢复）
+        if (spec.name == 'backupRecords') continue;
         await spec.importRows(data[spec.name]);
       }
     });
@@ -89,6 +97,10 @@ class BackupService {
     final jsonStr = await exportToJson();
 
     final dir = await getApplicationDocumentsDirectory();
+    final backupDir = Directory('${dir.path}${Platform.pathSeparator}backups');
+    if (!await backupDir.exists()) {
+      await backupDir.create(recursive: true);
+    }
     final now = DateTime.now();
     final timestamp =
         '${now.year}'
@@ -98,10 +110,10 @@ class BackupService {
         '${now.minute.toString().padLeft(2, '0')}'
         '${now.second.toString().padLeft(2, '0')}';
     final fileName = 'backup_$timestamp.json';
-    final filePath = '${dir.path}${Platform.pathSeparator}$fileName';
+    final filePath = '${backupDir.path}${Platform.pathSeparator}$fileName';
 
     final file = File(filePath);
-    await file.writeAsString(jsonStr);
+    await file.writeAsString(jsonStr, encoding: utf8);
 
     final fileSize = await file.length();
     await _db
@@ -120,12 +132,14 @@ class BackupService {
   }
 
   Future<String?> loadBackupFromFile(String path) async {
+    final file = File(path);
+    if (!await file.exists()) {
+      throw BackupRestoreException(message: '备份文件不存在: $path');
+    }
     try {
-      final file = File(path);
-      if (!await file.exists()) return null;
       return await file.readAsString();
-    } catch (_) {
-      return null;
+    } catch (e) {
+      throw BackupRestoreException(message: '备份文件读取失败: $e');
     }
   }
 
@@ -138,6 +152,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.studyRecords)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.studyRecords).go(),
     ),
     _BackupTableSpec<FitnessRecord>(
       name: 'fitnessRecords',
@@ -147,6 +162,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.fitnessRecords)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.fitnessRecords).go(),
     ),
     _BackupTableSpec<FitnessWorkoutTemplate>(
       name: 'fitnessWorkoutTemplates',
@@ -156,6 +172,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.fitnessWorkoutTemplates)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.fitnessWorkoutTemplates).go(),
     ),
     _BackupTableSpec<BodyMetric>(
       name: 'bodyMetrics',
@@ -165,6 +182,17 @@ class BackupService {
       insert: (row) => _db
           .into(_db.bodyMetrics)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.bodyMetrics).go(),
+    ),
+    _BackupTableSpec<JournalFolder>(
+      name: 'journalFolders',
+      exportRows: () async =>
+          (await _db.select(_db.journalFolders).get()).mapJson(),
+      fromJson: JournalFolder.fromJson,
+      insert: (row) => _db
+          .into(_db.journalFolders)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.journalFolders).go(),
     ),
     _BackupTableSpec<DailyJournal>(
       name: 'dailyJournals',
@@ -174,6 +202,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.dailyJournals)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.dailyJournals).go(),
     ),
     _BackupTableSpec<TaskTemplate>(
       name: 'taskTemplates',
@@ -183,6 +212,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.taskTemplates)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.taskTemplates).go(),
     ),
     _BackupTableSpec<DailyTask>(
       name: 'dailyTasks',
@@ -192,6 +222,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.dailyTasks)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.dailyTasks).go(),
     ),
     _BackupTableSpec<DietRecord>(
       name: 'dietRecords',
@@ -201,6 +232,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.dietRecords)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.dietRecords).go(),
     ),
     _BackupTableSpec<SleepRecord>(
       name: 'sleepRecords',
@@ -210,6 +242,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.sleepRecords)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.sleepRecords).go(),
     ),
     _BackupTableSpec<PetProfile>(
       name: 'petProfiles',
@@ -219,6 +252,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.petProfiles)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.petProfiles).go(),
     ),
     _BackupTableSpec<PetState>(
       name: 'petStates',
@@ -226,6 +260,7 @@ class BackupService {
       fromJson: PetState.fromJson,
       insert: (row) =>
           _db.into(_db.petStates).insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.petStates).go(),
     ),
     _BackupTableSpec<PetDiary>(
       name: 'petDiaries',
@@ -235,6 +270,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.petDiaries)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.petDiaries).go(),
     ),
     _BackupTableSpec<DailyWeather>(
       name: 'dailyWeather',
@@ -244,6 +280,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.dailyWeatherTable)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.dailyWeatherTable).go(),
     ),
     _BackupTableSpec<ApiConfig>(
       name: 'apiConfigs',
@@ -253,6 +290,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.apiConfigs)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.apiConfigs).go(),
     ),
     _BackupTableSpec<WeatherSearchHistory>(
       name: 'weatherSearchHistory',
@@ -262,6 +300,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.weatherSearchHistoryTable)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.weatherSearchHistoryTable).go(),
     ),
     _BackupTableSpec<MusicTrack>(
       name: 'musicTracks',
@@ -271,6 +310,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.musicTracks)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.musicTracks).go(),
     ),
     _BackupTableSpec<AppSetting>(
       name: 'appSettings',
@@ -280,6 +320,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.appSettings)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.appSettings).go(),
     ),
     _BackupTableSpec<AiConfig>(
       name: 'aiConfigs',
@@ -287,6 +328,7 @@ class BackupService {
       fromJson: AiConfig.fromJson,
       insert: (row) =>
           _db.into(_db.aiConfigs).insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.aiConfigs).go(),
     ),
     _BackupTableSpec<BackupRecord>(
       name: 'backupRecords',
@@ -296,6 +338,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.backupRecords)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.backupRecords).go(),
     ),
     _BackupTableSpec<FitnessExercise>(
       name: 'fitnessExercises',
@@ -305,6 +348,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.fitnessExercises)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.fitnessExercises).go(),
     ),
     _BackupTableSpec<FitnessWorkoutTemplateExercise>(
       name: 'fitnessWorkoutTemplateExercises',
@@ -315,6 +359,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.fitnessWorkoutTemplateExercises)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.fitnessWorkoutTemplateExercises).go(),
     ),
     _BackupTableSpec<JournalAsset>(
       name: 'journalAssets',
@@ -324,6 +369,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.journalAssets)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.journalAssets).go(),
     ),
     _BackupTableSpec<FocusSession>(
       name: 'focusSessions',
@@ -333,6 +379,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.focusSessions)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.focusSessions).go(),
     ),
     _BackupTableSpec<GrowthExpLog>(
       name: 'growthExpLogs',
@@ -342,6 +389,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.growthExpLogs)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.growthExpLogs).go(),
     ),
     _BackupTableSpec<PetMessage>(
       name: 'petMessages',
@@ -351,6 +399,7 @@ class BackupService {
       insert: (row) => _db
           .into(_db.petMessages)
           .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.petMessages).go(),
     ),
   ];
 }
@@ -361,12 +410,14 @@ class _BackupTableSpec<T extends DataClass> {
     required this.exportRows,
     required this.fromJson,
     required this.insert,
+    required this.deleteAll,
   });
 
   final String name;
   final Future<List<Map<String, dynamic>>> Function() exportRows;
   final T Function(Map<String, dynamic>) fromJson;
   final Future<void> Function(Insertable<T>) insert;
+  final Future<void> Function() deleteAll;
 
   Future<void> importRows(dynamic rawRows) async {
     if (rawRows == null) {

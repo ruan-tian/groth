@@ -19,9 +19,28 @@ void main() {
       final data = await rootBundle.load(asset);
       final isWebP = _isWebP(data);
       final isAlphaPng = _pngHasAlphaChannel(data);
-      expect(isWebP || isAlphaPng, isTrue,
-          reason: '$asset should be WebP or alpha PNG');
+      expect(
+        isWebP || isAlphaPng,
+        isTrue,
+        reason: '$asset should be WebP or alpha PNG',
+      );
     }
+  });
+
+  test('coverForTitle maps local song names to themed default covers', () {
+    expect(MusicAssets.coverForTitle('Morning Lofi'), MusicAssets.coverLofi);
+    expect(MusicAssets.coverForTitle('晚安小夜曲'), MusicAssets.coverSleep);
+    expect(MusicAssets.coverForTitle('专注学习曲'), MusicAssets.coverStudy);
+    expect(
+      MusicAssets.coverForTitle('Fitness Beats'),
+      MusicAssets.coverFitness,
+    );
+    expect(
+      MusicAssets.coverForTitle('rain white noise'),
+      MusicAssets.coverRain,
+    );
+    expect(MusicAssets.coverForTitle('晨间唤醒'), MusicAssets.coverMorning);
+    expect(MusicAssets.coverForTitle('unknown song'), MusicAssets.coverDefault);
   });
 }
 

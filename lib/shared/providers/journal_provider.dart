@@ -9,6 +9,36 @@ import '../../core/services/image_service.dart';
 import 'database_provider.dart';
 import 'repository_providers.dart';
 
+enum JournalFolderFilterKind { all, uncategorized, folder }
+
+class JournalFolderSelection {
+  const JournalFolderSelection._(this.kind, this.folderId);
+
+  const JournalFolderSelection.all()
+    : this._(JournalFolderFilterKind.all, null);
+
+  const JournalFolderSelection.uncategorized()
+    : this._(JournalFolderFilterKind.uncategorized, null);
+
+  const JournalFolderSelection.folder(int id)
+    : this._(JournalFolderFilterKind.folder, id);
+
+  final JournalFolderFilterKind kind;
+  final int? folderId;
+
+  bool get isAll => kind == JournalFolderFilterKind.all;
+
+  @override
+  bool operator ==(Object other) {
+    return other is JournalFolderSelection &&
+        other.kind == kind &&
+        other.folderId == folderId;
+  }
+
+  @override
+  int get hashCode => Object.hash(kind, folderId);
+}
+
 List<String> _parseTagsSafe(String? tagsString) {
   if (tagsString == null || tagsString.isEmpty) return const [];
   try {
@@ -47,12 +77,34 @@ final todayJournalCountProvider = FutureProvider<int>((ref) async {
 
 /// 最近 5 条日记（按创建时间倒序）
 final recentJournalsProvider = FutureProvider<List<DailyJournal>>((ref) async {
-  final db = ref.watch(databaseProvider);
-  final query = db.select(db.dailyJournals)
-    ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
-    ..limit(5);
-  return query.get();
+  final repo = ref.watch(journalRepositoryProvider);
+  return repo.getRecentJournals();
 });
+
+final journalFoldersProvider = FutureProvider<List<JournalFolder>>((ref) {
+  final repo = ref.watch(journalRepositoryProvider);
+  return repo.getFolders();
+});
+
+final selectedJournalFolderProvider = StateProvider<JournalFolderSelection>(
+  (ref) => const JournalFolderSelection.all(),
+);
+
+final journalsByFolderProvider =
+    FutureProvider.family<List<DailyJournal>, JournalFolderSelection>((
+      ref,
+      selection,
+    ) async {
+      final repo = ref.watch(journalRepositoryProvider);
+      switch (selection.kind) {
+        case JournalFolderFilterKind.all:
+          return repo.getRecentJournals(limit: 20);
+        case JournalFolderFilterKind.uncategorized:
+          return repo.getJournalsByFolder(uncategorizedOnly: true);
+        case JournalFolderFilterKind.folder:
+          return repo.getJournalsByFolder(folderId: selection.folderId);
+      }
+    });
 
 /// 全部日记中出现过的标签（去重）
 final allJournalTagsProvider = FutureProvider<List<String>>((ref) async {

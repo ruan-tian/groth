@@ -51,8 +51,10 @@ final selectedHeatmapYearProvider = StateProvider<int>(
   (ref) => DateTime.now().year,
 );
 
-final journalHeatmapProvider = FutureProvider<Map<DateTime, int>>((ref) async {
-  final year = ref.watch(selectedHeatmapYearProvider);
+final journalHeatmapProvider = FutureProvider.family<Map<DateTime, int>, int>((
+  ref,
+  year,
+) async {
   final repo = ref.watch(journalRepositoryProvider);
   final start = DateTime(year);
   final end = DateTime(year, 12, 31);

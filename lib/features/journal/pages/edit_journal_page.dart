@@ -38,6 +38,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
   String _contentType = 'markdown';
   String? _quillDeltaJson;
   bool _openedQuillEditor = false;
+  int? _folderId;
 
   @override
   void initState() {
@@ -79,6 +80,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
         _originalContent = journal.content;
         _contentType = journal.contentType;
         _quillDeltaJson = journal.quillDeltaJson;
+        _folderId = journal.folderId;
         _selectedTags
           ..clear()
           ..addAll(_parseTags(journal.tags));
@@ -135,6 +137,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
         tags: Value(
           _selectedTags.isEmpty ? null : jsonEncode(_selectedTags.toList()),
         ),
+        folderId: Value(_folderId),
         wordCount: Value(wordCount),
         expGained: Value(exp),
         createdAt: Value(_createdAt ?? nowMs),
@@ -158,9 +161,13 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       }
 
       ref.invalidate(recentJournalsProvider);
+      ref.invalidate(journalsByFolderProvider);
       ref.invalidate(todayJournalCountProvider);
       ref.invalidate(allJournalTagsProvider);
       ref.invalidate(journalStreakProvider);
+      ref.invalidate(totalJournalCountProvider);
+      ref.invalidate(monthlyJournalCountProvider);
+      ref.invalidate(journalHeatmapProvider);
       ref.invalidate(dashboardProvider);
 
       _originalExpGained = exp;

@@ -64,15 +64,19 @@ class ProfileBasicInfoGroup extends StatelessWidget {
   }
 }
 
-/// 身体数据区块（体重、体脂率、BMI — 自动同步）
+/// 身体数据区块（体重、体脂率、BMI — 支持手动编辑 + 自动同步）
 class ProfileBodyDataGroup extends StatelessWidget {
   final AsyncValue<BodyMetric?> latestWeight;
   final String heightText;
+  final VoidCallback? onWeightTap;
+  final VoidCallback? onBodyFatTap;
 
   const ProfileBodyDataGroup({
     super.key,
     required this.latestWeight,
     required this.heightText,
+    this.onWeightTap,
+    this.onBodyFatTap,
   });
 
   @override
@@ -94,26 +98,9 @@ class ProfileBodyDataGroup extends StatelessWidget {
               label: '体重',
               value: metric?.weight != null
                   ? '${metric!.weight!.toStringAsFixed(1)} kg'
-                  : '未记录',
-              subtitle: '每日自动同步',
-              trailing: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 2,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF35C976).withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text(
-                  '自动',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFF35C976),
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
+                  : '点击设置',
+              subtitle: '点击编辑',
+              onTap: onWeightTap,
             ),
             _divider(),
             ProfileInfoTile(
@@ -122,8 +109,9 @@ class ProfileBodyDataGroup extends StatelessWidget {
               label: '体脂率',
               value: metric?.bodyFat != null
                   ? '${metric!.bodyFat!.toStringAsFixed(1)}%'
-                  : '未记录',
-              subtitle: '每日自动同步',
+                  : '点击设置',
+              subtitle: '点击编辑',
+              onTap: onBodyFatTap,
             ),
             _divider(),
             ProfileInfoTile(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/design/design.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../shared/providers/task_provider.dart';
+import '../../../../shared/widgets/common/growth_time_picker.dart';
 
 /// 任务模板底部弹窗
 ///
@@ -467,7 +468,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
   }) {
     return InkWell(
       onTap: () async {
-        final picked = await showTimePicker(
+        final picked = await showGrowthTimePicker(
           context: context,
           initialTime: time,
         );

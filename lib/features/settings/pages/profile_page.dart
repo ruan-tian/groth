@@ -1,12 +1,15 @@
+import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
 import '../../../shared/providers/fitness_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/widgets/common/growth_date_picker.dart';
 import '../widgets/profile_avatar_section.dart';
 import '../widgets/profile_info_tiles.dart';
 import '../widgets/profile_sheets.dart';
@@ -150,29 +153,73 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   }
 
   Future<void> _pickBirthday() async {
-    final picked = await showDatePicker(
+    final picked = await showGrowthDatePicker(
       context: context,
       initialDate: _birthday,
       firstDate: DateTime(1950),
       lastDate: DateTime.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFFD4A574),
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Color(0xFF5C3D2E),
-            ),
-          ),
-          child: child!,
-        );
-      },
     );
 
     if (picked != null) {
       setState(() => _birthday = picked);
       await _saveField('birthday', picked.toIso8601String());
+    }
+  }
+
+  Future<void> _showWeightEditor() async {
+    final latestMetric = ref.read(latestBodyMetricProvider).valueOrNull;
+    final currentWeight = latestMetric?.weight;
+
+    final result = await showWeightEditorSheet(
+      context,
+      currentWeight: currentWeight,
+    );
+
+    if (result != null && mounted) {
+      await _saveBodyMetric(weight: result);
+      ref.invalidate(latestBodyMetricProvider);
+      ref.invalidate(dashboardProvider);
+    }
+  }
+
+  Future<void> _showBodyFatEditor() async {
+    final latestMetric = ref.read(latestBodyMetricProvider).valueOrNull;
+    final currentBodyFat = latestMetric?.bodyFat;
+
+    final result = await showBodyFatEditorSheet(
+      context,
+      currentBodyFat: currentBodyFat,
+    );
+
+    if (result != null && mounted) {
+      await _saveBodyMetric(bodyFat: result);
+      ref.invalidate(latestBodyMetricProvider);
+      ref.invalidate(dashboardProvider);
+    }
+  }
+
+  Future<void> _saveBodyMetric({double? weight, double? bodyFat}) async {
+    final db = ref.read(databaseProvider);
+    final now = DateTime.now();
+    final recordDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+
+    await db.into(db.bodyMetrics).insert(
+      BodyMetricsCompanion.insert(
+        recordDate: recordDate,
+        weight: Value(weight),
+        bodyFat: Value(bodyFat),
+        createdAt: now.millisecondsSinceEpoch,
+      ),
+    );
+
+    HapticFeedback.lightImpact();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('数据已保存'),
+          backgroundColor: Color(0xFF35C976),
+        ),
+      );
     }
   }
 
@@ -246,12 +293,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
             ),
             const SizedBox(height: 24),
 
-            // ── 身体数据（自动同步）──
-            _buildSectionTitle('身体数据（自动同步）'),
+            // ── 身体数据（支持手动编辑）──
+            _buildSectionTitle('身体数据'),
             const SizedBox(height: 12),
             ProfileBodyDataGroup(
               latestWeight: latestWeight,
               heightText: _heightController.text,
+              onWeightTap: _showWeightEditor,
+              onBodyFatTap: _showBodyFatEditor,
             ),
           ],
         ),

@@ -76,6 +76,16 @@ class MusicRepository {
     );
   }
 
+  Future<void> updateCoverAsset(int id, String coverAsset) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (_db.update(_db.musicTracks)..where((t) => t.id.equals(id))).write(
+      MusicTracksCompanion(
+        coverAsset: Value(coverAsset),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
   Future<void> deleteTrack(int id) {
     return (_db.delete(_db.musicTracks)..where((t) => t.id.equals(id))).go();
   }

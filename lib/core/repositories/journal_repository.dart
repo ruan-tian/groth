@@ -29,9 +29,7 @@ class JournalRepository {
     // 先删除附件
     await deleteJournalAssets(id);
     // 再删除日记
-    await (_db.delete(_db.dailyJournals)
-          ..where((t) => t.id.equals(id)))
-        .go();
+    await (_db.delete(_db.dailyJournals)..where((t) => t.id.equals(id))).go();
   }
 
   // ---------------------------------------------------------------------------
@@ -54,10 +52,7 @@ class JournalRepository {
   ///
   /// 由于 `journalDate` 是 YYYY-MM-DD 格式字符串，字典序等价于日期序，
   /// 可直接用字符串比较进行范围过滤。
-  Future<List<DailyJournal>> getJournalsByRange(
-    DateTime start,
-    DateTime end,
-  ) {
+  Future<List<DailyJournal>> getJournalsByRange(DateTime start, DateTime end) {
     final startStr = _formatDate(start);
     final endStr = _formatDate(end);
     return (_db.select(_db.dailyJournals)
@@ -74,9 +69,109 @@ class JournalRepository {
   ///
   /// 若不存在则返回 `null`。
   Future<DailyJournal?> getJournalById(int id) {
+    return (_db.select(
+      _db.dailyJournals,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+  }
+
+  Future<List<DailyJournal>> getRecentJournals({int limit = 5}) {
     return (_db.select(_db.dailyJournals)
-          ..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(limit))
+        .get();
+  }
+
+  Future<List<DailyJournal>> getJournalsByFolder({
+    int? folderId,
+    bool uncategorizedOnly = false,
+  }) {
+    final query = _db.select(_db.dailyJournals)
+      ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]);
+    if (uncategorizedOnly) {
+      query.where((t) => t.folderId.isNull());
+    } else if (folderId != null) {
+      query.where((t) => t.folderId.equals(folderId));
+    }
+    return query.get();
+  }
+
+  // ---------------------------------------------------------------------------
+  // 文件夹
+  // ---------------------------------------------------------------------------
+
+  Future<List<JournalFolder>> getFolders() {
+    return (_db.select(_db.journalFolders)..orderBy([
+          (t) => OrderingTerm.asc(t.sortOrder),
+          (t) => OrderingTerm.asc(t.createdAt),
+        ]))
+        .get();
+  }
+
+  Future<int> createFolder({
+    required String name,
+    int colorValue = 0xFFEFA6BA,
+    int iconCodePoint = 0xe2c7,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final countExp = _db.journalFolders.id.count();
+    final countQuery = _db.selectOnly(_db.journalFolders)
+      ..addColumns([countExp]);
+    final count = (await countQuery.getSingle()).read(countExp) ?? 0;
+    return _db
+        .into(_db.journalFolders)
+        .insert(
+          JournalFoldersCompanion.insert(
+            name: name.trim(),
+            colorValue: Value(colorValue),
+            iconCodePoint: Value(iconCodePoint),
+            sortOrder: Value(count),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+  }
+
+  Future<void> updateFolder({
+    required int id,
+    required String name,
+    int? colorValue,
+    int? iconCodePoint,
+  }) {
+    return (_db.update(
+      _db.journalFolders,
+    )..where((t) => t.id.equals(id))).write(
+      JournalFoldersCompanion(
+        name: Value(name.trim()),
+        colorValue: colorValue == null
+            ? const Value.absent()
+            : Value(colorValue),
+        iconCodePoint: iconCodePoint == null
+            ? const Value.absent()
+            : Value(iconCodePoint),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  Future<void> deleteFolder(int id) {
+    return _db.transaction(() async {
+      await (_db.update(_db.dailyJournals)..where((t) => t.folderId.equals(id)))
+          .write(const DailyJournalsCompanion(folderId: Value(null)));
+      await (_db.delete(
+        _db.journalFolders,
+      )..where((t) => t.id.equals(id))).go();
+    });
+  }
+
+  Future<void> moveJournalToFolder(int journalId, int? folderId) {
+    return (_db.update(
+      _db.dailyJournals,
+    )..where((t) => t.id.equals(journalId))).write(
+      DailyJournalsCompanion(
+        folderId: Value(folderId),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -98,9 +193,9 @@ class JournalRepository {
 
   /// 删除日记的所有附件
   Future<void> deleteJournalAssets(int journalId) {
-    return (_db.delete(_db.journalAssets)
-          ..where((t) => t.journalId.equals(journalId)))
-        .go();
+    return (_db.delete(
+      _db.journalAssets,
+    )..where((t) => t.journalId.equals(journalId))).go();
   }
 
   // ---------------------------------------------------------------------------

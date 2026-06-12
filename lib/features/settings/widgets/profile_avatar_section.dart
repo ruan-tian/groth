@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../features/fitness/utils/fitness_timer_assets.dart';
 
 /// 头像 + 昵称 + 等级徽章组合组件
 class ProfileAvatarSection extends StatelessWidget {
@@ -46,14 +47,14 @@ class ProfileAvatarSection extends StatelessWidget {
                           ? const LinearGradient(
                               begin: Alignment.topLeft,
                               end: Alignment.bottomRight,
-                              colors: [Color(0xFFD4A574), Color(0xFFE8C9A0)],
+                              colors: [Color(0xFFFFB6C1), Color(0xFFFFC0CB)],
                             )
                           : null,
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(
-                            0xFFD4A574,
+                            0xFFFFB6C1,
                           ).withValues(alpha: 0.3),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
@@ -66,16 +67,21 @@ class ProfileAvatarSection extends StatelessWidget {
                             child: Image.file(
                               File(avatarPath!),
                               fit: BoxFit.cover,
-                              errorBuilder: (_, _, _) => const Center(
-                                child: Text(
-                                  '🐱',
-                                  style: TextStyle(fontSize: 56),
+                              errorBuilder: (_, _, _) => ClipRRect(
+                                borderRadius: BorderRadius.circular(28),
+                                child: Image.asset(
+                                  FitnessTimerAssets.catAvatarDefault,
+                                  fit: BoxFit.cover,
                                 ),
                               ),
                             ),
                           )
-                        : const Center(
-                            child: Text('🐱', style: TextStyle(fontSize: 56)),
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(28),
+                            child: Image.asset(
+                              FitnessTimerAssets.catAvatarDefault,
+                              fit: BoxFit.cover,
+                            ),
                           ),
                   ),
                   Positioned(

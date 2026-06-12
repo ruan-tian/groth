@@ -553,3 +553,283 @@ Widget _buildDragHandle() {
     ),
   );
 }
+
+// =============================================================================
+// 体重编辑 Sheet
+// =============================================================================
+
+Future<double?> showWeightEditorSheet(
+  BuildContext context, {
+  required double? currentWeight,
+}) {
+  final controller = TextEditingController(
+    text: currentWeight?.toStringAsFixed(1) ?? '',
+  );
+  final formKey = GlobalKey<FormState>();
+
+  return showModalBottomSheet<double>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: _WeightEditorSheet(
+        controller: controller,
+        formKey: formKey,
+      ),
+    ),
+  );
+}
+
+class _WeightEditorSheet extends StatelessWidget {
+  final TextEditingController controller;
+  final GlobalKey<FormState> formKey;
+
+  const _WeightEditorSheet({
+    required this.controller,
+    required this.formKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      child: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDragHandle(),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF5D68F2).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.monitor_weight_outlined,
+                    color: Color(0xFF5D68F2),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  '记录体重',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF5C3D2E),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: controller,
+              textInputAction: TextInputAction.done,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF5C3D2E),
+              ),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                suffixText: 'kg',
+                suffixStyle: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFFB0A09A),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE8C9A0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFD4A574),
+                    width: 2,
+                  ),
+                ),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return '请输入体重';
+                final n = double.tryParse(v);
+                if (n == null || n <= 0 || n > 500) return '请输入有效体重';
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.pop(context, double.tryParse(controller.text));
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFD4A574),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('保存'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// 体脂率编辑 Sheet
+// =============================================================================
+
+Future<double?> showBodyFatEditorSheet(
+  BuildContext context, {
+  required double? currentBodyFat,
+}) {
+  final controller = TextEditingController(
+    text: currentBodyFat?.toStringAsFixed(1) ?? '',
+  );
+  final formKey = GlobalKey<FormState>();
+
+  return showModalBottomSheet<double>(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (ctx) => Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+      child: _BodyFatEditorSheet(
+        controller: controller,
+        formKey: formKey,
+      ),
+    ),
+  );
+}
+
+class _BodyFatEditorSheet extends StatelessWidget {
+  final TextEditingController controller;
+  final GlobalKey<FormState> formKey;
+
+  const _BodyFatEditorSheet({
+    required this.controller,
+    required this.formKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+      child: Form(
+        key: formKey,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildDragHandle(),
+            const SizedBox(height: 20),
+            Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFF8A3D).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.water_drop_outlined,
+                    color: Color(0xFFFF8A3D),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  '记录体脂率',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF5C3D2E),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            TextFormField(
+              controller: controller,
+              textInputAction: TextInputAction.done,
+              autofocus: true,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF5C3D2E),
+              ),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                suffixText: '%',
+                suffixStyle: const TextStyle(
+                  fontSize: 16,
+                  color: Color(0xFFB0A09A),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFFE8C9A0)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(
+                    color: Color(0xFFD4A574),
+                    width: 2,
+                  ),
+                ),
+              ),
+              validator: (v) {
+                if (v == null || v.isEmpty) return '请输入体脂率';
+                final n = double.tryParse(v);
+                if (n == null || n < 0 || n > 60) return '请输入有效体脂率';
+                return null;
+              },
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  if (formKey.currentState!.validate()) {
+                    Navigator.pop(context, double.tryParse(controller.text));
+                  }
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFD4A574),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('保存'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

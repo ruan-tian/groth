@@ -31,6 +31,9 @@ String _formatDate(DateTime date) {
   return '$y-$m-$d';
 }
 
+/// 将 DateTime 格式化为 YYYY-MM-DD 字符串
+String formatDateKey(DateTime date) => _formatDate(date);
+
 /// 今天日期 Provider
 final todayDateProvider = Provider<String>((ref) {
   return _formatDate(DateTime.now());
@@ -41,6 +44,22 @@ final todayTasksProvider = FutureProvider<List<DailyTask>>((ref) async {
   final repo = ref.watch(dailyTaskRepositoryProvider);
   final today = ref.watch(todayDateProvider);
   return repo.getTasksByDate(today);
+});
+
+/// 按日期查询任务列表 Provider
+///
+/// 用法：`ref.watch(tasksByDateProvider('2026-06-11'))`
+final tasksByDateProvider =
+    FutureProvider.family<List<DailyTask>, String>((ref, date) async {
+  final repo = ref.watch(dailyTaskRepositoryProvider);
+  return repo.getTasksByDate(date);
+});
+
+/// 指定日期未完成任务数量 Provider
+final incompleteTaskCountByDateProvider =
+    FutureProvider.family<int, String>((ref, date) async {
+  final repo = ref.watch(dailyTaskRepositoryProvider);
+  return repo.getIncompleteTaskCount(date);
 });
 
 /// 今天未完成任务数量 Provider

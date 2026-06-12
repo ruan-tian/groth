@@ -151,9 +151,10 @@ class ExpService {
   /// 获取当前等级内的经验值进度。
   ///
   /// 返回值为距离当前等级起点的经验值（即已在本级累积的经验）。
+  /// 不会返回负值（防止数据异常时 UI 显示负数）。
   int getExpProgress(int totalExp, int currentLevel) {
     final currentLevelStart = getExpForLevelStart(currentLevel);
-    return totalExp - currentLevelStart;
+    return max(0, totalExp - currentLevelStart);
   }
 
   /// 统一的人物/宠物等级进度投影。

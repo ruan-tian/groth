@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,88 +16,12 @@ import '../pet/models/pet_scene_model.dart';
 import '../../shared/providers/pet_scene_provider.dart';
 import '../plan/utils/plan_module_assets.dart';
 import '../plan/widgets/plan_module_visuals.dart';
+import 'providers/journal_stats_provider.dart';
 import 'utils/journal_constants.dart';
 import 'widgets/journal_colors.dart';
 import '../statistics/widgets/heatmap_calendar.dart';
 
 part 'widgets/journal_page_widgets.dart';
-
-// =============================================================================
-// New Providers
-// =============================================================================
-
-/// 连续写作天数
-final journalStreakProvider = FutureProvider<int>((ref) async {
-  final repo = ref.watch(journalRepositoryProvider);
-  final now = DateTime.now();
-  final journals = await repo.getJournalsByRange(
-    now.subtract(const Duration(days: 90)),
-    now,
-  );
-
-  final dates = journals.map((j) => j.journalDate).toSet();
-  int streak = 0;
-  for (int i = 0; i < 90; i++) {
-    final date = now.subtract(Duration(days: i));
-    final dateStr =
-        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    if (dates.contains(dateStr)) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  return streak;
-});
-
-/// 去年今天的日记
-final onThisDayProvider = FutureProvider<List<DailyJournal>>((ref) async {
-  final repo = ref.watch(journalRepositoryProvider);
-  final now = DateTime.now();
-  final lastYear = DateTime(now.year - 1, now.month, now.day);
-  return repo.getJournalsByDate(lastYear);
-});
-
-/// 日记总数
-final totalJournalCountProvider = FutureProvider<int>((ref) async {
-  final db = ref.watch(databaseProvider);
-  final count = db.dailyJournals.id.count();
-  final query = db.selectOnly(db.dailyJournals)..addColumns([count]);
-  final result = await query.getSingle();
-  return result.read(count) ?? 0;
-});
-
-/// 本月日记篇数
-final monthlyJournalCountProvider = FutureProvider<int>((ref) async {
-  final repo = ref.watch(journalRepositoryProvider);
-  final now = DateTime.now();
-  final start = DateTime(now.year, now.month, 1);
-  final journals = await repo.getJournalsByRange(start, now);
-  return journals.length;
-});
-
-/// 选中的热力图年份
-final selectedHeatmapYearProvider = StateProvider<int>(
-  (ref) => DateTime.now().year,
-);
-
-/// 日记热力图数据（按年份）
-final journalHeatmapProvider = FutureProvider<Map<DateTime, int>>((ref) async {
-  final year = ref.watch(selectedHeatmapYearProvider);
-  final repo = ref.watch(journalRepositoryProvider);
-  final start = DateTime(year, 1, 1);
-  final end = DateTime(year, 12, 31);
-  final journals = await repo.getJournalsByRange(start, end);
-  final data = <DateTime, int>{};
-  for (final j in journals) {
-    try {
-      final date = DateTime.parse(j.journalDate);
-      final key = DateTime(date.year, date.month, date.day);
-      data[key] = (data[key] ?? 0) + 1;
-    } catch (_) {}
-  }
-  return data;
-});
 
 // =============================================================================
 // JournalPage
@@ -118,16 +41,16 @@ class _JournalPageState extends ConsumerState<JournalPage> {
 
   @override
   Widget build(BuildContext context) {
-    final recentJournals = ref.watch(recentJournalsProvider);
     final allTags = ref.watch(allJournalTagsProvider);
     final todayCount = ref.watch(todayJournalCountProvider);
     final streak = ref.watch(journalStreakProvider);
     final totalCount = ref.watch(totalJournalCountProvider);
     final monthlyCount = ref.watch(monthlyJournalCountProvider);
-    final heatmapData = ref.watch(journalHeatmapProvider);
+    final folders = ref.watch(journalFoldersProvider);
+    final selectedFolder = ref.watch(selectedJournalFolderProvider);
 
     final source = _selectedTag == null
-        ? recentJournals
+        ? ref.watch(journalsByFolderProvider(selectedFolder))
         : ref.watch(journalsByTagProvider(_selectedTag!));
 
     final sort = ref.watch(journalSortProvider);
@@ -180,6 +103,8 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           ref.invalidate(journalStreakProvider);
           ref.invalidate(totalJournalCountProvider);
           ref.invalidate(monthlyJournalCountProvider);
+          ref.invalidate(journalFoldersProvider);
+          ref.invalidate(journalsByFolderProvider);
           ref.invalidate(journalHeatmapProvider);
           if (_selectedTag != null) {
             ref.invalidate(journalsByTagProvider(_selectedTag!));
@@ -204,9 +129,12 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               _buildTodayRecordCard(context, todayCount),
               const SizedBox(height: 20),
 
+              const SizedBox.shrink(),
+              const SizedBox.shrink(),
+
               // ── 3. 标签筛选 ──
-              _buildTagFilter(allTags),
-              const SizedBox(height: 20),
+              const SizedBox.shrink(),
+              const SizedBox(height: 0),
 
               // ── 4. 统计卡片 ──
               _StatsRow(
@@ -217,12 +145,12 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               const SizedBox(height: 20),
 
               // ── 5. 写作热力图 ──
-              _buildHeatmapSection(heatmapData),
+              const _JournalHeatmapSection(),
               const SizedBox(height: 20),
 
               // ── 6. 最近日记列表 ──
-              _buildSectionTitle('最近日记 ✨'),
-              const SizedBox(height: 12),
+              _buildRecentJournalFilters(folders, selectedFolder, allTags),
+              const SizedBox(height: 14),
               journals.when(
                 data: (list) {
                   if (list.isEmpty) return _buildEmptyState();
@@ -251,6 +179,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                           onDismissed: () {},
                           child: _JournalListItem(
                             journal: journal,
+                            onMove: () => _showMoveJournalSheet(journal),
                             onTap: () => context.push(
                               '/plan/journal/detail/${journal.id}',
                             ),
@@ -318,6 +247,201 @@ class _JournalPageState extends ConsumerState<JournalPage> {
   }
 
   // ---------------------------------------------------------------------------
+  // Folder Filter
+  // ---------------------------------------------------------------------------
+
+  Widget _buildFolderFilter(
+    AsyncValue<List<JournalFolder>> folders,
+    JournalFolderSelection selectedFolder,
+  ) {
+    return folders.when(
+      data: (items) {
+        return SizedBox(
+          height: 40,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            itemCount: items.length + 3,
+            separatorBuilder: (_, _) => const SizedBox(width: 8),
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _TagChip(
+                  label: '全部',
+                  selected: selectedFolder.kind == JournalFolderFilterKind.all,
+                  onTap: () =>
+                      _selectFolder(const JournalFolderSelection.all()),
+                );
+              }
+              if (index == 1) {
+                return _TagChip(
+                  label: '未分类',
+                  selected:
+                      selectedFolder.kind ==
+                      JournalFolderFilterKind.uncategorized,
+                  onTap: () => _selectFolder(
+                    const JournalFolderSelection.uncategorized(),
+                  ),
+                );
+              }
+              if (index == items.length + 2) {
+                return _TagChip(
+                  label: '+ 文件夹',
+                  selected: false,
+                  onTap: () => _showFolderEditor(),
+                );
+              }
+
+              final folder = items[index - 2];
+              return _TagChip(
+                label: folder.name,
+                selected:
+                    selectedFolder.kind == JournalFolderFilterKind.folder &&
+                    selectedFolder.folderId == folder.id,
+                onTap: () =>
+                    _selectFolder(JournalFolderSelection.folder(folder.id)),
+                onLongPress: () => _showFolderActions(folder),
+              );
+            },
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+
+  void _selectFolder(JournalFolderSelection selection) {
+    ref.read(selectedJournalFolderProvider.notifier).state = selection;
+    if (_selectedTag != null) {
+      setState(() => _selectedTag = null);
+    }
+  }
+
+  Future<void> _showFolderEditor({JournalFolder? folder}) async {
+    final controller = TextEditingController(text: folder?.name ?? '');
+    final result = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.viewInsetsOf(context).bottom,
+          ),
+          child: _FolderEditSheet(
+            controller: controller,
+            title: folder == null ? '新建文件夹' : '重命名文件夹',
+          ),
+        );
+      },
+    );
+    controller.dispose();
+    final name = result?.trim();
+    if (name == null || name.isEmpty) return;
+
+    try {
+      final repo = ref.read(journalRepositoryProvider);
+      if (folder == null) {
+        await repo.createFolder(name: name);
+      } else {
+        await repo.updateFolder(id: folder.id, name: name);
+      }
+      _invalidateJournalLists();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('文件夹保存失败: $e')));
+    }
+  }
+
+  Future<void> _showFolderActions(JournalFolder folder) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _FolderActionSheet(
+          folderName: folder.name,
+          onRename: () {
+            Navigator.pop(context);
+            _showFolderEditor(folder: folder);
+          },
+          onDelete: () async {
+            Navigator.pop(context);
+            await _confirmDeleteFolder(folder);
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _confirmDeleteFolder(JournalFolder folder) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('删除文件夹'),
+        content: Text('删除「${folder.name}」后，里面的日记会回到未分类。'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('取消'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            child: const Text('删除'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      await ref.read(journalRepositoryProvider).deleteFolder(folder.id);
+      final selected = ref.read(selectedJournalFolderProvider);
+      if (selected.folderId == folder.id) {
+        ref.read(selectedJournalFolderProvider.notifier).state =
+            const JournalFolderSelection.all();
+      }
+      _invalidateJournalLists();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('文件夹删除失败: $e')));
+    }
+  }
+
+  Future<void> _showMoveJournalSheet(DailyJournal journal) async {
+    final folders = await ref.read(journalFoldersProvider.future);
+    if (!mounted) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return _MoveJournalSheet(
+          journal: journal,
+          folders: folders,
+          onMove: (folderId) async {
+            await ref
+                .read(journalRepositoryProvider)
+                .moveJournalToFolder(journal.id, folderId);
+            _invalidateJournalLists();
+          },
+        );
+      },
+    );
+  }
+
+  void _invalidateJournalLists() {
+    ref.invalidate(journalFoldersProvider);
+    ref.invalidate(journalsByFolderProvider);
+    ref.invalidate(recentJournalsProvider);
+    ref.invalidate(allJournalTagsProvider);
+    ref.invalidate(dashboardProvider);
+  }
+
+  // ---------------------------------------------------------------------------
   // Tag Filter
   // ---------------------------------------------------------------------------
 
@@ -359,135 +483,53 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Heatmap Section
-  // ---------------------------------------------------------------------------
-
-  Widget _buildHeatmapSection(AsyncValue<Map<DateTime, int>> heatmapData) {
-    return heatmapData.when(
-      data: (data) {
-        final selectedYear = ref.watch(selectedHeatmapYearProvider);
-        final currentYear = DateTime.now().year;
-        return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: JournalColors.shadow,
-                blurRadius: 16,
-                offset: const Offset(0, 6),
-              ),
-            ],
+  Widget _buildRecentJournalFilters(
+    AsyncValue<List<JournalFolder>> folders,
+    JournalFolderSelection selectedFolder,
+    AsyncValue<List<String>> allTags,
+  ) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.88),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: JournalColors.pinkBorder),
+        boxShadow: [
+          BoxShadow(
+            color: JournalColors.pinkMain.withValues(alpha: 0.08),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              // Header with year selector
-              Row(
-                children: [
-                  Text(
-                    '📅 写作热力图',
-                    style: AppTextStyles.cardTitle.copyWith(fontSize: 15),
-                  ),
-                  const Spacer(),
-                  _YearSelector(
-                    year: selectedYear,
-                    canGoBack: selectedYear > 2020,
-                    canGoForward: selectedYear < currentYear,
-                    onBack: () {
-                      ref.read(selectedHeatmapYearProvider.notifier).state--;
-                    },
-                    onForward: () {
-                      ref.read(selectedHeatmapYearProvider.notifier).state++;
-                    },
-                  ),
-                ],
+              Expanded(child: _buildSectionTitle('最近日记 ✨')),
+              SortButton(
+                currentSort: ref.watch(journalSortProvider),
+                onSortChanged: (s) =>
+                    ref.read(journalSortProvider.notifier).state = s,
               ),
-              const SizedBox(height: 16),
-              // Heatmap
-              if (data.isNotEmpty)
-                HeatmapCalendar(
-                  data: data,
-                  monthsToShow: 12,
-                  baseColor: JournalColors.heat0,
-                  maxColor: JournalColors.heat4,
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24),
-                  child: Center(
-                    child: Text(
-                      '$selectedYear 年暂无写作记录',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: JournalColors.textMuted,
-                      ),
-                    ),
-                  ),
-                ),
-              // Legend
-              if (data.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    const Text(
-                      '少',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: JournalColors.textMuted,
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        '→',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: JournalColors.textMuted,
-                        ),
-                      ),
-                    ),
-                    ...JournalColors.heatColors.map(
-                      (c) => Container(
-                        width: 12,
-                        height: 12,
-                        margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                        decoration: BoxDecoration(
-                          color: c,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      child: Text(
-                        '→',
-                        style: TextStyle(
-                          fontSize: 10,
-                          color: JournalColors.textMuted,
-                        ),
-                      ),
-                    ),
-                    const Text(
-                      '多',
-                      style: TextStyle(
-                        fontSize: 10,
-                        color: JournalColors.textMuted,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
-        );
-      },
-      loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+          const SizedBox(height: 4),
+          const Text(
+            '按文件夹和标签筛选你的记录',
+            style: TextStyle(
+              color: JournalColors.textSecondary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildFolderFilter(folders, selectedFolder),
+          const SizedBox(height: 10),
+          _buildTagFilter(allTags),
+        ],
+      ),
     );
   }
 
@@ -558,6 +600,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         ref.invalidate(todayJournalCountProvider);
         ref.invalidate(dashboardProvider);
         ref.invalidate(allJournalTagsProvider);
+        ref.invalidate(journalsByFolderProvider);
         ref.invalidate(totalJournalCountProvider);
         ref.invalidate(monthlyJournalCountProvider);
         ref.invalidate(journalHeatmapProvider);

@@ -65,7 +65,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
   // ---------------------------------------------------------------------------
 
   Future<void> _pickStartTime() async {
-    final date = await showDatePicker(
+    final date = await showGrowthDatePicker(
       context: context,
       initialDate: _startTime,
       firstDate: DateTime(2020),
@@ -73,7 +73,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
     );
     if (date == null || !mounted) return;
 
-    final time = await showTimePicker(
+    final time = await showGrowthTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_startTime),
     );
@@ -92,7 +92,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
   }
 
   Future<void> _pickEndTime() async {
-    final date = await showDatePicker(
+    final date = await showGrowthDatePicker(
       context: context,
       initialDate: _endTime,
       firstDate: DateTime(2020),
@@ -100,7 +100,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
     );
     if (date == null || !mounted) return;
 
-    final time = await showTimePicker(
+    final time = await showGrowthTimePicker(
       context: context,
       initialTime: TimeOfDay.fromDateTime(_endTime),
     );
@@ -173,11 +173,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
         updatedAt: now,
       );
 
-      // 插入学习记录
-      final studyRepo = ref.read(studyRepositoryProvider);
-      final recordId = await studyRepo.insertStudyRecord(companion);
-
-      // 计算经验值
+      // 计算经验值（纯计算，事务外执行）
       final expService = ref.read(expServiceProvider);
       final exp = expService.calculateStudyExp(
         durationMinutes: duration,
@@ -185,22 +181,25 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
         difficultyLevel: _isProfessional ? _difficultyLevel : 0,
       );
 
-      // 更新记录的经验值
-      await studyRepo.updateStudyRecordExp(recordId, exp);
-
-      // 插入经验日志
-      final expRepo = ref.read(expRepositoryProvider);
-      final oldTotal = await expRepo.getTotalExp();
+      // 原子操作：插入记录 + 更新EXP + 写入经验日志
+      final db = ref.read(databaseProvider);
+      final oldTotal = await ref.read(expRepositoryProvider).getTotalExp();
       final oldLevel = expService.calculateLevel(oldTotal);
-      await expRepo.insertExpLog(
-        GrowthExpLogsCompanion.insert(
-          sourceType: 'study',
-          sourceId: recordId,
-          expValue: exp,
-          reason: '学习: ${_titleController.text.trim()} ($duration min)',
-          createdAt: now,
-        ),
-      );
+      late final int recordId;
+      await db.transaction(() async {
+        final studyRepo = ref.read(studyRepositoryProvider);
+        recordId = await studyRepo.insertStudyRecord(companion);
+        await studyRepo.updateStudyRecordExp(recordId, exp);
+        await ref.read(expRepositoryProvider).insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'study',
+            sourceId: recordId,
+            expValue: exp,
+            reason: '学习: ${_titleController.text.trim()} ($duration min)',
+            createdAt: now,
+          ),
+        );
+      });
 
       // 等级提升检测
       final newTotal = oldTotal + exp;
