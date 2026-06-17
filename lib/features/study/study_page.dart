@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -197,7 +197,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         return Material(
           color: Colors.transparent,
           child: InkWell(
-            onTap: () => context.push('/plan/study/knowledge'),
+            onTap: () => context.push('/plan/study/flash-review'),
             borderRadius: BorderRadius.circular(AppRadius.xxxl),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.xxxl),

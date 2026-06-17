@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'design/design.dart';
@@ -47,6 +47,7 @@ import '../features/study/pages/knowledge_export_page.dart';
 import '../features/study/pages/knowledge_goal_detail_page.dart';
 import '../features/study/pages/knowledge_review_page.dart';
 import '../features/study/pages/knowledge_onboarding_page.dart';
+import '../features/study/pages/flash_review_page.dart';
 import '../features/study/pages/knowledge_source_detail_page.dart';
 import '../features/study/pages/knowledge_sources_page.dart';
 import '../features/study/pages/study_record_detail_page.dart';
@@ -390,6 +391,14 @@ final goRouter = GoRouter(
                     context,
                     state,
                     const KnowledgeOnboardingPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/flash-review',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const FlashReviewPage(),
                   ),
                 ),
                 // 健身相关

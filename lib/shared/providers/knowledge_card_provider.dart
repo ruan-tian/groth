@@ -320,3 +320,55 @@ final filteredKnowledgeGoalSummariesProvider =
     return selectedKeys.contains(s.visual.key) || s.visual.key == 'custom';
   }).toList();
 });
+// =============================================================================
+// Flash Review Page Providers
+// =============================================================================
+
+/// 今日复习进度
+// =============================================================================
+// Flash Review Page Providers
+// =============================================================================
+
+/// 今日复习进度
+class TodayReviewProgress {
+  const TodayReviewProgress({required this.reviewed, required this.total});
+
+  final int reviewed;
+  final int total;
+
+  double get progress => total > 0 ? reviewed / total : 0.0;
+}
+
+/// 今日复习进度 Provider
+final todayReviewProgressProvider = FutureProvider<TodayReviewProgress>((ref) async {
+  final cards = await ref.watch(knowledgeCardsProvider.future);
+  final nowMs = DateTime.now().millisecondsSinceEpoch;
+  final now = DateTime.now();
+  final startOfDay = DateTime(now.year, now.month, now.day).millisecondsSinceEpoch;
+  final dueCards = cards.where((c) => c.dueAt <= nowMs).length;
+  final reviewedToday = cards.where((c) =>
+    c.lastReviewedAt != null && c.lastReviewedAt! >= startOfDay,
+  ).length;
+  return TodayReviewProgress(reviewed: reviewedToday, total: dueCards);
+});
+
+/// AI 推荐复习卡 Provider
+final aiRecommendedCardsProvider = FutureProvider<List<KnowledgeCard>>((ref) async {
+  final cards = await ref.watch(knowledgeCardsProvider.future);
+  final nowMs = DateTime.now().millisecondsSinceEpoch;
+  final weak = cards.where(isWeakKnowledgeCard).toList();
+  final dueSoon = cards.where((c) =>
+    c.dueAt > nowMs && c.dueAt <= nowMs + const Duration(hours: 24).inMilliseconds,
+  ).toList();
+  final highError = cards.where((c) =>
+    c.reviewCount > 0 && c.correctStreak == 0,
+  ).toList();
+  // 合并去重，排序：薄弱 > 即将过期 > 高频错误
+  final seen = <int>{};
+  final result = <KnowledgeCard>[];
+  for (final card in [...weak, ...dueSoon, ...highError]) {
+    if (seen.add(card.id)) result.add(card);
+    if (result.length >= 10) break;
+  }
+  return result;
+});
