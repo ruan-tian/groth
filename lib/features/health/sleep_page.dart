@@ -33,11 +33,11 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   int _selectedRange = 7; // 7, 30, 365
   bool _showAllRecentRecords = false;
 
-  // 薰衣草色系 (mapped to AppColors)
-  static const _lavender = AppColors.lavender;
-  static const _lavenderDark = AppColors.lavenderDark;
-  static const _lavenderLight = AppColors.softLavender;
-  static const _sleepPink = AppColors.sleepPink;
+  // 薰衣草色系 (mapped to theme)
+  Color get _lavender => context.growthColors.sleep;
+  Color get _lavenderDark => context.growthColors.primaryDark;
+  Color get _lavenderLight => context.growthColors.softPurple;
+  Color get _sleepPink => context.growthColors.journal;
 
   @override
   void initState() {
@@ -47,43 +47,36 @@ class _SleepPageState extends ConsumerState<SleepPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final sleepGoal = ref.watch(sleepGoalProvider);
     final lastNightRecord = ref.watch(lastNightSleepRecordProvider);
     final weeklyDuration = ref.watch(weeklyAvgSleepDurationProvider);
     final weeklyQuality = ref.watch(weeklyAvgSleepQualityProvider);
 
-    // Range-based providers
-    final weeklyDurationList = ref.watch(weeklySleepDurationProvider);
-    final weeklyQualityList = ref.watch(weeklySleepQualityProvider);
-    final monthlyDurationList = ref.watch(monthlySleepDurationProvider);
-    final monthlyQualityList = ref.watch(monthlySleepQualityProvider);
-    final yearlyDurationList = ref.watch(yearlySleepDurationProvider);
-    final yearlyQualityList = ref.watch(yearlySleepQualityProvider);
-
-    // Select data based on range
+    // Range-based providers - only watch the selected range
     final durationList = _selectedRange == 7
-        ? weeklyDurationList
+        ? ref.watch(weeklySleepDurationProvider)
         : _selectedRange == 30
-        ? monthlyDurationList
-        : yearlyDurationList;
+        ? ref.watch(monthlySleepDurationProvider)
+        : ref.watch(yearlySleepDurationProvider);
     final qualityList = _selectedRange == 7
-        ? weeklyQualityList
+        ? ref.watch(weeklySleepQualityProvider)
         : _selectedRange == 30
-        ? monthlyQualityList
-        : yearlyQualityList;
+        ? ref.watch(monthlySleepQualityProvider)
+        : ref.watch(yearlySleepQualityProvider);
 
     final recentRecords = ref.watch(
       recentSleepRecordsProvider(_showAllRecentRecords ? 10 : 5),
     );
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
               title: Text('睡眠', style: AppTextStyles.pageTitle),
               centerTitle: false,
-              backgroundColor: AppColors.paper,
+              backgroundColor: colors.paper,
               actions: [
                 IconButton(
                   tooltip: '设置睡眠目标',
@@ -93,20 +86,23 @@ class _SleepPageState extends ConsumerState<SleepPage> {
               ],
             ),
       body: ModulePageSurface(
-        color: AppColors.sleep,
+        color: colors.sleep,
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(lastNightSleepRecordProvider);
-            ref.invalidate(weeklyAvgSleepDurationProvider);
-            ref.invalidate(weeklyAvgSleepQualityProvider);
-            ref.invalidate(weeklySleepDurationProvider);
-            ref.invalidate(weeklySleepQualityProvider);
-            ref.invalidate(monthlySleepDurationProvider);
-            ref.invalidate(monthlySleepQualityProvider);
-            ref.invalidate(yearlySleepDurationProvider);
-            ref.invalidate(yearlySleepQualityProvider);
             ref.invalidate(recentSleepRecordsProvider(5));
             ref.invalidate(recentSleepRecordsProvider(10));
+            // Only invalidate the selected range
+            if (_selectedRange == 7) {
+              ref.invalidate(weeklySleepDurationProvider);
+              ref.invalidate(weeklySleepQualityProvider);
+            } else if (_selectedRange == 30) {
+              ref.invalidate(monthlySleepDurationProvider);
+              ref.invalidate(monthlySleepQualityProvider);
+            } else {
+              ref.invalidate(yearlySleepDurationProvider);
+              ref.invalidate(yearlySleepQualityProvider);
+            }
           },
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -118,12 +114,12 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                 // ── 1. 小猫提示条 ──
                 PlanModuleVisualHeader(
                   module: PlanModuleType.sleep,
-                  color: AppColors.sleep,
+                  color: colors.sleep,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 PlanModuleActionImageCard(
                   module: PlanModuleType.sleep,
-                  color: AppColors.sleep,
+                  color: colors.sleep,
                   onTap: () => context.push('/plan/sleep/reminder'),
                 ),
                 const SizedBox(height: AppSpacing.lg),
@@ -165,7 +161,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddRecordSheet(context),
         backgroundColor: _lavender,
-        child: const Icon(Icons.add, color: Colors.white),
+        child: Icon(Icons.add, color: colors.textOnAccent),
       ),
     );
   }
@@ -180,19 +176,22 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     AsyncValue<double?> weeklyQuality,
     int sleepGoal,
   ) {
+    final colors = context.growthColors;
     return lastNightRecord.when(
       data: (record) {
         if (record == null) {
           return _buildNoRecordCard();
         }
-        final progress = (record.durationMinutes / (sleepGoal * 60))
-            .clamp(0.0, 1.0);
+        final progress = (record.durationMinutes / (sleepGoal * 60)).clamp(
+          0.0,
+          1.0,
+        );
         return ModuleHeroCard(
           icon: Icons.bedtime_rounded,
           title: '昨晚睡眠概况',
           primaryValue: formatSleepDuration(record.durationMinutes),
           primaryLabel: '昨晚睡眠时长',
-          color: AppColors.sleep,
+          color: colors.sleep,
           progress: progress,
           targetLabel: '目标 $sleepGoal小时',
           metrics: [
@@ -218,33 +217,31 @@ class _SleepPageState extends ConsumerState<SleepPage> {
       loading: () => Container(
         height: 200,
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
         child: const Center(child: CircularProgressIndicator()),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
   Widget _buildNoRecordCard() {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.98),
-            AppColors.sleep.withValues(alpha: 0.045),
-          ],
+          colors: [colors.card, colors.sleep.withValues(alpha: 0.06)],
         ),
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: AppColors.sleep.withValues(alpha: 0.14)),
+        border: Border.all(color: colors.sleep.withValues(alpha: 0.14)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.sleep.withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: 0.2),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -264,7 +261,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(height: 4),
@@ -297,6 +294,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     AsyncValue<double?> weeklyQuality,
     int sleepGoal,
   ) {
+    final colors = context.growthColors;
     final rangeLabel = _selectedRange == 7
         ? '近7天趋势'
         : _selectedRange == 30
@@ -350,17 +348,17 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withValues(alpha: 0.98),
-                            AppColors.sleep.withValues(alpha: 0.045),
+                            colors.card,
+                            colors.sleep.withValues(alpha: 0.06),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(AppRadius.xxxl),
                         border: Border.all(
-                          color: AppColors.sleep.withValues(alpha: 0.14),
+                          color: colors.sleep.withValues(alpha: 0.14),
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.sleep.withValues(alpha: 0.08),
+                            color: colors.shadow.withValues(alpha: 0.2),
                             blurRadius: 24,
                             offset: const Offset(0, 10),
                           ),
@@ -418,7 +416,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                                   _lavender,
                                 ),
                                 loading: () => const SizedBox.shrink(),
-                                error: (_, _) => const SizedBox.shrink(),
+                                error: (_, _) => const ErrorRetryWidget(),
                               ),
                               weeklyQuality.when(
                                 data: (avg) => _buildAvgItem(
@@ -429,7 +427,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                                   _sleepPink,
                                 ),
                                 loading: () => const SizedBox.shrink(),
-                                error: (_, _) => const SizedBox.shrink(),
+                                error: (_, _) => const ErrorRetryWidget(),
                               ),
                             ],
                           ),
@@ -451,10 +449,11 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   }
 
   Widget _buildRangeSelector() {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
+        color: colors.surfaceVariant.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(AppRadius.mlg),
         border: Border.all(color: _lavender.withValues(alpha: 0.10)),
       ),
@@ -470,6 +469,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
 
   Widget _buildRangeChip(String label, int days) {
     final isSelected = _selectedRange == days;
+    final colors = context.growthColors;
     return Expanded(
       child: Semantics(
         button: true,
@@ -485,7 +485,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: isSelected ? Colors.white : Colors.transparent,
+              color: isSelected ? colors.card : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
               boxShadow: isSelected
                   ? [
@@ -503,7 +503,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? _lavender : AppColors.textSecondary,
+                  color: isSelected ? _lavender : colors.textSecondary,
                 ),
               ),
             ),
@@ -514,6 +514,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   }
 
   Widget _buildLegend(Color color, String label) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Container(
@@ -525,21 +526,16 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           ),
         ),
         const SizedBox(width: 6),
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
       ],
     );
   }
 
   Widget _buildAvgItem(String label, String value, Color color) {
+    final colors = context.growthColors;
     return Column(
       children: [
-        Text(
-          label,
-          style: const TextStyle(fontSize: 11, color: AppColors.textTertiary),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
         const SizedBox(height: 4),
         Text(
           value,
@@ -583,7 +579,11 @@ class _SleepPageState extends ConsumerState<SleepPage> {
 
   // ─── 睡眠建议 ────────────────────────────────────────────────────────────
 
-  Widget _buildSleepSuggestions(AsyncValue<SleepRecord?> lastNightRecord, int sleepGoal) {
+  Widget _buildSleepSuggestions(
+    AsyncValue<SleepRecord?> lastNightRecord,
+    int sleepGoal,
+  ) {
+    final colors = context.growthColors;
     return lastNightRecord.when(
       data: (record) {
         final suggestions = _getSuggestions(record, sleepGoal);
@@ -628,7 +628,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                           s,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                             height: 1.5,
                           ),
                         ),
@@ -642,7 +642,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
@@ -725,16 +725,19 @@ class _SleepPageState extends ConsumerState<SleepPage> {
       builder: (context) => AddSleepRecordSheet(
         onSave: () {
           ref.invalidate(lastNightSleepRecordProvider);
-          ref.invalidate(weeklyAvgSleepDurationProvider);
-          ref.invalidate(weeklyAvgSleepQualityProvider);
-          ref.invalidate(weeklySleepDurationProvider);
-          ref.invalidate(weeklySleepQualityProvider);
-          ref.invalidate(monthlySleepDurationProvider);
-          ref.invalidate(monthlySleepQualityProvider);
-          ref.invalidate(yearlySleepDurationProvider);
-          ref.invalidate(yearlySleepQualityProvider);
           ref.invalidate(recentSleepRecordsProvider(5));
           ref.invalidate(recentSleepRecordsProvider(10));
+          // Only invalidate the selected range
+          if (_selectedRange == 7) {
+            ref.invalidate(weeklySleepDurationProvider);
+            ref.invalidate(weeklySleepQualityProvider);
+          } else if (_selectedRange == 30) {
+            ref.invalidate(monthlySleepDurationProvider);
+            ref.invalidate(monthlySleepQualityProvider);
+          } else {
+            ref.invalidate(yearlySleepDurationProvider);
+            ref.invalidate(yearlySleepQualityProvider);
+          }
         },
       ),
     );
@@ -747,6 +750,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     WidgetRef ref,
     SleepRecord record,
   ) async {
+    final colors = context.growthColors;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -759,7 +763,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(foregroundColor: colors.danger),
             child: const Text('删除'),
           ),
         ],
@@ -776,15 +780,18 @@ class _SleepPageState extends ConsumerState<SleepPage> {
       ref.invalidate(lastNightSleepRecordProvider);
       ref.invalidate(recentSleepRecordsProvider(5));
       ref.invalidate(recentSleepRecordsProvider(10));
-      ref.invalidate(weeklyAvgSleepDurationProvider);
-      ref.invalidate(weeklyAvgSleepQualityProvider);
-      ref.invalidate(weeklySleepDurationProvider);
-      ref.invalidate(weeklySleepQualityProvider);
-      ref.invalidate(monthlySleepDurationProvider);
-      ref.invalidate(monthlySleepQualityProvider);
-      ref.invalidate(yearlySleepDurationProvider);
-      ref.invalidate(yearlySleepQualityProvider);
       ref.invalidate(dashboardProvider);
+      // Only invalidate the selected range
+      if (_selectedRange == 7) {
+        ref.invalidate(weeklySleepDurationProvider);
+        ref.invalidate(weeklySleepQualityProvider);
+      } else if (_selectedRange == 30) {
+        ref.invalidate(monthlySleepDurationProvider);
+        ref.invalidate(monthlySleepQualityProvider);
+      } else {
+        ref.invalidate(yearlySleepDurationProvider);
+        ref.invalidate(yearlySleepQualityProvider);
+      }
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('已删除')));
@@ -793,7 +800,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
     }
   }
 }

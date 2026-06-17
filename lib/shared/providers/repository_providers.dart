@@ -1,12 +1,15 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/repositories/ai_config_repository.dart';
+import '../../core/repositories/ai_chat_repository.dart';
 import '../../core/repositories/api_config_repository.dart';
 import '../../core/repositories/diet_repository.dart';
 import '../../core/repositories/exp_repository.dart';
 import '../../core/repositories/fitness_repository.dart';
 import '../../core/repositories/focus_repository.dart';
 import '../../core/repositories/journal_repository.dart';
+import '../../core/repositories/knowledge_card_repository.dart';
+import '../../core/repositories/knowledge_source_repository.dart';
 import '../../core/repositories/music_repository.dart';
 import '../../core/repositories/pet_diary_repository.dart';
 import '../../core/repositories/setting_repository.dart';
@@ -20,6 +23,22 @@ import 'database_provider.dart';
 final studyRepositoryProvider = Provider<StudyRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return StudyRepository(db);
+});
+
+/// 知识卡片仓库 Provider。
+final knowledgeCardRepositoryProvider = Provider<KnowledgeCardRepository>((
+  ref,
+) {
+  final db = ref.watch(appDatabaseProvider);
+  return KnowledgeCardRepository(db);
+});
+
+/// 本地知识库资料仓库 Provider。
+final knowledgeSourceRepositoryProvider = Provider<KnowledgeSourceRepository>((
+  ref,
+) {
+  final db = ref.watch(appDatabaseProvider);
+  return KnowledgeSourceRepository(db);
 });
 
 /// 健身记录仓库 Provider。
@@ -98,4 +117,9 @@ final weatherSearchHistoryRepositoryProvider =
 final musicRepositoryProvider = Provider<MusicRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return MusicRepository(db);
+});
+/// AI 对话历史仓库 Provider。
+final aiChatRepositoryProvider = Provider<AiChatRepository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return AiChatRepository(db);
 });

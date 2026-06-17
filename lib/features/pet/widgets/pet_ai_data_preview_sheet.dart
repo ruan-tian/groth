@@ -2,13 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/settings_provider.dart';
 import '../../../core/domain/pet/pet_ai_result.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../services/pet_ai_privacy_guard.dart';
 
-/// AI 数据预览弹窗
-///
-/// 调用 AI 前展示即将发送的数据，用户确认后才执行。
+/// Shows the exact local data summary before a pet AI analysis request.
 class PetAIDataPreviewSheet extends ConsumerWidget {
   const PetAIDataPreviewSheet({
     super.key,
@@ -41,6 +39,7 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final typeLabel = _getTypeLabel(analysisType);
     final journalUpload = ref.watch(journalUploadProvider);
     final privacyNotice = PetAIPrivacyGuard.instance.getPrivacyNotice(
@@ -50,39 +49,39 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 拖拽条
           Center(
             child: Container(
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textTertiary.withValues(alpha: 0.3),
+                color: colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 20),
-
-          // 标题
           Row(
             children: [
               Container(
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.1),
+                  color: colors.primary.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Center(
-                  child: Text('🐱', style: TextStyle(fontSize: 20)),
+                child: Center(
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: colors.primary,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -92,18 +91,18 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
                   children: [
                     Text(
                       '甜甜要分析你的$typeLabel啦',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
-                    const Text(
+                    Text(
                       '确认后将发送以下数据进行分析',
                       style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ],
@@ -112,13 +111,12 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 20),
-
-          // 数据预览
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.background,
+              color: colors.surfaceVariant.withValues(alpha: 0.62),
               borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: colors.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,13 +126,13 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('• ', style: TextStyle(color: AppColors.textSecondary)),
+                      Text('• ', style: TextStyle(color: colors.textSecondary)),
                       Expanded(
                         child: Text(
                           '${entry.key}: ${entry.value}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                             height: 1.4,
                           ),
                         ),
@@ -146,31 +144,32 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-
-          // 隐私提示
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: AppColors.warning.withValues(alpha: 0.08),
+              color: colors.warning.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: colors.warning.withValues(alpha: 0.18)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.info_outline, size: 16, color: AppColors.warning),
+                Icon(Icons.info_outline, size: 16, color: colors.warning),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     privacyNotice,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary, height: 1.5),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colors.textSecondary,
+                      height: 1.5,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
-
-          // 按钮
           Row(
             children: [
               Expanded(
@@ -181,9 +180,12 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    side: const BorderSide(color: AppColors.border),
+                    side: BorderSide(color: colors.border),
                   ),
-                  child: const Text('取消', style: TextStyle(color: AppColors.textSecondary)),
+                  child: Text(
+                    '取消',
+                    style: TextStyle(color: colors.textSecondary),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -195,8 +197,8 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
                     onConfirm();
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    backgroundColor: colors.primary,
+                    foregroundColor: colors.textOnAccent,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -218,12 +220,18 @@ class PetAIDataPreviewSheet extends ConsumerWidget {
 
   String _getTypeLabel(PetAIAnalysisType type) {
     switch (type) {
-      case PetAIAnalysisType.study: return '学习分析';
-      case PetAIAnalysisType.fitness: return '健身分析';
-      case PetAIAnalysisType.diet: return '饮食分析';
-      case PetAIAnalysisType.sleep: return '睡眠分析';
-      case PetAIAnalysisType.weeklyReport: return '成长周报';
-      case PetAIAnalysisType.monthlyReport: return '成长月报';
+      case PetAIAnalysisType.study:
+        return '学习分析';
+      case PetAIAnalysisType.fitness:
+        return '健身分析';
+      case PetAIAnalysisType.diet:
+        return '饮食分析';
+      case PetAIAnalysisType.sleep:
+        return '睡眠分析';
+      case PetAIAnalysisType.weeklyReport:
+        return '成长周报';
+      case PetAIAnalysisType.monthlyReport:
+        return '成长月报';
     }
   }
 }

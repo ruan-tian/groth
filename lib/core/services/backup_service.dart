@@ -46,16 +46,30 @@ class BackupService {
       counts[spec.name] = rows.length;
     }
 
+    final jsonStr = jsonEncode(data);
+    final checksum = _calculateChecksum(jsonStr);
+
     final payload = {
       'version': 2,
       'backupVersion': 2,
       'schemaVersion': _db.schemaVersion,
       'exportedAt': DateTime.now().millisecondsSinceEpoch,
+      'checksum': checksum,
       'tables': counts,
       'data': data,
     };
 
     return jsonEncode(payload);
+  }
+
+  /// 计算数据校验和（简单 hash，不引入额外依赖）
+  String _calculateChecksum(String data) {
+    var hash = 0;
+    for (var i = 0; i < data.length; i++) {
+      hash = ((hash << 5) - hash) + data.codeUnitAt(i);
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toRadixString(16);
   }
 
   Future<void> importFromJson(String jsonStr) async {
@@ -71,6 +85,13 @@ class BackupService {
       throw BackupRestoreException(
         message: 'Unsupported backup version: ${version ?? 'missing'}',
       );
+    }
+
+    // 检查 schemaVersion 兼容性
+    final backupSchemaVersion = decoded['schemaVersion'] as int?;
+    if (backupSchemaVersion != null &&
+        backupSchemaVersion > _db.schemaVersion) {
+      throw BackupRestoreException(message: '备份来自更高版本的应用，无法恢复。请先更新应用。');
     }
 
     final data = decoded['data'];
@@ -153,6 +174,84 @@ class BackupService {
           .into(_db.studyRecords)
           .insert(row, mode: InsertMode.insertOrReplace),
       deleteAll: () => _db.delete(_db.studyRecords).go(),
+    ),
+    _BackupTableSpec<KnowledgeCard>(
+      name: 'knowledgeCards',
+      exportRows: () async =>
+          (await _db.select(_db.knowledgeCards).get()).mapJson(),
+      fromJson: _knowledgeCardFromJson,
+      insert: (row) => _db
+          .into(_db.knowledgeCards)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.knowledgeCards).go(),
+      optional: true,
+    ),
+    _BackupTableSpec<KnowledgeReviewLog>(
+      name: 'knowledgeReviewLogs',
+      exportRows: () async =>
+          (await _db.select(_db.knowledgeReviewLogs).get()).mapJson(),
+      fromJson: KnowledgeReviewLog.fromJson,
+      insert: (row) => _db
+          .into(_db.knowledgeReviewLogs)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.knowledgeReviewLogs).go(),
+      optional: true,
+    ),
+    _BackupTableSpec<KnowledgeCustomTemplate>(
+      name: 'knowledgeCustomTemplates',
+      exportRows: () async =>
+          (await _db.select(_db.knowledgeCustomTemplates).get()).mapJson(),
+      fromJson: KnowledgeCustomTemplate.fromJson,
+      insert: (row) => _db
+          .into(_db.knowledgeCustomTemplates)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.knowledgeCustomTemplates).go(),
+      optional: true,
+    ),
+    _BackupTableSpec<KnowledgeCustomTemplateModule>(
+      name: 'knowledgeCustomTemplateModules',
+      exportRows: () async =>
+          (await _db.select(_db.knowledgeCustomTemplateModules).get())
+              .mapJson(),
+      fromJson: KnowledgeCustomTemplateModule.fromJson,
+      insert: (row) => _db
+          .into(_db.knowledgeCustomTemplateModules)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.knowledgeCustomTemplateModules).go(),
+      optional: true,
+    ),
+    _BackupTableSpec<KnowledgeSource>(
+      name: 'knowledgeSources',
+      exportRows: () async =>
+          (await _db.select(_db.knowledgeSources).get()).mapJson(),
+      fromJson: KnowledgeSource.fromJson,
+      insert: (row) => _db
+          .into(_db.knowledgeSources)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.knowledgeSources).go(),
+      optional: true,
+    ),
+    _BackupTableSpec<KnowledgeChunk>(
+      name: 'knowledgeChunks',
+      exportRows: () async =>
+          (await _db.select(_db.knowledgeChunks).get()).mapJson(),
+      fromJson: KnowledgeChunk.fromJson,
+      insert: (row) => _db
+          .into(_db.knowledgeChunks)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.knowledgeChunks).go(),
+      optional: true,
+    ),
+    _BackupTableSpec<KnowledgeCardSourceLink>(
+      name: 'knowledgeCardSourceLinks',
+      exportRows: () async =>
+          (await _db.select(_db.knowledgeCardSourceLinks).get()).mapJson(),
+      fromJson: KnowledgeCardSourceLink.fromJson,
+      insert: (row) => _db
+          .into(_db.knowledgeCardSourceLinks)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.knowledgeCardSourceLinks).go(),
+      optional: true,
     ),
     _BackupTableSpec<FitnessRecord>(
       name: 'fitnessRecords',
@@ -312,6 +411,26 @@ class BackupService {
           .insert(row, mode: InsertMode.insertOrReplace),
       deleteAll: () => _db.delete(_db.musicTracks).go(),
     ),
+    _BackupTableSpec<MusicPlaylist>(
+      name: 'musicPlaylists',
+      exportRows: () async =>
+          (await _db.select(_db.musicPlaylists).get()).mapJson(),
+      fromJson: MusicPlaylist.fromJson,
+      insert: (row) => _db
+          .into(_db.musicPlaylists)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.musicPlaylists).go(),
+    ),
+    _BackupTableSpec<MusicPlaylistTrack>(
+      name: 'musicPlaylistTracks',
+      exportRows: () async =>
+          (await _db.select(_db.musicPlaylistTracks).get()).mapJson(),
+      fromJson: MusicPlaylistTrack.fromJson,
+      insert: (row) => _db
+          .into(_db.musicPlaylistTracks)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.musicPlaylistTracks).go(),
+    ),
     _BackupTableSpec<AppSetting>(
       name: 'appSettings',
       exportRows: () async =>
@@ -402,6 +521,15 @@ class BackupService {
       deleteAll: () => _db.delete(_db.petMessages).go(),
     ),
   ];
+
+  static KnowledgeCard _knowledgeCardFromJson(Map<String, dynamic> json) {
+    final normalized = Map<String, dynamic>.from(json)
+      ..putIfAbsent('goalKey', () => 'custom')
+      ..putIfAbsent('goalName', () => null)
+      ..putIfAbsent('moduleKey', () => 'custom')
+      ..putIfAbsent('moduleName', () => null);
+    return KnowledgeCard.fromJson(normalized);
+  }
 }
 
 class _BackupTableSpec<T extends DataClass> {
@@ -411,6 +539,7 @@ class _BackupTableSpec<T extends DataClass> {
     required this.fromJson,
     required this.insert,
     required this.deleteAll,
+    this.optional = false,
   });
 
   final String name;
@@ -418,9 +547,11 @@ class _BackupTableSpec<T extends DataClass> {
   final T Function(Map<String, dynamic>) fromJson;
   final Future<void> Function(Insertable<T>) insert;
   final Future<void> Function() deleteAll;
+  final bool optional;
 
   Future<void> importRows(dynamic rawRows) async {
     if (rawRows == null) {
+      if (optional) return;
       throw BackupRestoreException(
         tableName: name,
         message: 'Table is missing from backup',

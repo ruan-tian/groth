@@ -5,7 +5,7 @@ class AppTextStyles {
   AppTextStyles._();
 
   static const TextStyle pageTitle = TextStyle(
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     height: 1.2,
@@ -13,30 +13,30 @@ class AppTextStyles {
 
   static const TextStyle sectionTitle = TextStyle(
     fontSize: 18,
-    fontWeight: FontWeight.w600,
-    color: AppColors.textPrimary,
-    height: 1.25,
-  );
-
-  static const TextStyle cardTitle = TextStyle(
-    fontSize: 15,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     height: 1.3,
   );
 
+  static const TextStyle cardTitle = TextStyle(
+    fontSize: 16,
+    fontWeight: FontWeight.w700,
+    color: AppColors.textPrimary,
+    height: 1.35,
+  );
+
   static const TextStyle body = TextStyle(
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: FontWeight.w400,
     color: AppColors.textPrimary,
-    height: 1.45,
+    height: 1.55,
   );
 
   static const TextStyle caption = TextStyle(
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
+    fontSize: 13,
+    fontWeight: FontWeight.w500,
     color: AppColors.textSecondary,
-    height: 1.35,
+    height: 1.45,
   );
 
   static const TextStyle numberLarge = TextStyle(
@@ -51,5 +51,19 @@ class AppTextStyles {
     fontWeight: FontWeight.w700,
     color: AppColors.textPrimary,
     height: 1.1,
+  );
+
+  static const TextStyle bodySmall = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    color: AppColors.textSecondary,
+    height: 1.45,
+  );
+
+  static const TextStyle label = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w600,
+    color: AppColors.textSecondary,
+    height: 1.3,
   );
 }

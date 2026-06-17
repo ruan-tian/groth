@@ -1,4 +1,4 @@
-﻿part of '../pages/study_record_detail_page.dart';
+part of '../pages/study_record_detail_page.dart';
 
 class _StudyTrendChart extends ConsumerStatefulWidget {
   const _StudyTrendChart({required this.record});
@@ -12,8 +12,8 @@ class _StudyTrendChart extends ConsumerStatefulWidget {
 class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
   String _selectedRange = 'week';
 
-  static const _barColor = AppColors.study;
-  final _barColorLight = AppColors.study.withValues(alpha: 0.3);
+  Color get _barColor => context.growthColors.study;
+  Color get _barColorLight => context.growthColors.study.withValues(alpha: 0.3);
   static const _tooltipBg = Color(0xFF1E293B);
 
   // ── 周/月/年中文名 ──
@@ -38,15 +38,15 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(AppRadius.md),
         border: Border.all(
-          color: AppColors.study.withValues(alpha: 0.06),
+          color: context.growthColors.study.withValues(alpha: 0.06),
           width: 1,
         ),
         boxShadow: [
           BoxShadow(
-            color: AppColors.study.withValues(alpha: 0.03),
+            color: context.growthColors.study.withValues(alpha: 0.03),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -72,7 +72,7 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: context.growthColors.surfaceVariant,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
@@ -93,7 +93,9 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                    color: selected ? Colors.white : AppColors.textSecondary,
+                    color: selected
+                        ? context.growthColors.card
+                        : context.growthColors.textSecondary,
                   ),
                 ),
               ),
@@ -153,7 +155,7 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
           emptyHint: '本周暂无学习数据',
         );
       },
-      loading: () => const SizedBox(
+      loading: () => SizedBox(
         height: 240,
         child: Center(
           child: CircularProgressIndicator(strokeWidth: 2, color: _barColor),
@@ -204,7 +206,7 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
           emptyHint: '本月暂无学习数据',
         );
       },
-      loading: () => const SizedBox(
+      loading: () => SizedBox(
         height: 240,
         child: Center(
           child: CircularProgressIndicator(strokeWidth: 2, color: _barColor),
@@ -238,7 +240,7 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
           emptyHint: '本年暂无学习数据',
         );
       },
-      loading: () => const SizedBox(
+      loading: () => SizedBox(
         height: 240,
         child: Center(
           child: CircularProgressIndicator(strokeWidth: 2, color: _barColor),
@@ -277,16 +279,16 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
         child: RepaintBoundary(
           child: BarChart(
             BarChartData(
-            maxY: yMax * 1.25,
-            alignment: BarChartAlignment.spaceAround,
-            barTouchData: _buildTouchData(barData, scale),
-            titlesData: _buildTitles(barData, scale, yMax, range),
-            gridData: _buildGrid(scale),
-            borderData: FlBorderData(show: false),
-            barGroups: List.generate(barData.length, (i) {
-              return _buildBarGroup(i, barData, yMax, range);
-            }),
-          ),
+              maxY: yMax * 1.25,
+              alignment: BarChartAlignment.spaceAround,
+              barTouchData: _buildTouchData(barData, scale),
+              titlesData: _buildTitles(barData, scale, yMax, range),
+              gridData: _buildGrid(scale),
+              borderData: FlBorderData(show: false),
+              barGroups: List.generate(barData.length, (i) {
+                return _buildBarGroup(i, barData, yMax, range);
+              }),
+            ),
           ),
         ),
       ),
@@ -302,23 +304,23 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
         getTooltipColor: (_) => _tooltipBg,
-        tooltipRoundedRadius: 8,
+        tooltipBorderRadius: BorderRadius.circular(8),
         tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
           final bar = barData[group.x];
           final title = bar.subLabel ?? bar.label;
           return BarTooltipItem(
             '$title\n',
-            const TextStyle(
-              color: Colors.white70,
+            TextStyle(
+              color: context.growthColors.textOnAccent.withValues(alpha: 0.7),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
             children: [
               TextSpan(
                 text: scale.formatTooltipValue(bar.value.toDouble()),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.growthColors.textOnAccent,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -363,9 +365,9 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
               padding: const EdgeInsets.only(right: 4),
               child: Text(
                 scale.formatAxisLabel(value),
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textTertiary,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: context.growthColors.textTertiary,
                 ),
                 textAlign: TextAlign.right,
               ),
@@ -408,7 +410,7 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
       drawVerticalLine: false,
       horizontalInterval: scale.interval,
       getDrawingHorizontalLine: (value) => FlLine(
-        color: AppColors.border.withValues(alpha: 0.6),
+        color: context.growthColors.border.withValues(alpha: 0.6),
         strokeWidth: 1,
         dashArray: [4, 4],
       ),
@@ -444,7 +446,7 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
             toY: yMax,
-            color: AppColors.border.withValues(alpha: 0.3),
+            color: context.growthColors.border.withValues(alpha: 0.3),
           ),
         ),
       ],
@@ -463,11 +465,11 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
     final mainStyle = TextStyle(
       fontSize: range == 'month' ? 10 : 11,
       fontWeight: highlighted ? FontWeight.w700 : FontWeight.w600,
-      color: highlighted ? _barColor : AppColors.textPrimary,
+      color: highlighted ? _barColor : context.growthColors.textPrimary,
     );
     final subStyle = TextStyle(
-      fontSize: 10,
-      color: highlighted ? _barColor : AppColors.textTertiary,
+      fontSize: 11,
+      color: highlighted ? _barColor : context.growthColors.textTertiary,
     );
 
     if (range == 'week') {
@@ -556,12 +558,12 @@ class _TrendValueBubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.growthColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: context.growthColors.shadow.withValues(alpha: 0.05),
             blurRadius: 2,
             offset: const Offset(0, 1),
           ),
@@ -569,10 +571,10 @@ class _TrendValueBubble extends StatelessWidget {
       ),
       child: Text(
         value,
-        style: const TextStyle(
-          fontSize: 9,
+        style: TextStyle(
+          fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.study,
+          color: context.growthColors.study,
         ),
       ),
     );

@@ -68,10 +68,7 @@ class PetAIPrivacyGuard {
     );
 
     // 移除手机号
-    sanitized = sanitized.replaceAll(
-      RegExp(r'1[3-9]\d{9}'),
-      '***',
-    );
+    sanitized = sanitized.replaceAll(RegExp(r'1[3-9]\d{9}'), '***');
 
     // 移除具体日期（保留相对描述）
     sanitized = sanitized.replaceAll(

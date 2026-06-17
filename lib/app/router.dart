@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 import 'design/design.dart';
 import '../features/dashboard/dashboard_page.dart';
 import '../features/dashboard/pages/task_history_page.dart';
+import '../features/music/pages/music_playlist_page.dart';
+import '../features/music/pages/music_favorites_page.dart';
 import '../features/plan/plan_page.dart';
 import '../features/fitness/pages/add_fitness_record_page.dart';
 import '../features/fitness/pages/add_body_metric_page.dart';
@@ -15,12 +17,14 @@ import '../features/fitness/pages/all_fitness_records_page.dart';
 import '../features/focus/focus_page.dart';
 import '../features/focus/pages/focus_session_page.dart';
 import '../features/health/pages/add_diet_record_page.dart';
+import '../features/health/pages/drink_recommendation_page.dart';
 import '../features/health/pages/add_sleep_record_page.dart';
 import '../features/health/pages/sleep_reminder_timer_page.dart';
 import '../features/health/pages/water_reminder_timer_page.dart';
 import '../features/journal/pages/journal_detail_page.dart';
 import '../features/journal/pages/write_journal_page.dart';
 import '../features/journal/pages/edit_journal_page.dart';
+import '../features/journal/pages/inspiration_bookmark_page.dart';
 import '../features/pet/pages/pet_ai_analysis_page.dart';
 import '../features/pet/pages/pet_center_page.dart';
 import '../features/pet/pages/pet_diary_page.dart';
@@ -34,6 +38,17 @@ import '../features/settings/pages/weather_settings_page.dart';
 import '../features/ai/pages/ai_analysis_page.dart';
 import '../features/settings/pages/ai_config_page.dart';
 import '../features/study/pages/add_study_record_page.dart';
+import '../features/study/pages/add_knowledge_card_page.dart';
+import '../features/study/pages/bulk_import_knowledge_cards_page.dart';
+import '../features/study/pages/knowledge_archive_page.dart';
+import '../features/study/pages/knowledge_cards_page.dart';
+import '../features/study/pages/knowledge_custom_templates_page.dart';
+import '../features/study/pages/knowledge_export_page.dart';
+import '../features/study/pages/knowledge_goal_detail_page.dart';
+import '../features/study/pages/knowledge_review_page.dart';
+import '../features/study/pages/knowledge_onboarding_page.dart';
+import '../features/study/pages/knowledge_source_detail_page.dart';
+import '../features/study/pages/knowledge_sources_page.dart';
 import '../features/study/pages/study_record_detail_page.dart';
 import '../features/study/pages/subject_distribution_page.dart';
 import '../features/study/pages/recent_records_page.dart';
@@ -172,6 +187,25 @@ final goRouter = GoRouter(
               path: RoutePaths.dashboard,
               name: RouteNames.dashboard,
               builder: (_, _) => const DashboardPage(),
+              routes: [
+                // 音乐相关
+                GoRoute(
+                  path: 'music/playlist',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const MusicPlaylistPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'music/favorites',
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const MusicFavoritesPage(),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -218,6 +252,144 @@ final goRouter = GoRouter(
                     context,
                     state,
                     const SubjectDistributionPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeCardsPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/add',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    AddKnowledgeCardPage(
+                      initialGoalKey: state.uri.queryParameters['goalKey'],
+                      initialGoalName: state.uri.queryParameters['goalName'],
+                      initialModuleKey: state.uri.queryParameters['moduleKey'],
+                      initialModuleName:
+                          state.uri.queryParameters['moduleName'],
+                      initialDeckKey: state.uri.queryParameters['deckKey'],
+                      editCardId: int.tryParse(
+                        state.uri.queryParameters['editCardId'] ?? '',
+                      ),
+                      initialCustomTemplateId: int.tryParse(
+                        state.uri.queryParameters['customTemplateId'] ?? '',
+                      ),
+                      initialCustomModuleId: int.tryParse(
+                        state.uri.queryParameters['customModuleId'] ?? '',
+                      ),
+                      sourceStudyId: int.tryParse(
+                        state.uri.queryParameters['sourceStudyId'] ?? '',
+                      ),
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/import',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    BulkImportKnowledgeCardsPage(
+                      initialGoalKey: state.uri.queryParameters['goalKey'],
+                      initialGoalName: state.uri.queryParameters['goalName'],
+                      initialModuleKey: state.uri.queryParameters['moduleKey'],
+                      initialModuleName:
+                          state.uri.queryParameters['moduleName'],
+                      initialDeckKey: state.uri.queryParameters['deckKey'],
+                      initialSubject: state.uri.queryParameters['subject'],
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/sources',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeSourcesPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/sources/:id',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    KnowledgeSourceDetailPage(
+                      sourceId: int.parse(state.pathParameters['id']!),
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/archive',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeArchivePage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/export',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeExportPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/templates',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeCustomTemplatesPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/goal',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    KnowledgeGoalDetailPage(
+                      goalKey: state.uri.queryParameters['goalKey'] ?? 'custom',
+                      goalName: state.uri.queryParameters['goalName'],
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/edit/:id',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    AddKnowledgeCardPage(
+                      editCardId: int.parse(state.pathParameters['id']!),
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/review',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    KnowledgeReviewPage(
+                      deckKey: state.uri.queryParameters['deckKey'],
+                      goalKey: state.uri.queryParameters['goalKey'],
+                      goalName: state.uri.queryParameters['goalName'],
+                      moduleKey: state.uri.queryParameters['moduleKey'],
+                      moduleName: state.uri.queryParameters['moduleName'],
+                      includeAll: state.uri.queryParameters['all'] == '1',
+                      weakOnly: state.uri.queryParameters['weak'] == '1',
+                    ),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/onboarding',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeOnboardingPage(),
                   ),
                 ),
                 // 健身相关
@@ -300,6 +472,14 @@ final goRouter = GoRouter(
                   ),
                 ),
                 GoRoute(
+                  path: 'journal/inspiration',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const InspirationBookmarkPage(),
+                  ),
+                ),
+                GoRoute(
                   path: 'journal/detail/:id',
                   pageBuilder: (context, state) {
                     final id = int.parse(state.pathParameters['id']!);
@@ -328,6 +508,14 @@ final goRouter = GoRouter(
                     context,
                     state,
                     const AddDietRecordPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'diet/drink-recommendation',
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const DrinkRecommendationPage(),
                   ),
                 ),
                 GoRoute(

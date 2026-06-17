@@ -5,7 +5,10 @@ import 'dart:math';
 /// 纯计算逻辑，无构造函数依赖。人物等级和宠物等级都从同一份
 /// GrowthExpLogs 总经验派生，宠物不再拥有独立经验曲线。
 class ExpService {
-  static const int expPerLevelUnit = 100;
+  /// 每级经验系数（用于等级计算公式）
+  static const int expPerLevelUnit = 5;
+
+  /// 每分钟基础经验
   static const int minutesPerBaseExp = 10;
 
   // ---------------------------------------------------------------------------

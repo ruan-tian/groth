@@ -35,7 +35,7 @@ class ModuleHero extends StatelessWidget {
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.growthColors.card,
               borderRadius: BorderRadius.circular(18),
               boxShadow: AppColors.cardShadow,
             ),
@@ -149,26 +149,26 @@ class ModuleMetricChip {
   final String label;
 }
 
-BoxDecoration _moduleCardDecoration(Color color) {
+BoxDecoration _moduleCardDecoration(Color color, BuildContext context) {
   return BoxDecoration(
     gradient: LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        Colors.white.withValues(alpha: 0.98),
-        color.withValues(alpha: 0.045),
+        context.growthColors.card.withValues(alpha: 0.98),
+        color.withValues(alpha: 0.032),
       ],
     ),
     borderRadius: BorderRadius.circular(AppRadius.xxxl),
-    border: Border.all(color: color.withValues(alpha: 0.14)),
+    border: Border.all(color: color.withValues(alpha: 0.12)),
     boxShadow: [
       BoxShadow(
-        color: color.withValues(alpha: 0.08),
+        color: color.withValues(alpha: 0.07),
         blurRadius: 24,
         offset: const Offset(0, 10),
       ),
       BoxShadow(
-        color: Colors.black.withValues(alpha: 0.025),
+        color: context.growthColors.shadow.withValues(alpha: 0.25),
         blurRadius: 18,
         offset: const Offset(0, 7),
       ),
@@ -211,7 +211,7 @@ class ModuleHeroCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-          decoration: _moduleCardDecoration(color),
+          decoration: _moduleCardDecoration(color, context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -221,7 +221,7 @@ class ModuleHeroCard extends StatelessWidget {
                     width: 44,
                     height: 44,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.92),
+                      color: context.growthColors.card.withValues(alpha: 0.92),
                       borderRadius: BorderRadius.circular(AppRadius.mlg),
                       boxShadow: [
                         BoxShadow(
@@ -252,7 +252,9 @@ class ModuleHeroCard extends StatelessWidget {
                           width: 34,
                           height: 34,
                           decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.82),
+                            color: context.growthColors.card.withValues(
+                              alpha: 0.82,
+                            ),
                             borderRadius: BorderRadius.circular(AppRadius.smd),
                             border: Border.all(
                               color: color.withValues(alpha: 0.14),
@@ -329,17 +331,17 @@ class ModuleHeroCard extends StatelessWidget {
                           Icon(
                             m.icon,
                             size: 18,
-                            color: color.withValues(alpha: 0.72),
+                            color: color.withValues(alpha: 0.82),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             m.value,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 15,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: context.growthColors.textPrimary,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -347,9 +349,9 @@ class ModuleHeroCard extends StatelessWidget {
                             m.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppColors.textTertiary,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: context.growthColors.textSecondary,
                             ),
                           ),
                         ],
@@ -395,7 +397,7 @@ class ModuleRecordsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: _moduleCardDecoration(color),
+      decoration: _moduleCardDecoration(color, context),
       padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -406,7 +408,7 @@ class ModuleRecordsCard extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.84),
+                  color: context.growthColors.card.withValues(alpha: 0.84),
                   borderRadius: BorderRadius.circular(AppRadius.smd),
                   border: Border.all(color: color.withValues(alpha: 0.12)),
                 ),
@@ -453,7 +455,7 @@ class ModuleRecordsCard extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.72),
+                    color: context.growthColors.card.withValues(alpha: 0.72),
                     borderRadius: BorderRadius.circular(AppRadius.mlg),
                     border: Border.all(color: color.withValues(alpha: 0.10)),
                   ),

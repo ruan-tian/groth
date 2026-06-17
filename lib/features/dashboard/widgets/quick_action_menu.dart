@@ -52,9 +52,7 @@ class _QuickActionMenuState extends State<QuickActionMenu> {
           // 点击空白区域关闭
           GestureDetector(
             onTap: () => Navigator.of(context).pop(),
-            child: Container(
-              color: Colors.transparent,
-            ),
+            child: Container(color: Colors.transparent),
           ),
 
           // 快捷操作按钮组
@@ -68,35 +66,35 @@ class _QuickActionMenuState extends State<QuickActionMenu> {
                 _buildActionButton(
                   icon: Icons.menu_book_rounded,
                   label: '添加学习',
-                  color: AppColors.study,
+                  color: context.growthColors.study,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.fitness_center_rounded,
                   label: '添加健身',
-                  color: AppColors.fitness,
+                  color: context.growthColors.fitness,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.restaurant_rounded,
                   label: '记录饮食',
-                  color: AppColors.diet,
+                  color: context.growthColors.diet,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.bedtime_rounded,
                   label: '记录睡眠',
-                  color: AppColors.sleep,
+                  color: context.growthColors.sleep,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 12),
                 _buildActionButton(
                   icon: Icons.edit_note_rounded,
                   label: '写日记',
-                  color: AppColors.primary,
+                  color: context.growthColors.primary,
                   onTap: () => _navigateTo(context, RoutePaths.plan),
                 ),
                 const SizedBox(height: 24),
@@ -139,16 +137,12 @@ class _QuickActionMenuState extends State<QuickActionMenu> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                icon,
-                color: Colors.white,
-                size: 22,
-              ),
+              Icon(icon, color: context.growthColors.textOnAccent, size: 22),
               const SizedBox(width: 12),
               Text(
                 label,
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: context.growthColors.textOnAccent,
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
                 ),
@@ -171,19 +165,19 @@ class _QuickActionMenuState extends State<QuickActionMenu> {
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: AppColors.primary,
+            color: context.growthColors.primary,
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.3),
+                color: context.growthColors.primary.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 6),
               ),
             ],
           ),
-          child: const Icon(
+          child: Icon(
             Icons.close,
-            color: Colors.white,
+            color: context.growthColors.textOnAccent,
             size: 28,
           ),
         ),

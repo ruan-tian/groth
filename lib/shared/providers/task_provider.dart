@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/repositories/task_repository.dart';
+import '../../core/utils/date_utils.dart';
 import 'database_provider.dart';
 
 // =============================================================================
@@ -23,20 +24,12 @@ final taskTemplateRepositoryProvider = Provider<TaskTemplateRepository>((ref) {
 // 任务数据 Providers
 // =============================================================================
 
-/// 今天的日期字符串 (YYYY-MM-DD)
-String _formatDate(DateTime date) {
-  final y = date.year.toString().padLeft(4, '0');
-  final m = date.month.toString().padLeft(2, '0');
-  final d = date.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}
-
 /// 将 DateTime 格式化为 YYYY-MM-DD 字符串
-String formatDateKey(DateTime date) => _formatDate(date);
+String formatDateKey(DateTime date) => GrowthDateUtils.formatDateKey(date);
 
 /// 今天日期 Provider
 final todayDateProvider = Provider<String>((ref) {
-  return _formatDate(DateTime.now());
+  return GrowthDateUtils.formatDateKey(DateTime.now());
 });
 
 /// 今天的任务列表 Provider
@@ -49,15 +42,19 @@ final todayTasksProvider = FutureProvider<List<DailyTask>>((ref) async {
 /// 按日期查询任务列表 Provider
 ///
 /// 用法：`ref.watch(tasksByDateProvider('2026-06-11'))`
-final tasksByDateProvider =
-    FutureProvider.family<List<DailyTask>, String>((ref, date) async {
+final tasksByDateProvider = FutureProvider.family<List<DailyTask>, String>((
+  ref,
+  date,
+) async {
   final repo = ref.watch(dailyTaskRepositoryProvider);
   return repo.getTasksByDate(date);
 });
 
 /// 指定日期未完成任务数量 Provider
-final incompleteTaskCountByDateProvider =
-    FutureProvider.family<int, String>((ref, date) async {
+final incompleteTaskCountByDateProvider = FutureProvider.family<int, String>((
+  ref,
+  date,
+) async {
   final repo = ref.watch(dailyTaskRepositoryProvider);
   return repo.getIncompleteTaskCount(date);
 });
@@ -107,7 +104,7 @@ final taskExpandedProvider = StateProvider<bool>((ref) {
 
 /// 当前选中的日期（用于查看历史任务）
 final selectedTaskDateProvider = StateProvider<String>((ref) {
-  return _formatDate(DateTime.now());
+  return GrowthDateUtils.formatDateKey(DateTime.now());
 });
 
 // NOTE: DailyGoal, defaultDailyGoals, dailyGoalsProvider are defined in

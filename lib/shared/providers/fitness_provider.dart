@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/sort_button.dart';
 
+import '../../core/constants/fitness_constants.dart';
 import '../../core/database/app_database.dart';
-import 'database_provider.dart';
 import 'repository_providers.dart';
 
 // =============================================================================
@@ -50,9 +50,8 @@ final fitnessRecordByIdProvider = FutureProvider.family<FitnessRecord, int>((
   ref,
   id,
 ) async {
-  final db = ref.watch(appDatabaseProvider);
-  final query = db.select(db.fitnessRecords)..where((t) => t.id.equals(id));
-  return query.getSingle();
+  final repo = ref.watch(fitnessRepositoryProvider);
+  return repo.getFitnessRecordById(id);
 });
 
 /// 获取指定健身记录的动作列表
@@ -187,11 +186,13 @@ final fitnessChartDataProvider = FutureProvider.family<List<FitnessChartData>, i
     now.day,
   ).subtract(Duration(days: days - 1));
 
-  // 获取健身记录
-  final records = await repo.getFitnessRecordsByRange(start, now);
-
-  // 获取身体数据（体重）
-  final metrics = await repo.getBodyMetricsByRange(start, now);
+  // 获取健身记录和身体数据（并行查询）
+  final results = await Future.wait([
+    repo.getFitnessRecordsByRange(start, now),
+    repo.getBodyMetricsByRange(start, now),
+  ]);
+  final records = results[0] as List<FitnessRecord>;
+  final metrics = results[1] as List<BodyMetric>;
 
   // 按日期聚合健身数据
   final Map<String, FitnessChartData> dateMap = {};
@@ -204,7 +205,8 @@ final fitnessChartDataProvider = FutureProvider.family<List<FitnessChartData>, i
     final existing = dateMap[key];
     final minutes = (existing?.minutes ?? 0) + r.durationMinutes;
     final calories =
-        (existing?.calories ?? 0) + (r.durationMinutes * 7.5).toInt();
+        (existing?.calories ?? 0) +
+        FitnessConstants.estimateCalories(r.durationMinutes);
 
     dateMap[key] = FitnessChartData(
       date: DateTime(date.year, date.month, date.day),

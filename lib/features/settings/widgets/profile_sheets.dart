@@ -5,9 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
-// =============================================================================
-// 头像选择 Sheet
-// =============================================================================
+import '../../../app/design/design.dart';
 
 Future<void> showAvatarPickerSheet(
   BuildContext context, {
@@ -27,37 +25,26 @@ Future<void> showAvatarPickerSheet(
 }
 
 class _AvatarPickerSheet extends StatelessWidget {
-  final String? avatarPath;
-  final ValueChanged<String> onAvatarUpdated;
-  final VoidCallback onAvatarDeleted;
-
   const _AvatarPickerSheet({
     required this.avatarPath,
     required this.onAvatarUpdated,
     required this.onAvatarDeleted,
   });
 
+  final String? avatarPath;
+  final ValueChanged<String> onAvatarUpdated;
+  final VoidCallback onAvatarDeleted;
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+    final colors = context.growthColors;
+    return _SheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildDragHandle(),
+          _buildDragHandle(context),
           const SizedBox(height: 20),
-          const Text(
-            '更换头像',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF5C3D2E),
-            ),
-          ),
+          Text('更换头像', style: _sheetTitleStyle(colors)),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -65,7 +52,7 @@ class _AvatarPickerSheet extends StatelessWidget {
               _AvatarOption(
                 icon: Icons.camera_alt_rounded,
                 label: '拍照',
-                color: const Color(0xFF5D68F2),
+                color: colors.primary,
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndSave(context, ImageSource.camera);
@@ -74,7 +61,7 @@ class _AvatarPickerSheet extends StatelessWidget {
               _AvatarOption(
                 icon: Icons.photo_library_rounded,
                 label: '相册',
-                color: const Color(0xFF35C976),
+                color: colors.success,
                 onTap: () {
                   Navigator.pop(context);
                   _pickAndSave(context, ImageSource.gallery);
@@ -84,7 +71,7 @@ class _AvatarPickerSheet extends StatelessWidget {
                 _AvatarOption(
                   icon: Icons.delete_outline_rounded,
                   label: '删除',
-                  color: const Color(0xFFFF6B6B),
+                  color: colors.danger,
                   onTap: () {
                     Navigator.pop(context);
                     _deleteAvatar(context);
@@ -98,6 +85,7 @@ class _AvatarPickerSheet extends StatelessWidget {
   }
 
   Future<void> _pickAndSave(BuildContext context, ImageSource source) async {
+    final colors = context.growthColors;
     try {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(
@@ -115,26 +103,26 @@ class _AvatarPickerSheet extends StatelessWidget {
       }
 
       final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final savedFile = await File(pickedFile.path).copy(
-        '${avatarDir.path}/$fileName',
-      );
+      final savedFile = await File(
+        pickedFile.path,
+      ).copy('${avatarDir.path}/$fileName');
 
       onAvatarUpdated(savedFile.path);
 
       if (context.mounted) {
         HapticFeedback.lightImpact();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('头像已更新'),
-            backgroundColor: Color(0xFF35C976),
+          SnackBar(
+            content: const Text('头像已更新'),
+            backgroundColor: colors.success,
           ),
         );
       }
-    } catch (e) {
+    } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('选择图片失败: $e')));
+        ).showSnackBar(const SnackBar(content: Text('选择图片失败，请重试')));
       }
     }
   }
@@ -152,17 +140,17 @@ class _AvatarPickerSheet extends StatelessWidget {
 }
 
 class _AvatarOption extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
   const _AvatarOption({
     required this.icon,
     required this.label,
     required this.color,
     required this.onTap,
   });
+
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -198,10 +186,6 @@ class _AvatarOption extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// 性别选择 Sheet
-// =============================================================================
-
 Future<String?> showGenderPickerSheet(
   BuildContext context, {
   required String currentGender,
@@ -214,31 +198,20 @@ Future<String?> showGenderPickerSheet(
 }
 
 class _GenderPickerSheet extends StatelessWidget {
-  final String currentGender;
-
   const _GenderPickerSheet({required this.currentGender});
+
+  final String currentGender;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+    final colors = context.growthColors;
+    return _SheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _buildDragHandle(),
+          _buildDragHandle(context),
           const SizedBox(height: 20),
-          const Text(
-            '选择性别',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF5C3D2E),
-            ),
-          ),
+          Text('选择性别', style: _sheetTitleStyle(colors)),
           const SizedBox(height: 24),
           _GenderOption(
             value: 'male',
@@ -262,12 +235,6 @@ class _GenderPickerSheet extends StatelessWidget {
 }
 
 class _GenderOption extends StatelessWidget {
-  final String value;
-  final String label;
-  final IconData icon;
-  final bool isSelected;
-  final VoidCallback onTap;
-
   const _GenderOption({
     required this.value,
     required this.label,
@@ -276,11 +243,18 @@ class _GenderOption extends StatelessWidget {
     required this.onTap,
   });
 
+  final String value;
+  final String label;
+  final IconData icon;
+  final bool isSelected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
-      label: '选择性别：$label',
+      label: '选择性别: $label',
       selected: isSelected,
       child: GestureDetector(
         onTap: onTap,
@@ -289,22 +263,20 @@ class _GenderOption extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: isSelected
-                ? const Color(0xFFFFF1DF)
-                : const Color(0xFFF8F8F8),
+                ? colors.primary.withValues(alpha: 0.1)
+                : colors.surface,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
-                  ? const Color(0xFFD4A574)
-                  : const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+                  ? colors.primary
+                  : colors.border.withValues(alpha: 0.55),
             ),
           ),
           child: Row(
             children: [
               Icon(
                 icon,
-                color: isSelected
-                    ? const Color(0xFFD4A574)
-                    : const Color(0xFF8B6F5E),
+                color: isSelected ? colors.primary : colors.textSecondary,
                 size: 24,
               ),
               const SizedBox(width: 12),
@@ -313,16 +285,14 @@ class _GenderOption extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
-                  color: isSelected
-                      ? const Color(0xFF5C3D2E)
-                      : const Color(0xFF8B6F5E),
+                  color: isSelected ? colors.textPrimary : colors.textSecondary,
                 ),
               ),
               const Spacer(),
               if (isSelected)
-                const Icon(
+                Icon(
                   Icons.check_circle_rounded,
-                  color: Color(0xFFD4A574),
+                  color: colors.primary,
                   size: 20,
                 ),
             ],
@@ -332,10 +302,6 @@ class _GenderOption extends StatelessWidget {
     );
   }
 }
-
-// =============================================================================
-// 身高编辑 Sheet
-// =============================================================================
 
 Future<String?> showHeightEditorSheet(
   BuildContext context, {
@@ -350,133 +316,28 @@ Future<String?> showHeightEditorSheet(
     isScrollControlled: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-      child: _HeightEditorSheet(
+      child: _NumberEditorSheet<String>(
         controller: controller,
         formKey: formKey,
+        title: '设置身高',
+        icon: Icons.height,
+        iconColor: context.growthColors.success,
+        suffixText: 'cm',
+        keyboardType: TextInputType.number,
+        validator: (value) {
+          if (value == null || value.isEmpty) return '请输入身高';
+          final number = double.tryParse(value);
+          if (number == null || number <= 0 || number > 250) {
+            return '请输入有效身高';
+          }
+          return null;
+        },
+        onSubmit: (value) => value,
       ),
     ),
   );
 }
 
-class _HeightEditorSheet extends StatelessWidget {
-  final TextEditingController controller;
-  final GlobalKey<FormState> formKey;
-
-  const _HeightEditorSheet({
-    required this.controller,
-    required this.formKey,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-      child: Form(
-        key: formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDragHandle(),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF35C976).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.height,
-                    color: Color(0xFF35C976),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  '设置身高',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF5C3D2E),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: controller,
-              textInputAction: TextInputAction.done,
-              autofocus: true,
-              keyboardType: TextInputType.number,
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF5C3D2E),
-              ),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                suffixText: 'cm',
-                suffixStyle: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFFB0A09A),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE8C9A0)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFD4A574),
-                    width: 2,
-                  ),
-                ),
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return '请输入身高';
-                final n = double.tryParse(v);
-                if (n == null || n <= 0 || n > 250) return '请输入有效身高';
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.pop(context, controller.text);
-                  }
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4A574),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('保存'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// 通用编辑 Sheet 壳
-// =============================================================================
-
-/// 通用底部编辑弹窗外壳，[child] 为编辑内容区域。
-/// 返回值由调用方通过 Navigator.pop 传回。
 Widget buildEditSheet(
   BuildContext context, {
   required String title,
@@ -484,16 +345,12 @@ Widget buildEditSheet(
   required Color iconColor,
   required Widget child,
 }) {
-  return Container(
-    decoration: const BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
-    padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+  final colors = context.growthColors;
+  return _SheetShell(
     child: Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildDragHandle(),
+        _buildDragHandle(context),
         const SizedBox(height: 20),
         Row(
           children: [
@@ -507,14 +364,7 @@ Widget buildEditSheet(
               child: Icon(icon, color: iconColor, size: 20),
             ),
             const SizedBox(width: 12),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF5C3D2E),
-              ),
-            ),
+            Expanded(child: Text(title, style: _sheetTitleStyle(colors))),
           ],
         ),
         const SizedBox(height: 20),
@@ -525,7 +375,8 @@ Widget buildEditSheet(
           child: FilledButton(
             onPressed: () => Navigator.pop(context),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD4A574),
+              backgroundColor: colors.primary,
+              foregroundColor: colors.textOnAccent,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -538,25 +389,6 @@ Widget buildEditSheet(
     ),
   );
 }
-
-// =============================================================================
-// 共用拖拽条
-// =============================================================================
-
-Widget _buildDragHandle() {
-  return Container(
-    width: 40,
-    height: 4,
-    decoration: BoxDecoration(
-      color: const Color(0xFFB0A09A).withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(2),
-    ),
-  );
-}
-
-// =============================================================================
-// 体重编辑 Sheet
-// =============================================================================
 
 Future<double?> showWeightEditorSheet(
   BuildContext context, {
@@ -573,130 +405,27 @@ Future<double?> showWeightEditorSheet(
     isScrollControlled: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-      child: _WeightEditorSheet(
+      child: _NumberEditorSheet<double>(
         controller: controller,
         formKey: formKey,
+        title: '记录体重',
+        icon: Icons.monitor_weight_outlined,
+        iconColor: context.growthColors.primary,
+        suffixText: 'kg',
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        validator: (value) {
+          if (value == null || value.isEmpty) return '请输入体重';
+          final number = double.tryParse(value);
+          if (number == null || number <= 0 || number > 500) {
+            return '请输入有效体重';
+          }
+          return null;
+        },
+        onSubmit: double.tryParse,
       ),
     ),
   );
 }
-
-class _WeightEditorSheet extends StatelessWidget {
-  final TextEditingController controller;
-  final GlobalKey<FormState> formKey;
-
-  const _WeightEditorSheet({
-    required this.controller,
-    required this.formKey,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
-      child: Form(
-        key: formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildDragHandle(),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF5D68F2).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: const Icon(
-                    Icons.monitor_weight_outlined,
-                    color: Color(0xFF5D68F2),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  '记录体重',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF5C3D2E),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: controller,
-              textInputAction: TextInputAction.done,
-              autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF5C3D2E),
-              ),
-              textAlign: TextAlign.center,
-              decoration: InputDecoration(
-                suffixText: 'kg',
-                suffixStyle: const TextStyle(
-                  fontSize: 16,
-                  color: Color(0xFFB0A09A),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE8C9A0)),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFD4A574),
-                    width: 2,
-                  ),
-                ),
-              ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return '请输入体重';
-                final n = double.tryParse(v);
-                if (n == null || n <= 0 || n > 500) return '请输入有效体重';
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.pop(context, double.tryParse(controller.text));
-                  }
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4A574),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text('保存'),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// 体脂率编辑 Sheet
-// =============================================================================
 
 Future<double?> showBodyFatEditorSheet(
   BuildContext context, {
@@ -713,37 +442,62 @@ Future<double?> showBodyFatEditorSheet(
     isScrollControlled: true,
     builder: (ctx) => Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-      child: _BodyFatEditorSheet(
+      child: _NumberEditorSheet<double>(
         controller: controller,
         formKey: formKey,
+        title: '记录体脂率',
+        icon: Icons.water_drop_outlined,
+        iconColor: context.growthColors.fitness,
+        suffixText: '%',
+        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+        validator: (value) {
+          if (value == null || value.isEmpty) return '请输入体脂率';
+          final number = double.tryParse(value);
+          if (number == null || number < 0 || number > 60) {
+            return '请输入有效体脂率';
+          }
+          return null;
+        },
+        onSubmit: double.tryParse,
       ),
     ),
   );
 }
 
-class _BodyFatEditorSheet extends StatelessWidget {
-  final TextEditingController controller;
-  final GlobalKey<FormState> formKey;
-
-  const _BodyFatEditorSheet({
+class _NumberEditorSheet<T> extends StatelessWidget {
+  const _NumberEditorSheet({
     required this.controller,
     required this.formKey,
+    required this.title,
+    required this.icon,
+    required this.iconColor,
+    required this.suffixText,
+    required this.keyboardType,
+    required this.validator,
+    required this.onSubmit,
   });
+
+  final TextEditingController controller;
+  final GlobalKey<FormState> formKey;
+  final String title;
+  final IconData icon;
+  final Color iconColor;
+  final String suffixText;
+  final TextInputType keyboardType;
+  final String? Function(String?) validator;
+  final T? Function(String) onSubmit;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
+    final colors = context.growthColors;
+    return _SheetShell(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
       child: Form(
         key: formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildDragHandle(),
+            _buildDragHandle(context),
             const SizedBox(height: 20),
             Row(
               children: [
@@ -751,24 +505,13 @@ class _BodyFatEditorSheet extends StatelessWidget {
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFF8A3D).withValues(alpha: 0.1),
+                    color: iconColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
-                    Icons.water_drop_outlined,
-                    color: Color(0xFFFF8A3D),
-                    size: 20,
-                  ),
+                  child: Icon(icon, color: iconColor, size: 20),
                 ),
                 const SizedBox(width: 12),
-                const Text(
-                  '记录体脂率',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF5C3D2E),
-                  ),
-                ),
+                Text(title, style: _sheetTitleStyle(colors)),
               ],
             ),
             const SizedBox(height: 20),
@@ -776,49 +519,39 @@ class _BodyFatEditorSheet extends StatelessWidget {
               controller: controller,
               textInputAction: TextInputAction.done,
               autofocus: true,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              style: const TextStyle(
+              keyboardType: keyboardType,
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF5C3D2E),
+                color: colors.textPrimary,
               ),
               textAlign: TextAlign.center,
               decoration: InputDecoration(
-                suffixText: '%',
-                suffixStyle: const TextStyle(
+                suffixText: suffixText,
+                suffixStyle: TextStyle(
                   fontSize: 16,
-                  color: Color(0xFFB0A09A),
+                  color: colors.textTertiary,
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFFE8C9A0)),
+                  borderSide: BorderSide(color: colors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFD4A574),
-                    width: 2,
-                  ),
+                  borderSide: BorderSide(color: iconColor, width: 2),
                 ),
               ),
-              validator: (v) {
-                if (v == null || v.isEmpty) return '请输入体脂率';
-                final n = double.tryParse(v);
-                if (n == null || n < 0 || n > 60) return '请输入有效体脂率';
-                return null;
-              },
+              validator: validator,
+              onFieldSubmitted: (value) => _trySubmit(context),
             ),
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () {
-                  if (formKey.currentState!.validate()) {
-                    Navigator.pop(context, double.tryParse(controller.text));
-                  }
-                },
+                onPressed: () => _trySubmit(context),
                 style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFD4A574),
+                  backgroundColor: colors.primary,
+                  foregroundColor: colors.textOnAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -832,4 +565,53 @@ class _BodyFatEditorSheet extends StatelessWidget {
       ),
     );
   }
+
+  void _trySubmit(BuildContext context) {
+    if (formKey.currentState!.validate()) {
+      Navigator.pop(context, onSubmit(controller.text));
+    }
+  }
+}
+
+class _SheetShell extends StatelessWidget {
+  const _SheetShell({
+    required this.child,
+    this.padding = const EdgeInsets.fromLTRB(24, 12, 24, 32),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: padding,
+      child: child,
+    );
+  }
+}
+
+TextStyle _sheetTitleStyle(AppThemeColors colors) {
+  return TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w600,
+    color: colors.textPrimary,
+  );
+}
+
+Widget _buildDragHandle(BuildContext context) {
+  final colors = context.growthColors;
+  return Container(
+    width: 40,
+    height: 4,
+    decoration: BoxDecoration(
+      color: colors.textTertiary.withValues(alpha: 0.3),
+      borderRadius: BorderRadius.circular(2),
+    ),
+  );
 }

@@ -1,12 +1,16 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
+import '../health/models/drink_recommendation.dart';
 import '../../shared/providers/dashboard_provider.dart';
 import '../music/widgets/dashboard_music_float.dart';
 import 'widgets/dashboard_pet_widget.dart';
 import 'widgets/dashboard_weather_badge.dart';
+import 'widgets/dashboard_knowledge_summary.dart';
 import 'widgets/quick_action_sheet.dart';
 import 'widgets/today_overview.dart';
 import 'widgets/today_tasks.dart';
@@ -21,22 +25,18 @@ class DashboardPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboardAsync = ref.watch(dashboardProvider);
+    final colors = context.growthColors;
 
     return Scaffold(
       body: Stack(
         children: [
           Container(
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFFFFBF5),
-                  Color(0xFFFFF7FA),
-                  Color(0xFFF8FAF0),
-                  Color(0xFFFFFFFF),
-                ],
-                stops: [0.0, 0.34, 0.72, 1.0],
+                colors: [colors.background, colors.paper, colors.background],
+                stops: const [0.0, 0.58, 1.0],
               ),
             ),
             child: SafeArea(
@@ -62,9 +62,14 @@ class DashboardPage extends ConsumerWidget {
                               DashboardPetWidget(data: data),
                               const SizedBox(height: 22),
                               _buildTodayOverview(ref, data),
-                              const SizedBox(height: 24),
+                              const SizedBox(height: 14),
                               const TodayTasks(),
-                              const SizedBox(height: 80), // 为FAB留空间
+                              const SizedBox(height: 16),
+                              const DashboardKnowledgeSummaryCard(),
+                              const SizedBox(height: 12),
+                              const _DashboardDrinkInspirationCard(),
+                              const SizedBox(height: 12),
+                              const _DashboardInspirationBookmarkCard(),
                               const SizedBox(height: 80),
                             ],
                           ),
@@ -79,12 +84,77 @@ class DashboardPage extends ConsumerWidget {
           const DashboardMusicFloat(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showQuickActions(context),
-        backgroundColor: _DashboardColors.primary,
-        foregroundColor: Colors.white,
-        elevation: 8,
-        child: const Icon(Icons.add_rounded, size: 28),
+      floatingActionButton: Semantics(
+        button: true,
+        label: '打开快速开始菜单',
+        child: Tooltip(
+          message: '快速开始',
+          child: GestureDetector(
+            onTap: () => _showQuickActions(context),
+            child: Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.primary.withValues(alpha: 0.18),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
+                  BoxShadow(
+                    color: colors.shadow.withValues(alpha: 0.10),
+                    blurRadius: 30,
+                    offset: const Offset(0, 14),
+                  ),
+                ],
+              ),
+              child: ClipOval(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          colors.card.withValues(alpha: 0.55),
+                          colors.primaryLight.withValues(alpha: 0.18),
+                        ],
+                      ),
+                      border: Border.all(
+                        color: colors.textOnAccent.withValues(alpha: 0.22),
+                        width: 1.2,
+                      ),
+                    ),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            colors.textOnAccent.withValues(alpha: 0.15),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.5],
+                        ),
+                      ),
+                      child: Center(
+                        child: Icon(
+                          Icons.add_rounded,
+                          size: 28,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -96,6 +166,7 @@ class DashboardPage extends ConsumerWidget {
   Widget _buildHeader(BuildContext context) {
     final now = DateTime.now();
     const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    final colors = context.growthColors;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -111,7 +182,7 @@ class DashboardPage extends ConsumerWidget {
                   style: AppTextStyles.pageTitle.copyWith(
                     fontSize: 28,
                     fontWeight: FontWeight.w900,
-                    color: _DashboardColors.ink,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -158,21 +229,8 @@ class DashboardPage extends ConsumerWidget {
   }
 
   void _showQuickActions(BuildContext context) {
-    QuickActionSheet.show(
-      context,
-      onStudy: () => context.push('/study/add'),
-      onFitness: () => context.push('/fitness/add'),
-      onJournal: () => context.push('/journal/write'),
-    );
+    QuickActionSheet.show(context);
   }
-}
-
-class _DashboardColors {
-  static const ink = Color(0xFF37314E);
-  static const muted = Color(0xFF8D869A);
-  static const primary = Color(0xFF8B75F6);
-  static const chip = Color(0xFFFFFFFF);
-  static const chipBorder = Color(0xFFF0E7DB);
 }
 
 class _HeaderChip extends StatelessWidget {
@@ -183,27 +241,226 @@ class _HeaderChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: _DashboardColors.chip.withValues(alpha: 0.78),
+        color: colors.card.withValues(alpha: 0.78),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _DashboardColors.chipBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 13, color: _DashboardColors.primary),
+          Icon(icon, size: 13, color: colors.primary),
           const SizedBox(width: 5),
           Text(
             label,
-            style: const TextStyle(
-              color: _DashboardColors.muted,
+            style: TextStyle(
+              color: colors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w800,
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DashboardDrinkInspirationCard extends StatelessWidget {
+  const _DashboardDrinkInspirationCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    final drink = DrinkCatalog.todayRecommendation();
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.push('/plan/diet/drink-recommendation'),
+        child: Ink(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colors.diet.withValues(alpha: 0.16)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.diet.withValues(alpha: 0.10),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  drink.imagePath,
+                  width: 62,
+                  height: 62,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 62,
+                      height: 62,
+                      color: colors.softOrange,
+                      child: Icon(
+                        Icons.local_drink_outlined,
+                        color: colors.diet,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '今日饮品灵感',
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.diet,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '${drink.brand} · ${drink.name}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.cardTitle.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '选择困难时，让今天替你挑一杯',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: colors.diet.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.chevron_right_rounded, color: colors.diet),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardInspirationBookmarkCard extends StatelessWidget {
+  const _DashboardInspirationBookmarkCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.push('/plan/journal/inspiration'),
+        child: Ink(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colors.journal.withValues(alpha: 0.16)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.journal.withValues(alpha: 0.09),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  'assets/images/inspiration/自我接纳.webp',
+                  width: 62,
+                  height: 62,
+                  fit: BoxFit.cover,
+                  cacheWidth: 140,
+                  filterQuality: FilterQuality.medium,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Container(
+                      width: 62,
+                      height: 62,
+                      color: colors.softPink,
+                      child: Icon(
+                        Icons.auto_stories_outlined,
+                        color: colors.journal,
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '今日一句',
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.journal,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '灵感书签',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.cardTitle.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '写日记前，先给自己留一句话',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: colors.journal.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(Icons.chevron_right_rounded, color: colors.journal),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -218,12 +475,14 @@ class _LoadingBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final colors = context.growthColors;
+
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          CircularProgressIndicator(color: AppColors.primary),
-          SizedBox(height: AppSpacing.lg),
+          CircularProgressIndicator(color: colors.primary),
+          const SizedBox(height: AppSpacing.lg),
           Text('加载中...', style: AppTextStyles.caption),
         ],
       ),
@@ -239,24 +498,32 @@ class _ErrorBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
         child: Container(
           padding: const EdgeInsets.all(22),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.card,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border, width: 0.6),
-            boxShadow: AppColors.cardShadow,
+            border: Border.all(color: colors.border, width: 0.6),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: 0.08),
+                blurRadius: 20,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline_rounded,
                 size: 48,
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
               const SizedBox(height: AppSpacing.lg),
               const Text('加载失败', style: AppTextStyles.sectionTitle),

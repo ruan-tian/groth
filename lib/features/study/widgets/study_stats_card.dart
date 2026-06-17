@@ -35,11 +35,7 @@ class StudyStatsCard extends StatelessWidget {
               theme: theme,
             ),
             const SizedBox(width: 8),
-            Container(
-              width: 1,
-              height: 40,
-              color: theme.dividerColor,
-            ),
+            Container(width: 1, height: 40, color: theme.dividerColor),
             const SizedBox(width: 8),
             _StatItem(
               icon: Icons.calendar_today,
@@ -82,7 +78,9 @@ class _StatItem extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.6),
+                  color: theme.textTheme.bodySmall?.color?.withValues(
+                    alpha: 0.6,
+                  ),
                 ),
               ),
               const SizedBox(height: 2),

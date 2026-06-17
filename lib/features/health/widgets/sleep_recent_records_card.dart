@@ -40,7 +40,7 @@ class SleepRecentRecordsCard extends StatelessWidget {
           title: '最近记录',
           action: '查看全部',
           onActionTap: onViewAll,
-          color: AppColors.sleep,
+          color: context.growthColors.sleep,
           recordCount: records.length,
           maxVisible: 5,
           isExpanded: isExpanded,
@@ -56,16 +56,16 @@ class SleepRecentRecordsCard extends StatelessWidget {
                   onDismissed: () {},
                   child: RecentRecordTile(
                     icon: Icons.nightlight_round,
-                    iconColor: Colors.white,
-                    iconBackgroundColor: AppColors.sleep,
+                    iconColor: context.growthColors.textOnAccent,
+                    iconBackgroundColor: context.growthColors.sleep,
                     title: '${r.sleepDate} 睡眠记录',
                     subtitle:
                         '${r.sleepTime} - ${r.wakeTime} · ${formatSleepDuration(r.durationMinutes)}',
                     primaryBadge: sleepQualityLabel(r.qualityLevel),
-                    primaryBadgeColor: AppColors.sleep,
+                    primaryBadgeColor: context.growthColors.sleep,
                     secondaryBadge:
                         '${r.durationMinutes ~/ 60}h${r.durationMinutes % 60}m',
-                    secondaryBadgeColor: AppColors.textSecondary,
+                    secondaryBadgeColor: context.growthColors.textSecondary,
                     onTap: () => onRecordTap(r),
                   ),
                 ),
@@ -89,7 +89,7 @@ class _EmptySleepRecords extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
       child: Center(
@@ -104,7 +104,7 @@ class _EmptySleepRecords extends StatelessWidget {
             Text(
               '还没有睡眠记录',
               style: AppTextStyles.cardTitle.copyWith(
-                color: AppColors.textSecondary,
+                color: context.growthColors.textSecondary,
               ),
             ),
             const SizedBox(height: AppSpacing.sm),

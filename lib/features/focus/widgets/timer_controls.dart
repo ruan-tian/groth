@@ -124,11 +124,7 @@ class _CircleIconButton extends StatelessWidget {
             ),
           ],
         ),
-        child: Icon(
-          icon,
-          size: iconSize,
-          color: foregroundColor,
-        ),
+        child: Icon(icon, size: iconSize, color: foregroundColor),
       ),
     );
   }

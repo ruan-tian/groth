@@ -58,8 +58,9 @@ DurationChartScale buildDurationChartScale(List<num> minutesList) {
     );
   }
 
-  final maxMinutes =
-      minutesList.map((e) => e.toDouble()).reduce((a, b) => a > b ? a : b);
+  final maxMinutes = minutesList
+      .map((e) => e.toDouble())
+      .reduce((a, b) => a > b ? a : b);
 
   final useHours = maxMinutes >= 180;
 
@@ -70,10 +71,10 @@ DurationChartScale buildDurationChartScale(List<num> minutesList) {
     final interval = maxY <= 4
         ? 1.0
         : maxY <= 8
-            ? 2.0
-            : maxY <= 12
-                ? 3.0
-                : 4.0;
+        ? 2.0
+        : maxY <= 12
+        ? 3.0
+        : 4.0;
 
     return DurationChartScale(
       useHours: true,
@@ -88,8 +89,8 @@ DurationChartScale buildDurationChartScale(List<num> minutesList) {
   final interval = maxY <= 60
       ? 15.0
       : maxY <= 180
-          ? 30.0
-          : 60.0;
+      ? 30.0
+      : 60.0;
 
   return DurationChartScale(
     useHours: false,

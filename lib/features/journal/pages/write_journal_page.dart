@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/journal_provider.dart';
@@ -167,7 +168,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('已保存，获得 $exp EXP'),
-          backgroundColor: const Color(0xFF35C976),
+          backgroundColor: context.growthColors.success,
         ),
       );
       context.pop();
@@ -175,7 +176,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+        ).showSnackBar(const SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -259,7 +260,7 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('图片导入失败: $e')));
+        ).showSnackBar(SnackBar(content: Text('图片导入失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _pickingImage = false);
@@ -323,11 +324,12 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final streak =
         ref.watch(journalStreakProvider).whenOrNull(data: (v) => v) ?? 0;
 
     return Scaffold(
-      backgroundColor: JournalColors.bg,
+      backgroundColor: colors.background,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {

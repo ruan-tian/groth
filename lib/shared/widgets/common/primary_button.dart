@@ -36,8 +36,11 @@ class PrimaryButton extends StatelessWidget {
           height: height,
           width: double.infinity,
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [AppColors.primary, AppColors.primaryDark],
+            gradient: LinearGradient(
+              colors: [
+                context.growthColors.primary,
+                context.growthColors.primaryDark,
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -46,7 +49,9 @@ class PrimaryButton extends StatelessWidget {
                 ? null
                 : [
                     BoxShadow(
-                      color: AppColors.primary.withValues(alpha: 0.24),
+                      color: context.growthColors.primary.withValues(
+                        alpha: 0.24,
+                      ),
                       blurRadius: 18,
                       offset: const Offset(0, 10),
                     ),
@@ -54,27 +59,31 @@ class PrimaryButton extends StatelessWidget {
           ),
           child: Center(
             child: isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: CircularProgressIndicator(
                       strokeWidth: 2.4,
-                      color: Colors.white,
+                      color: context.growthColors.textOnAccent,
                     ),
                   )
                 : Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       if (icon != null) ...[
-                        Icon(icon, color: Colors.white, size: 20),
+                        Icon(
+                          icon,
+                          color: context.growthColors.textOnAccent,
+                          size: 20,
+                        ),
                         const SizedBox(width: 8),
                       ],
                       Flexible(
                         child: Text(
                           text,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
+                          style: TextStyle(
+                            color: context.growthColors.textOnAccent,
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
                           ),

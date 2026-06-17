@@ -83,13 +83,14 @@ class StudyRepository {
   /// 若当天无记录则返回 0。
   Future<int> getTotalStudyMinutesByDate(DateTime date) async {
     final range = _dayRange(date);
-    final result = await (_db.selectOnly(_db.studyRecords)
-          ..addColumns([_db.studyRecords.durationMinutes.sum()])
-          ..where(
-            _db.studyRecords.createdAt.isBiggerOrEqualValue(range.start) &
-                _db.studyRecords.createdAt.isSmallerThanValue(range.end),
-          ))
-        .getSingle();
+    final result =
+        await (_db.selectOnly(_db.studyRecords)
+              ..addColumns([_db.studyRecords.durationMinutes.sum()])
+              ..where(
+                _db.studyRecords.createdAt.isBiggerOrEqualValue(range.start) &
+                    _db.studyRecords.createdAt.isSmallerThanValue(range.end),
+              ))
+            .getSingle();
     return result.read(_db.studyRecords.durationMinutes.sum()) ?? 0;
   }
 

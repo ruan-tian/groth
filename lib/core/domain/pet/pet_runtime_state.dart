@@ -37,8 +37,7 @@ class PetRuntimeState {
   }
 
   /// 是否有有效的 activeIntent
-  bool get hasActiveIntent =>
-      activeIntent != null && !activeIntent!.isExpired;
+  bool get hasActiveIntent => activeIntent != null && !activeIntent!.isExpired;
 
   PetRuntimeState copyWith({
     PetDisplayIntent? lifeIntent,
@@ -51,7 +50,9 @@ class PetRuntimeState {
     return PetRuntimeState(
       lifeIntent: lifeIntent ?? this.lifeIntent,
       moduleIntents: moduleIntents ?? this.moduleIntents,
-      activeIntent: clearActiveIntent ? null : activeIntent ?? this.activeIntent,
+      activeIntent: clearActiveIntent
+          ? null
+          : activeIntent ?? this.activeIntent,
       lastBubbleTime: lastBubbleTime ?? this.lastBubbleTime,
       recentMessageKeys: recentMessageKeys ?? this.recentMessageKeys,
     );

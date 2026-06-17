@@ -41,11 +41,7 @@ class StudyRecordTile extends StatelessWidget {
           size: 20,
         ),
       ),
-      title: Text(
-        record.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(record.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: _buildSubtitle(theme),
       trailing: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -72,10 +68,7 @@ class StudyRecordTile extends StatelessWidget {
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
           color: theme.colorScheme.error,
-          child: Icon(
-            Icons.delete,
-            color: theme.colorScheme.onError,
-          ),
+          child: Icon(Icons.delete, color: theme.colorScheme.onError),
         ),
         confirmDismiss: (_) async {
           onDelete!();
@@ -95,8 +88,7 @@ class StudyRecordTile extends StatelessWidget {
       parts.add(record.subject!);
     }
 
-    final dateTime =
-        DateTime.fromMillisecondsSinceEpoch(record.createdAt);
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
     final dateStr =
         '${dateTime.month.toString().padLeft(2, '0')}-'
         '${dateTime.day.toString().padLeft(2, '0')} '

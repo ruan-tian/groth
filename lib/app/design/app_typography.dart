@@ -10,10 +10,10 @@ class AppTypography {
   /// Large headline for hero sections.
   static const TextStyle headline = TextStyle(
     fontSize: 28,
-    fontWeight: FontWeight.w700,
+    fontWeight: FontWeight.w800,
     color: AppColors.textPrimary,
     height: 1.15,
-    letterSpacing: -0.5,
+    letterSpacing: 0,
   );
 
   /// Button text: medium weight, tight spacing.
@@ -36,11 +36,11 @@ class AppTypography {
 
   /// Label for form fields, tabs, navigation.
   static const TextStyle label = TextStyle(
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: FontWeight.w600,
     color: AppColors.textSecondary,
     height: 1.3,
-    letterSpacing: 0.3,
+    letterSpacing: 0,
   );
 
   /// Overline: smallest semantic text for categories, timestamps.
@@ -48,8 +48,8 @@ class AppTypography {
     fontSize: 11,
     fontWeight: FontWeight.w600,
     color: AppColors.textTertiary,
-    height: 1.3,
-    letterSpacing: 0.8,
+    height: 1.25,
+    letterSpacing: 0,
   );
 
   /// Number display: large tabular figures for stats.

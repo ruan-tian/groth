@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:just_audio/just_audio.dart';
 
 class MusicPlayerService {
@@ -19,7 +21,7 @@ class MusicPlayerService {
   Future<Duration?> playFile(String filePath, {required double volume}) async {
     final duration = await load(filePath);
     await setVolume(volume);
-    await _player.play();
+    unawaited(_player.play());
     return duration;
   }
 

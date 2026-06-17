@@ -52,12 +52,14 @@ class PetAINotifier extends StateNotifier<PetAIState> {
   Future<void> analyze(PetAIAnalysisType type) async {
     state = PetAIState(isLoading: true, analysisType: type);
     final moduleName = _getSourceType(type);
-    PetEventBus.instance.emit(PetEvent(
-      eventId: 'ai_start_${DateTime.now().millisecondsSinceEpoch}',
-      source: PetEventSource.ai,
-      type: PetEventType.aiAnalysisStarted,
-      module: moduleName,
-    ));
+    PetEventBus.instance.emit(
+      PetEvent(
+        eventId: 'ai_start_${DateTime.now().millisecondsSinceEpoch}',
+        source: PetEventSource.ai,
+        type: PetEventType.aiAnalysisStarted,
+        module: moduleName,
+      ),
+    );
 
     try {
       // 获取 AI 配置
@@ -102,7 +104,10 @@ class PetAINotifier extends StateNotifier<PetAIState> {
       // 调用 AI
       final aiService = _ref.read(aiServiceProvider);
       final systemPrompt = PetPromptBuilder.buildSystemPrompt();
-      final userPrompt = PetPromptBuilder.buildUserPrompt(type: type, data: data);
+      final userPrompt = PetPromptBuilder.buildUserPrompt(
+        type: type,
+        data: data,
+      );
 
       final raw = await aiService.callApi(
         apiKey: config.apiKey,
@@ -118,37 +123,45 @@ class PetAINotifier extends StateNotifier<PetAIState> {
       // 保存到数据库
       final db = _ref.read(databaseProvider);
       final now = DateTime.now().millisecondsSinceEpoch;
-      await db.into(db.petMessages).insert(PetMessagesCompanion.insert(
-        type: 'analysis',
-        title: result.title,
-        content: result.summary,
-        petMessage: result.petMessage,
-        sourceType: _getSourceType(type),
-        sourceRange: const Value('last_7_days'),
-        createdAt: now,
-        highlights: Value(result.highlights.join('|||')),
-        risks: Value(result.risks.join('|||')),
-        suggestions: Value(result.suggestions.join('|||')),
-      ));
+      await db
+          .into(db.petMessages)
+          .insert(
+            PetMessagesCompanion.insert(
+              type: 'analysis',
+              title: result.title,
+              content: result.summary,
+              petMessage: result.petMessage,
+              sourceType: _getSourceType(type),
+              sourceRange: const Value('last_7_days'),
+              createdAt: now,
+              highlights: Value(result.highlights.join('|||')),
+              risks: Value(result.risks.join('|||')),
+              suggestions: Value(result.suggestions.join('|||')),
+            ),
+          );
 
       // Invalidate the latest analysis provider so it refreshes
       _ref.invalidate(latestPetAnalysisProvider(_getSourceType(type)));
 
       state = PetAIState(result: result, analysisType: type);
-      PetEventBus.instance.emit(PetEvent.aiCompleted(
-        eventId: 'ai_done_${DateTime.now().millisecondsSinceEpoch}',
-        module: moduleName,
-        shortMessage: result.petMessage,
-      ));
+      PetEventBus.instance.emit(
+        PetEvent.aiCompleted(
+          eventId: 'ai_done_${DateTime.now().millisecondsSinceEpoch}',
+          module: moduleName,
+          shortMessage: result.petMessage,
+        ),
+      );
     } catch (e) {
-      state = PetAIState(error: '分析失败: $e', analysisType: type);
-      PetEventBus.instance.emit(PetEvent(
-        eventId: 'ai_fail_${DateTime.now().millisecondsSinceEpoch}',
-        source: PetEventSource.ai,
-        type: PetEventType.aiAnalysisFailed,
-        module: moduleName,
-        payload: {'error': e.toString()},
-      ));
+      state = PetAIState(error: '分析失败，请重试', analysisType: type);
+      PetEventBus.instance.emit(
+        PetEvent(
+          eventId: 'ai_fail_${DateTime.now().millisecondsSinceEpoch}',
+          source: PetEventSource.ai,
+          type: PetEventType.aiAnalysisFailed,
+          module: moduleName,
+          payload: {'error': e.toString()},
+        ),
+      );
     }
   }
 
@@ -213,12 +226,17 @@ class PetAINotifier extends StateNotifier<PetAIState> {
 
   String _getSourceType(PetAIAnalysisType type) {
     switch (type) {
-      case PetAIAnalysisType.study: return 'study';
-      case PetAIAnalysisType.fitness: return 'fitness';
-      case PetAIAnalysisType.diet: return 'diet';
-      case PetAIAnalysisType.sleep: return 'sleep';
+      case PetAIAnalysisType.study:
+        return 'study';
+      case PetAIAnalysisType.fitness:
+        return 'fitness';
+      case PetAIAnalysisType.diet:
+        return 'diet';
+      case PetAIAnalysisType.sleep:
+        return 'sleep';
       case PetAIAnalysisType.weeklyReport:
-      case PetAIAnalysisType.monthlyReport: return 'growth';
+      case PetAIAnalysisType.monthlyReport:
+        return 'growth';
     }
   }
 }

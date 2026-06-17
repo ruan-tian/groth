@@ -32,10 +32,8 @@ Future<TimeOfDay?> showGrowthTimePicker({
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
-    builder: (_) => _GrowthTimePickerSheet(
-      initialTime: initialTime,
-      presets: presets,
-    ),
+    builder: (_) =>
+        _GrowthTimePickerSheet(initialTime: initialTime, presets: presets),
   );
 }
 
@@ -173,9 +171,9 @@ class _GrowthTimePickerSheetState extends State<_GrowthTimePickerSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.growthColors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
         top: false,
@@ -188,7 +186,7 @@ class _GrowthTimePickerSheetState extends State<_GrowthTimePickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.growthColors.border,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -232,7 +230,7 @@ class _GrowthTimePickerSheetState extends State<_GrowthTimePickerSheet> {
                       top: 78,
                       child: Container(
                         height: 0.5,
-                        color: AppColors.border,
+                        color: context.growthColors.border,
                       ),
                     ),
                     // 分隔线（下）
@@ -242,7 +240,7 @@ class _GrowthTimePickerSheetState extends State<_GrowthTimePickerSheet> {
                       top: 122,
                       child: Container(
                         height: 0.5,
-                        color: AppColors.border,
+                        color: context.growthColors.border,
                       ),
                     ),
                     // 选中行背景高亮
@@ -253,7 +251,9 @@ class _GrowthTimePickerSheetState extends State<_GrowthTimePickerSheet> {
                       height: 44,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppColors.fitness.withValues(alpha: 0.04),
+                          color: context.growthColors.fitness.withValues(
+                            alpha: 0.04,
+                          ),
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
@@ -280,7 +280,7 @@ class _GrowthTimePickerSheetState extends State<_GrowthTimePickerSheet> {
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                                color: context.growthColors.textPrimary,
                               ),
                             ),
                           ),
@@ -379,8 +379,8 @@ class _WheelColumn extends StatelessWidget {
                 fontSize: isSelected ? 26 : 17,
                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                 color: isSelected
-                    ? AppColors.textPrimary
-                    : AppColors.textTertiary,
+                    ? context.growthColors.textPrimary
+                    : context.growthColors.textTertiary,
                 letterSpacing: -0.5,
               ),
               child: Text(labelBuilder(index)),
@@ -407,9 +407,11 @@ class _PresetButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.softOrange,
+          color: context.growthColors.softOrange,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.fitness.withValues(alpha: 0.15)),
+          border: Border.all(
+            color: context.growthColors.fitness.withValues(alpha: 0.15),
+          ),
         ),
         child: Center(
           child: Text(
@@ -417,7 +419,7 @@ class _PresetButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: AppColors.fitness,
+              color: context.growthColors.fitness,
             ),
           ),
         ),
@@ -446,9 +448,11 @@ class _BottomButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: filled ? AppColors.fitness : Colors.transparent,
+          color: filled ? context.growthColors.fitness : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
-          border: filled ? null : Border.all(color: AppColors.border),
+          border: filled
+              ? null
+              : Border.all(color: context.growthColors.border),
         ),
         child: Center(
           child: Text(
@@ -456,7 +460,9 @@ class _BottomButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: filled ? Colors.white : AppColors.textSecondary,
+              color: filled
+                  ? context.growthColors.textOnAccent
+                  : context.growthColors.textSecondary,
             ),
           ),
         ),

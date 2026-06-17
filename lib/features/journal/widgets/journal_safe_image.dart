@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_quill/flutter_quill.dart';
 
+import '../../../app/design/design.dart';
 import 'journal_colors.dart';
 
 class JournalSafeImage extends StatefulWidget {
@@ -140,7 +141,7 @@ class _JournalSafeImageState extends State<JournalSafeImage> {
       context: context,
       builder: (context) {
         return Dialog(
-          backgroundColor: Colors.black.withValues(alpha: 0.86),
+          backgroundColor: context.growthColors.shadow.withValues(alpha: 0.86),
           insetPadding: const EdgeInsets.all(16),
           child: SizedBox(
             width: double.infinity,

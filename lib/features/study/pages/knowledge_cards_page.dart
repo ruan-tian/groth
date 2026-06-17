@@ -1,5 +1,3 @@
-﻿import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -55,6 +53,8 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
     final colors = context.growthColors;
     final summaries = ref.watch(filteredKnowledgeGoalSummariesProvider);
     final cards = ref.watch(knowledgeCardsProvider);
+    final reviewStats = ref.watch(knowledgeReviewStatsProvider);
+    final knowledgeOverview = ref.watch(knowledgeBaseOverviewProvider);
 
     return Scaffold(
       backgroundColor: colors.paper,
@@ -126,29 +126,26 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(knowledgeCardsProvider);
+            ref.invalidate(knowledgeReviewStatsProvider);
             ref.invalidate(knowledgeGoalSummariesProvider);
             ref.invalidate(knowledgeDeckSummariesProvider);
             ref.invalidate(knowledgeCustomTemplatesProvider);
+            ref.invalidate(knowledgeBaseOverviewProvider);
             ref.invalidate(dueKnowledgeCardsCountProvider);
           },
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
-              summaries.when(
-                data: (items) {
-                  final total = items.fold<int>(
-                    0,
-                    (sum, item) => sum + item.totalCards,
-                  );
-                  final due = items.fold<int>(
-                    0,
-                    (sum, item) => sum + item.dueCards,
-                  );
-                  return KnowledgeReviewHero(totalCards: total, dueCards: due);
-                },
-                loading: () => const KnowledgeHeroSkeleton(),
-                error: (_, _) =>
-                    KnowledgeReviewHero(totalCards: 0, dueCards: 0),
+              KnowledgeHeroSection(
+                reviewStats: reviewStats,
+                overview: knowledgeOverview,
+                onReviewDue: () => context.push('/plan/study/knowledge/review'),
+                onReviewAll: () =>
+                    context.push('/plan/study/knowledge/review?all=1'),
+                onImport: () => context.push('/plan/study/knowledge/import'),
+                onAdd: () => context.push('/plan/study/knowledge/add'),
+                onOpenSources: () =>
+                    context.push('/plan/study/knowledge/sources'),
               ),
               cards.when(
                 data: (items) => items.isEmpty
@@ -220,6 +217,7 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
                     onArchiveSelected: _archiveSelectedCards,
                     onEditSubjectSelected: _editSelectedCardsSubject,
                     onMoveSelected: _moveSelectedCards,
+                    onEdit: _editCard,
                     onArchive: _archiveCard,
                     onPreview: _showCardPreview,
                   );
@@ -247,7 +245,9 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
   List<KnowledgeCard> _filterCards(List<KnowledgeCard> cards) {
     var filtered = cards;
     if (_selectedGoalFilter != null) {
-      filtered = filtered.where((c) => c.goalKey == _selectedGoalFilter).toList();
+      filtered = filtered
+          .where((c) => c.goalKey == _selectedGoalFilter)
+          .toList();
     }
     if (_query.isNotEmpty) {
       final q = _query.toLowerCase();
@@ -291,6 +291,8 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
 
   void _invalidateKnowledgeCardLists() {
     ref.invalidate(knowledgeCardsProvider);
+    ref.invalidate(knowledgeReviewStatsProvider);
+    ref.invalidate(knowledgeBaseOverviewProvider);
     ref.invalidate(knowledgeGoalSummariesProvider);
     ref.invalidate(knowledgeDeckSummariesProvider);
     ref.invalidate(dueKnowledgeCardsCountProvider);
@@ -327,7 +329,9 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
             ),
             Text(
               card.title,
-              style: AppTextStyles.cardTitle.copyWith(color: colors.textPrimary),
+              style: AppTextStyles.cardTitle.copyWith(
+                color: colors.textPrimary,
+              ),
             ),
             const SizedBox(height: AppSpacing.md),
             Text(
@@ -377,6 +381,7 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
       ),
     );
   }
+
   Future<void> _archiveCard(KnowledgeCard card) async {
     final colors = context.growthColors;
     final confirmed = await showDialog<bool>(
@@ -393,7 +398,9 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: context.growthColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('归档'),
           ),
         ],
@@ -428,7 +435,9 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: context.growthColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('归档'),
           ),
         ],
@@ -526,6 +535,10 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
       SnackBar(content: Text('已移动 $count 张知识卡到「${result.displayName}」')),
     );
   }
+
+  void _editCard(KnowledgeCard card) {
+    context.push('/plan/study/knowledge/add?editCardId=${card.id}');
+  }
 }
 
 enum KnowledgeMoreAction { export, archive }
@@ -534,91 +547,381 @@ enum KnowledgeMoreAction { export, archive }
 // Hero / Stats Widgets
 // =============================================================================
 
+class KnowledgeHeroSection extends StatelessWidget {
+  const KnowledgeHeroSection({
+    super.key,
+    required this.reviewStats,
+    required this.overview,
+    required this.onReviewDue,
+    required this.onReviewAll,
+    required this.onImport,
+    required this.onAdd,
+    required this.onOpenSources,
+  });
+
+  final AsyncValue<KnowledgeCardReviewStats> reviewStats;
+  final AsyncValue<KnowledgeBaseOverview> overview;
+  final VoidCallback onReviewDue;
+  final VoidCallback onReviewAll;
+  final VoidCallback onImport;
+  final VoidCallback onAdd;
+  final VoidCallback onOpenSources;
+
+  @override
+  Widget build(BuildContext context) {
+    return reviewStats.when(
+      data: (stats) => overview.when(
+        data: (data) => KnowledgeReviewHero(
+          stats: stats,
+          overview: data,
+          onReviewDue: onReviewDue,
+          onReviewAll: onReviewAll,
+          onImport: onImport,
+          onAdd: onAdd,
+          onOpenSources: onOpenSources,
+        ),
+        loading: () => const KnowledgeHeroSkeleton(),
+        error: (_, _) => const KnowledgeHeroSkeleton(),
+      ),
+      loading: () => const KnowledgeHeroSkeleton(),
+      error: (_, _) => const KnowledgeHeroSkeleton(),
+    );
+  }
+}
+
 class KnowledgeReviewHero extends StatelessWidget {
   const KnowledgeReviewHero({
     super.key,
-    required this.totalCards,
-    required this.dueCards,
+    required this.stats,
+    required this.overview,
+    required this.onReviewDue,
+    required this.onReviewAll,
+    required this.onImport,
+    required this.onAdd,
+    required this.onOpenSources,
   });
 
-  final int totalCards;
-  final int dueCards;
+  final KnowledgeCardReviewStats stats;
+  final KnowledgeBaseOverview overview;
+  final VoidCallback onReviewDue;
+  final VoidCallback onReviewAll;
+  final VoidCallback onImport;
+  final VoidCallback onAdd;
+  final VoidCallback onOpenSources;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
+    final totalCards = stats.totalCards;
+    final primaryAction = _heroPrimaryAction();
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxWidth < 420;
+        final isMedium = constraints.maxWidth < 560;
+        final heroRatio = isCompact ? 1.0 : (isMedium ? 1.18 : 16 / 9);
+        final horizontalPadding = isCompact ? AppSpacing.md : AppSpacing.lg;
+        final contentWidth = isCompact ? constraints.maxWidth : 360.0;
+
+        return Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.xxxl),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: 0.12),
+                blurRadius: 26,
+                offset: const Offset(0, 12),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xxxl),
+            child: AspectRatio(
+              aspectRatio: heroRatio,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.asset(
+                    KnowledgeCardAssets.entryWide,
+                    fit: BoxFit.cover,
+                    cacheWidth: 1400,
+                  errorBuilder: (_, __, ___) => ColoredBox(
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+                  ),
+                  ),
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                          colors.card.withValues(alpha: 0.98),
+                          colors.card.withValues(alpha: 0.88),
+                          colors.card.withValues(alpha: 0.18),
+                        ],
+                      ),
+                      border: Border.all(color: colors.border),
+                    ),
+                  ),
+                  Padding(
+                    padding: EdgeInsets.all(horizontalPadding),
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: contentWidth),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '知识抽卡',
+                              style: AppTextStyles.pageTitle.copyWith(
+                                color: colors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text(
+                              _heroSubtitle(),
+                              style: AppTextStyles.body.copyWith(
+                                color: colors.textSecondary,
+                                height: 1.42,
+                              ),
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            Wrap(
+                              spacing: AppSpacing.sm,
+                              runSpacing: AppSpacing.sm,
+                              children: [
+                                _HeroMetricChip(
+                                  label: '总卡片',
+                                  value: '$totalCards',
+                                  asset: KnowledgeCardAssets.badgeMastered,
+                                ),
+                                _HeroMetricChip(
+                                  label: '待复习',
+                                  value: '${stats.dueCards}',
+                                  asset: KnowledgeCardAssets.badgeDueCards,
+                                ),
+                                _HeroMetricChip(
+                                  label: '薄弱点',
+                                  value: '${stats.weakCards}',
+                                  asset: KnowledgeCardAssets.badgeWeakPoints,
+                                ),
+                                _HeroMetricChip(
+                                  label: '资料',
+                                  value: overview.sourceCount.toString(),
+                                  icon: Icons.auto_stories_rounded,
+                                  tint: colors.study,
+                                ),
+                                if (overview.pendingChunkCount > 0)
+                                  _HeroMetricChip(
+                                    label: '待沉淀',
+                                    value: '${overview.pendingChunkCount}',
+                                    icon: Icons.auto_awesome_rounded,
+                                    tint: colors.warning,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            FilledButton.icon(
+                              onPressed: primaryAction.onTap,
+                              style: FilledButton.styleFrom(
+                                backgroundColor: colors.study,
+                                foregroundColor: colors.textOnAccent,
+                                minimumSize: const Size.fromHeight(44),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                              ),
+                              icon: Icon(primaryAction.icon, size: 18),
+                              label: Text(primaryAction.label),
+                            ),
+                            const SizedBox(height: AppSpacing.sm),
+                            Wrap(
+                              spacing: AppSpacing.sm,
+                              runSpacing: AppSpacing.sm,
+                              children: [
+                                _HeroGhostAction(
+                                  icon: Icons.library_books_rounded,
+                                  label: '本地知识库',
+                                  onTap: onOpenSources,
+                                ),
+                                _HeroGhostAction(
+                                  icon: Icons.upload_file_rounded,
+                                  label: '导入资料',
+                                  onTap: onImport,
+                                ),
+                                _HeroGhostAction(
+                                  icon: Icons.add_card_rounded,
+                                  label: '添加知识卡',
+                                  onTap: onAdd,
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  _HeroPrimaryAction _heroPrimaryAction() {
+    if (stats.totalCards == 0) {
+      return _HeroPrimaryAction(
+        label: '从资料开始建卡',
+        icon: Icons.upload_file_rounded,
+        onTap: onImport,
+      );
+    }
+    if (stats.dueCards > 0) {
+      return _HeroPrimaryAction(
+        label: '复习 ${stats.dueCards} 张卡片',
+        icon: Icons.style_rounded,
+        onTap: onReviewDue,
+      );
+    }
+    return _HeroPrimaryAction(
+      label: '开始一轮总复习',
+      icon: Icons.play_arrow_rounded,
+      onTap: onReviewAll,
+    );
+  }
+
+  String _heroSubtitle() {
+    if (stats.totalCards == 0) {
+      return '先把资料留在本地知识库，AI 只读取你确认过的片段来生成知识卡。';
+    }
+    if (stats.dueCards > 0) {
+      return '今天有 ${stats.dueCards} 张卡片待复习，当前知识库共关联 ${overview.sourceCount} 份资料。';
+    }
+    if (overview.pendingChunkCount > 0) {
+      return '卡片复习节奏已经稳定，还有 ${overview.pendingChunkCount} 个片段可以继续沉淀成新卡。';
+    }
+    return '目前没有到期卡片，继续补充资料或做一轮总复习都很合适。';
+  }
+}
+
+class _HeroPrimaryAction {
+  const _HeroPrimaryAction({
+    required this.label,
+    required this.icon,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final VoidCallback onTap;
+}
+
+class _HeroMetricChip extends StatelessWidget {
+  const _HeroMetricChip({
+    required this.label,
+    required this.value,
+    this.asset,
+    this.icon,
+    this.tint,
+  });
+
+  final String label;
+  final String value;
+  final String? asset;
+  final IconData? icon;
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    final accent = tint ?? colors.study;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.study,
-            colors.study.withValues(alpha: 0.8),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: AppSpacing.xs,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.82),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          if (asset != null)
+            Image.asset(asset!, width: 20, height: 20, fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => ColoredBox(
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image_outlined, size: 16, color: Colors.grey),
+            ),
+          )
+          else if (icon != null)
+            Icon(icon, size: 18, color: accent),
+          const SizedBox(width: AppSpacing.xs),
           Text(
-            '知识抽卡',
-            style: AppTextStyles.sectionTitle.copyWith(color: Colors.white),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            totalCards == 0
-                ? '还没有知识卡，从导入资料开始吧'
-                : dueCards > 0
-                    ? '今天有 $dueCards 张卡片待复习'
-                    : '所有卡片已复习完毕',
-            style: AppTextStyles.body.copyWith(
-              color: Colors.white.withValues(alpha: 0.9),
+            value,
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          if (totalCards > 0) ...[
-            const SizedBox(height: AppSpacing.lg),
-            Row(
-              children: [
-                _HeroStat(label: '总计', value: '$totalCards'),
-                const SizedBox(width: AppSpacing.xl),
-                _HeroStat(label: '待复习', value: '$dueCards'),
-              ],
-            ),
-          ],
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
+          ),
         ],
       ),
     );
   }
 }
 
-class _HeroStat extends StatelessWidget {
-  const _HeroStat({required this.label, required this.value});
+class _HeroGhostAction extends StatelessWidget {
+  const _HeroGhostAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
 
+  final IconData icon;
   final String label;
-  final String value;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          value,
-          style: AppTextStyles.sectionTitle.copyWith(
-            color: Colors.white,
-            fontSize: 28,
-          ),
+    final colors = context.growthColors;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(99),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
         ),
-        Text(
-          label,
-          style: AppTextStyles.caption.copyWith(
-            color: Colors.white.withValues(alpha: 0.7),
-          ),
+        decoration: BoxDecoration(
+          color: colors.card.withValues(alpha: 0.74),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: colors.border.withValues(alpha: 0.75)),
         ),
-      ],
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 16, color: colors.study),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -630,30 +933,47 @@ class KnowledgeHeroSkeleton extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      height: 160,
+      height: 220,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            width: 120,
-            height: 24,
+            width: 150,
+            height: 28,
             decoration: BoxDecoration(
               color: colors.surface,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(8),
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Container(
-            width: 200,
+            width: 260,
             height: 16,
             decoration: BoxDecoration(
               color: colors.surface,
-              borderRadius: BorderRadius.circular(4),
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            children: List.generate(
+              4,
+              (_) => Container(
+                width: 88,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(99),
+                ),
+              ),
             ),
           ),
         ],
@@ -670,20 +990,47 @@ class ReviewHealthSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
+    final weakExcludingUnreviewed = stats.weakCards > stats.unreviewedCards
+        ? stats.weakCards - stats.unreviewedCards
+        : 0;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
+        color: colors.card.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Row(
+            children: [
+              Text(
+                '学习健康度',
+                style: AppTextStyles.sectionTitle.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '均值 ${stats.averageMastery.toStringAsFixed(1)}/5',
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xs),
           Text(
-            '学习健康度',
-            style: AppTextStyles.sectionTitle.copyWith(
-              color: colors.textPrimary,
+            weakExcludingUnreviewed > 0
+                ? '$weakExcludingUnreviewed 张卡片已经暴露薄弱点，建议先做一轮薄弱复习。'
+                : stats.unreviewedCards > 0
+                ? '还有 ${stats.unreviewedCards} 张卡片尚未开始复习，先抽几张熟悉一下。'
+                : '当前卡片状态稳定，继续保持复习节奏就好。',
+            style: AppTextStyles.caption.copyWith(
+              color: colors.textSecondary,
+              height: 1.4,
             ),
           ),
           const SizedBox(height: AppSpacing.md),
@@ -691,7 +1038,7 @@ class ReviewHealthSummary extends StatelessWidget {
             children: [
               Expanded(
                 child: HealthMetricTile(
-                  icon: Icons.local_fire_department_rounded,
+                  asset: KnowledgeCardAssets.badgeMastered,
                   label: '已掌握',
                   value: '${stats.masteredCards}',
                   color: colors.success,
@@ -700,7 +1047,7 @@ class ReviewHealthSummary extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: HealthMetricTile(
-                  icon: Icons.warning_amber_rounded,
+                  asset: KnowledgeCardAssets.badgeWeakPoints,
                   label: '薄弱点',
                   value: '${stats.weakCards}',
                   color: colors.warning,
@@ -709,7 +1056,7 @@ class ReviewHealthSummary extends StatelessWidget {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: HealthMetricTile(
-                  icon: Icons.schedule_rounded,
+                  asset: KnowledgeCardAssets.badgeDueCards,
                   label: '待复习',
                   value: '${stats.dueCards}',
                   color: colors.study,
@@ -733,9 +1080,11 @@ class MasteryDistributionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final mastered = stats.ratio(stats.masteredCards);
-    final reviewed = stats.ratio(stats.reviewedCards - stats.masteredCards);
-    final weak = stats.ratio(stats.weakCards);
+    final unreviewed = stats.unreviewedCards;
+    final weak = stats.weakCards > unreviewed
+        ? stats.weakCards - unreviewed
+        : 0;
+    final learning = stats.totalCards - stats.masteredCards - weak - unreviewed;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -746,12 +1095,91 @@ class MasteryDistributionBar extends StatelessWidget {
         ),
         const SizedBox(height: AppSpacing.xs),
         ClipRRect(
-          borderRadius: BorderRadius.circular(4),
-          child: LinearProgressIndicator(
-            value: mastered + reviewed + weak,
-            backgroundColor: colors.border,
-            valueColor: AlwaysStoppedAnimation(colors.success),
-            minHeight: 8,
+          borderRadius: BorderRadius.circular(99),
+          child: SizedBox(
+            height: 10,
+            child: stats.totalCards == 0
+                ? ColoredBox(color: colors.border)
+                : Row(
+                    children: [
+                      _DistributionBarPart(
+                        value: stats.masteredCards,
+                        color: colors.success,
+                      ),
+                      _DistributionBarPart(value: weak, color: colors.warning),
+                      _DistributionBarPart(
+                        value: unreviewed,
+                        color: colors.textTertiary,
+                      ),
+                      _DistributionBarPart(
+                        value: learning > 0 ? learning : 0,
+                        color: colors.study.withValues(alpha: 0.45),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.sm,
+          runSpacing: AppSpacing.xs,
+          children: [
+            _DistributionLegend(
+              label: '已掌握 ${stats.masteredCards}',
+              color: colors.success,
+            ),
+            _DistributionLegend(
+              label: '薄弱 ${stats.weakCards}',
+              color: colors.warning,
+            ),
+            _DistributionLegend(
+              label: '未复习 ${stats.unreviewedCards}',
+              color: colors.textTertiary,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _DistributionBarPart extends StatelessWidget {
+  const _DistributionBarPart({required this.value, required this.color});
+
+  final int value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    if (value <= 0) return const SizedBox.shrink();
+    return Expanded(
+      flex: value,
+      child: ColoredBox(color: color),
+    );
+  }
+}
+
+class _DistributionLegend extends StatelessWidget {
+  const _DistributionLegend({required this.label, required this.color});
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(
+            color: context.growthColors.textSecondary,
           ),
         ),
       ],
@@ -762,16 +1190,18 @@ class MasteryDistributionBar extends StatelessWidget {
 class HealthMetricTile extends StatelessWidget {
   const HealthMetricTile({
     super.key,
-    required this.icon,
     required this.label,
     required this.value,
     required this.color,
+    this.asset,
+    this.icon,
   });
 
-  final IconData icon;
   final String label;
   final String value;
   final Color color;
+  final String? asset;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -784,17 +1214,20 @@ class HealthMetricTile extends StatelessWidget {
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 20),
+          if (asset != null)
+            Image.asset(asset!, width: 24, height: 24, fit: BoxFit.contain,
+            errorBuilder: (_, __, ___) => ColoredBox(
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image_outlined, size: 16, color: Colors.grey),
+            ),
+          )
+          else if (icon != null)
+            Icon(icon, color: color, size: 20),
           const SizedBox(height: AppSpacing.xs),
-          Text(
-            value,
-            style: AppTextStyles.sectionTitle.copyWith(color: color),
-          ),
+          Text(value, style: AppTextStyles.sectionTitle.copyWith(color: color)),
           Text(
             label,
-            style: AppTextStyles.caption.copyWith(
-              color: colors.textSecondary,
-            ),
+            style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
           ),
         ],
       ),
@@ -818,13 +1251,46 @@ class WeakReviewShortcut extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: colors.warning.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: colors.warning.withValues(alpha: 0.3)),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              colors.warning.withValues(alpha: 0.18),
+              colors.card.withValues(alpha: 0.88),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
+          border: Border.all(color: colors.warning.withValues(alpha: 0.24)),
+          boxShadow: [
+            BoxShadow(
+              color: colors.warning.withValues(alpha: 0.10),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: colors.warning),
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: colors.card.withValues(alpha: 0.52),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: Image.asset(
+                  KnowledgeCardAssets.badgeWeakPoints,
+                  fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => ColoredBox(
+                  color: Colors.grey.shade200,
+                  child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+                ),
+                ),
+              ),
+            ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
               child: Column(
@@ -834,19 +1300,49 @@ class WeakReviewShortcut extends StatelessWidget {
                     '${weakCards.length} 张薄弱卡片',
                     style: AppTextStyles.body.copyWith(
                       color: colors.textPrimary,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
-                    '点击立即复习薄弱知识点',
+                    '建议优先清掉已经暴露的薄弱点，先做一轮针对性复习。',
                     style: AppTextStyles.caption.copyWith(
                       color: colors.textSecondary,
+                      height: 1.35,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, color: colors.warning, size: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: AppSpacing.sm,
+              ),
+              decoration: BoxDecoration(
+                color: colors.card.withValues(alpha: 0.58),
+                borderRadius: BorderRadius.circular(99),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.42)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    '立即复习',
+                    style: AppTextStyles.caption.copyWith(
+                      color: colors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    color: colors.warning,
+                    size: 14,
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -878,17 +1374,12 @@ class SectionTitleRow extends StatelessWidget {
       children: [
         Text(
           title,
-          style: AppTextStyles.sectionTitle.copyWith(
-            color: colors.textPrimary,
-          ),
+          style: AppTextStyles.sectionTitle.copyWith(color: colors.textPrimary),
         ),
         if (action != null)
           TextButton(
             onPressed: onActionTap,
-            child: Text(
-              action!,
-              style: TextStyle(color: colors.study),
-            ),
+            child: Text(action!, style: TextStyle(color: colors.study)),
           ),
       ],
     );
@@ -902,18 +1393,35 @@ class GoalGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: AppSpacing.md,
-        crossAxisSpacing: AppSpacing.md,
-        childAspectRatio: 1.2,
-      ),
-      itemCount: summaries.length,
-      itemBuilder: (context, index) {
-        return GoalCard(summary: summaries[index]);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final crossAxisCount = constraints.maxWidth >= 760 ? 2 : 1;
+        if (crossAxisCount == 1) {
+          return Column(
+            children: [
+              for (var index = 0; index < summaries.length; index++) ...[
+                GoalCard(summary: summaries[index]),
+                if (index != summaries.length - 1)
+                  const SizedBox(height: AppSpacing.md),
+              ],
+            ],
+          );
+        }
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            mainAxisSpacing: AppSpacing.md,
+            crossAxisSpacing: AppSpacing.md,
+            childAspectRatio: 0.92,
+          ),
+          itemCount: summaries.length,
+          itemBuilder: (context, index) {
+            return GoalCard(summary: summaries[index]);
+          },
+        );
       },
     );
   }
@@ -934,50 +1442,131 @@ class GoalCard extends StatelessWidget {
         '/plan/study/knowledge/goal?goalKey=${visual.key}&goalName=${summary.displayName}',
       ),
       child: Container(
-        padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: colors.card,
-          borderRadius: BorderRadius.circular(AppRadius.xl),
+          color: colors.card.withValues(alpha: 0.94),
+          borderRadius: BorderRadius.circular(AppRadius.xxl),
           border: Border.all(color: colors.border),
+          boxShadow: [
+            BoxShadow(
+              color: colors.shadow.withValues(alpha: 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  child: Image.asset(
-                    visual.asset,
-                    width: 32,
-                    height: 32,
-                    fit: BoxFit.cover,
-                  ),
-                ),
-                const Spacer(),
-                if (summary.dueCards > 0)
-                  DueBadge(count: summary.dueCards),
-              ],
-            ),
-            const Spacer(),
-            Text(
-              summary.displayName,
-              style: AppTextStyles.body.copyWith(
-                color: colors.textPrimary,
-                fontWeight: FontWeight.w600,
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(AppRadius.xxl),
               ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: Image.asset(
+                  visual.asset,
+                  fit: BoxFit.cover,
+                  cacheWidth: 900,
+                errorBuilder: (_, __, ___) => ColoredBox(
+                  color: Colors.grey.shade200,
+                  child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+                ),
+                ),
+              ),
             ),
-            const SizedBox(height: AppSpacing.xs),
-            Text(
-              '${summary.totalCards} 张卡片',
-              style: AppTextStyles.caption.copyWith(
-                color: colors.textSecondary,
+            Padding(
+              padding: const EdgeInsets.all(AppSpacing.md),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          summary.displayName,
+                          style: AppTextStyles.body.copyWith(
+                            color: colors.textPrimary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (summary.dueCards > 0) ...[
+                        const SizedBox(width: AppSpacing.sm),
+                        DueBadge(count: summary.dueCards),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(
+                    visual.subtitle,
+                    style: AppTextStyles.caption.copyWith(
+                      color: colors.textSecondary,
+                      height: 1.35,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Wrap(
+                    spacing: AppSpacing.sm,
+                    runSpacing: AppSpacing.xs,
+                    children: [
+                      _GoalMetaPill(
+                        icon: Icons.style_rounded,
+                        text: '${summary.totalCards} 张卡片',
+                      ),
+                      _GoalMetaPill(
+                        icon: Icons.dashboard_customize_rounded,
+                        text: '${summary.moduleCount} 个模块',
+                      ),
+                      _GoalMetaPill(
+                        icon: Icons.psychology_rounded,
+                        text:
+                            '掌握 ${summary.averageMastery.toStringAsFixed(1)}/5',
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _GoalMetaPill extends StatelessWidget {
+  const _GoalMetaPill({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colors.study),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
+          ),
+        ],
       ),
     );
   }
@@ -1032,6 +1621,7 @@ class KnowledgeCardLibrary extends StatelessWidget {
     required this.onArchiveSelected,
     required this.onEditSubjectSelected,
     required this.onMoveSelected,
+    required this.onEdit,
     required this.onArchive,
     this.onPreview,
   });
@@ -1050,6 +1640,7 @@ class KnowledgeCardLibrary extends StatelessWidget {
   final VoidCallback onArchiveSelected;
   final VoidCallback onEditSubjectSelected;
   final VoidCallback onMoveSelected;
+  final ValueChanged<KnowledgeCard> onEdit;
   final ValueChanged<KnowledgeCard> onArchive;
   final ValueChanged<KnowledgeCard>? onPreview;
 
@@ -1059,27 +1650,69 @@ class KnowledgeCardLibrary extends StatelessWidget {
 
     return Column(
       children: [
-        // Search bar
-        TextField(
-          onChanged: onQueryChanged,
-          decoration: InputDecoration(
-            hintText: '搜索知识卡...',
-            prefixIcon: Icon(Icons.search_rounded, color: colors.textTertiary),
-            filled: true,
-            fillColor: colors.surface,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.lg),
-              borderSide: BorderSide.none,
-            ),
+        Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
+            border: Border.all(color: colors.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                onChanged: onQueryChanged,
+                decoration: InputDecoration(
+                  hintText: '搜索知识卡...',
+                  prefixIcon: Icon(
+                    Icons.search_rounded,
+                    color: colors.textTertiary,
+                  ),
+                  filled: true,
+                  fillColor: colors.surface,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.md),
+              Row(
+                children: [
+                  Text(
+                    '共 ${allCards.length} 张卡片',
+                    style: AppTextStyles.caption.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Container(
+                    width: 4,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: colors.textTertiary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.sm),
+                  Text(
+                    query.isEmpty && selectedGoalFilter == null
+                        ? '当前显示全部'
+                        : '当前筛出 ${cards.length} 张',
+                    style: AppTextStyles.caption.copyWith(
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        // Goal filter chips
         GoalFilterChips(
           selectedGoal: selectedGoalFilter,
           onSelected: onGoalSelected,
         ),
-        // Bulk manage bar
         if (bulkMode)
           BulkManageBar(
             selectedCount: selectedCardIds.length,
@@ -1090,7 +1723,6 @@ class KnowledgeCardLibrary extends StatelessWidget {
             onMove: onMoveSelected,
           ),
         const SizedBox(height: AppSpacing.md),
-        // Card list
         if (cards.isEmpty)
           const EmptyKnowledgeCardsPanel()
         else
@@ -1100,6 +1732,7 @@ class KnowledgeCardLibrary extends StatelessWidget {
               bulkMode: bulkMode,
               selected: selectedCardIds.contains(card.id),
               onToggle: () => onToggleSelected(card.id),
+              onEdit: () => onEdit(card),
               onArchive: () => onArchive(card),
               onPreview: onPreview != null ? () => onPreview!(card) : null,
             ),
@@ -1120,7 +1753,6 @@ class GoalFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.growthColors;
     return SizedBox(
       height: 40,
       child: ListView(
@@ -1172,9 +1804,7 @@ class FilterChipButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: selected ? colors.study : colors.surface,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(
-            color: selected ? colors.study : colors.border,
-          ),
+          border: Border.all(color: selected ? colors.study : colors.border),
         ),
         child: Text(
           label,
@@ -1209,37 +1839,110 @@ class BulkManageBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.sm),
+      margin: const EdgeInsets.only(top: AppSpacing.md),
+      padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
         color: colors.study.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppRadius.md),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.study.withValues(alpha: 0.15)),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          TextButton(
-            onPressed: onSelectAll,
-            child: const Text('全选'),
+          Row(
+            children: [
+              Icon(Icons.fact_check_rounded, size: 18, color: colors.study),
+              const SizedBox(width: AppSpacing.xs),
+              Text(
+                '已选择 $selectedCount 张',
+                style: AppTextStyles.body.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const Spacer(),
+              TextButton(onPressed: onSelectAll, child: const Text('全选')),
+              TextButton(onPressed: onClear, child: const Text('清除')),
+            ],
           ),
-          TextButton(
-            onPressed: onClear,
-            child: const Text('清除'),
-          ),
-          const Spacer(),
-          Text('$selectedCount 项'),
-          const Spacer(),
-          TextButton(
-            onPressed: selectedCount > 0 ? onArchive : null,
-            child: const Text('归档所选'),
-          ),
-          TextButton(
-            onPressed: selectedCount > 0 ? onEditSubject : null,
-            child: const Text('改章节/单元'),
-          ),
-          TextButton(
-            onPressed: selectedCount > 0 ? onMove : null,
-            child: const Text('移动目标/模块'),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              _BulkActionButton(
+                label: '归档所选',
+                icon: Icons.archive_outlined,
+                enabled: selectedCount > 0,
+                onTap: onArchive,
+              ),
+              _BulkActionButton(
+                label: '改章节/单元',
+                icon: Icons.edit_note_rounded,
+                enabled: selectedCount > 0,
+                onTap: onEditSubject,
+              ),
+              _BulkActionButton(
+                label: '移动目标/模块',
+                icon: Icons.swap_horiz_rounded,
+                enabled: selectedCount > 0,
+                onTap: onMove,
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _BulkActionButton extends StatelessWidget {
+  const _BulkActionButton({
+    required this.label,
+    required this.icon,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return InkWell(
+      onTap: enabled ? onTap : null,
+      borderRadius: BorderRadius.circular(99),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.sm,
+        ),
+        decoration: BoxDecoration(
+          color: enabled ? colors.card : colors.card.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 16,
+              color: enabled ? colors.study : colors.textTertiary,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: enabled ? colors.textPrimary : colors.textTertiary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1252,6 +1955,7 @@ class KnowledgeCardManageTile extends StatelessWidget {
     required this.bulkMode,
     required this.selected,
     required this.onToggle,
+    required this.onEdit,
     required this.onArchive,
     this.onPreview,
   });
@@ -1260,56 +1964,248 @@ class KnowledgeCardManageTile extends StatelessWidget {
   final bool bulkMode;
   final bool selected;
   final VoidCallback onToggle;
+  final VoidCallback onEdit;
   final VoidCallback onArchive;
   final VoidCallback? onPreview;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    final isDue = card.dueAt <= nowMs;
+    final statusColor = isMasteredKnowledgeCard(card)
+        ? colors.success
+        : isWeakKnowledgeCard(card)
+        ? colors.warning
+        : colors.study;
+    final subjectText = _subjectText();
 
     return Container(
       key: ValueKey('knowledge-card-manage-tile-${card.id}'),
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
+        color: colors.card.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         border: Border.all(
           color: selected ? colors.study : colors.border,
           width: selected ? 2 : 1,
         ),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
-      child: ListTile(
+      child: InkWell(
         onTap: bulkMode ? onToggle : onPreview,
-        leading: bulkMode
-            ? Checkbox(
-                value: selected,
-                onChanged: (_) => onToggle(),
-              )
-            : null,
-        title: Text(
-          card.title,
-          style: AppTextStyles.body.copyWith(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Text(
-          card.question,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: AppTextStyles.caption.copyWith(
-            color: colors.textSecondary,
-          ),
-        ),
-        trailing: bulkMode
-            ? null
-            : IconButton(
-                onPressed: onArchive,
-                icon: Icon(
-                  Icons.archive_rounded,
-                  color: colors.textTertiary,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: Padding(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (bulkMode) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Checkbox(
+                    value: selected,
+                    onChanged: (_) => onToggle(),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.xs),
+              ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      card.title,
+                      style: AppTextStyles.body.copyWith(
+                        color: colors.textPrimary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      card.question,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.xs,
+                      children: [
+                        if (subjectText != null)
+                          _CardMetaPill(
+                            icon: Icons.bookmark_outline_rounded,
+                            label: subjectText,
+                          ),
+                        _CardMetaPill(
+                          icon: isDue
+                              ? Icons.schedule_rounded
+                              : Icons.event_available_rounded,
+                          label: isDue ? '待复习' : '未到期',
+                          tint: isDue ? colors.warning : colors.success,
+                        ),
+                        _CardMetaPill(
+                          icon: Icons.psychology_rounded,
+                          label: card.reviewCount == 0
+                              ? '未复习'
+                              : '掌握 ${card.masteryLevel}/5',
+                          tint: statusColor,
+                        ),
+                      ],
+                    ),
+                    if (!bulkMode) ...[
+                      const SizedBox(height: AppSpacing.sm),
+                      Wrap(
+                        spacing: AppSpacing.sm,
+                        runSpacing: AppSpacing.xs,
+                        children: [
+                          _InlineActionChip(
+                            icon: Icons.visibility_outlined,
+                            label: '预览',
+                            onTap: onPreview,
+                          ),
+                          _InlineActionChip(
+                            icon: Icons.edit_outlined,
+                            label: '编辑',
+                            onTap: onEdit,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
                 ),
               ),
+              if (!bulkMode)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      onPressed: onArchive,
+                      icon: Icon(
+                        Icons.archive_outlined,
+                        color: colors.textTertiary,
+                      ),
+                    ),
+                    Icon(
+                      Icons.chevron_right_rounded,
+                      color: colors.textTertiary,
+                    ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String? _subjectText() {
+    final candidates = [
+      card.subject,
+      card.moduleName,
+      card.goalName,
+      card.moduleKey,
+    ];
+    for (final value in candidates) {
+      final trimmed = value?.trim();
+      if (trimmed != null && trimmed.isNotEmpty) {
+        return trimmed;
+      }
+    }
+    return null;
+  }
+}
+
+class _InlineActionChip extends StatelessWidget {
+  const _InlineActionChip({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(99),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.sm,
+          vertical: 6,
+        ),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          borderRadius: BorderRadius.circular(99),
+          border: Border.all(color: colors.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: colors.study),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppTextStyles.caption.copyWith(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CardMetaPill extends StatelessWidget {
+  const _CardMetaPill({required this.icon, required this.label, this.tint});
+
+  final IconData icon;
+  final String label;
+  final Color? tint;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    final chipTint = tint ?? colors.study;
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.sm,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        color: chipTint.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: chipTint.withValues(alpha: 0.15)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: chipTint),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: colors.textSecondary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1321,11 +2217,70 @@ class EmptyKnowledgeCardsPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    return EmptyStateWidget(
-      icon: Icons.style_rounded,
-      title: '还没有知识卡',
-      subtitle: '从导入资料开始，AI 会帮你生成知识卡',
-      accentColor: colors.study,
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.94),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        border: Border.all(color: colors.border),
+      ),
+      child: Column(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            child: AspectRatio(
+              aspectRatio: 16 / 9,
+              child: Image.asset(
+                KnowledgeCardAssets.emptyCards,
+                fit: BoxFit.cover,
+                cacheWidth: 900,
+              errorBuilder: (_, __, ___) => ColoredBox(
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+              ),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(
+            '还没有知识卡',
+            style: AppTextStyles.sectionTitle.copyWith(
+              color: colors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Text(
+            '从导入资料开始，AI 会先生成草稿，你确认后再进入本地知识卡片库。',
+            textAlign: TextAlign.center,
+            style: AppTextStyles.caption.copyWith(
+              color: colors.textSecondary,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            alignment: WrapAlignment.center,
+            children: [
+              FilledButton.icon(
+                onPressed: () => context.push('/plan/study/knowledge/import'),
+                style: FilledButton.styleFrom(
+                  backgroundColor: colors.study,
+                  foregroundColor: colors.textOnAccent,
+                ),
+                icon: const Icon(Icons.upload_file_rounded, size: 18),
+                label: const Text('导入资料'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => context.push('/plan/study/knowledge/add'),
+                icon: const Icon(Icons.add_card_rounded, size: 18),
+                label: const Text('手动添加'),
+              ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1347,7 +2302,10 @@ class KnowledgeMoreActionRow extends StatelessWidget {
       children: [
         Icon(icon, size: 20, color: colors.textPrimary),
         const SizedBox(width: AppSpacing.sm),
-        Text(label, style: AppTextStyles.body.copyWith(color: colors.textPrimary)),
+        Text(
+          label,
+          style: AppTextStyles.body.copyWith(color: colors.textPrimary),
+        ),
       ],
     );
   }
@@ -1364,7 +2322,6 @@ class CardSourceReferences extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.growthColors;
     final references = ref.watch(knowledgeCardSourceReferencesProvider(cardId));
 
     return references.when(
@@ -1403,8 +2360,7 @@ class SourceReferencePanel extends StatelessWidget {
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
-          for (final ref in references)
-            SourceReferenceTile(reference: ref),
+          for (final ref in references) SourceReferenceTile(reference: ref),
         ],
       ),
     );
@@ -1528,11 +2484,16 @@ class _BulkMoveTargetDialogState extends State<BulkMoveTargetDialog> {
                         final modules = goal.modules.toList();
                         setState(() {
                           _selectedGoalKey = goal.key;
-                          _selectedModuleKey = modules.isNotEmpty ? modules.first.key : null;
+                          _selectedModuleKey = modules.isNotEmpty
+                              ? modules.first.key
+                              : null;
                         });
                       },
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: _selectedGoalKey == goal.key
                               ? colors.study.withValues(alpha: 0.15)
@@ -1582,7 +2543,10 @@ class _BulkMoveTargetDialogState extends State<BulkMoveTargetDialog> {
                           setState(() => _selectedModuleKey = module.key);
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
                             color: _selectedModuleKey == module.key
                                 ? colors.study.withValues(alpha: 0.15)
@@ -1622,7 +2586,9 @@ class _BulkMoveTargetDialogState extends State<BulkMoveTargetDialog> {
         TextButton(
           onPressed: _selectedGoalKey != null && _selectedModuleKey != null
               ? () {
-                  final goal = KnowledgeCardAssets.goalForKey(_selectedGoalKey!);
+                  final goal = KnowledgeCardAssets.goalForKey(
+                    _selectedGoalKey!,
+                  );
                   final module = _getModules().firstWhere(
                     (m) => m.key == _selectedModuleKey,
                   );

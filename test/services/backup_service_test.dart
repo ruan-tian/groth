@@ -4,6 +4,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
+import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
+import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
 import 'package:growth_os/core/services/backup_service.dart';
 
 void main() {
@@ -44,6 +46,13 @@ void main() {
     expect(tables.keys, contains('sleepRecords'));
     expect(tables.keys, contains('petMessages'));
     expect(tables.keys, contains('musicTracks'));
+    expect(tables.keys, contains('knowledgeCards'));
+    expect(tables.keys, contains('knowledgeReviewLogs'));
+    expect(tables.keys, contains('knowledgeCustomTemplates'));
+    expect(tables.keys, contains('knowledgeCustomTemplateModules'));
+    expect(tables.keys, contains('knowledgeSources'));
+    expect(tables.keys, contains('knowledgeChunks'));
+    expect(tables.keys, contains('knowledgeCardSourceLinks'));
   });
 
   test(
@@ -270,6 +279,168 @@ void main() {
       ),
     );
   });
+
+  test(
+    'import accepts older backups without optional knowledge card tables',
+    () async {
+      final payload =
+          jsonDecode(await BackupService(sourceDb).exportToJson())
+              as Map<String, dynamic>;
+      final data = payload['data'] as Map<String, dynamic>;
+      data.remove('knowledgeCards');
+      data.remove('knowledgeReviewLogs');
+      data.remove('knowledgeCustomTemplates');
+      data.remove('knowledgeCustomTemplateModules');
+      data.remove('knowledgeSources');
+      data.remove('knowledgeChunks');
+      data.remove('knowledgeCardSourceLinks');
+
+      await BackupService(targetDb).importFromJson(jsonEncode(payload));
+
+      final cards = await targetDb.select(targetDb.knowledgeCards).get();
+      final logs = await targetDb.select(targetDb.knowledgeReviewLogs).get();
+      final templates = await targetDb
+          .select(targetDb.knowledgeCustomTemplates)
+          .get();
+      final modules = await targetDb
+          .select(targetDb.knowledgeCustomTemplateModules)
+          .get();
+      final sources = await targetDb.select(targetDb.knowledgeSources).get();
+      final chunks = await targetDb.select(targetDb.knowledgeChunks).get();
+      final links = await targetDb
+          .select(targetDb.knowledgeCardSourceLinks)
+          .get();
+      expect(cards, isEmpty);
+      expect(logs, isEmpty);
+      expect(templates, isEmpty);
+      expect(modules, isEmpty);
+      expect(sources, isEmpty);
+      expect(chunks, isEmpty);
+      expect(links, isEmpty);
+    },
+  );
+
+  test('round-trip preserves custom knowledge templates', () async {
+    final repo = KnowledgeCardRepository(sourceDb);
+    final templateId = await repo.createCustomTemplate(
+      name: '软考高级',
+      description: '案例分析和论文复习',
+    );
+    await repo.createCustomTemplateModule(
+      templateId: templateId,
+      name: '案例分析',
+      deckKey: 'computer',
+    );
+
+    final json = await BackupService(sourceDb).exportToJson();
+    await BackupService(targetDb).importFromJson(json);
+
+    final importedTemplates = await targetDb
+        .select(targetDb.knowledgeCustomTemplates)
+        .get();
+    final importedModules = await targetDb
+        .select(targetDb.knowledgeCustomTemplateModules)
+        .get();
+    expect(importedTemplates, hasLength(1));
+    expect(importedTemplates.single.name, '软考高级');
+    expect(importedModules, hasLength(1));
+    expect(importedModules.single.name, '案例分析');
+    expect(importedModules.single.deckKey, 'computer');
+  });
+
+  test(
+    'round-trip preserves knowledge sources, chunks and card links',
+    () async {
+      final cardRepo = KnowledgeCardRepository(sourceDb);
+      final sourceRepo = KnowledgeSourceRepository(sourceDb);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final cardId = await cardRepo.insertCard(
+        KnowledgeCardsCompanion.insert(
+          deckKey: const Value('computer'),
+          goalKey: const Value('kaoyan_computer'),
+          moduleKey: const Value('operating_system'),
+          subject: const Value('进程管理'),
+          title: '进程和线程',
+          question: '进程和线程有什么区别？',
+          answer: '进程是资源分配单位，线程是 CPU 调度单位。',
+          dueAt: now,
+          createdAt: now,
+          updatedAt: now,
+        ),
+      );
+      final sourceId = await sourceRepo.importTextSource(
+        title: '操作系统笔记',
+        goalKey: 'kaoyan_computer',
+        moduleKey: 'operating_system',
+        content: '进程是资源分配单位，线程是 CPU 调度单位。',
+      );
+      final chunk = (await sourceRepo.getChunksForSource(sourceId)).single;
+      await sourceRepo.linkCardToChunk(
+        cardId: cardId,
+        sourceId: sourceId,
+        chunkId: chunk.id,
+        quote: '线程是 CPU 调度单位',
+      );
+
+      final json = await BackupService(sourceDb).exportToJson();
+      await BackupService(targetDb).importFromJson(json);
+
+      final importedSources = await targetDb
+          .select(targetDb.knowledgeSources)
+          .get();
+      final importedChunks = await targetDb
+          .select(targetDb.knowledgeChunks)
+          .get();
+      final importedLinks = await targetDb
+          .select(targetDb.knowledgeCardSourceLinks)
+          .get();
+      expect(importedSources, hasLength(1));
+      expect(importedSources.single.title, '操作系统笔记');
+      expect(importedChunks, hasLength(1));
+      expect(importedChunks.single.content, contains('线程'));
+      expect(importedLinks, hasLength(1));
+      expect(importedLinks.single.quote, '线程是 CPU 调度单位');
+    },
+  );
+
+  test(
+    'import accepts schema 23 knowledge cards without goal fields',
+    () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final payload =
+          jsonDecode(await BackupService(sourceDb).exportToJson())
+              as Map<String, dynamic>;
+      final data = payload['data'] as Map<String, dynamic>;
+      data['knowledgeCards'] = [
+        {
+          'id': 1,
+          'deckKey': 'computer',
+          'subject': '操作系统',
+          'title': '进程与线程',
+          'question': '进程和线程有什么区别？',
+          'answer': '进程是资源分配单位，线程是 CPU 调度单位。',
+          'explanation': null,
+          'tags': null,
+          'sourceStudyId': null,
+          'masteryLevel': 0,
+          'reviewCount': 0,
+          'correctStreak': 0,
+          'lastReviewedAt': null,
+          'dueAt': now,
+          'archived': false,
+          'createdAt': now,
+          'updatedAt': now,
+        },
+      ];
+
+      await BackupService(targetDb).importFromJson(jsonEncode(payload));
+
+      final cards = await targetDb.select(targetDb.knowledgeCards).get();
+      expect(cards, hasLength(1));
+      expect(cards.first.goalKey, 'custom');
+      expect(cards.first.moduleKey, 'custom');
+    },
+  );
 
   test('import throws on unsupported backup version', () async {
     final payload = {

@@ -69,8 +69,12 @@ class ModuleProgressBar extends StatelessWidget {
                   Text(
                     '$current/$target$unit',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: isCompleted ? color : theme.colorScheme.onSurfaceVariant,
-                      fontWeight: isCompleted ? FontWeight.w600 : FontWeight.normal,
+                      color: isCompleted
+                          ? color
+                          : theme.colorScheme.onSurfaceVariant,
+                      fontWeight: isCompleted
+                          ? FontWeight.w600
+                          : FontWeight.normal,
                     ),
                   ),
                   if (showPercentage) ...[
@@ -96,7 +100,7 @@ class ModuleProgressBar extends StatelessWidget {
               minHeight: 6,
               backgroundColor: color.withValues(alpha: 0.15),
               valueColor: AlwaysStoppedAnimation<Color>(
-                isCompleted ? AppColors.success : color,
+                isCompleted ? context.growthColors.success : color,
               ),
             ),
           ),
@@ -134,7 +138,7 @@ class CombinedProgressBar extends StatelessWidget {
           target: studyTarget,
           label: '学习',
           unit: '分钟',
-          color: AppColors.study,
+          color: context.growthColors.study,
         ),
         const SizedBox(height: AppSpacing.sm),
         ModuleProgressBar(
@@ -142,7 +146,7 @@ class CombinedProgressBar extends StatelessWidget {
           target: fitnessTarget,
           label: '健身',
           unit: '分钟',
-          color: AppColors.fitness,
+          color: context.growthColors.fitness,
         ),
         const SizedBox(height: AppSpacing.sm),
         ModuleProgressBar(
@@ -150,7 +154,7 @@ class CombinedProgressBar extends StatelessWidget {
           target: journalTarget,
           label: '日记',
           unit: '篇',
-          color: AppColors.journal,
+          color: context.growthColors.journal,
         ),
       ],
     );

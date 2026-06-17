@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/pet_orchestrator_provider.dart';
 import '../../../shared/providers/pet_projection_provider.dart';
 import '../../../core/constants/pet_assets.dart';
+import '../../../features/fitness/utils/fitness_timer_assets.dart';
 
 /// 首页甜甜成长主卡。
 ///
@@ -61,16 +63,17 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
 
   Widget _buildContent({required String imagePath, required String message}) {
     final data = widget.data;
+    final colors = context.growthColors;
 
     return Container(
       width: double.infinity,
       constraints: const BoxConstraints(minHeight: 238),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: const Color(0xFFF0E5F4)),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: _DashboardHeroColors.primary.withValues(alpha: 0.11),
+            color: colors.primary.withValues(alpha: 0.11),
             blurRadius: 26,
             offset: const Offset(0, 14),
           ),
@@ -110,7 +113,7 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
                       Text(
                         '你的成长，由你掌控',
                         style: TextStyle(
-                          color: _DashboardHeroColors.ink,
+                          color: colors.textPrimary,
                           fontSize: compact ? 22 : 24,
                           fontWeight: FontWeight.w900,
                           height: 1.12,
@@ -121,8 +124,8 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
                         _summaryLine(data),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: _DashboardHeroColors.muted,
+                        style: TextStyle(
+                          color: colors.textSecondary,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                         ),
@@ -153,6 +156,7 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
   }
 
   Widget _buildPetImage(String imagePath) {
+    final colors = context.growthColors;
     return AnimatedBuilder(
       animation: _floatAnimation,
       builder: (context, child) {
@@ -181,14 +185,12 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
                 width: 98,
                 height: 98,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.95),
+                  color: colors.card.withValues(alpha: 0.95),
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: const Color(0xFFF1E8F5)),
+                  border: Border.all(color: colors.border),
                   boxShadow: [
                     BoxShadow(
-                      color: _DashboardHeroColors.primary.withValues(
-                        alpha: 0.12,
-                      ),
+                      color: colors.primary.withValues(alpha: 0.12),
                       blurRadius: 18,
                       offset: const Offset(0, 8),
                     ),
@@ -209,13 +211,13 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
                     width: 78,
                     height: 78,
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7FB),
+                      color: colors.surfaceVariant,
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Icon(
                         Icons.pets_rounded,
-                        color: _DashboardHeroColors.primary,
+                        color: colors.primary,
                         size: 36,
                       ),
                     ),
@@ -230,17 +232,18 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
   }
 
   Widget _buildSpeechBubble(String bubbleText) {
+    final colors = context.growthColors;
     return GestureDetector(
       onTap: () => _showFullMessage(context, bubbleText),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 13, 16, 13),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.93),
+          color: colors.card.withValues(alpha: 0.93),
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFF0E8F5)),
+          border: Border.all(color: colors.border),
           boxShadow: [
             BoxShadow(
-              color: _DashboardHeroColors.primary.withValues(alpha: 0.08),
+              color: colors.primary.withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 7),
             ),
@@ -251,20 +254,16 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
           children: [
             Row(
               children: [
-                const Text(
+                Text(
                   '甜甜',
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w900,
-                    color: _DashboardHeroColors.ink,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(width: 4),
-                Icon(
-                  Icons.touch_app_rounded,
-                  size: 12,
-                  color: _DashboardHeroColors.muted.withValues(alpha: 0.5),
-                ),
+                Icon(Icons.touch_app_rounded, size: 12, color: colors.textHint),
               ],
             ),
             const SizedBox(height: 4),
@@ -273,9 +272,9 @@ class _DashboardPetWidgetState extends ConsumerState<DashboardPetWidget>
               child: Text(
                 bubbleText,
                 key: ValueKey(bubbleText),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
-                  color: _DashboardHeroColors.text,
+                  color: colors.textSecondary,
                   fontWeight: FontWeight.w700,
                   height: 1.35,
                 ),
@@ -323,18 +322,19 @@ class _HeroBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Stack(
       children: [
-        const Positioned.fill(
+        Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFFFFFFFF),
-                  Color(0xFFFFF4F8),
-                  Color(0xFFF2F5E8),
+                  colors.card,
+                  colors.softPink.withValues(alpha: 0.3),
+                  colors.surface,
                 ],
               ),
             ),
@@ -361,6 +361,7 @@ class _GrowthSummary extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final expService = ref.watch(expServiceProvider);
     final level = data?.currentLevel ?? 1;
     final totalExp = data?.totalExp ?? 0;
@@ -371,9 +372,9 @@ class _GrowthSummary extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.68),
+        color: colors.card.withValues(alpha: 0.68),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFF1E8F5)),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -389,8 +390,8 @@ class _GrowthSummary extends ConsumerWidget {
                       'Lv.$level 成长进行中',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _DashboardHeroColors.ink,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.w900,
                       ),
@@ -400,8 +401,8 @@ class _GrowthSummary extends ConsumerWidget {
                       '$totalExp EXP · 下一级还差 $remaining',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _DashboardHeroColors.muted,
+                      style: TextStyle(
+                        color: colors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w700,
                       ),
@@ -426,17 +427,14 @@ class _GrowthSummary extends ConsumerWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 9,
-              backgroundColor: const Color(0xFFEDE7FA),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                _DashboardHeroColors.primary,
-              ),
+              backgroundColor: colors.primaryLight.withValues(alpha: 0.2),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.primaryLight),
             ),
           ),
         ],
       ),
     );
   }
-
 }
 
 class _LevelBadge extends StatelessWidget {
@@ -446,33 +444,47 @@ class _LevelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: 52,
       height: 52,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFA695FF), _DashboardHeroColors.primary],
+        gradient: LinearGradient(
+          colors: [colors.primaryLight, colors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.circular(18),
+        shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: _DashboardHeroColors.primary.withValues(alpha: 0.24),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
+            color: colors.primaryLight.withValues(alpha: 0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Center(
-        child: Text(
-          '$level',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 23,
-            fontWeight: FontWeight.w900,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            '$level',
+            style: TextStyle(
+              color: colors.textOnAccent,
+              fontSize: 18,
+              fontWeight: FontWeight.w900,
+              height: 1.0,
+            ),
           ),
-        ),
+          Text(
+            'Lv',
+            style: TextStyle(
+              color: colors.textOnAccent.withValues(alpha: 0.7),
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              height: 1.0,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -486,27 +498,28 @@ class _TinyMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       constraints: const BoxConstraints(minWidth: 54),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E6),
+        color: colors.softGold.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: const TextStyle(
-              color: Color(0xFFD58D31),
+            style: TextStyle(
+              color: colors.warning,
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
           ),
           Text(
             label,
-            style: const TextStyle(
-              color: _DashboardHeroColors.muted,
+            style: TextStyle(
+              color: colors.textSecondary,
               fontSize: 11,
               fontWeight: FontWeight.w800,
             ),
@@ -517,13 +530,6 @@ class _TinyMetric extends StatelessWidget {
   }
 }
 
-class _DashboardHeroColors {
-  static const primary = Color(0xFF8B75F6);
-  static const ink = Color(0xFF37314E);
-  static const text = Color(0xFF5C5670);
-  static const muted = Color(0xFF8D869A);
-}
-
 class _PetMessageSheet extends StatelessWidget {
   const _PetMessageSheet({required this.message});
 
@@ -531,13 +537,14 @@ class _PetMessageSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.45,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: colors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -549,7 +556,7 @@ class _PetMessageSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
+                color: colors.divider,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -568,24 +575,27 @@ class _PetMessageSheet extends StatelessWidget {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [Color(0xFFB8A9FF), Color(0xFF8B75F6)],
+                          gradient: LinearGradient(
+                            colors: [colors.primaryLight, colors.primary],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           ),
                           borderRadius: BorderRadius.circular(16),
                           boxShadow: [
                             BoxShadow(
-                              color: const Color(0xFF8B75F6).withValues(alpha: 0.3),
+                              color: colors.primary.withValues(alpha: 0.3),
                               blurRadius: 12,
                               offset: const Offset(0, 4),
                             ),
                           ],
                         ),
-                        child: const Center(
-                          child: Text(
-                            '🐱',
-                            style: TextStyle(fontSize: 24),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: Image.asset(
+                            FitnessTimerAssets.catAvatarDefault,
+                            width: 44,
+                            height: 44,
+                            fit: BoxFit.cover,
                           ),
                         ),
                       ),
@@ -594,12 +604,12 @@ class _PetMessageSheet extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               '甜甜',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w900,
-                                color: Color(0xFF37314E),
+                                color: colors.textPrimary,
                               ),
                             ),
                             const SizedBox(height: 2),
@@ -607,7 +617,7 @@ class _PetMessageSheet extends StatelessWidget {
                               '你的成长伙伴',
                               style: TextStyle(
                                 fontSize: 12,
-                                color: const Color(0xFF8D869A).withValues(alpha: 0.8),
+                                color: colors.textHint,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -618,16 +628,16 @@ class _PetMessageSheet extends StatelessWidget {
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
                         child: Container(
-                          width: 36,
-                          height: 36,
+                          width: 44,
+                          height: 44,
                           decoration: BoxDecoration(
-                            color: const Color(0xFFF5F5F5),
+                            color: colors.surfaceVariant,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(
+                          child: Icon(
                             Icons.close_rounded,
                             size: 20,
-                            color: Color(0xFF8D869A),
+                            color: colors.textSecondary,
                           ),
                         ),
                       ),
@@ -641,15 +651,15 @@ class _PetMessageSheet extends StatelessWidget {
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          const Color(0xFFF8F5FF),
-                          const Color(0xFFFFF8F0),
+                          colors.primaryLight.withValues(alpha: 0.08),
+                          colors.softGold.withValues(alpha: 0.08),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: const Color(0xFFEDEBFF),
+                        color: colors.primaryLight.withValues(alpha: 0.2),
                         width: 1.5,
                       ),
                     ),
@@ -664,24 +674,24 @@ class _PetMessageSheet extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF8B75F6).withValues(alpha: 0.1),
+                                color: colors.primary.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: const Row(
+                              child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
                                     Icons.auto_awesome_rounded,
                                     size: 14,
-                                    color: Color(0xFF8B75F6),
+                                    color: colors.primary,
                                   ),
-                                  SizedBox(width: 4),
+                                  const SizedBox(width: 4),
                                   Text(
                                     '甜甜说',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF8B75F6),
+                                      color: colors.primary,
                                     ),
                                   ),
                                 ],
@@ -692,10 +702,10 @@ class _PetMessageSheet extends StatelessWidget {
                         const SizedBox(height: 14),
                         Text(
                           message,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 15,
                             height: 1.6,
-                            color: Color(0xFF37314E),
+                            color: colors.textPrimary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -709,7 +719,7 @@ class _PetMessageSheet extends StatelessWidget {
                       '点击空白处关闭',
                       style: TextStyle(
                         fontSize: 12,
-                        color: const Color(0xFF8D869A).withValues(alpha: 0.6),
+                        color: colors.textHint,
                         fontWeight: FontWeight.w500,
                       ),
                     ),

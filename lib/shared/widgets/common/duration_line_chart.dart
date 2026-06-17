@@ -1,6 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
+
 import '../../../core/utils/chart_scale_utils.dart';
 
 /// 时长类折线图（自适应分钟/小时）
@@ -22,14 +24,15 @@ class DurationLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     if (valuesInMinutes.isEmpty ||
         valuesInMinutes.every((value) => value <= 0)) {
       return SizedBox(
         height: height,
-        child: const Center(
+        child: Center(
           child: Text(
             '暂无数据',
-            style: TextStyle(fontSize: 13, color: Color(0xFF9CA3AF)),
+            style: TextStyle(fontSize: 13, color: colors.textTertiary),
           ),
         ),
       );
@@ -51,7 +54,7 @@ class DurationLineChart extends StatelessWidget {
                 drawVerticalLine: false,
                 horizontalInterval: scale.interval,
                 getDrawingHorizontalLine: (value) =>
-                    FlLine(color: const Color(0xFFE5E7EB), strokeWidth: 0.8),
+                    FlLine(color: colors.divider, strokeWidth: 0.8),
               ),
               borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
@@ -69,9 +72,9 @@ class DurationLineChart extends StatelessWidget {
                     getTitlesWidget: (value, meta) {
                       return Text(
                         scale.formatAxisLabel(value),
-                        style: const TextStyle(
-                          fontSize: 10,
-                          color: Color(0xFF9CA3AF),
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: colors.textTertiary,
                         ),
                       );
                     },
@@ -90,9 +93,9 @@ class DurationLineChart extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 8),
                         child: Text(
                           labels[index],
-                          style: const TextStyle(
-                            fontSize: 10,
-                            color: Color(0xFF9CA3AF),
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: colors.textTertiary,
                           ),
                         ),
                       );
@@ -111,11 +114,11 @@ class DurationLineChart extends StatelessWidget {
                   isCurved: true,
                   preventCurveOverShooting: true,
                   barWidth: 3,
-                  color: lineColor ?? const Color(0xFF6C63FF),
+                  color: lineColor ?? colors.primary,
                   dotData: const FlDotData(show: true),
                   belowBarData: BarAreaData(
                     show: true,
-                    color: (lineColor ?? const Color(0xFF6C63FF)).withValues(
+                    color: (lineColor ?? colors.primary).withValues(
                       alpha: 0.10,
                     ),
                   ),

@@ -38,6 +38,13 @@ class FitnessRepository {
   // 健身记录查询
   // ---------------------------------------------------------------------------
 
+  /// 根据 ID 获取单条健身记录。
+  Future<FitnessRecord> getFitnessRecordById(int id) {
+    return (_db.select(
+      _db.fitnessRecords,
+    )..where((t) => t.id.equals(id))).getSingle();
+  }
+
   /// 获取指定日期的健身记录（按 createdAt 毫秒时间戳范围过滤）。
   Future<List<FitnessRecord>> getFitnessRecordsByDate(DateTime date) {
     final range = _dayRange(date);

@@ -1,6 +1,8 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
+
 // ─── 睡眠组合图表（fl_chart 柱状图+折线图）──────────────────────────────────
 
 class SleepCombinedChart extends StatefulWidget {
@@ -190,6 +192,7 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final data = _cachedProcessedData ??= _processData();
     if (data.isEmpty) return const SizedBox.shrink();
 
@@ -209,7 +212,7 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                 value == value.roundToDouble()
                     ? '${value.toInt()}h'
                     : '${value.toStringAsFixed(1)}h',
-                style: TextStyle(fontSize: 9, color: widget.durationColor),
+                style: TextStyle(fontSize: 11, color: widget.durationColor),
               );
             }),
           ),
@@ -230,151 +233,156 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                     ),
                     child: RepaintBoundary(
                       child: BarChart(
-                      BarChartData(
-                        maxY: maxY,
-                        alignment: BarChartAlignment.spaceAround,
-                        barTouchData: BarTouchData(
-                          enabled: true,
-                          longPressDuration: const Duration(milliseconds: 100),
-                          touchTooltipData: BarTouchTooltipData(
-                            getTooltipColor: (_) => widget.durationColor,
-                            tooltipRoundedRadius: 8,
-                            getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                              final d = data[group.x];
-                              final dur =
-                                  (d['duration'] as num?)?.toDouble() ?? 0;
-                              final qual = (d['quality'] as num?)?.toDouble();
-                              final lines = <String>[_formatDurationValue(dur)];
-                              if (qual != null) {
-                                lines.add(_formatQualityValue(qual));
-                              }
-                              return BarTooltipItem(
-                                lines.join('\n'),
-                                const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              );
+                        BarChartData(
+                          maxY: maxY,
+                          alignment: BarChartAlignment.spaceAround,
+                          barTouchData: BarTouchData(
+                            enabled: true,
+                            longPressDuration: const Duration(
+                              milliseconds: 100,
+                            ),
+                            touchTooltipData: BarTouchTooltipData(
+                              getTooltipColor: (_) => widget.durationColor,
+                              tooltipBorderRadius: BorderRadius.circular(8),
+                              getTooltipItem:
+                                  (group, groupIndex, rod, rodIndex) {
+                                    final d = data[group.x];
+                                    final dur =
+                                        (d['duration'] as num?)?.toDouble() ??
+                                        0;
+                                    final qual = (d['quality'] as num?)
+                                        ?.toDouble();
+                                    final lines = <String>[
+                                      _formatDurationValue(dur),
+                                    ];
+                                    if (qual != null) {
+                                      lines.add(_formatQualityValue(qual));
+                                    }
+                                    return BarTooltipItem(
+                                      lines.join('\n'),
+                                      TextStyle(
+                                        color: colors.textOnAccent,
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    );
+                                  },
+                            ),
+                            touchCallback: (event, response) {
+                              setState(() {
+                                if (response != null &&
+                                    response.spot != null &&
+                                    event is FlLongPressEnd) {
+                                  _touchedBarIndex = null;
+                                } else if (response != null &&
+                                    response.spot != null) {
+                                  _touchedBarIndex =
+                                      response.spot!.touchedBarGroupIndex;
+                                }
+                              });
                             },
                           ),
-                          touchCallback: (event, response) {
-                            setState(() {
-                              if (response != null &&
-                                  response.spot != null &&
-                                  event is FlLongPressEnd) {
-                                _touchedBarIndex = null;
-                              } else if (response != null &&
-                                  response.spot != null) {
-                                _touchedBarIndex =
-                                    response.spot!.touchedBarGroupIndex;
-                              }
-                            });
-                          },
-                        ),
-                        titlesData: FlTitlesData(
-                          show: true,
-                          topTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          rightTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          leftTitles: AxisTitles(
-                            sideTitles: SideTitles(showTitles: false),
-                          ),
-                          bottomTitles: AxisTitles(
-                            sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 40,
-                              getTitlesWidget: (value, meta) {
-                                final idx = value.toInt();
-                                if (idx < 0 || idx >= n) {
-                                  return const SizedBox.shrink();
-                                }
-                                final d = data[idx];
-                                String main;
-                                String sub;
-                                if (widget.selectedRange == 7) {
-                                  main = _weekMainLabel(d);
-                                  sub = _weekSubLabel(d);
-                                } else if (widget.selectedRange == 30) {
-                                  main = _monthMainLabel(idx);
-                                  sub = _monthSubLabel(d);
-                                } else {
-                                  main = _yearMainLabel(d);
-                                  sub = '';
-                                }
-                                return Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        main,
-                                        style: const TextStyle(
-                                          fontSize: 9,
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF666666),
-                                        ),
-                                      ),
-                                      if (sub.isNotEmpty)
+                          titlesData: FlTitlesData(
+                            show: true,
+                            topTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            rightTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            leftTitles: AxisTitles(
+                              sideTitles: SideTitles(showTitles: false),
+                            ),
+                            bottomTitles: AxisTitles(
+                              sideTitles: SideTitles(
+                                showTitles: true,
+                                reservedSize: 40,
+                                getTitlesWidget: (value, meta) {
+                                  final idx = value.toInt();
+                                  if (idx < 0 || idx >= n) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  final d = data[idx];
+                                  String main;
+                                  String sub;
+                                  if (widget.selectedRange == 7) {
+                                    main = _weekMainLabel(d);
+                                    sub = _weekSubLabel(d);
+                                  } else if (widget.selectedRange == 30) {
+                                    main = _monthMainLabel(idx);
+                                    sub = _monthSubLabel(d);
+                                  } else {
+                                    main = _yearMainLabel(d);
+                                    sub = '';
+                                  }
+                                  return Padding(
+                                    padding: const EdgeInsets.only(top: 4),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
                                         Text(
-                                          sub,
-                                          style: const TextStyle(
-                                            fontSize: 8,
-                                            color: Color(0xFF999999),
+                                          main,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.w600,
+                                            color: colors.textSecondary,
                                           ),
                                         ),
-                                    ],
-                                  ),
-                                );
-                              },
+                                        if (sub.isNotEmpty)
+                                          Text(
+                                            sub,
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              color: colors.textTertiary,
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
                           ),
-                        ),
-                        gridData: FlGridData(
-                          show: true,
-                          drawVerticalLine: false,
-                          horizontalInterval: maxY / 4,
-                          getDrawingHorizontalLine: (value) => FlLine(
-                            color: const Color(0xFFE8E8E8),
-                            strokeWidth: 0.5,
+                          gridData: FlGridData(
+                            show: true,
+                            drawVerticalLine: false,
+                            horizontalInterval: maxY / 4,
+                            getDrawingHorizontalLine: (value) =>
+                                FlLine(color: colors.divider, strokeWidth: 0.5),
                           ),
-                        ),
-                        borderData: FlBorderData(show: false),
-                        barGroups: List.generate(n, (i) {
-                          final dur =
-                              (data[i]['duration'] as num?)?.toDouble() ?? 0;
-                          final hours = dur / 60;
-                          return BarChartGroupData(
-                            x: i,
-                            barRods: [
-                              BarChartRodData(
-                                toY: hours,
-                                color: widget.durationColor.withValues(
-                                  alpha: _touchedBarIndex == i ? 1.0 : 0.75,
-                                ),
-                                width: n > 14 ? 8 : (n > 7 ? 12 : 20),
-                                borderRadius: const BorderRadius.vertical(
-                                  top: Radius.circular(4),
-                                ),
-                                backDrawRodData: BackgroundBarChartRodData(
-                                  show: true,
-                                  toY: maxY,
+                          borderData: FlBorderData(show: false),
+                          barGroups: List.generate(n, (i) {
+                            final dur =
+                                (data[i]['duration'] as num?)?.toDouble() ?? 0;
+                            final hours = dur / 60;
+                            return BarChartGroupData(
+                              x: i,
+                              barRods: [
+                                BarChartRodData(
+                                  toY: hours,
                                   color: widget.durationColor.withValues(
-                                    alpha: 0.06,
+                                    alpha: _touchedBarIndex == i ? 1.0 : 0.75,
+                                  ),
+                                  width: n > 14 ? 8 : (n > 7 ? 12 : 20),
+                                  borderRadius: const BorderRadius.vertical(
+                                    top: Radius.circular(4),
+                                  ),
+                                  backDrawRodData: BackgroundBarChartRodData(
+                                    show: true,
+                                    toY: maxY,
+                                    color: widget.durationColor.withValues(
+                                      alpha: 0.06,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
-                            showingTooltipIndicators: _touchedBarIndex == i
-                                ? [0]
-                                : [],
-                          );
-                        }),
+                              ],
+                              showingTooltipIndicators: _touchedBarIndex == i
+                                  ? [0]
+                                  : [],
+                            );
+                          }),
+                        ),
                       ),
-                    ),
                     ),
                   ),
                   Padding(
@@ -394,7 +402,7 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                           longPressDuration: const Duration(milliseconds: 100),
                           touchTooltipData: LineTouchTooltipData(
                             getTooltipColor: (_) => widget.qualityColor,
-                            tooltipRoundedRadius: 8,
+                            tooltipBorderRadius: BorderRadius.circular(8),
                             getTooltipItems: (spots) {
                               return spots.map((spot) {
                                 final d = spot.x.toInt() < data.length
@@ -408,8 +416,8 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                                     : '';
                                 return LineTooltipItem(
                                   '${_formatQualityValue(spot.y)}${dur.isNotEmpty ? '\n$dur' : ''}',
-                                  const TextStyle(
-                                    color: Colors.white,
+                                  TextStyle(
+                                    color: colors.textOnAccent,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -452,7 +460,7 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                                 final isTouched = _touchedLineIndex == index;
                                 return FlDotCirclePainter(
                                   radius: isTouched ? 5 : 3.5,
-                                  color: Colors.white,
+                                  color: colors.card,
                                   strokeWidth: isTouched ? 3 : 2,
                                   strokeColor: widget.qualityColor,
                                 );
@@ -476,6 +484,7 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                       touchedLineIndex: _touchedLineIndex,
                       formatDuration: _formatDurationValue,
                       formatQuality: _formatQualityValue,
+                      labelBackgroundColor: colors.card.withValues(alpha: 0.86),
                     ),
                   ),
                 ],
@@ -492,7 +501,7 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
             children: List.generate(6, (i) {
               return Text(
                 '${5 - i}',
-                style: TextStyle(fontSize: 9, color: widget.qualityColor),
+                style: TextStyle(fontSize: 11, color: widget.qualityColor),
               );
             }),
           ),
@@ -512,6 +521,7 @@ class _ChartLabelPainter extends CustomPainter {
     required this.touchedLineIndex,
     required this.formatDuration,
     required this.formatQuality,
+    required this.labelBackgroundColor,
   });
 
   final List<Map<String, dynamic>> data;
@@ -522,6 +532,7 @@ class _ChartLabelPainter extends CustomPainter {
   final int? touchedLineIndex;
   final String Function(double) formatDuration;
   final String Function(double) formatQuality;
+  final Color labelBackgroundColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -588,7 +599,7 @@ class _ChartLabelPainter extends CustomPainter {
       text: TextSpan(
         text: text,
         style: TextStyle(
-          fontSize: bold ? 10 : 9,
+          fontSize: 11,
           fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
           color: color,
         ),
@@ -601,10 +612,7 @@ class _ChartLabelPainter extends CustomPainter {
       Rect.fromLTWH(dx - 3, dy - 1, tp.width + 6, tp.height + 2),
       const Radius.circular(4),
     );
-    canvas.drawRRect(
-      bgRect,
-      Paint()..color = Colors.white.withValues(alpha: 0.85),
-    );
+    canvas.drawRRect(bgRect, Paint()..color = labelBackgroundColor);
     tp.paint(canvas, Offset(dx, dy));
   }
 

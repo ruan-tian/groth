@@ -15,17 +15,16 @@ class FitnessRecordDetailPage extends ConsumerWidget {
 
   final int recordId;
 
-  // ── 主题色常量 ──
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final recordAsync = ref.watch(fitnessRecordByIdProvider(recordId));
     final exercisesAsync = ref.watch(
       fitnessExercisesByRecordIdProvider(recordId),
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       body: recordAsync.when(
         data: (record) => _DetailBody(
           record: record,
@@ -39,12 +38,13 @@ class FitnessRecordDetailPage extends ConsumerWidget {
   }
 
   Widget _buildError(BuildContext context, Object e) {
+    final colors = context.growthColors;
     return SafeArea(
       child: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
+            Icon(Icons.error_outline, size: 48, color: colors.danger),
             const SizedBox(height: AppSpacing.md),
             Text('加载失败: $e', style: AppTextStyles.body),
             const SizedBox(height: AppSpacing.md),
@@ -63,6 +63,7 @@ class FitnessRecordDetailPage extends ConsumerWidget {
     WidgetRef ref,
     FitnessRecord record,
   ) async {
+    final colors = context.growthColors;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -80,7 +81,7 @@ class FitnessRecordDetailPage extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(foregroundColor: colors.danger),
             child: const Text('删除'),
           ),
         ],
@@ -102,7 +103,7 @@ class FitnessRecordDetailPage extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+          ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
         }
       }
     }
@@ -269,15 +270,14 @@ class _GradientHeader extends StatelessWidget {
   final bool isProfessional;
   final VoidCallback onDelete;
 
-  static const _fitness = AppColors.fitness;
-
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_fitness, _fitness.withValues(alpha: 0.78)],
+          colors: [colors.fitness, colors.fitness.withValues(alpha: 0.78)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
@@ -293,17 +293,17 @@ class _GradientHeader extends StatelessWidget {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_ios_new_rounded,
-                      color: Colors.white,
+                      color: colors.textOnAccent,
                     ),
                     onPressed: () => context.pop(),
                   ),
                   const Spacer(),
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.delete_outline,
-                      color: Colors.white70,
+                      color: colors.textOnAccent.withValues(alpha: 0.7),
                     ),
                     onPressed: onDelete,
                   ),
@@ -316,12 +316,12 @@ class _GradientHeader extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: colors.textOnAccent.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.fitness_center,
-                color: Colors.white,
+                color: colors.textOnAccent,
                 size: 36,
               ),
             ),
@@ -330,10 +330,10 @@ class _GradientHeader extends StatelessWidget {
             // 标题
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
-                color: Colors.white,
+                color: colors.textOnAccent,
               ),
               textAlign: TextAlign.center,
             ),
@@ -345,7 +345,7 @@ class _GradientHeader extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: Colors.white.withValues(alpha: 0.8),
+                color: colors.textOnAccent.withValues(alpha: 0.8),
               ),
             ),
             const SizedBox(height: 12),
@@ -361,24 +361,20 @@ class _GradientHeader extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
+                    color: colors.textOnAccent.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(
-                        Icons.star_rounded,
-                        color: Colors.amber,
-                        size: 18,
-                      ),
+                      Icon(Icons.star_rounded, color: colors.warning, size: 18),
                       const SizedBox(width: 4),
                       Text(
                         '+$expGained EXP',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: colors.textOnAccent,
                         ),
                       ),
                     ],
@@ -393,15 +389,15 @@ class _GradientHeader extends StatelessWidget {
                       vertical: 6,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: colors.textOnAccent.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
+                    child: Text(
                       '专业模式',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: colors.textOnAccent,
                       ),
                     ),
                   ),
@@ -456,17 +452,15 @@ class _InfoTile extends StatelessWidget {
 
   final _InfoItem item;
 
-  static const _fitness = AppColors.fitness;
-  static const _fitnessFaded = Color(0x1AFF8A3D);
-
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x0D000000)),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -474,10 +468,10 @@ class _InfoTile extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: _fitnessFaded,
+              color: colors.fitness.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(item.icon, color: _fitness, size: 18),
+            child: Icon(item.icon, color: colors.fitness, size: 18),
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -512,20 +506,19 @@ class _SectionHeader extends StatelessWidget {
   final IconData icon;
   final String title;
 
-  static const _fitness = AppColors.fitness;
-
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
-        Icon(icon, size: 18, color: _fitness),
+        Icon(icon, size: 18, color: colors.fitness),
         const SizedBox(width: 8),
         Text(
           title,
           style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: _fitness,
+            color: colors.fitness,
           ),
         ),
       ],
@@ -546,16 +539,15 @@ class _ProfessionalMetrics extends StatelessWidget {
   final int? intensityLevel;
   final int? fatigueLevel;
 
-  static const _fitness = AppColors.fitness;
-
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x0D000000)),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -565,14 +557,14 @@ class _ProfessionalMetrics extends StatelessWidget {
                 label: '训练强度',
                 level: intensityLevel!,
                 maxLevel: 5,
-                color: _fitness,
+                color: colors.fitness,
               ),
             ),
           if (intensityLevel != null && fatigueLevel != null)
             Container(
               width: 1,
               height: 48,
-              color: AppColors.textTertiary.withValues(alpha: 0.3),
+              color: colors.textTertiary.withValues(alpha: 0.3),
             ),
           if (fatigueLevel != null)
             Expanded(
@@ -580,7 +572,7 @@ class _ProfessionalMetrics extends StatelessWidget {
                 label: '疲劳程度',
                 level: fatigueLevel!,
                 maxLevel: 5,
-                color: Colors.amber.shade600,
+                color: colors.warning,
               ),
             ),
         ],
@@ -604,6 +596,7 @@ class _MetricItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -617,7 +610,7 @@ class _MetricItem extends StatelessWidget {
               child: Icon(
                 i < level ? Icons.circle : Icons.circle_outlined,
                 size: 10,
-                color: i < level ? color : AppColors.textTertiary,
+                color: i < level ? color : colors.textTertiary,
               ),
             );
           }),
@@ -645,18 +638,16 @@ class _ExerciseCard extends StatelessWidget {
 
   final FitnessExercise exercise;
 
-  static const _fitness = AppColors.fitness;
-  static const _fitnessFaded = Color(0x1AFF8A3D);
-
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x0D000000)),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -668,12 +659,12 @@ class _ExerciseCard extends StatelessWidget {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: _fitnessFaded,
+                  color: colors.fitness.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.sports_gymnastics,
-                  color: _fitness,
+                  color: colors.fitness,
                   size: 16,
                 ),
               ),
@@ -717,6 +708,7 @@ class _ExerciseParam extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -725,10 +717,10 @@ class _ExerciseParam extends StatelessWidget {
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: colors.textPrimary,
           ),
         ),
       ],
@@ -747,18 +739,19 @@ class _NoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x0D000000)),
+        border: Border.all(color: colors.border),
       ),
       child: Text(
         text,
         style: AppTextStyles.body.copyWith(
-          color: AppColors.textSecondary,
+          color: colors.textSecondary,
           height: 1.6,
         ),
       ),
@@ -778,18 +771,19 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x0D000000)),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 32, color: AppColors.textTertiary),
+          Icon(icon, size: 32, color: colors.textTertiary),
           const SizedBox(height: 8),
           Text(text, style: AppTextStyles.caption),
         ],

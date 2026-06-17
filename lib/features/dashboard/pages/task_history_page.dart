@@ -49,18 +49,9 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
               setState(() => _filterStatus = value);
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: null,
-                child: Text('全部'),
-              ),
-              const PopupMenuItem(
-                value: 'completed',
-                child: Text('已完成'),
-              ),
-              const PopupMenuItem(
-                value: 'pending',
-                child: Text('未完成'),
-              ),
+              const PopupMenuItem(value: null, child: Text('全部')),
+              const PopupMenuItem(value: 'completed', child: Text('已完成')),
+              const PopupMenuItem(value: 'pending', child: Text('未完成')),
             ],
           ),
         ],
@@ -111,11 +102,13 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
                 // 应用搜索
                 if (_searchQuery.isNotEmpty) {
                   filtered = filtered.where((t) {
-                    final titleMatch =
-                        t.title.toLowerCase().contains(_searchQuery.toLowerCase());
-                    final descMatch = t.description
-                            ?.toLowerCase()
-                            .contains(_searchQuery.toLowerCase()) ??
+                    final titleMatch = t.title.toLowerCase().contains(
+                      _searchQuery.toLowerCase(),
+                    );
+                    final descMatch =
+                        t.description?.toLowerCase().contains(
+                          _searchQuery.toLowerCase(),
+                        ) ??
                         false;
                     return titleMatch || descMatch;
                   }).toList();
@@ -191,7 +184,7 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.danger,
+              foregroundColor: context.growthColors.danger,
             ),
             child: const Text('删除'),
           ),
@@ -208,10 +201,7 @@ class _TaskHistoryPageState extends ConsumerState<TaskHistoryPage> {
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('已删除'),
-            duration: Duration(seconds: 1),
-          ),
+          const SnackBar(content: Text('已删除'), duration: Duration(seconds: 1)),
         );
       }
     }
@@ -248,11 +238,8 @@ class _TaskHistoryTile extends StatelessWidget {
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: AppSpacing.md),
-        color: AppColors.danger,
-        child: const Icon(
-          Icons.delete,
-          color: Colors.white,
-        ),
+        color: context.growthColors.danger,
+        child: Icon(Icons.delete, color: context.growthColors.textOnAccent),
       ),
       child: Card(
         margin: const EdgeInsets.symmetric(
@@ -269,25 +256,28 @@ class _TaskHistoryTile extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: task.isCompleted
-                    ? AppColors.success
+                    ? context.growthColors.success
                     : Colors.transparent,
                 border: Border.all(
                   color: task.isCompleted
-                      ? AppColors.success
+                      ? context.growthColors.success
                       : colorScheme.outline,
                   width: 2,
                 ),
               ),
               child: task.isCompleted
-                  ? const Icon(Icons.check, size: 18, color: Colors.white)
+                  ? Icon(
+                      Icons.check,
+                      size: 18,
+                      color: context.growthColors.textOnAccent,
+                    )
                   : null,
             ),
           ),
           title: Text(
             task.title,
             style: theme.textTheme.bodyMedium?.copyWith(
-              decoration:
-                  task.isCompleted ? TextDecoration.lineThrough : null,
+              decoration: task.isCompleted ? TextDecoration.lineThrough : null,
               color: task.isCompleted ? colorScheme.outline : null,
             ),
           ),
@@ -314,7 +304,11 @@ class _TaskHistoryTile extends StatelessWidget {
             ],
           ),
           trailing: task.isCompleted
-              ? Icon(Icons.check_circle, color: AppColors.success, size: 20)
+              ? Icon(
+                  Icons.check_circle,
+                  color: context.growthColors.success,
+                  size: 20,
+                )
               : null,
         ),
       ),

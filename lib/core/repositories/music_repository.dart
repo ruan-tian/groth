@@ -23,6 +23,18 @@ class MusicRepository {
         .get();
   }
 
+  Future<List<MusicPlaylist>> getPlaylists() {
+    return (_db.select(_db.musicPlaylists)..orderBy([
+          (t) => OrderingTerm.asc(t.sortOrder),
+          (t) => OrderingTerm.asc(t.createdAt),
+        ]))
+        .get();
+  }
+
+  Future<List<MusicPlaylistTrack>> getPlaylistTracks() {
+    return _db.select(_db.musicPlaylistTracks).get();
+  }
+
   Future<List<MusicTrack>> getFavoriteTracks() {
     return (_db.select(_db.musicTracks)
           ..where((t) => t.isFavorite.equals(true))
@@ -47,6 +59,75 @@ class MusicRepository {
 
   Future<int> insertTrack(MusicTracksCompanion track) {
     return _db.into(_db.musicTracks).insert(track);
+  }
+
+  Future<int> createPlaylist({
+    required String name,
+    required String coverAsset,
+  }) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final maxSort =
+        await (_db.selectOnly(_db.musicPlaylists)
+              ..addColumns([_db.musicPlaylists.sortOrder.max()]))
+            .map((row) => row.read(_db.musicPlaylists.sortOrder.max()) ?? -1)
+            .getSingle();
+    return _db
+        .into(_db.musicPlaylists)
+        .insert(
+          MusicPlaylistsCompanion.insert(
+            name: name,
+            coverAsset: Value(coverAsset),
+            sortOrder: Value(maxSort + 1),
+            createdAt: now,
+            updatedAt: now,
+          ),
+        );
+  }
+
+  Future<void> deletePlaylist(int id) {
+    return (_db.delete(_db.musicPlaylists)..where((t) => t.id.equals(id))).go();
+  }
+
+  Future<void> addTrackToPlaylist({
+    required int playlistId,
+    required int trackId,
+  }) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return _db
+        .into(_db.musicPlaylistTracks)
+        .insert(
+          MusicPlaylistTracksCompanion.insert(
+            playlistId: playlistId,
+            trackId: trackId,
+            createdAt: now,
+          ),
+          mode: InsertMode.insertOrIgnore,
+        );
+  }
+
+  Future<void> removeTrackFromPlaylist({
+    required int playlistId,
+    required int trackId,
+  }) {
+    return (_db.delete(_db.musicPlaylistTracks)..where(
+          (t) => t.playlistId.equals(playlistId) & t.trackId.equals(trackId),
+        ))
+        .go();
+  }
+
+  Future<void> setTrackPlaylists({
+    required int trackId,
+    required Iterable<int> playlistIds,
+  }) async {
+    final uniqueIds = playlistIds.toSet();
+    await _db.transaction(() async {
+      await (_db.delete(
+        _db.musicPlaylistTracks,
+      )..where((t) => t.trackId.equals(trackId))).go();
+      for (final playlistId in uniqueIds) {
+        await addTrackToPlaylist(playlistId: playlistId, trackId: trackId);
+      }
+    });
   }
 
   Future<void> updateFavorite(int id, bool isFavorite) {
@@ -81,6 +162,16 @@ class MusicRepository {
     return (_db.update(_db.musicTracks)..where((t) => t.id.equals(id))).write(
       MusicTracksCompanion(
         coverAsset: Value(coverAsset),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> updateSceneOverride(int id, String? sceneOverride) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (_db.update(_db.musicTracks)..where((t) => t.id.equals(id))).write(
+      MusicTracksCompanion(
+        sceneOverride: Value(sceneOverride),
         updatedAt: Value(now),
       ),
     );

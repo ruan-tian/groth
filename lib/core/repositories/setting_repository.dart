@@ -13,9 +13,9 @@ class SettingRepository {
 
   /// 根据 key 获取设置值，不存在时返回 null。
   Future<String?> getSetting(String key) async {
-    final row = await (_db.select(_db.appSettings)
-          ..where((t) => t.key.equals(key)))
-        .getSingleOrNull();
+    final row = await (_db.select(
+      _db.appSettings,
+    )..where((t) => t.key.equals(key))).getSingleOrNull();
     return row?.value;
   }
 
@@ -24,7 +24,9 @@ class SettingRepository {
   /// key 已存在时更新 value 和 updatedAt，否则插入新行。
   Future<void> setSetting(String key, String value) async {
     final now = DateTime.now().millisecondsSinceEpoch;
-    await _db.into(_db.appSettings).insertOnConflictUpdate(
+    await _db
+        .into(_db.appSettings)
+        .insertOnConflictUpdate(
           AppSettingsCompanion(
             key: Value(key),
             value: Value(value),

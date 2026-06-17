@@ -225,7 +225,7 @@ class _QuillEditorPageState extends State<QuillEditorPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('选择图片失败: $e')));
+        ).showSnackBar(SnackBar(content: Text('选择图片失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _pickingImage = false);
@@ -461,7 +461,7 @@ class _EditorTopBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: context.growthColors.card.withValues(alpha: 0.86),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: JournalColors.pinkBorder),
         boxShadow: [
@@ -542,10 +542,10 @@ class _EditorTopBar extends StatelessWidget {
                 color: JournalColors.pinkMain,
                 borderRadius: BorderRadius.circular(18),
               ),
-              child: const Text(
+              child: Text(
                 '完成',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: context.growthColors.textOnAccent,
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
                 ),
@@ -585,7 +585,7 @@ class _TopIconButton extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.78),
+              color: context.growthColors.card.withValues(alpha: 0.78),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: JournalColors.pinkBorder),
             ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/weather_service.dart';
+import '../../../shared/widgets/common/error_retry_widget.dart';
 
 class WeatherSettingsSectionHeader extends StatelessWidget {
   const WeatherSettingsSectionHeader({
@@ -17,16 +18,17 @@ class WeatherSettingsSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Container(
           width: 28,
           height: 28,
           decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.1),
+            color: colors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
-          child: Icon(icon, size: 16, color: AppColors.primary),
+          child: Icon(icon, size: 16, color: colors.primary),
         ),
         const SizedBox(width: AppSpacing.sm),
         Text(title, style: AppTextStyles.sectionTitle),
@@ -42,17 +44,18 @@ class WeatherCurrentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF7C6BF0), Color(0xFF5A4BD4)],
+          colors: [colors.primaryLight, colors.primaryDark],
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: colors.primary.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -68,13 +71,13 @@ class WeatherCurrentCard extends StatelessWidget {
                   Icon(
                     Icons.cloud_off_rounded,
                     size: 40,
-                    color: Colors.white.withValues(alpha: 0.6),
+                    color: colors.textOnAccent.withValues(alpha: 0.6),
                   ),
                   const SizedBox(height: AppSpacing.sm),
                   Text(
                     '暂无天气数据',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.8),
+                      color: colors.textOnAccent.withValues(alpha: 0.8),
                       fontSize: 15,
                       fontWeight: FontWeight.w500,
                     ),
@@ -83,7 +86,7 @@ class WeatherCurrentCard extends StatelessWidget {
                   Text(
                     '点击右上角刷新获取',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: colors.textOnAccent.withValues(alpha: 0.5),
                       fontSize: 13,
                     ),
                   ),
@@ -111,10 +114,10 @@ class WeatherCurrentCard extends StatelessWidget {
                         children: [
                           Text(
                             '${weather.temperature}°C',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 40,
                               fontWeight: FontWeight.w700,
-                              color: Colors.white,
+                              color: colors.textOnAccent,
                               height: 1.1,
                             ),
                           ),
@@ -123,7 +126,9 @@ class WeatherCurrentCard extends StatelessWidget {
                             weather.weatherType,
                             style: TextStyle(
                               fontSize: 16,
-                              color: Colors.white.withValues(alpha: 0.85),
+                              color: colors.textOnAccent.withValues(
+                                alpha: 0.85,
+                              ),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -156,7 +161,7 @@ class WeatherCurrentCard extends StatelessWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: colors.textOnAccent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Row(
@@ -164,14 +169,14 @@ class WeatherCurrentCard extends StatelessWidget {
                       Icon(
                         Icons.location_on_rounded,
                         size: 14,
-                        color: Colors.white.withValues(alpha: 0.8),
+                        color: colors.textOnAccent.withValues(alpha: 0.8),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         weather.city ?? '未知城市',
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: colors.textOnAccent.withValues(alpha: 0.8),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -179,14 +184,14 @@ class WeatherCurrentCard extends StatelessWidget {
                       Icon(
                         Icons.access_time_rounded,
                         size: 14,
-                        color: Colors.white.withValues(alpha: 0.6),
+                        color: colors.textOnAccent.withValues(alpha: 0.6),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '更新于 $timeStr',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.6),
+                          color: colors.textOnAccent.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -196,9 +201,11 @@ class WeatherCurrentCard extends StatelessWidget {
             ),
           );
         },
-        loading: () => const Padding(
-          padding: EdgeInsets.all(40),
-          child: Center(child: CircularProgressIndicator(color: Colors.white)),
+        loading: () => Padding(
+          padding: const EdgeInsets.all(40),
+          child: Center(
+            child: CircularProgressIndicator(color: colors.textOnAccent),
+          ),
         ),
         error: (_, _) => Padding(
           padding: const EdgeInsets.all(24),
@@ -207,13 +214,13 @@ class WeatherCurrentCard extends StatelessWidget {
               Icon(
                 Icons.error_outline_rounded,
                 size: 40,
-                color: Colors.white.withValues(alpha: 0.6),
+                color: colors.textOnAccent.withValues(alpha: 0.6),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
                 '加载失败',
                 style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.8),
+                  color: colors.textOnAccent.withValues(alpha: 0.8),
                   fontSize: 15,
                 ),
               ),
@@ -239,23 +246,28 @@ class WeatherExtraChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: colors.textOnAccent.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.8)),
+          Icon(
+            icon,
+            size: 14,
+            color: colors.textOnAccent.withValues(alpha: 0.8),
+          ),
           const SizedBox(width: 4),
           Flexible(
             child: Text(
               value,
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.9),
+                color: colors.textOnAccent.withValues(alpha: 0.9),
                 fontWeight: FontWeight.w500,
               ),
               maxLines: 1,
@@ -282,6 +294,7 @@ class WeatherCitySelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final city = weather?.city ?? '未获取';
 
     return WeatherSettingsCard(
@@ -291,12 +304,12 @@ class WeatherCitySelectorCard extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.danger.withValues(alpha: 0.1),
+              color: colors.danger.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.location_on_rounded,
-              color: AppColors.danger,
+              color: colors.danger,
               size: 20,
             ),
           ),
@@ -316,7 +329,7 @@ class WeatherCitySelectorCard extends StatelessWidget {
                       Icon(
                         Icons.chevron_right_rounded,
                         size: 16,
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ],
                   ),
@@ -327,12 +340,12 @@ class WeatherCitySelectorCard extends StatelessWidget {
           const SizedBox(width: AppSpacing.sm),
           Container(
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: colors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: IconButton(
               icon: const Icon(Icons.my_location_rounded, size: 20),
-              color: AppColors.primary,
+              color: colors.primary,
               tooltip: '自动定位',
               onPressed: onLocateByGps,
             ),
@@ -381,6 +394,7 @@ class WeatherApiCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final isSelected = currentProvider == provider;
     final isQweather = provider == 'qweather';
     final keyController = controller;
@@ -388,13 +402,19 @@ class WeatherApiCard extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         border: Border.all(
-          color: isSelected ? AppColors.primary : AppColors.border,
+          color: isSelected ? colors.primary : colors.border,
           width: isSelected ? 1.5 : 1,
         ),
-        boxShadow: isSelected ? AppColors.elevatedShadow : AppColors.cardShadow,
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: isSelected ? 0.22 : 0.12),
+            blurRadius: isSelected ? 24 : 14,
+            offset: Offset(0, isSelected ? 10 : 5),
+          ),
+        ],
       ),
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.lg),
@@ -438,14 +458,14 @@ class WeatherApiCard extends StatelessWidget {
                   },
                   child: Radio<String>(
                     value: provider,
-                    activeColor: AppColors.primary,
+                    activeColor: colors.primary,
                   ),
                 ),
               ],
             ),
             if (isQweather && isSelected && keyController != null) ...[
               const SizedBox(height: AppSpacing.md),
-              Divider(color: AppColors.divider, height: 1),
+              Divider(color: colors.divider, height: 1),
               const SizedBox(height: AppSpacing.md),
               _StatusBadge(isConfigured: hasApiKey),
               const SizedBox(height: AppSpacing.md),
@@ -462,10 +482,10 @@ class WeatherApiCard extends StatelessWidget {
                       helperMaxLines: 2,
                       prefixIcon: Icon(
                         Icons.link_rounded,
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                       filled: true,
-                      fillColor: AppColors.surfaceVariant,
+                      fillColor: colors.surfaceVariant,
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.sm),
                         borderSide: BorderSide.none,
@@ -489,14 +509,14 @@ class WeatherApiCard extends StatelessWidget {
                   Icon(
                     Icons.check_circle_rounded,
                     size: 16,
-                    color: AppColors.success,
+                    color: colors.success,
                   ),
                   const SizedBox(width: 6),
                   Text(
                     '始终可用，无需配置',
                     style: TextStyle(
                       fontSize: 13,
-                      color: AppColors.success,
+                      color: colors.success,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -524,6 +544,7 @@ class WeatherSearchHistorySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return historyAsync.when(
       data: (history) {
         if (history.isEmpty) {
@@ -534,12 +555,12 @@ class WeatherSearchHistorySection extends StatelessWidget {
                 Icon(
                   Icons.history_rounded,
                   size: 18,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
                   '暂无搜索历史',
-                  style: TextStyle(fontSize: 14, color: AppColors.textTertiary),
+                  style: TextStyle(fontSize: 14, color: colors.textTertiary),
                 ),
               ],
             ),
@@ -566,7 +587,7 @@ class WeatherSearchHistorySection extends StatelessWidget {
                           Icon(
                             Icons.location_on_rounded,
                             size: 18,
-                            color: AppColors.primary,
+                            color: colors.primary,
                           ),
                           const SizedBox(width: AppSpacing.sm),
                           Expanded(
@@ -592,7 +613,7 @@ class WeatherSearchHistorySection extends StatelessWidget {
                             icon: Icon(
                               Icons.close_rounded,
                               size: 18,
-                              color: AppColors.textTertiary,
+                              color: colors.textTertiary,
                             ),
                             style: IconButton.styleFrom(
                               minimumSize: const Size(32, 32),
@@ -604,7 +625,7 @@ class WeatherSearchHistorySection extends StatelessWidget {
                     ),
                     if (!isLast)
                       Divider(
-                        color: AppColors.divider,
+                        color: colors.divider,
                         height: 1,
                         indent: AppSpacing.lg + 26,
                       ),
@@ -612,7 +633,7 @@ class WeatherSearchHistorySection extends StatelessWidget {
                 );
               }),
               if (history.length > 1) ...[
-                Divider(color: AppColors.divider, height: 1),
+                Divider(color: colors.divider, height: 1),
                 InkWell(
                   onTap: onClearSearchHistory,
                   borderRadius: const BorderRadius.vertical(
@@ -627,7 +648,7 @@ class WeatherSearchHistorySection extends StatelessWidget {
                         '清空历史',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.danger,
+                          color: colors.danger,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -647,7 +668,7 @@ class WeatherSearchHistorySection extends StatelessWidget {
           ),
         ),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 }
@@ -657,11 +678,12 @@ class WeatherApiKeyGuide extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.softPurple,
+        color: colors.softPurple,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.15)),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.15)),
       ),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
@@ -680,25 +702,25 @@ class WeatherApiKeyGuide extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.15),
+              color: colors.primary.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.lightbulb_rounded,
-              color: AppColors.primary,
+              color: colors.primary,
               size: 20,
             ),
           ),
-          title: const Text(
+          title: Text(
             '如何获取 API Key？',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
-          iconColor: AppColors.primary,
-          collapsedIconColor: AppColors.textTertiary,
+          iconColor: colors.primary,
+          collapsedIconColor: colors.textTertiary,
           children: const [
             _GuideSection(
               icon: Icons.cloud_rounded,
@@ -724,6 +746,7 @@ class WeatherCitySearchResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final name = city['name'] as String;
     final admin1 = city['admin1'] as String? ?? '';
     final country = city['country'] as String? ?? '';
@@ -734,12 +757,12 @@ class WeatherCitySearchResultTile extends StatelessWidget {
         width: 36,
         height: 36,
         decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
+          color: colors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(AppRadius.sm),
         ),
-        child: const Icon(
+        child: Icon(
           Icons.location_city_rounded,
-          color: AppColors.primary,
+          color: colors.primary,
           size: 18,
         ),
       ),
@@ -753,7 +776,7 @@ class WeatherCitySearchResultTile extends StatelessWidget {
       trailing: Icon(
         Icons.arrow_forward_ios_rounded,
         size: 14,
-        color: AppColors.textTertiary,
+        color: colors.textTertiary,
       ),
       onTap: onTap,
       shape: RoundedRectangleBorder(
@@ -771,12 +794,19 @@ class WeatherSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
-        boxShadow: AppColors.cardShadow,
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.14),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Material(
         color: Colors.transparent,
@@ -806,23 +836,28 @@ class _WeatherDetailChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.15),
+        color: colors.textOnAccent.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.8)),
+          Icon(
+            icon,
+            size: 14,
+            color: colors.textOnAccent.withValues(alpha: 0.8),
+          ),
           const SizedBox(width: 4),
           Text(
             value,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: colors.textOnAccent,
             ),
           ),
         ],
@@ -836,18 +871,19 @@ class _RecommendedBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
+        color: colors.primary.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         '推荐',
         style: TextStyle(
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w600,
-          color: AppColors.primary,
+          color: colors.primary,
         ),
       ),
     );
@@ -861,12 +897,13 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: isConfigured
-            ? AppColors.success.withValues(alpha: 0.1)
-            : AppColors.warning.withValues(alpha: 0.1),
+            ? colors.success.withValues(alpha: 0.1)
+            : colors.warning.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
@@ -877,7 +914,7 @@ class _StatusBadge extends StatelessWidget {
                 ? Icons.check_circle_rounded
                 : Icons.info_outline_rounded,
             size: 14,
-            color: isConfigured ? AppColors.success : AppColors.warning,
+            color: isConfigured ? colors.success : colors.warning,
           ),
           const SizedBox(width: 4),
           Text(
@@ -885,7 +922,7 @@ class _StatusBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: isConfigured ? AppColors.success : AppColors.warning,
+              color: isConfigured ? colors.success : colors.warning,
             ),
           ),
         ],
@@ -913,6 +950,7 @@ class _ApiKeyInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Expanded(
@@ -923,11 +961,11 @@ class _ApiKeyInput extends StatelessWidget {
             style: const TextStyle(fontSize: 14),
             decoration: InputDecoration(
               hintText: hintText,
-              hintStyle: TextStyle(color: AppColors.textHint, fontSize: 13),
+              hintStyle: TextStyle(color: colors.textHint, fontSize: 13),
               prefixIcon: Icon(
                 Icons.key_rounded,
                 size: 18,
-                color: AppColors.textTertiary,
+                color: colors.textTertiary,
               ),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -935,7 +973,7 @@ class _ApiKeyInput extends StatelessWidget {
                       ? Icons.visibility_off_rounded
                       : Icons.visibility_rounded,
                   size: 18,
-                  color: AppColors.textTertiary,
+                  color: colors.textTertiary,
                 ),
                 onPressed: onToggleObscure,
               ),
@@ -945,18 +983,18 @@ class _ApiKeyInput extends StatelessWidget {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(color: AppColors.border),
+                borderSide: BorderSide(color: colors.border),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
-                borderSide: BorderSide(color: AppColors.primary, width: 1.5),
+                borderSide: BorderSide(color: colors.primary, width: 1.5),
               ),
               filled: true,
-              fillColor: AppColors.surfaceVariant,
+              fillColor: colors.surfaceVariant,
             ),
           ),
         ),
@@ -966,19 +1004,19 @@ class _ApiKeyInput extends StatelessWidget {
           child: FilledButton(
             onPressed: isSaving ? null : onSave,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: colors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
               padding: const EdgeInsets.symmetric(horizontal: 16),
             ),
             child: isSaving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: colors.textOnAccent,
                     ),
                   )
                 : const Text('保存', style: TextStyle(fontSize: 13)),
@@ -1002,19 +1040,20 @@ class _GuideSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 16, color: AppColors.primary),
+            Icon(icon, size: 16, color: colors.primary),
             const SizedBox(width: 6),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
           ],
@@ -1028,16 +1067,13 @@ class _GuideSection extends StatelessWidget {
               children: [
                 Text(
                   '${entry.key + 1}.',
-                  style: TextStyle(fontSize: 13, color: AppColors.primary),
+                  style: TextStyle(fontSize: 13, color: colors.primary),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     entry.value,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
                   ),
                 ),
               ],

@@ -143,6 +143,7 @@ class _SetupForm extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final currentMode = ref.watch(focusStudyModeProvider);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -154,9 +155,12 @@ class _SetupForm extends ConsumerWidget {
             GestureDetector(
               onTap: () => showStudyModeSheet(context, ref),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
-                  color: _focusMint.withValues(alpha: 0.12),
+                  color: colors.focus.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(99),
                 ),
                 child: Row(
@@ -172,11 +176,15 @@ class _SetupForm extends ConsumerWidget {
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: _focusMintDark,
+                        color: colors.focus,
                       ),
                     ),
                     const SizedBox(width: 2),
-                    Icon(Icons.expand_more_rounded, size: 14, color: _focusMintDark),
+                    Icon(
+                      Icons.expand_more_rounded,
+                      size: 14,
+                      color: colors.focus,
+                    ),
                   ],
                 ),
               ),
@@ -329,67 +337,75 @@ class _PresetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final tint = Color(preset.tint);
     return Semantics(
       button: true,
-      label: '${preset.label}${preset.minutes > 0 ? ' ${preset.minutes}分钟' : ' 自定义'}',
+      label:
+          '${preset.label}${preset.minutes > 0 ? ' ${preset.minutes}分钟' : ' 自定义'}',
       selected: selected,
-      child: GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        height: 74,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: BoxDecoration(
-          color: selected ? tint.withValues(alpha: 0.11) : Colors.white,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? tint : _focusLine,
-            width: selected ? 1.8 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Image.asset(preset.asset, width: 34, height: 34),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    preset.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      color: selected ? _focusInk : const Color(0xFF5F6665),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  Text(
-                    preset.minutes > 0 ? '${preset.minutes}min' : '自定义时间',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: Color(0xFF8F9693),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 180),
+            height: 74,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: selected ? tint.withValues(alpha: 0.11) : colors.card,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(
+                color: selected ? tint : colors.border,
+                width: selected ? 1.8 : 1,
               ),
             ),
-            if (selected)
-              const Icon(
-                Icons.check_circle_rounded,
-                color: _focusMint,
-                size: 22,
-              ),
-          ],
+            child: Row(
+              children: [
+                Image.asset(preset.asset, width: 34, height: 34),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        preset.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: selected
+                              ? colors.textPrimary
+                              : colors.textSecondary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        preset.minutes > 0 ? '${preset.minutes}min' : '自定义时间',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.textTertiary,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (selected)
+                  Icon(
+                    Icons.check_circle_rounded,
+                    color: colors.focus,
+                    size: 22,
+                  ),
+              ],
+            ),
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -413,34 +429,35 @@ class _PillButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
       label: label,
       selected: selected,
       child: GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 170),
-        constraints: BoxConstraints(minWidth: minWidth ?? 0),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-        decoration: BoxDecoration(
-          color: selected ? _focusMint : Colors.white.withValues(alpha: 0.76),
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: selected ? _focusMintDark : const Color(0xFFD3E8E3),
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 170),
+          constraints: BoxConstraints(minWidth: minWidth ?? 0),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+          decoration: BoxDecoration(
+            color: selected
+                ? colors.focus
+                : colors.card.withValues(alpha: 0.76),
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: selected ? colors.focus : colors.border),
           ),
-        ),
-        child: Text(
-          label,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: selected ? Colors.white : _focusMintDark,
-            fontSize: 15,
-            fontWeight: FontWeight.w800,
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: selected ? colors.textOnAccent : colors.focus,
+              fontSize: 15,
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }
@@ -468,6 +485,7 @@ class _SoftInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return TextField(
       controller: controller,
       textInputAction: TextInputAction.next,
@@ -477,25 +495,25 @@ class _SoftInput extends StatelessWidget {
       decoration: InputDecoration(
         counterText: maxLength == null ? null : '',
         hintText: hint,
-        hintStyle: const TextStyle(color: Color(0xFFB8B6B2)),
-        prefixIcon: Icon(icon, color: const Color(0xFFA3B6B2)),
+        hintStyle: TextStyle(color: colors.textHint),
+        prefixIcon: Icon(icon, color: colors.textTertiary),
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.76),
+        fillColor: colors.card.withValues(alpha: 0.76),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,
           vertical: 13,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFD4ECE7)),
+          borderSide: BorderSide(color: colors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: Color(0xFFD4ECE7)),
+          borderSide: BorderSide(color: colors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: const BorderSide(color: _focusMint, width: 1.6),
+          borderSide: BorderSide(color: colors.focus, width: 1.6),
         ),
       ),
     );
@@ -513,43 +531,48 @@ class _StartButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
       label: '开始专注',
-      child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 64,
-        decoration: BoxDecoration(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(32),
-          gradient: const LinearGradient(
-            colors: [Color(0xFF58C9B8), Color(0xFF24A99B)],
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: _focusMint.withValues(alpha: 0.28),
-              blurRadius: 22,
-              offset: const Offset(0, 12),
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(FocusAssets.iconPomodoro, width: 34, height: 34),
-            const SizedBox(width: 12),
-            const Text(
-              '开始专注',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.w900,
+          child: Container(
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(32),
+              gradient: LinearGradient(
+                colors: [colors.focus, colors.primaryDark],
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.focus.withValues(alpha: 0.28),
+                  blurRadius: 22,
+                  offset: const Offset(0, 12),
+                ),
+              ],
             ),
-          ],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Image.asset(FocusAssets.iconPomodoro, width: 34, height: 34),
+                const SizedBox(width: 12),
+                Text(
+                  '开始专注',
+                  style: TextStyle(
+                    color: colors.textOnAccent,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -566,6 +589,7 @@ class _RecentFocusList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return recentSessions.when(
       data: (sessions) {
         return Column(
@@ -581,18 +605,18 @@ class _RecentFocusList extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(vertical: 26),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.76),
+                  color: colors.card.withValues(alpha: 0.76),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: _focusLine),
+                  border: Border.all(color: colors.border),
                 ),
                 child: Column(
                   children: [
                     Image.asset(FocusAssets.catIdle, width: 76, height: 76),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       '还没有专注记录',
                       style: TextStyle(
-                        color: Color(0xFF8E9693),
+                        color: colors.textTertiary,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -610,7 +634,7 @@ class _RecentFocusList extends StatelessWidget {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 }
@@ -627,17 +651,20 @@ class _RecentTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final interrupted = !session.completed;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: interrupted ? const Color(0xFFFFF7F3) : const Color(0xFFFAFFF9),
+        color: interrupted
+            ? colors.danger.withValues(alpha: 0.08)
+            : colors.success.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: interrupted
-              ? const Color(0xFFFFD1C8)
-              : const Color(0xFFD8EBDC),
+              ? colors.danger.withValues(alpha: 0.18)
+              : colors.success.withValues(alpha: 0.18),
         ),
       ),
       child: Row(
@@ -658,8 +685,8 @@ class _RecentTile extends StatelessWidget {
                   session.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: _focusInk,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                   ),
@@ -667,8 +694,8 @@ class _RecentTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   '${focusTypeLabel(session.type)} · ${session.roundIndex}轮',
-                  style: const TextStyle(
-                    color: Color(0xFF8C948F),
+                  style: TextStyle(
+                    color: colors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -678,8 +705,8 @@ class _RecentTile extends StatelessWidget {
           ),
           Text(
             '${session.durationMinutes}min',
-            style: const TextStyle(
-              color: _focusMintDark,
+            style: TextStyle(
+              color: colors.focus,
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),

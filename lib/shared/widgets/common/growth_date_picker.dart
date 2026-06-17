@@ -76,7 +76,8 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
     _selectedDate = widget.initialDate;
     _baseMonth = DateTime(widget.firstDate.year, widget.firstDate.month);
     final lastMonth = DateTime(widget.lastDate.year, widget.lastDate.month);
-    _totalMonths = (lastMonth.year - _baseMonth.year) * 12 +
+    _totalMonths =
+        (lastMonth.year - _baseMonth.year) * 12 +
         (lastMonth.month - _baseMonth.month) +
         1;
     _displayMonth = DateTime(_selectedDate.year, _selectedDate.month);
@@ -93,8 +94,8 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
   }
 
   void _goToMonth(DateTime month) {
-    final page = (month.year - _baseMonth.year) * 12 +
-        (month.month - _baseMonth.month);
+    final page =
+        (month.year - _baseMonth.year) * 12 + (month.month - _baseMonth.month);
     _monthPageController.animateToPage(
       page.clamp(0, _totalMonths - 1),
       duration: const Duration(milliseconds: 300),
@@ -162,9 +163,9 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.growthColors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
         top: false,
@@ -177,7 +178,7 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: context.growthColors.border,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
@@ -197,7 +198,7 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.fitness.withValues(alpha: 0.1),
+                    color: context.growthColors.fitness.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -205,7 +206,7 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.fitness,
+                      color: context.growthColors.fitness,
                     ),
                   ),
                 ),
@@ -258,10 +259,10 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
                           '${_displayMonth.year}-${_displayMonth.month}',
                         ),
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 15,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: context.growthColors.textPrimary,
                         ),
                       ),
                     ),
@@ -300,7 +301,7 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textTertiary,
+                              color: context.growthColors.textTertiary,
                             ),
                           ),
                         ),
@@ -436,10 +437,10 @@ class _CalendarGrid extends StatelessWidget {
               duration: const Duration(milliseconds: 150),
               decoration: BoxDecoration(
                 color: selected
-                    ? AppColors.fitness
+                    ? context.growthColors.fitness
                     : today
-                        ? AppColors.fitness.withValues(alpha: 0.08)
-                        : Colors.transparent,
+                    ? context.growthColors.fitness.withValues(alpha: 0.08)
+                    : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -451,12 +452,12 @@ class _CalendarGrid extends StatelessWidget {
                         ? FontWeight.w700
                         : FontWeight.w500,
                     color: !inRange
-                        ? AppColors.textHint
+                        ? context.growthColors.textHint
                         : selected
-                            ? Colors.white
-                            : today
-                                ? AppColors.fitness
-                                : AppColors.textPrimary,
+                        ? context.growthColors.textOnAccent
+                        : today
+                        ? context.growthColors.fitness
+                        : context.growthColors.textPrimary,
                   ),
                 ),
               ),
@@ -484,10 +485,10 @@ class _NavArrow extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: AppColors.softOrange,
+          color: context.growthColors.softOrange,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, size: 20, color: AppColors.fitness),
+        child: Icon(icon, size: 20, color: context.growthColors.fitness),
       ),
     );
   }
@@ -508,16 +509,18 @@ class _PresetButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.softOrange,
+          color: context.growthColors.softOrange,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.fitness.withValues(alpha: 0.15)),
+          border: Border.all(
+            color: context.growthColors.fitness.withValues(alpha: 0.15),
+          ),
         ),
         child: Text(
           label,
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: AppColors.fitness,
+            color: context.growthColors.fitness,
           ),
         ),
       ),
@@ -545,9 +548,11 @@ class _BottomButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: filled ? AppColors.fitness : Colors.transparent,
+          color: filled ? context.growthColors.fitness : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
-          border: filled ? null : Border.all(color: AppColors.border),
+          border: filled
+              ? null
+              : Border.all(color: context.growthColors.border),
         ),
         child: Center(
           child: Text(
@@ -555,7 +560,9 @@ class _BottomButton extends StatelessWidget {
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
-              color: filled ? Colors.white : AppColors.textSecondary,
+              color: filled
+                  ? context.growthColors.textOnAccent
+                  : context.growthColors.textSecondary,
             ),
           ),
         ),

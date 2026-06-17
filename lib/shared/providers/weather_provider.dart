@@ -27,7 +27,9 @@ final apiStatusProvider = FutureProvider<String>((ref) async {
 final weatherExtraProvider = StateProvider<WeatherExtraState?>((ref) => null);
 
 /// 首次进入 Dashboard / 天气弹窗时自动补齐空气质量和指数数据。
-final weatherExtraAutoProvider = FutureProvider<WeatherExtraState?>((ref) async {
+final weatherExtraAutoProvider = FutureProvider<WeatherExtraState?>((
+  ref,
+) async {
   final cached = ref.read(weatherExtraProvider);
   if (cached != null) return cached;
 
@@ -42,7 +44,9 @@ final weatherExtraAutoProvider = FutureProvider<WeatherExtraState?>((ref) async 
     final state = WeatherExtraState(data);
     ref.read(weatherExtraProvider.notifier).state = state;
     ref.invalidate(todayWeatherProvider);
-    debugPrint('weatherExtraAutoProvider: success, invalidated todayWeatherProvider');
+    debugPrint(
+      'weatherExtraAutoProvider: success, invalidated todayWeatherProvider',
+    );
     return state;
   } catch (e, st) {
     debugPrint('weatherExtraAutoProvider error: $e');

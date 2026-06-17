@@ -3,8 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../features/fitness/utils/fitness_timer_assets.dart';
+import '../../../shared/widgets/common/error_retry_widget.dart';
 
 /// 头像 + 昵称 + 等级徽章组合组件
 class ProfileAvatarSection extends StatelessWidget {
@@ -43,19 +45,13 @@ class ProfileAvatarSection extends StatelessWidget {
                     width: 100,
                     height: 100,
                     decoration: BoxDecoration(
-                      gradient: avatarPath == null
-                          ? const LinearGradient(
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                              colors: [Color(0xFFFFB6C1), Color(0xFFFFC0CB)],
-                            )
-                          : null,
+                      color: context.growthColors.card,
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(
-                            0xFFFFB6C1,
-                          ).withValues(alpha: 0.3),
+                            0xFF8B75F6,
+                          ).withValues(alpha: 0.15),
                           blurRadius: 16,
                           offset: const Offset(0, 6),
                         ),
@@ -93,12 +89,15 @@ class ProfileAvatarSection extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: const Color(0xFF5C3D2E),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.white, width: 2),
+                        border: Border.all(
+                          color: context.growthColors.card,
+                          width: 2,
+                        ),
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.camera_alt_rounded,
                         size: 16,
-                        color: Colors.white,
+                        color: context.growthColors.textOnAccent,
                       ),
                     ),
                   ),
@@ -164,7 +163,7 @@ class ProfileAvatarSection extends StatelessWidget {
             ),
           ),
           loading: () => const SizedBox.shrink(),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (_, _) => const ErrorRetryWidget(),
         ),
       ],
     );

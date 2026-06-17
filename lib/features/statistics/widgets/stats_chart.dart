@@ -41,6 +41,7 @@ class StatsChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = context.growthColors;
     final colorScheme = theme.colorScheme;
 
     // 收集所有时长数据用于计算缩放
@@ -120,7 +121,7 @@ class StatsChart extends StatelessWidget {
                           ),
                         )
                       : LineChart(
-                          _buildChartData(colorScheme, scale, expScale),
+                          _buildChartData(colorScheme, colors, scale, expScale),
                         ),
                 ),
               ),
@@ -137,6 +138,7 @@ class StatsChart extends StatelessWidget {
 
   LineChartData _buildChartData(
     ColorScheme colorScheme,
+    AppThemeColors colors,
     DurationChartScale scale,
     double expScale,
   ) {
@@ -170,7 +172,7 @@ class StatsChart extends StatelessWidget {
                 child: Text(
                   '${date.month}/${date.day}',
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: 11,
                     color: colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -187,7 +189,7 @@ class StatsChart extends StatelessWidget {
               return Text(
                 scale.formatAxisLabel(value),
                 style: TextStyle(
-                  fontSize: 10,
+                  fontSize: 11,
                   color: colorScheme.onSurfaceVariant,
                 ),
               );
@@ -235,13 +237,14 @@ class StatsChart extends StatelessWidget {
       maxY: scale.maxY,
 
       // ── 折线数据 ──
-      lineBarsData: _buildLineBarsData(colorScheme, scale, expScale),
+      lineBarsData: _buildLineBarsData(colorScheme, colors, scale, expScale),
     );
   }
 
   /// 构建各条折线
   List<LineChartBarData> _buildLineBarsData(
     ColorScheme colorScheme,
+    AppThemeColors colors,
     DurationChartScale scale,
     double expScale,
   ) {
@@ -253,7 +256,7 @@ class StatsChart extends StatelessWidget {
           values: data
               .map((d) => scale.convertMinutes(d.studyMinutes))
               .toList(),
-          color: AppColors.study,
+          color: colors.study,
           surfaceColor: colorScheme.surface,
         ),
       );
@@ -264,7 +267,7 @@ class StatsChart extends StatelessWidget {
           values: data
               .map((d) => scale.convertMinutes(d.fitnessMinutes))
               .toList(),
-          color: AppColors.fitness,
+          color: colors.fitness,
           surfaceColor: colorScheme.surface,
         ),
       );
@@ -274,7 +277,7 @@ class StatsChart extends StatelessWidget {
       lines.add(
         _buildLine(
           values: data.map((d) => d.expGained * expScale).toList(),
-          color: AppColors.primary,
+          color: colors.primary,
           surfaceColor: colorScheme.surface,
         ),
       );
@@ -363,25 +366,26 @@ class _Legend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = context.growthColors;
 
     return Wrap(
       spacing: AppSpacing.md,
       children: [
         if (showStudy)
           _LegendItem(
-            color: AppColors.study,
+            color: colors.study,
             label: '学习 (min)',
             textStyle: theme.textTheme.labelSmall,
           ),
         if (showFitness)
           _LegendItem(
-            color: AppColors.fitness,
+            color: colors.fitness,
             label: '健身 (min)',
             textStyle: theme.textTheme.labelSmall,
           ),
         if (showExp)
           _LegendItem(
-            color: AppColors.primary,
+            color: colors.primary,
             label: '经验 (EXP)',
             textStyle: theme.textTheme.labelSmall,
           ),

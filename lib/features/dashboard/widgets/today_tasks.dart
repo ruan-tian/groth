@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
+import '../../../core/constants/date_constants.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/task_provider.dart';
 import '../../../shared/widgets/common/growth_date_picker.dart';
@@ -15,6 +16,7 @@ import '../../../core/constants/pet_assets.dart';
 import 'add_task_dialog.dart';
 import 'task_priority.dart';
 import 'today_task_tile.dart';
+import '../../../shared/widgets/common/error_retry_widget.dart';
 
 // =============================================================================
 // TodayTasks Widget - 分组式待办事项列表
@@ -79,7 +81,9 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
 
   /// 回到今天
   void _goToToday() {
-    ref.read(selectedTaskDateProvider.notifier).state = formatDateKey(DateTime.now());
+    ref.read(selectedTaskDateProvider.notifier).state = formatDateKey(
+      DateTime.now(),
+    );
     HapticFeedback.lightImpact();
   }
 
@@ -100,17 +104,18 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
   Widget build(BuildContext context) {
     final selectedDateStr = ref.watch(selectedTaskDateProvider);
     final tasksAsync = ref.watch(tasksByDateProvider(selectedDateStr));
+    final colors = context.growthColors;
 
     return Stack(
       children: [
         Container(
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.86),
+            color: colors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: const Color(0xFFF0E7DB), width: 1),
+            border: Border.all(color: colors.border, width: 1),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFF8B75F6).withValues(alpha: 0.08),
+                color: colors.shadow.withValues(alpha: 0.18),
                 blurRadius: 24,
                 offset: const Offset(0, 12),
               ),
@@ -172,8 +177,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     AsyncValue<List<DailyTask>> tasksAsync,
   ) {
     final selectedDate = _selectedDate;
-    final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    final weekday = weekdays[selectedDate.weekday - 1];
+    final weekday = DateConstants.weekdayName(selectedDate.weekday);
+    final colors = context.growthColors;
 
     // 混合模式：今天显示"今天"，其他显示具体日期
     String dateLabel;
@@ -203,18 +208,18 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                     children: [
                       Text(
                         dateLabel,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w900,
-                          color: Color(0xFF37314E),
+                          color: colors.textPrimary,
                         ),
                       ),
                       if (!_isToday)
                         Text(
                           '${selectedDate.year}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: Color(0xFF8D869A),
+                            color: colors.textTertiary,
                           ),
                         ),
                     ],
@@ -229,23 +234,27 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
               const SizedBox(width: 8),
               // 回到今天按钮（仅非今天时显示）
               if (!_isToday)
-                GestureDetector(
-                  onTap: _goToToday,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF8B75F6).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: const Text(
-                      '今天',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF8B75F6),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: _goToToday,
+                    borderRadius: BorderRadius.circular(999),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        '今天',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: colors.primary,
+                        ),
                       ),
                     ),
                   ),
@@ -266,8 +275,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                         ),
                         decoration: BoxDecoration(
                           color: completed == total && total > 0
-                              ? const Color(0xFF35C976).withValues(alpha: 0.12)
-                              : const Color(0xFFF7F4FA),
+                              ? colors.success.withValues(alpha: 0.12)
+                              : colors.surfaceVariant,
                           borderRadius: BorderRadius.circular(999),
                         ),
                         child: Text(
@@ -276,8 +285,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: completed == total && total > 0
-                                ? const Color(0xFF35C976)
-                                : const Color(0xFF8D869A),
+                                ? colors.success
+                                : colors.textTertiary,
                           ),
                         ),
                       ),
@@ -285,10 +294,10 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                         const SizedBox(width: 8),
                         Text(
                           '${(completed / total * 100).round()}%',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w800,
-                            color: Color(0xFF8B75F6),
+                            color: colors.primary,
                           ),
                         ),
                       ],
@@ -296,7 +305,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                   );
                 },
                 loading: () => const SizedBox.shrink(),
-                error: (_, _) => const SizedBox.shrink(),
+                error: (_, _) => const ErrorRetryWidget(),
               ),
             ],
           ),
@@ -312,17 +321,15 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 7,
-                  backgroundColor: const Color(0xFFEFEAF8),
+                  backgroundColor: colors.surfaceVariant,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    progress >= 1.0
-                        ? const Color(0xFF35C976)
-                        : const Color(0xFF8B75F6),
+                    progress >= 1.0 ? colors.success : colors.primary,
                   ),
                 ),
               );
             },
             loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
+            error: (_, _) => const ErrorRetryWidget(),
           ),
           const SizedBox(height: 8),
         ],
@@ -334,20 +341,18 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     required IconData icon,
     required VoidCallback onTap,
   }) {
+    final colors = context.growthColors;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 32,
-        height: 32,
+        width: 44,
+        height: 44,
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F4FA),
-          borderRadius: BorderRadius.circular(10),
+          color: colors.surfaceVariant,
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(
-          icon,
-          size: 20,
-          color: const Color(0xFF8D869A),
-        ),
+        child: Icon(icon, size: 20, color: colors.textTertiary),
       ),
     );
   }
@@ -357,6 +362,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
   // ---------------------------------------------------------------------------
 
   Widget _buildEmptyState() {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 24),
       child: Center(
@@ -370,22 +376,22 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
               errorBuilder: (_, _, _) => Icon(
                 Icons.task_alt_rounded,
                 size: 46,
-                color: AppColors.textTertiary.withValues(alpha: 0.45),
+                color: colors.textTertiary.withValues(alpha: 0.45),
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               '暂无任务',
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF37314E),
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               '点击下方按钮添加今天的计划',
-              style: TextStyle(fontSize: 12, color: AppColors.textTertiary),
+              style: TextStyle(fontSize: 12, color: colors.textTertiary),
             ),
           ],
         ),
@@ -533,6 +539,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
   // ---------------------------------------------------------------------------
 
   Widget _buildCompletedSection(List<DailyTask> tasks) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -586,10 +593,10 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
                     turns: _showCompleted ? 0.5 : 0,
                     duration: AppMotion.duration(context, AppMotion.normal),
                     curve: AppMotion.standard,
-                    child: const Icon(
+                    child: Icon(
                       Icons.keyboard_arrow_down_rounded,
                       size: 18,
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -626,6 +633,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
   // ---------------------------------------------------------------------------
 
   Widget _buildAddTaskButton(BuildContext context) {
+    final colors = context.growthColors;
+
     return Semantics(
       button: true,
       label: '添加任务',
@@ -635,21 +644,21 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
           margin: const EdgeInsets.fromLTRB(16, 10, 16, 16),
           padding: const EdgeInsets.symmetric(vertical: 13),
           decoration: BoxDecoration(
-            color: const Color(0xFFF6F2FF),
+            color: colors.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFE8DFFF)),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.22)),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_rounded, size: 19, color: Color(0xFF8B75F6)),
-              SizedBox(width: 6),
+              Icon(Icons.add_rounded, size: 19, color: colors.primary),
+              const SizedBox(width: 6),
               Text(
                 '添加任务',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w900,
-                  color: Color(0xFF8B75F6),
+                  color: colors.primary,
                 ),
               ),
             ],

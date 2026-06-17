@@ -7,7 +7,8 @@ import 'database_provider.dart';
 import 'repository_providers.dart';
 import 'service_providers.dart';
 
-export '../../core/repositories/pet_repository.dart' show PetRepository, normalizePetName;
+export '../../core/repositories/pet_repository.dart'
+    show PetRepository, normalizePetName;
 
 enum PetStateType { idle, peek, happy, sleepy }
 

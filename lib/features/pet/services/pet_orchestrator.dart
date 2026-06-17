@@ -30,9 +30,9 @@ class PetOrchestrator extends StateNotifier<PetRuntimeState> {
   PetOrchestrator({
     required ExpRepository expRepository,
     required PetRepository petRepository,
-  })  : _expRepository = expRepository,
-        _petRepository = petRepository,
-        super(const PetRuntimeState());
+  }) : _expRepository = expRepository,
+       _petRepository = petRepository,
+       super(const PetRuntimeState());
 
   final ExpRepository _expRepository;
   final PetRepository _petRepository;

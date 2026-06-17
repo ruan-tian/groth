@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
 import '../utils/focus_options.dart';
 
 class SoundSelector extends StatelessWidget {
@@ -53,11 +54,12 @@ class _SoundChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const primary = Color(0xFF43B7A8);
-    final border = selected ? primary : const Color(0xFFE6DDD4);
+    final colors = context.growthColors;
+    final primary = colors.focus;
+    final border = selected ? primary : colors.border;
     final background = selected
-        ? const Color(0xFFEAFBF6)
-        : Colors.white.withValues(alpha: 0.72);
+        ? primary.withValues(alpha: 0.10)
+        : colors.card.withValues(alpha: 0.72);
     final imageSize = compact ? 24.0 : 30.0;
 
     return Semantics(
@@ -94,9 +96,7 @@ class _SoundChip extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: selected
-                      ? const Color(0xFF178F85)
-                      : const Color(0xFF5E6666),
+                  color: selected ? colors.focus : colors.textSecondary,
                   fontSize: compact ? 12 : 14,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
                 ),

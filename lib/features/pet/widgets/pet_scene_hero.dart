@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/providers/pet_projection_provider.dart';
 import '../../../core/constants/pet_assets.dart';
 import 'particle_burst.dart';
+import '../../../app/design/design.dart';
 
 const int kMorningStartHour = 6;
 const int kAfternoonStartHour = 12;
@@ -501,9 +502,11 @@ class _PetSpeechBubble extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 44),
             padding: const EdgeInsets.fromLTRB(17, 11, 17, 12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.84),
+              color: context.growthColors.card.withValues(alpha: 0.84),
               borderRadius: BorderRadius.circular(23),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.94)),
+              border: Border.all(
+                color: context.growthColors.card.withValues(alpha: 0.94),
+              ),
               boxShadow: [
                 BoxShadow(
                   color: accent.withValues(alpha: 0.14),

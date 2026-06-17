@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/journal_provider.dart';
@@ -91,7 +92,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       setState(() => _loading = false);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('加载日记失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('加载日记失败，请重试')));
     }
   }
 
@@ -182,7 +183,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+        ).showSnackBar(SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -302,12 +303,12 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
                       shape: const StadiumBorder(),
                     ),
                     child: _saving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 22,
                             height: 22,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: context.growthColors.textOnAccent,
                             ),
                           )
                         : const Text(
@@ -400,7 +401,9 @@ class _MoodSelector extends StatelessWidget {
                       duration: const Duration(milliseconds: 180),
                       height: 90,
                       decoration: BoxDecoration(
-                        color: selected ? JournalColors.pinkBg : Colors.white,
+                        color: selected
+                            ? JournalColors.pinkBg
+                            : context.growthColors.card,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: selected
@@ -568,7 +571,7 @@ class _TagEditor extends StatelessWidget {
           label: Text(tag),
           selected: selected,
           onSelected: (_) => onToggle(tag),
-          backgroundColor: Colors.white,
+          backgroundColor: context.growthColors.card,
           selectedColor: JournalColors.pinkBg,
           checkmarkColor: JournalColors.pinkMain,
           side: BorderSide(
@@ -676,7 +679,7 @@ class _SoftCard extends StatelessWidget {
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.76),
+        color: context.growthColors.card.withValues(alpha: 0.76),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: JournalColors.pinkBorder),
         boxShadow: [
@@ -709,7 +712,7 @@ class _SquareButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = small ? 40.0 : 52.0;
     return Material(
-      color: Colors.white.withValues(alpha: 0.82),
+      color: context.growthColors.card.withValues(alpha: 0.82),
       borderRadius: BorderRadius.circular(small ? 12 : 18),
       child: InkWell(
         onTap: onTap,

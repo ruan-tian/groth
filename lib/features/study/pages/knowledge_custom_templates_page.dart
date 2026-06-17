@@ -111,6 +111,10 @@ class _TemplatesHero extends StatelessWidget {
               KnowledgeCardAssets.customTemplateBuilderWide,
               fit: BoxFit.cover,
               cacheWidth: 900,
+            errorBuilder: (_, __, ___) => ColoredBox(
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+            ),
             ),
             DecoratedBox(
               decoration: BoxDecoration(
@@ -213,6 +217,10 @@ class _TemplateCard extends ConsumerWidget {
                 template.coverAsset ?? KnowledgeCardAssets.customTemplateCover,
                 fit: BoxFit.cover,
                 cacheWidth: 720,
+              errorBuilder: (_, __, ___) => ColoredBox(
+                color: Colors.grey.shade200,
+                child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+              ),
               ),
             ),
           ),
@@ -352,6 +360,10 @@ class _ModuleTile extends ConsumerWidget {
               height: 36,
               fit: BoxFit.cover,
               cacheWidth: 180,
+            errorBuilder: (_, __, ___) => ColoredBox(
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+            ),
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -507,6 +519,10 @@ class _EmptyTemplatesPanel extends StatelessWidget {
               KnowledgeCardAssets.emptyCustomTemplates,
               fit: BoxFit.cover,
               cacheWidth: 900,
+            errorBuilder: (_, __, ___) => ColoredBox(
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image_outlined, size: 20, color: Colors.grey),
+            ),
             ),
           ),
         ),

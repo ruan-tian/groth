@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../plan/models/reminder_timer_state.dart';
 import '../../plan/providers/reminder_timer_provider.dart';
 import '../../plan/services/reminder_notification_service.dart';
+import '../../plan/widgets/notification_permission_dialog.dart';
 import '../models/water_plan_state.dart';
 import '../providers/water_plan_provider.dart';
 import '../utils/health_timer_assets.dart';
@@ -92,7 +94,10 @@ class _WaterReminderTimerPageState
     await planController.recordDrink();
     final plan = ref.read(waterPlanProvider);
     if (plan.reminderEnabled) {
-      await _scheduleNextReminder(plan);
+      final scheduled = await _scheduleNextReminder(plan);
+      if (!scheduled) {
+        await planController.setReminderEnabled(false);
+      }
     }
   }
 
@@ -100,7 +105,13 @@ class _WaterReminderTimerPageState
     await ref.read(waterPlanProvider.notifier).setReminderEnabled(enabled);
     final plan = ref.read(waterPlanProvider);
     if (enabled) {
-      await _scheduleNextReminder(plan);
+      final scheduled = await _scheduleNextReminder(plan);
+      if (!scheduled) {
+        await ref.read(waterPlanProvider.notifier).setReminderEnabled(false);
+        ref
+            .read(reminderTimerProvider(ReminderKind.water).notifier)
+            .reset(duration: Duration(minutes: plan.intervalMinutes));
+      }
     } else {
       await ref
           .read(reminderNotificationServiceProvider)
@@ -111,20 +122,50 @@ class _WaterReminderTimerPageState
     }
   }
 
-  Future<void> _scheduleNextReminder(WaterPlanState plan) async {
+  Future<bool> _scheduleNextReminder(WaterPlanState plan) async {
     final duration = Duration(minutes: plan.intervalMinutes);
-    ref
-        .read(reminderTimerProvider(ReminderKind.water).notifier)
-        .start(duration);
     final service = ref.read(reminderNotificationServiceProvider);
-    await service.requestPermissions();
-    await service.scheduleReminder(
+    final permissionsGranted = await service.requestPermissions();
+    if (!permissionsGranted) {
+      if (!mounted) return false;
+      final opened = await showNotificationPermissionGuide(context);
+      if (opened) {
+        final retry = await service.requestPermissions();
+        if (!retry) {
+          if (!mounted) return false;
+          _showNotificationSnack('通知权限仍未开启，无法发送提醒。');
+          return false;
+        }
+      } else {
+        if (!mounted) return false;
+        _showNotificationSnack('需要通知权限才能发送喝水提醒。');
+        return false;
+      }
+    }
+
+    final scheduled = await service.scheduleReminder(
       id: _notificationId,
       scheduledAt: DateTime.now().add(duration),
       title: '该喝水啦',
       body: '喝 ${plan.defaultAmountMl} ml，保持清爽状态。',
       payload: 'water_reminder',
     );
+    if (!scheduled) {
+      _showNotificationSnack('喝水提醒创建失败，请检查系统通知设置。');
+      return false;
+    }
+
+    ref
+        .read(reminderTimerProvider(ReminderKind.water).notifier)
+        .start(duration);
+    return true;
+  }
+
+  void _showNotificationSnack(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Future<void> _editGoal() async {

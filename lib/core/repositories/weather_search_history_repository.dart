@@ -14,30 +14,35 @@ class WeatherSearchHistoryRepository {
     required double longitude,
   }) async {
     // 检查是否已存在
-    final existing = await (_db.select(_db.weatherSearchHistoryTable)
-          ..where((t) => t.cityName.equals(cityName))
-          ..limit(1))
-        .getSingleOrNull();
-    
+    final existing =
+        await (_db.select(_db.weatherSearchHistoryTable)
+              ..where((t) => t.cityName.equals(cityName))
+              ..limit(1))
+            .getSingleOrNull();
+
     if (existing != null) {
       // 更新时间
-      await (_db.update(_db.weatherSearchHistoryTable)
-            ..where((t) => t.cityName.equals(cityName)))
-          .write(WeatherSearchHistoryTableCompanion(
-        createdAt: Value(DateTime.now().millisecondsSinceEpoch),
-      ));
-    } else {
-      // 插入新记录
-      await _db.into(_db.weatherSearchHistoryTable).insert(
+      await (_db.update(
+        _db.weatherSearchHistoryTable,
+      )..where((t) => t.cityName.equals(cityName))).write(
         WeatherSearchHistoryTableCompanion(
-          cityName: Value(cityName),
-          country: Value(country),
-          admin1: Value(admin1),
-          latitude: Value(latitude),
-          longitude: Value(longitude),
           createdAt: Value(DateTime.now().millisecondsSinceEpoch),
         ),
       );
+    } else {
+      // 插入新记录
+      await _db
+          .into(_db.weatherSearchHistoryTable)
+          .insert(
+            WeatherSearchHistoryTableCompanion(
+              cityName: Value(cityName),
+              country: Value(country),
+              admin1: Value(admin1),
+              latitude: Value(latitude),
+              longitude: Value(longitude),
+              createdAt: Value(DateTime.now().millisecondsSinceEpoch),
+            ),
+          );
     }
   }
 
@@ -51,9 +56,9 @@ class WeatherSearchHistoryRepository {
 
   /// 删除搜索历史
   Future<void> deleteHistory(int id) async {
-    await (_db.delete(_db.weatherSearchHistoryTable)
-          ..where((t) => t.id.equals(id)))
-        .go();
+    await (_db.delete(
+      _db.weatherSearchHistoryTable,
+    )..where((t) => t.id.equals(id))).go();
   }
 
   /// 清空搜索历史

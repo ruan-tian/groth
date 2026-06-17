@@ -79,7 +79,8 @@ PetViewState? _project(
 }) {
   final active = _visibleActiveIntent(state, surface, module);
   final fallback = switch (surface) {
-    PetSurface.modulePage => module != null ? state.moduleIntents[module] : null,
+    PetSurface.modulePage =>
+      module != null ? state.moduleIntents[module] : null,
     PetSurface.dashboard => state.lifeIntent,
     PetSurface.petCenter => state.lifeIntent,
   };
@@ -96,7 +97,9 @@ PetViewState? _project(
     imagePath: intent?.imagePath,
     bubbleText: bubbleText,
     isBubbleVisible:
-        fixedMsg != null || (intent?.messages.isNotEmpty ?? false),
+        fixedMsg != null ||
+        aiPetMessage != null ||
+        (intent?.messages.isNotEmpty ?? false),
     mood: 'neutral',
     action: _inferAction(intent?.imagePath),
     module: intent?.module ?? module,

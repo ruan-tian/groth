@@ -655,6 +655,7 @@ class _RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -662,10 +663,12 @@ class _RoundIconButton extends StatelessWidget {
         height: size,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: danger ? const Color(0x331A0E0A) : const Color(0x220D3540),
-          border: Border.all(color: _sessionCream.withValues(alpha: 0.72)),
+          color: danger
+              ? colors.danger.withValues(alpha: 0.18)
+              : colors.surfaceVariant.withValues(alpha: 0.34),
+          border: Border.all(color: colors.border.withValues(alpha: 0.72)),
         ),
-        child: Icon(icon, color: _sessionCream, size: size * 0.48),
+        child: Icon(icon, color: colors.textPrimary, size: size * 0.48),
       ),
     );
   }
@@ -688,6 +691,7 @@ class _GlowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final buttonSize = compact ? 58.0 : (large ? 86.0 : 64.0);
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -698,20 +702,20 @@ class _GlowButton extends StatelessWidget {
             width: buttonSize,
             height: buttonSize,
             decoration: BoxDecoration(
-              color: _sessionMint.withValues(alpha: 0.9),
+              color: colors.focus.withValues(alpha: 0.90),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: _sessionMint.withValues(alpha: 0.48),
+                  color: colors.focus.withValues(alpha: 0.48),
                   blurRadius: 24,
                   spreadRadius: 4,
                 ),
               ],
-              border: Border.all(color: Colors.white.withValues(alpha: 0.76)),
+              border: Border.all(color: colors.card.withValues(alpha: 0.76)),
             ),
             child: Icon(
               icon,
-              color: Colors.white,
+              color: colors.textOnAccent,
               size: compact
                   ? 30
                   : large
@@ -724,7 +728,7 @@ class _GlowButton extends StatelessWidget {
         Text(
           label,
           style: TextStyle(
-            color: _sessionMint,
+            color: colors.focus,
             fontSize: compact ? 13 : 16,
             fontWeight: FontWeight.w900,
           ),
@@ -742,6 +746,7 @@ class _NextPhaseCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final nextTitle = cycleState.isBreak
         ? '下一阶段：专注'
         : cycleState.isLastRound
@@ -755,9 +760,9 @@ class _NextPhaseCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: const Color(0xEFFFF8EA),
+        color: colors.card.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE4CEAA), width: 1.2),
+        border: Border.all(color: colors.border, width: 1.2),
       ),
       child: Row(
         children: [
@@ -775,8 +780,8 @@ class _NextPhaseCard extends StatelessWidget {
               children: [
                 Text(
                   nextTitle,
-                  style: const TextStyle(
-                    color: Color(0xFF615043),
+                  style: TextStyle(
+                    color: colors.textSecondary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -784,8 +789,8 @@ class _NextPhaseCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   nextTime,
-                  style: const TextStyle(
-                    color: _sessionMintDark,
+                  style: TextStyle(
+                    color: colors.focus,
                     fontSize: 26,
                     fontWeight: FontWeight.w900,
                   ),
@@ -793,7 +798,7 @@ class _NextPhaseCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Color(0xFF6B5747)),
+          Icon(Icons.chevron_right_rounded, color: colors.textTertiary),
         ],
       ),
     );
@@ -807,15 +812,16 @@ class _EncourageNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: EdgeInsets.symmetric(
         horizontal: compact ? 16 : 22,
         vertical: compact ? 12 : 18,
       ),
       decoration: BoxDecoration(
-        color: const Color(0x33082A35),
+        color: colors.surfaceVariant.withValues(alpha: 0.34),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: _sessionCream.withValues(alpha: 0.42)),
+        border: Border.all(color: colors.border.withValues(alpha: 0.42)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -827,7 +833,7 @@ class _EncourageNote extends StatelessWidget {
               '你专注的每一分钟，都是未来的自己在感谢你。',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: _sessionCream,
+                color: colors.textPrimary,
                 fontSize: compact ? 14 : 17,
                 fontWeight: FontWeight.w800,
               ),
@@ -864,18 +870,19 @@ class _FocusIllustrationDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
         width: math.min(MediaQuery.sizeOf(context).width - 48, 390),
         padding: const EdgeInsets.fromLTRB(24, 22, 24, 22),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFBF2),
+          color: colors.card,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: const Color(0xFFE7D8BF)),
+          border: Border.all(color: colors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: colors.shadow.withValues(alpha: 0.20),
               blurRadius: 30,
               offset: const Offset(0, 18),
             ),
@@ -907,8 +914,8 @@ class _FocusIllustrationDialog extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF2E3734),
+              style: TextStyle(
+                color: colors.textPrimary,
                 fontSize: 23,
                 fontWeight: FontWeight.w900,
               ),
@@ -917,8 +924,8 @@ class _FocusIllustrationDialog extends StatelessWidget {
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Color(0xFF73736C),
+              style: TextStyle(
+                color: colors.textSecondary,
                 fontSize: 15,
                 height: 1.5,
                 fontWeight: FontWeight.w600,
@@ -933,8 +940,10 @@ class _FocusIllustrationDialog extends StatelessWidget {
                       onPressed: onSecondary,
                       style: OutlinedButton.styleFrom(
                         minimumSize: const Size(0, 46),
-                        foregroundColor: const Color(0xFFAF6A55),
-                        side: const BorderSide(color: Color(0xFFE5B9A8)),
+                        foregroundColor: colors.danger,
+                        side: BorderSide(
+                          color: colors.danger.withValues(alpha: 0.32),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -949,8 +958,8 @@ class _FocusIllustrationDialog extends StatelessWidget {
                     onPressed: onPrimary,
                     style: FilledButton.styleFrom(
                       minimumSize: const Size(0, 46),
-                      backgroundColor: _sessionMintDark,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.focus,
+                      foregroundColor: colors.textOnAccent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(18),
                       ),

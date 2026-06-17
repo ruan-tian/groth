@@ -129,6 +129,7 @@ class _DiaryNotebookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final ready = status == 'ready';
     final failed = status == 'failed';
 
@@ -140,7 +141,7 @@ class _DiaryNotebookCard extends StatelessWidget {
           child: Text(
             '甜甜的小日记',
             style: AppTextStyles.sectionTitle.copyWith(
-              color: const Color(0xFF6E4A58),
+              color: colors.textPrimary,
             ),
           ),
         ),
@@ -151,20 +152,20 @@ class _DiaryNotebookCard extends StatelessWidget {
             curve: Curves.easeOutCubic,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFFFFF5FA),
-                  Color(0xFFFFE2EF),
-                  Color(0xFFFFF9F1),
+                  colors.card,
+                  colors.softPink.withValues(alpha: 0.72),
+                  colors.surfaceTint,
                 ],
               ),
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: const Color(0xFFF1C2D8)),
+              border: Border.all(color: colors.border),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFE889B5).withValues(alpha: 0.16),
+                  color: colors.journal.withValues(alpha: 0.14),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -185,10 +186,10 @@ class _DiaryNotebookCard extends StatelessWidget {
                               title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w800,
-                                color: Color(0xFF6E4A58),
+                                color: colors.textPrimary,
                               ),
                             ),
                           ),
@@ -200,10 +201,10 @@ class _DiaryNotebookCard extends StatelessWidget {
                         subtitle,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           height: 1.45,
-                          color: Color(0xFF8E6D78),
+                          color: colors.textSecondary,
                         ),
                       ),
                       const SizedBox(height: 12),
@@ -212,7 +213,7 @@ class _DiaryNotebookCard extends StatelessWidget {
                           TextButton.icon(
                             onPressed: onOpen,
                             style: TextButton.styleFrom(
-                              foregroundColor: const Color(0xFFD8709B),
+                              foregroundColor: colors.journal,
                               padding: EdgeInsets.zero,
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -224,7 +225,8 @@ class _DiaryNotebookCard extends StatelessWidget {
                           FilledButton(
                             onPressed: onGenerate,
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFFE889B5),
+                              backgroundColor: colors.journal,
+                              foregroundColor: colors.textOnAccent,
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
                                 vertical: 8,
@@ -236,12 +238,12 @@ class _DiaryNotebookCard extends StatelessWidget {
                               ),
                             ),
                             child: isGenerating
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 14,
                                     height: 14,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: Colors.white,
+                                      color: colors.textOnAccent,
                                     ),
                                   )
                                 : Text(ready ? '重新生成' : '让甜甜写'),
@@ -268,16 +270,17 @@ class _NotebookCover extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: 70,
       height: 86,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFBCD8),
+        color: colors.softPink,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white, width: 2),
+        border: Border.all(color: colors.card, width: 2),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFD8709B).withValues(alpha: 0.22),
+            color: colors.journal.withValues(alpha: 0.20),
             blurRadius: 12,
             offset: const Offset(0, 5),
           ),
@@ -291,7 +294,7 @@ class _NotebookCover extends StatelessWidget {
             bottom: 0,
             child: Container(
               width: 7,
-              color: const Color(0xFFDD7BA5).withValues(alpha: 0.45),
+              color: colors.journal.withValues(alpha: 0.42),
             ),
           ),
           Align(
@@ -303,7 +306,7 @@ class _NotebookCover extends StatelessWidget {
                   ? Icons.favorite_rounded
                   : Icons.edit_note_rounded,
               size: 30,
-              color: Colors.white,
+              color: colors.journal,
             ),
           ),
           Positioned(
@@ -313,9 +316,9 @@ class _NotebookCover extends StatelessWidget {
               width: 18,
               height: 18,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF7FB),
+                color: colors.card,
                 shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFE889B5)),
+                border: Border.all(color: colors.journal),
               ),
             ),
           ),
@@ -332,6 +335,7 @@ class _StatusPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final label = switch (status) {
       'ready' => '已写好',
       'failed' => '待重试',
@@ -339,10 +343,10 @@ class _StatusPill extends StatelessWidget {
       _ => '待书写',
     };
     final color = switch (status) {
-      'ready' => const Color(0xFF42A576),
-      'failed' => const Color(0xFFE07A63),
-      'loading' => const Color(0xFF8E7EDC),
-      _ => const Color(0xFFD8709B),
+      'ready' => colors.success,
+      'failed' => colors.danger,
+      'loading' => colors.primary,
+      _ => colors.journal,
     };
 
     return Container(

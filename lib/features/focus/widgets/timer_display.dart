@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
 import '../utils/focus_assets.dart';
 
 class TimerDisplay extends StatefulWidget {
@@ -67,19 +68,22 @@ class _TimerDisplayState extends State<TimerDisplay>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final totalSeconds = widget.total.inSeconds;
     final progress = totalSeconds > 0
         ? (widget.remaining.inSeconds / totalSeconds).clamp(0.0, 1.0)
         : 0.0;
     final percent = (progress * 100).round();
     final accent = widget.isBreak
-        ? const Color(0xFF9DEECF)
+        ? colors.success
         : progress > 0.25
-        ? const Color(0xFF9DEBD8)
-        : const Color(0xFFFF8D76);
-    final textColor = widget.dark
-        ? const Color(0xFFF8E8C8)
-        : const Color(0xFF2C3938);
+        ? colors.focus
+        : colors.warning;
+    final ringBaseColor = Color.lerp(colors.border, colors.focus, 0.16)!;
+    final ringFillColor = widget.dark
+        ? colors.card.withValues(alpha: 0.72)
+        : colors.paper.withValues(alpha: 0.68);
+    final tickColor = colors.textSecondary.withValues(alpha: 0.36);
 
     final content = SizedBox(
       width: widget.size,
@@ -101,6 +105,15 @@ class _TimerDisplayState extends State<TimerDisplay>
               accent: accent,
               dark: widget.dark,
               isBreak: widget.isBreak,
+              baseColor: ringBaseColor,
+              fillColor: ringFillColor,
+              tickColor: tickColor,
+              gradientColors: [
+                colors.focus,
+                colors.success,
+                colors.warning,
+                colors.focus,
+              ],
             ),
           ),
           if (widget.showCat)
@@ -120,9 +133,7 @@ class _TimerDisplayState extends State<TimerDisplay>
               Text(
                 widget.roundLabel ?? '',
                 style: TextStyle(
-                  color: widget.dark
-                      ? const Color(0xFFE8DFC6)
-                      : const Color(0xFF6D7B78),
+                  color: colors.textSecondary,
                   fontSize: widget.size * 0.052,
                   fontWeight: FontWeight.w700,
                 ),
@@ -131,7 +142,7 @@ class _TimerDisplayState extends State<TimerDisplay>
               Text(
                 _formatTime(widget.remaining),
                 style: TextStyle(
-                  color: textColor,
+                  color: colors.textPrimary,
                   fontSize: widget.size * 0.18,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0,
@@ -187,23 +198,28 @@ class _TimerRingPainter extends CustomPainter {
     required this.accent,
     required this.dark,
     required this.isBreak,
+    required this.baseColor,
+    required this.fillColor,
+    required this.tickColor,
+    required this.gradientColors,
   });
 
   final double progress;
   final Color accent;
   final bool dark;
   final bool isBreak;
+  final Color baseColor;
+  final Color fillColor;
+  final Color tickColor;
+  final List<Color> gradientColors;
 
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
     final radius = (size.width - 34) / 2;
-    final baseColor = dark ? const Color(0xFF38545A) : const Color(0xFFE8EFEA);
 
     final fillPaint = Paint()
-      ..color = dark
-          ? const Color(0xAA082B35)
-          : Colors.white.withValues(alpha: 0.68)
+      ..color = fillColor
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, radius - 8, fillPaint);
 
@@ -232,12 +248,7 @@ class _TimerRingPainter extends CustomPainter {
       ..shader = SweepGradient(
         startAngle: -math.pi / 2,
         endAngle: math.pi * 1.5,
-        colors: const [
-          Color(0xFF9DEBD8),
-          Color(0xFF78DCC8),
-          Color(0xFFFF8D76),
-          Color(0xFF9DEBD8),
-        ],
+        colors: gradientColors,
       ).createShader(Rect.fromCircle(center: center, radius: radius))
       ..style = PaintingStyle.stroke
       ..strokeWidth = 13
@@ -252,7 +263,7 @@ class _TimerRingPainter extends CustomPainter {
 
     if (dark) {
       final tickPaint = Paint()
-        ..color = const Color(0x66E9DDC7)
+        ..color = tickColor
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1.2
         ..strokeCap = StrokeCap.round;
@@ -274,6 +285,10 @@ class _TimerRingPainter extends CustomPainter {
     return oldDelegate.progress != progress ||
         oldDelegate.accent != accent ||
         oldDelegate.dark != dark ||
-        oldDelegate.isBreak != isBreak;
+        oldDelegate.isBreak != isBreak ||
+        oldDelegate.baseColor != baseColor ||
+        oldDelegate.fillColor != fillColor ||
+        oldDelegate.tickColor != tickColor ||
+        oldDelegate.gradientColors != gradientColors;
   }
 }

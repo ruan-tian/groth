@@ -225,7 +225,11 @@ class FocusCycleState {
       sessionGroupId: json['sessionGroupId'] as String?,
       currentRound: json['currentRound'] as int? ?? 1,
       totalRounds: json['totalRounds'] as int? ?? 4,
-      phase: FocusPhase.values[json['phase'] as int? ?? 0],
+      phase:
+          FocusPhase.values[(json['phase'] as int? ?? 0).clamp(
+            0,
+            FocusPhase.values.length - 1,
+          )],
       phaseStartAt: json['phaseStartAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(json['phaseStartAt'] as int)
           : null,
@@ -254,7 +258,8 @@ const Object _focusCycleUnset = Object();
 // =============================================================================
 
 class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
-  FocusCycleNotifier(this._notificationService) : super(const FocusCycleState());
+  FocusCycleNotifier(this._notificationService)
+    : super(const FocusCycleState());
   Timer? _tickTimer;
   static const _persistKey = 'focus_cycle_state';
   static const _notificationId = 5205;
@@ -420,6 +425,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
       );
       _startTick();
       _persist();
+      _schedulePhaseNotification();
       return false;
     }
 
@@ -469,11 +475,12 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
         isRunning: false,
         phaseCompleted: true,
       );
-      _persist();
+      // _persist() 已在 _advanceToNextPhase 中调用，不在 tick 中重复持久化
       // 不在这里自动推进，由 focus_session_page 控制
       // （需要先保存记录、发宠物事件等）
     } else {
       state = state.copyWith(remainingSeconds: remaining);
+      // 不在 tick 中持久化，只在关键状态变化时持久化
     }
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/design/design.dart';
 import '../../../shared/providers/pet_ai_result_provider.dart';
 import '../../../shared/providers/pet_orchestrator_provider.dart';
 import '../../../shared/providers/pet_projection_provider.dart';
@@ -66,11 +67,13 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
 
     // Register module ambient with v2 orchestrator
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      ref.read(petOrchestratorProvider.notifier).setModuleAmbient(
-        widget.module.name,
-        _getDefaultImagePath(widget.module.name),
-        _getDefaultMessages(widget.module.name),
-      );
+      ref
+          .read(petOrchestratorProvider.notifier)
+          .setModuleAmbient(
+            widget.module.name,
+            _getDefaultImagePath(widget.module.name),
+            _getDefaultMessages(widget.module.name),
+          );
     });
   }
 
@@ -85,7 +88,9 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
     final runtimeState = ref.watch(petOrchestratorProvider);
     final intent = runtimeState.activeIntent;
     final projection = ref.watch(modulePetViewProvider(widget.module.name));
-    final latestAnalysis = ref.watch(latestPetAnalysisProvider(widget.module.name));
+    final latestAnalysis = ref.watch(
+      latestPetAnalysisProvider(widget.module.name),
+    );
 
     // 解析颜色
     final bgColor = _parseColor(widget.module.softColorHex);
@@ -94,8 +99,8 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
 
     final visibleIntent =
         (intent?.module == null || intent?.module == widget.module.name)
-            ? intent
-            : null;
+        ? intent
+        : null;
     final imagePath =
         visibleIntent?.imagePath ??
         projection?.imagePath ??
@@ -111,29 +116,32 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
       button: widget.onTap != null,
       label: '宠物场景',
       child: GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        height: widget.height,
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              bgColor,
-              bgColor.withValues(alpha: 0.6),
+        onTap: widget.onTap,
+        child: Container(
+          height: widget.height,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [bgColor, bgColor.withValues(alpha: 0.6)],
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: bgColorDeep.withValues(alpha: 0.15),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
             ],
           ),
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: bgColorDeep.withValues(alpha: 0.15),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+          child: _buildContent(
+            imagePath,
+            message,
+            bgColorDeep,
+            primaryColor,
+            latestAnalysis.valueOrNull,
+          ),
         ),
-        child: _buildContent(imagePath, message, bgColorDeep, primaryColor, latestAnalysis.valueOrNull),
-      ),
       ),
     );
   }
@@ -210,9 +218,9 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.white.withValues(alpha: 0.35),
-                    Colors.white.withValues(alpha: 0.15),
-                    Colors.white.withValues(alpha: 0.0),
+                    context.growthColors.card.withValues(alpha: 0.35),
+                    context.growthColors.card.withValues(alpha: 0.15),
+                    Colors.transparent,
                   ],
                   stops: const [0.4, 0.7, 1.0],
                 ),
@@ -226,10 +234,10 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
                 shape: BoxShape.circle,
                 gradient: RadialGradient(
                   colors: [
-                    Colors.white,
-                    Colors.white,
-                    Colors.white.withValues(alpha: 0.8),
-                    Colors.white.withValues(alpha: 0.0),
+                    context.growthColors.card,
+                    context.growthColors.card,
+                    context.growthColors.card.withValues(alpha: 0.8),
+                    Colors.transparent,
                   ],
                   stops: const [0.0, 0.75, 0.9, 1.0],
                 ),
@@ -296,7 +304,7 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
           width: widget.petSize,
           height: widget.petSize,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.5),
+            color: context.growthColors.card.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Center(
@@ -320,11 +328,16 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
       children: [
         // 主气泡（petMessage）
         CustomPaint(
-          painter: _BubbleTailPainter(),
+          painter: _BubbleTailPainter(color: context.growthColors.card),
           child: Container(
-            padding: const EdgeInsets.only(left: 14, right: 14, top: 8, bottom: 8),
+            padding: const EdgeInsets.only(
+              left: 14,
+              right: 14,
+              top: 8,
+              bottom: 8,
+            ),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: context.growthColors.card,
               borderRadius: BorderRadius.circular(14),
               boxShadow: [
                 BoxShadow(
@@ -372,42 +385,45 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
             button: true,
             label: '展开AI分析报告',
             child: GestureDetector(
-            onTap: () {
-              setState(() => _isReportExpanded = !_isReportExpanded);
-              widget.onTap?.call();
-            },
-            child: AnimatedOpacity(
-              opacity: sceneState.showReport ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 300),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      sceneState.reportTitle!,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
-                        color: primaryColor.withValues(alpha: 0.8),
+              onTap: () {
+                setState(() => _isReportExpanded = !_isReportExpanded);
+                widget.onTap?.call();
+              },
+              child: AnimatedOpacity(
+                opacity: sceneState.showReport ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: primaryColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        sceneState.reportTitle!,
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                          color: primaryColor.withValues(alpha: 0.8),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 4),
-                    Icon(
-                      _isReportExpanded
-                          ? Icons.expand_less_rounded
-                          : Icons.chevron_right_rounded,
-                      size: 14,
-                      color: primaryColor.withValues(alpha: 0.6),
-                    ),
-                  ],
+                      const SizedBox(width: 4),
+                      Icon(
+                        _isReportExpanded
+                            ? Icons.expand_less_rounded
+                            : Icons.chevron_right_rounded,
+                        size: 14,
+                        color: primaryColor.withValues(alpha: 0.6),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
             ),
           ),
         ],
@@ -463,25 +479,25 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
       button: onTap != null,
       label: text,
       child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
-        ),
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 10,
-            fontWeight: FontWeight.w500,
-            color: color.withValues(alpha: 0.8),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: color.withValues(alpha: 0.15)),
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          child: Text(
+            text,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w500,
+              color: color.withValues(alpha: 0.8),
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
-      ),
       ),
     );
   }
@@ -500,10 +516,14 @@ class _PetSceneBannerState extends ConsumerState<PetSceneBanner>
 
 /// 绘制气泡左侧的小三角尾巴
 class _BubbleTailPainter extends CustomPainter {
+  _BubbleTailPainter({required this.color});
+
+  final Color color;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white
+      ..color = color
       ..style = PaintingStyle.fill;
 
     // 小三角位置：左侧中间偏下
@@ -517,5 +537,6 @@ class _BubbleTailPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _BubbleTailPainter oldDelegate) =>
+      oldDelegate.color != color;
 }

@@ -21,6 +21,7 @@ class PetCenterPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final profileAsync = ref.watch(petProfileProvider);
     final dashboardAsync = ref.watch(dashboardProvider);
     final ageDays = ref.watch(petAgeDaysProvider);
@@ -41,7 +42,7 @@ class PetCenterPage extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7EF),
+      backgroundColor: colors.background,
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -55,12 +56,15 @@ class PetCenterPage extends ConsumerWidget {
             }
           },
         ),
-        title: Text(
-          '$name的小窝',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+        title: Padding(
+          padding: const EdgeInsets.only(bottom: 2),
+          child: Text(
+            '$name的小窝',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.w700,
+              color: colors.textPrimary,
+            ),
           ),
         ),
         centerTitle: true,
@@ -75,7 +79,7 @@ class PetCenterPage extends ConsumerWidget {
         ],
       ),
       body: RefreshIndicator(
-        color: const Color(0xFFE89B68),
+        color: colors.accent,
         onRefresh: () async {
           ref.invalidate(petProfileProvider);
           ref.invalidate(petStateProvider);
@@ -89,11 +93,11 @@ class PetCenterPage extends ConsumerWidget {
               child: PetSceneHero(level: level, petName: name),
             ),
             Container(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0xFFFFF3E8), Color(0xFFFFFBF6)],
+                  colors: [colors.background, colors.surfaceTint],
                 ),
               ),
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 36),
@@ -149,6 +153,7 @@ class _GrowthIdentityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final progress = levelProgress?.progressRatio ?? 0;
     final expRemaining = levelProgress?.expRemaining ?? 0;
 
@@ -171,10 +176,10 @@ class _GrowthIdentityCard extends StatelessWidget {
                             name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 22,
                               fontWeight: FontWeight.w800,
-                              color: AppColors.textPrimary,
+                              color: colors.textPrimary,
                             ),
                           ),
                         ),
@@ -187,7 +192,7 @@ class _GrowthIdentityCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.4,
-                        color: AppColors.textSecondary.withValues(alpha: 0.88),
+                        color: colors.textSecondary.withValues(alpha: 0.88),
                       ),
                     ),
                   ],
@@ -216,21 +221,21 @@ class _GrowthIdentityCard extends StatelessWidget {
                   children: [
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           '成长经验',
                           style: TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.textPrimary,
+                            color: colors.textPrimary,
                           ),
                         ),
                         const Spacer(),
                         Text(
                           loading ? '加载中' : '${dashboard?.totalExp ?? 0} EXP',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFFE08B55),
+                            color: colors.accent,
                           ),
                         ),
                       ],
@@ -241,18 +246,18 @@ class _GrowthIdentityCard extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 9,
-                        backgroundColor: const Color(0xFFFFE6D6),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFFEFA26D),
+                        backgroundColor: colors.softOrange,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          colors.accent,
                         ),
                       ),
                     ),
                     const SizedBox(height: 7),
                     Text(
                       '距离 Lv.${level + 1} 还差 $expRemaining EXP',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
@@ -273,6 +278,7 @@ class _TodaySummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final data = dashboard;
     return _PaperCard(
       child: Column(
@@ -294,25 +300,25 @@ class _TodaySummaryCard extends StatelessWidget {
             children: [
               _MetricTile(
                 icon: Icons.menu_book_rounded,
-                color: AppColors.study,
+                color: colors.study,
                 label: '学习',
                 value: '${data?.todayStudyMinutes ?? 0} 分钟',
               ),
               _MetricTile(
                 icon: Icons.fitness_center_rounded,
-                color: AppColors.fitness,
+                color: colors.fitness,
                 label: '健身',
                 value: '${data?.todayFitnessMinutes ?? 0} 分钟',
               ),
               _MetricTile(
                 icon: Icons.edit_note_rounded,
-                color: const Color(0xFFE49772),
+                color: colors.journal,
                 label: '日记',
                 value: '${data?.todayJournalCount ?? 0} 篇',
               ),
               _MetricTile(
                 icon: Icons.timer_rounded,
-                color: const Color(0xFF7AA6A1),
+                color: colors.focus,
                 label: '专注',
                 value: '${data?.todayFocusMinutes ?? 0} 分钟',
               ),
@@ -372,14 +378,15 @@ class _PaperCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.92),
+        color: colors.card.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.8)),
+        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB97A52).withValues(alpha: 0.10),
+            color: colors.shadow.withValues(alpha: 0.10),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -403,6 +410,7 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         _AssetMini(asset: asset),
@@ -413,19 +421,19 @@ class _SectionHeader extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   height: 1.35,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -451,6 +459,7 @@ class _ActionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: () {
@@ -460,9 +469,9 @@ class _ActionRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF7EF),
+          color: colors.surfaceVariant.withValues(alpha: 0.62),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFFFE6D6)),
+          border: Border.all(color: colors.border.withValues(alpha: 0.72)),
         ),
         child: Row(
           children: [
@@ -474,25 +483,25 @@ class _ActionRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       height: 1.35,
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: Color(0xFFCA9877)),
+            Icon(Icons.chevron_right_rounded, color: colors.textTertiary),
           ],
         ),
       ),
@@ -515,6 +524,7 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -534,20 +544,17 @@ class _MetricTile extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 11, color: colors.textSecondary),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ],
@@ -567,27 +574,28 @@ class _SoftChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Expanded(
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFF2E9),
+          color: colors.softOrange.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(999),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 13, color: const Color(0xFFD79466)),
+            Icon(icon, size: 13, color: colors.accent),
             const SizedBox(width: 4),
             Flexible(
               child: Text(
                 label,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ),
@@ -605,18 +613,19 @@ class _LevelPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: const Color(0xFF6F74E8).withValues(alpha: 0.10),
+        color: colors.primary.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
         'Lv.$level',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w800,
-          color: Color(0xFF5F66D6),
+          color: colors.primaryDark,
         ),
       ),
     );
@@ -654,29 +663,30 @@ class _RoundIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
       label: icon == Icons.arrow_back_rounded ? '返回' : '设置',
       child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 40,
-        height: 40,
-        margin: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.86),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.06),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
-            ),
-          ],
+        onTap: onTap,
+        child: Container(
+          width: 40,
+          height: 40,
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.86),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: 0.08),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: colors.textPrimary, size: 20),
         ),
-        child: Icon(icon, color: AppColors.textPrimary, size: 20),
       ),
-    ),
     );
   }
 }

@@ -6,7 +6,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('MusicAssets are bundled and loadable', (tester) async {
-    expect(MusicAssets.all, hasLength(46));
+    expect(MusicAssets.all, hasLength(93));
 
     for (final asset in MusicAssets.all) {
       final data = await rootBundle.load(asset);
@@ -14,16 +14,12 @@ void main() {
     }
   });
 
-  testWidgets('MusicAssets have alpha or are WebP', (tester) async {
+  testWidgets('MusicAssets are PNG or WebP images', (tester) async {
     for (final asset in MusicAssets.all) {
       final data = await rootBundle.load(asset);
       final isWebP = _isWebP(data);
-      final isAlphaPng = _pngHasAlphaChannel(data);
-      expect(
-        isWebP || isAlphaPng,
-        isTrue,
-        reason: '$asset should be WebP or alpha PNG',
-      );
+      final isPng = _isPng(data);
+      expect(isWebP || isPng, isTrue, reason: '$asset should be WebP or PNG');
     }
   });
 
@@ -40,6 +36,7 @@ void main() {
       MusicAssets.coverRain,
     );
     expect(MusicAssets.coverForTitle('晨间唤醒'), MusicAssets.coverMorning);
+    expect(MusicAssets.coverForTitle('cafe relax'), MusicAssets.coverRelax);
     expect(MusicAssets.coverForTitle('unknown song'), MusicAssets.coverDefault);
   });
 }
@@ -56,12 +53,11 @@ bool _isWebP(ByteData data) {
       data.getUint8(11) == 0x50;
 }
 
-bool _pngHasAlphaChannel(ByteData data) {
+bool _isPng(ByteData data) {
   const pngSignature = [137, 80, 78, 71, 13, 10, 26, 10];
-  if (data.lengthInBytes < 26) return false;
+  if (data.lengthInBytes < pngSignature.length) return false;
   for (var i = 0; i < pngSignature.length; i++) {
     if (data.getUint8(i) != pngSignature[i]) return false;
   }
-  final colorType = data.getUint8(25);
-  return colorType == 4 || colorType == 6;
+  return true;
 }

@@ -24,24 +24,20 @@ class AllFitnessRecordsPage extends ConsumerStatefulWidget {
 class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
   SortOption _sortOption = SortOption.newest;
 
-  // ── 主题色常量 ──
-  static const _fitness = AppColors.fitness;
-  static const _fitnessFaded = Color(0x1AFF8A3D); // 10% alpha
-
   @override
   Widget build(BuildContext context) {
     final records = ref.watch(sortedRecentFitnessRecordsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.growthColors.background,
       appBar: AppBar(
         title: Text('全部训练记录', style: AppTextStyles.pageTitle),
         centerTitle: false,
-        backgroundColor: AppColors.background,
+        backgroundColor: context.growthColors.background,
         surfaceTintColor: Colors.transparent,
         actions: [
           PopupMenuButton<SortOption>(
-            icon: Icon(Icons.sort, color: AppColors.textSecondary),
+            icon: Icon(Icons.sort, color: context.growthColors.textSecondary),
             onSelected: (option) {
               setState(() => _sortOption = option);
               ref.read(fitnessSortProvider.notifier).state = option;
@@ -77,7 +73,7 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
           Text(text, style: AppTextStyles.body),
           if (_sortOption == option) ...[
             const Spacer(),
-            Icon(Icons.check, size: 16, color: _fitness),
+            Icon(Icons.check, size: 16, color: context.growthColors.fitness),
           ],
         ],
       ),
@@ -166,14 +162,17 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [_fitness, _fitness.withValues(alpha: 0.75)],
+          colors: [
+            context.growthColors.fitness,
+            context.growthColors.fitness.withValues(alpha: 0.75),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: _fitness.withValues(alpha: 0.25),
+            color: context.growthColors.fitness.withValues(alpha: 0.25),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -190,7 +189,7 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
           Container(
             width: 1,
             height: 40,
-            color: Colors.white.withValues(alpha: 0.3),
+            color: context.growthColors.textOnAccent.withValues(alpha: 0.3),
           ),
           _StatItem(
             icon: Icons.timer_outlined,
@@ -200,7 +199,7 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
           Container(
             width: 1,
             height: 40,
-            color: Colors.white.withValues(alpha: 0.3),
+            color: context.growthColors.textOnAccent.withValues(alpha: 0.3),
           ),
           _StatItem(icon: Icons.star_outline, label: '总经验', value: '$totalExp'),
         ],
@@ -221,10 +220,14 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: _fitnessFaded,
+              color: context.growthColors.fitness.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.fitness_center, size: 40, color: _fitness),
+            child: Icon(
+              Icons.fitness_center,
+              size: 40,
+              color: context.growthColors.fitness,
+            ),
           ),
           const SizedBox(height: AppSpacing.lg),
           Text('暂无训练记录', style: AppTextStyles.cardTitle),
@@ -256,7 +259,9 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -280,7 +285,7 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+          ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
         }
       }
     }
@@ -307,14 +312,14 @@ class _StatItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white, size: 22),
+        Icon(icon, color: context.growthColors.textOnAccent, size: 22),
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: context.growthColors.textOnAccent,
           ),
         ),
         const SizedBox(height: 2),
@@ -323,7 +328,7 @@ class _StatItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: Colors.white.withValues(alpha: 0.8),
+            color: context.growthColors.textOnAccent.withValues(alpha: 0.8),
           ),
         ),
       ],
@@ -341,11 +346,11 @@ class _RecordCard extends StatelessWidget {
   final FitnessRecord record;
   final VoidCallback onTap;
 
-  static const _fitness = AppColors.fitness;
-  static const _fitnessFaded = Color(0x1AFF8A3D);
-
   @override
   Widget build(BuildContext context) {
+    final fitness = context.growthColors.fitness;
+    final fitnessFaded = fitness.withValues(alpha: 0.1);
+
     final dt = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
     final dateStr =
         '${dt.year}/${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} '
@@ -355,7 +360,7 @@ class _RecordCard extends StatelessWidget {
 
     return GrowthCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      borderColor: const Color(0x1AFF8A3D),
+      borderColor: fitnessFaded,
       onTap: onTap,
       child: Row(
         children: [
@@ -364,10 +369,10 @@ class _RecordCard extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: _fitnessFaded,
+              color: fitnessFaded,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: const Icon(Icons.fitness_center, color: _fitness, size: 24),
+            child: Icon(Icons.fitness_center, color: fitness, size: 24),
           ),
           const SizedBox(width: AppSpacing.md),
 
@@ -395,15 +400,15 @@ class _RecordCard extends StatelessWidget {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: _fitnessFaded,
+                          color: fitnessFaded,
                           borderRadius: BorderRadius.circular(4),
                         ),
-                        child: const Text(
+                        child: Text(
                           '专业',
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
-                            color: _fitness,
+                            color: fitness,
                           ),
                         ),
                       ),
@@ -426,15 +431,15 @@ class _RecordCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: _fitnessFaded,
+              color: fitnessFaded,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Text(
               '+${record.expGained} EXP',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: _fitness,
+                color: fitness,
               ),
             ),
           ),

@@ -4,6 +4,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
+import '../../../core/utils/date_utils.dart';
 import 'task_priority.dart';
 
 // =============================================================================
@@ -31,6 +32,7 @@ class TaskSlidable extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final priority = TaskPriority.fromValue(task.priority);
+    final colors = context.growthColors;
 
     return Slidable(
       key: ValueKey('task_${task.id}'),
@@ -40,10 +42,8 @@ class TaskSlidable extends StatelessWidget {
         children: [
           SlidableAction(
             onPressed: (_) => onComplete(),
-            backgroundColor: task.isCompleted
-                ? const Color(0xFFFF8A3D)
-                : const Color(0xFF35C976),
-            foregroundColor: Colors.white,
+            backgroundColor: task.isCompleted ? colors.warning : colors.success,
+            foregroundColor: colors.textOnAccent,
             icon: task.isCompleted ? Icons.undo_rounded : Icons.check_rounded,
             label: task.isCompleted ? '恢复' : '完成',
             borderRadius: BorderRadius.circular(0),
@@ -57,15 +57,15 @@ class TaskSlidable extends StatelessWidget {
         children: [
           SlidableAction(
             onPressed: (_) => onReschedule(),
-            backgroundColor: const Color(0xFFFF8A3D),
-            foregroundColor: Colors.white,
+            backgroundColor: colors.warning,
+            foregroundColor: colors.textOnAccent,
             icon: Icons.calendar_today_rounded,
             label: '改期',
           ),
           SlidableAction(
             onPressed: (_) => onDelete(),
-            backgroundColor: const Color(0xFFFF4D4F),
-            foregroundColor: Colors.white,
+            backgroundColor: colors.danger,
+            foregroundColor: colors.textOnAccent,
             icon: Icons.delete_outline_rounded,
             label: '删除',
             borderRadius: const BorderRadius.only(
@@ -79,21 +79,27 @@ class TaskSlidable extends StatelessWidget {
         label: '${task.title}，长按显示操作菜单',
         button: true,
         child: GestureDetector(
-        onLongPress: () => _showContextMenu(context),
-        child: _TaskTile(task: task, priority: priority, onToggle: onComplete),
-      ),
+          onLongPress: () => _showContextMenu(context),
+          child: _TaskTile(
+            task: task,
+            priority: priority,
+            onToggle: onComplete,
+          ),
+        ),
       ),
     );
   }
 
   void _showContextMenu(BuildContext context) {
     HapticFeedback.heavyImpact();
+    final colors = context.growthColors;
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => Container(
+        decoration: BoxDecoration(color: colors.card),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -102,24 +108,24 @@ class TaskSlidable extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textTertiary.withValues(alpha: 0.3),
+                color: colors.textTertiary.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(999),
               ),
             ),
             const SizedBox(height: 16),
             Text(
               task.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(height: 20),
             _ContextMenuItem(
               icon: Icons.edit_rounded,
               label: '编辑任务',
-              color: const Color(0xFF5D68F2),
+              color: colors.primary,
               onTap: () {
                 Navigator.pop(ctx);
                 onEdit();
@@ -128,7 +134,7 @@ class TaskSlidable extends StatelessWidget {
             _ContextMenuItem(
               icon: Icons.calendar_today_rounded,
               label: '改期',
-              color: const Color(0xFFFF8A3D),
+              color: colors.warning,
               onTap: () {
                 Navigator.pop(ctx);
                 onReschedule();
@@ -137,7 +143,7 @@ class TaskSlidable extends StatelessWidget {
             _ContextMenuItem(
               icon: Icons.flag_rounded,
               label: '设置优先级',
-              color: const Color(0xFFFF4D4F),
+              color: colors.danger,
               onTap: () {
                 Navigator.pop(ctx);
                 _showPriorityPicker(context);
@@ -147,7 +153,7 @@ class TaskSlidable extends StatelessWidget {
               _ContextMenuItem(
                 icon: Icons.check_circle_outline_rounded,
                 label: '标记完成',
-                color: const Color(0xFF35C976),
+                color: colors.success,
                 onTap: () {
                   Navigator.pop(ctx);
                   onComplete();
@@ -156,7 +162,7 @@ class TaskSlidable extends StatelessWidget {
             _ContextMenuItem(
               icon: Icons.delete_outline_rounded,
               label: '删除任务',
-              color: const Color(0xFFFF4D4F),
+              color: colors.danger,
               isDestructive: true,
               onTap: () {
                 Navigator.pop(ctx);
@@ -171,22 +177,25 @@ class TaskSlidable extends StatelessWidget {
   }
 
   void _showPriorityPicker(BuildContext context) {
+    final colors = context.growthColors;
+
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => Container(
+        decoration: BoxDecoration(color: colors.card),
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
+            Text(
               '设置优先级',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(height: 16),
@@ -202,7 +211,7 @@ class TaskSlidable extends StatelessWidget {
                 ),
                 title: Text(p.label),
                 trailing: task.priority == p.value
-                    ? const Icon(Icons.check_rounded, color: Color(0xFF35C976))
+                    ? Icon(Icons.check_rounded, color: colors.success)
                     : null,
                 onTap: () {
                   Navigator.pop(ctx);
@@ -235,6 +244,8 @@ class _ContextMenuItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return ListTile(
       leading: Icon(icon, color: color, size: 22),
       title: Text(
@@ -242,7 +253,7 @@ class _ContextMenuItem extends StatelessWidget {
         style: TextStyle(
           fontSize: 15,
           fontWeight: FontWeight.w500,
-          color: isDestructive ? color : AppColors.textPrimary,
+          color: isDestructive ? color : colors.textPrimary,
         ),
       ),
       onTap: onTap,
@@ -264,6 +275,7 @@ class _TaskTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
     final startMinutes = task.startHour * 60 + task.startMinute;
@@ -280,11 +292,11 @@ class _TaskTile extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isCompleted ? const Color(0xFFF8F8FB) : const Color(0xFFFFFCFF),
+        color: isCompleted ? colors.surfaceVariant : colors.card,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: isCompleted
-              ? const Color(0xFFE9E9F0)
+              ? colors.border
               : priority.color.withValues(alpha: 0.12),
         ),
       ),
@@ -294,7 +306,7 @@ class _TaskTile extends StatelessWidget {
             width: 4,
             height: 42,
             decoration: BoxDecoration(
-              color: isCompleted ? const Color(0xFFD0D5DD) : priority.color,
+              color: isCompleted ? colors.border : priority.color,
               borderRadius: BorderRadius.circular(99),
             ),
           ),
@@ -304,29 +316,31 @@ class _TaskTile extends StatelessWidget {
             button: true,
             child: GestureDetector(
               onTap: onToggle,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(9),
-                  color: isCompleted
-                      ? const Color(0xFF35C976)
-                      : Colors.transparent,
-                  border: Border.all(
-                    color: isCompleted
-                        ? const Color(0xFF35C976)
-                        : const Color(0xFFD0D5DD),
-                    width: 1.5,
+              child: SizedBox(
+                width: 48,
+                height: 48,
+                child: Center(
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(9),
+                      color: isCompleted ? colors.success : Colors.transparent,
+                      border: Border.all(
+                        color: isCompleted ? colors.success : colors.border,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: isCompleted
+                        ? Icon(
+                            Icons.check_rounded,
+                            size: 16,
+                            color: colors.textOnAccent,
+                          )
+                        : null,
                   ),
                 ),
-                child: isCompleted
-                    ? const Icon(
-                        Icons.check_rounded,
-                        size: 16,
-                        color: Colors.white,
-                      )
-                    : null,
               ),
             ),
           ),
@@ -341,10 +355,10 @@ class _TaskTile extends StatelessWidget {
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                     color: isCompleted
-                        ? AppColors.textTertiary
-                        : AppColors.textPrimary,
+                        ? colors.textTertiary
+                        : colors.textPrimary,
                     decoration: isCompleted ? TextDecoration.lineThrough : null,
-                    decorationColor: AppColors.textTertiary,
+                    decorationColor: colors.textTertiary,
                   ),
                 ),
                 if (task.description != null &&
@@ -352,10 +366,7 @@ class _TaskTile extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     task.description!,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.textTertiary,
-                    ),
+                    style: TextStyle(fontSize: 12, color: colors.textTertiary),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -368,15 +379,15 @@ class _TaskTile extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF1DF),
+                      color: colors.warning.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: const Text(
+                    child: Text(
                       '进行中',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF8A3D),
+                        color: colors.warning,
                       ),
                     ),
                   ),
@@ -388,15 +399,15 @@ class _TaskTile extends StatelessWidget {
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF0F0),
+                      color: colors.danger.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: const Text(
+                    child: Text(
                       '已过期',
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: Color(0xFFFF4D4F),
+                        color: colors.danger,
                       ),
                     ),
                   ),
@@ -408,22 +419,22 @@ class _TaskTile extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                _formatTime(task.startHour, task.startMinute),
+                GrowthDateUtils.formatTime(task.startHour, task.startMinute),
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w800,
                   color: isCompleted
-                      ? AppColors.textTertiary
-                      : const Color(0xFF6E6384),
+                      ? colors.textTertiary
+                      : colors.textSecondary,
                 ),
               ),
               Text(
-                _formatTime(task.endHour, task.endMinute),
+                GrowthDateUtils.formatTime(task.endHour, task.endMinute),
                 style: TextStyle(
                   fontSize: 11,
                   color: isCompleted
-                      ? AppColors.textTertiary.withValues(alpha: 0.6)
-                      : AppColors.textTertiary,
+                      ? colors.textTertiary.withValues(alpha: 0.6)
+                      : colors.textTertiary,
                 ),
               ),
             ],
@@ -432,7 +443,4 @@ class _TaskTile extends StatelessWidget {
       ),
     );
   }
-
-  String _formatTime(int hour, int minute) =>
-      '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
 }

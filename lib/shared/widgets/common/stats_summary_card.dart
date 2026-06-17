@@ -51,22 +51,22 @@ class StatsSummaryCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: context.growthColors.card,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.border, width: 0.6),
+          border: Border.all(color: context.growthColors.border, width: 0.6),
           boxShadow: AppColors.cardShadow,
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── Header: icon + label + trend ──
-            _buildHeader(),
+            _buildHeader(context),
             const SizedBox(height: AppSpacing.md),
             // ── Value ──
             _buildValue(),
             const SizedBox(height: AppSpacing.md),
             // ── Progress bar (optional) ──
-            if (progress != null) _buildProgressBar(),
+            if (progress != null) _buildProgressBar(context),
           ],
         ),
       ),
@@ -76,7 +76,7 @@ class StatsSummaryCard extends ConsumerWidget {
   // ---------------------------------------------------------------------------
   // Header row
   // ---------------------------------------------------------------------------
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return Row(
       children: [
         // Icon container
@@ -94,17 +94,17 @@ class StatsSummaryCard extends ConsumerWidget {
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: context.growthColors.textSecondary,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
         ),
         // Trend badge
-        if (trend != null) _buildTrendBadge(),
+        if (trend != null) _buildTrendBadge(context),
       ],
     );
   }
@@ -112,18 +112,18 @@ class StatsSummaryCard extends ConsumerWidget {
   // ---------------------------------------------------------------------------
   // Trend arrow + percentage
   // ---------------------------------------------------------------------------
-  Widget _buildTrendBadge() {
+  Widget _buildTrendBadge(BuildContext context) {
     final pct = trend!;
     final isZero = pct.abs() < 0.001;
     final isPositive = pct > 0;
 
     final Color trendColor;
     if (isZero) {
-      trendColor = AppColors.textTertiary;
+      trendColor = context.growthColors.textTertiary;
     } else if (isPositive) {
-      trendColor = AppColors.success;
+      trendColor = context.growthColors.success;
     } else {
-      trendColor = AppColors.danger;
+      trendColor = context.growthColors.danger;
     }
 
     final IconData arrow;
@@ -243,7 +243,7 @@ class StatsSummaryCard extends ConsumerWidget {
   // ---------------------------------------------------------------------------
   // Progress bar
   // ---------------------------------------------------------------------------
-  Widget _buildProgressBar() {
+  Widget _buildProgressBar(BuildContext context) {
     final clamped = progress!.clamp(0.0, 1.0);
     return ClipRRect(
       borderRadius: BorderRadius.circular(2),
@@ -251,7 +251,7 @@ class StatsSummaryCard extends ConsumerWidget {
         height: 4,
         child: LinearProgressIndicator(
           value: clamped,
-          backgroundColor: AppColors.border,
+          backgroundColor: context.growthColors.border,
           valueColor: AlwaysStoppedAnimation<Color>(color),
           minHeight: 4,
         ),

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
+import '../../../shared/providers/fitness_provider.dart';
 import 'dashboard_card.dart';
 import 'add_card_sheet.dart';
 
@@ -30,6 +31,9 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
   AnimationController? _deleteController;
   String? _deletingCardId;
 
+  /// 折叠/展开状态
+  bool _isExpanded = false;
+
   @override
   void dispose() {
     for (final controller in _cardControllers) {
@@ -53,11 +57,13 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       case 'journal':
         return data.todayJournalCount;
       case 'water':
-        return 0; // 饮水数据需要单独的Provider
+        final waterMap = ref.read(dailyWaterIntakeProvider);
+        return getTodayWaterIntake(waterMap);
       case 'focus':
         return data.todayFocusMinutes;
       case 'weight':
-        return 0; // 体重需要单独的Provider
+        final latestMetric = ref.read(latestBodyMetricProvider).valueOrNull;
+        return latestMetric?.weight?.round() ?? 0;
       default:
         return 0;
     }
@@ -148,13 +154,13 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.danger.withValues(alpha: 0.1),
+                color: context.growthColors.danger.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.remove_circle_outline_rounded,
                 size: 20,
-                color: AppColors.danger,
+                color: context.growthColors.danger,
               ),
             ),
             const SizedBox(width: 12),
@@ -163,9 +169,9 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
         ),
         content: Text(
           '确定要移除「$cardName」卡片吗？\n移除后可随时重新添加。',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
-            color: AppColors.textSecondary,
+            color: context.growthColors.textSecondary,
             height: 1.5,
           ),
         ),
@@ -179,7 +185,9 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
               Navigator.pop(context);
               _removeCard(cardId);
             },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            style: FilledButton.styleFrom(
+              backgroundColor: context.growthColors.danger,
+            ),
             child: const Text('确定移除'),
           ),
         ],
@@ -217,38 +225,38 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
         _buildHeader(cardIds.length),
         const SizedBox(height: AppSpacing.md),
 
-        // 卡片网格
+        // 卡片网格（根据折叠状态显示）
         dashboardAsync.when(
           loading: () => _buildLoadingGrid(cardIds.length),
           error: (_, _) => _buildErrorCard(),
-          data: (data) => _buildCardGrid(cardIds, data),
+          data: (data) => _isExpanded
+              ? _buildCardGrid(cardIds, data)
+              : _buildCompactGrid(cardIds, data),
         ),
       ],
     );
   }
 
   Widget _buildHeader(int cardCount) {
+    final colors = context.growthColors;
+
     return Row(
       children: [
         Container(
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: const Color(0xFFFFF0F7),
+            color: colors.softPink,
             borderRadius: BorderRadius.circular(13),
-            border: Border.all(color: const Color(0xFFF3DCE8)),
+            border: Border.all(color: colors.border),
           ),
-          child: const Icon(
-            Icons.grid_view_rounded,
-            color: Color(0xFFE37AA4),
-            size: 19,
-          ),
+          child: Icon(Icons.grid_view_rounded, color: colors.journal, size: 19),
         ),
         const SizedBox(width: 10),
-        const Text(
+        Text(
           '今日概览',
           style: TextStyle(
-            color: Color(0xFF37314E),
+            color: colors.textPrimary,
             fontSize: 20,
             fontWeight: FontWeight.w900,
           ),
@@ -257,16 +265,41 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.72),
+            color: colors.card.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: const Color(0xFFF0E7DB)),
+            border: Border.all(color: colors.border),
           ),
           child: Text(
             '$cardCount/8',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
               fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        // 折叠/展开按钮
+        GestureDetector(
+          onTap: () => setState(() => _isExpanded = !_isExpanded),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+            decoration: BoxDecoration(
+              color: colors.card.withValues(alpha: 0.72),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: colors.border),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  _isExpanded
+                      ? Icons.keyboard_arrow_up_rounded
+                      : Icons.keyboard_arrow_down_rounded,
+                  size: 18,
+                  color: colors.textSecondary,
+                ),
+              ],
             ),
           ),
         ),
@@ -274,22 +307,22 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
         GestureDetector(
           onTap: _showAddCardSheet,
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFEEEAFE),
+              color: colors.primary.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(999),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.add_rounded, size: 14, color: AppColors.primary),
-                SizedBox(width: 4),
+                Icon(Icons.add_rounded, size: 14, color: colors.primary),
+                const SizedBox(width: 4),
                 Text(
                   '添加',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w900,
-                    color: AppColors.primary,
+                    color: colors.primary,
                   ),
                 ),
               ],
@@ -373,34 +406,76 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
     );
   }
 
+  /// 构建紧凑网格（折叠状态）
+  Widget _buildCompactGrid(List<String> cardIds, DashboardData data) {
+    if (cardIds.isEmpty) return _buildEmptyState();
+    final colors = context.growthColors;
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: colors.border),
+      ),
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 4,
+          childAspectRatio: 4.0,
+        ),
+        itemCount: cardIds.length,
+        itemBuilder: (context, index) {
+          final cardId = cardIds[index];
+          final config = getCardConfigById(cardId);
+          if (config == null) return const SizedBox.shrink();
+
+          final currentValue = _getCardValue(cardId, data);
+          return _CompactCard(
+            icon: config.icon,
+            name: config.name,
+            value: currentValue,
+            unit: config.unit,
+            color: config.color,
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildEmptyState() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xxl),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFF0E7DB), width: 1),
+        border: Border.all(color: colors.border, width: 1),
       ),
       child: Column(
         children: [
           Icon(
             Icons.dashboard_customize_outlined,
             size: 48,
-            color: AppColors.textHint,
+            color: colors.textHint,
           ),
           const SizedBox(height: AppSpacing.md),
-          const Text(
+          Text(
             '首页暂无卡片',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text(
+          Text(
             '点击下方按钮添加数据卡片',
-            style: TextStyle(fontSize: 13, color: AppColors.textTertiary),
+            style: TextStyle(fontSize: 13, color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.lg),
           FilledButton.icon(
@@ -414,6 +489,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
   }
 
   Widget _buildLoadingGrid(int count) {
+    final colors = context.growthColors;
     final itemCount = count > 0 ? count : 4;
     return GridView.count(
       crossAxisCount: 2,
@@ -426,9 +502,9 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
         itemCount,
         (_) => Container(
           decoration: BoxDecoration(
-            color: AppColors.card,
+            color: colors.card,
             borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: AppColors.border, width: 0.6),
+            border: Border.all(color: colors.border, width: 0.6),
           ),
           child: const Center(
             child: SizedBox(
@@ -443,26 +519,70 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
   }
 
   Widget _buildErrorCard() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border, width: 0.6),
+        border: Border.all(color: colors.border, width: 0.6),
       ),
-      child: const Center(
+      child: Center(
         child: Column(
           children: [
             Icon(
               Icons.error_outline_rounded,
               size: 32,
-              color: AppColors.textTertiary,
+              color: colors.textTertiary,
             ),
-            SizedBox(height: AppSpacing.sm),
-            Text('加载失败', style: TextStyle(color: AppColors.textSecondary)),
+            const SizedBox(height: AppSpacing.sm),
+            Text(
+              '加载失败',
+              style: TextStyle(color: context.growthColors.textSecondary),
+            ),
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 紧凑卡片组件（折叠状态）
+class _CompactCard extends StatelessWidget {
+  const _CompactCard({
+    required this.icon,
+    required this.name,
+    required this.value,
+    required this.unit,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String name;
+  final int value;
+  final String unit;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: color),
+        const SizedBox(width: 6),
+        Text(name, style: TextStyle(fontSize: 12, color: colors.textTertiary)),
+        const Spacer(),
+        Text(
+          '$value$unit',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+      ],
     );
   }
 }

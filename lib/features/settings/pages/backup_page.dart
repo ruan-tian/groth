@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/service_providers.dart';
@@ -17,9 +18,9 @@ import '../../../shared/providers/service_providers.dart';
 
 final backupRecordsProvider = FutureProvider<List<BackupRecord>>((ref) async {
   final db = ref.watch(appDatabaseProvider);
-  final records = await (db.select(db.backupRecords)
-        ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-      .get();
+  final records = await (db.select(
+    db.backupRecords,
+  )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
   return records;
 });
 
@@ -48,9 +49,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   Future<void> _loadBackupOverview() async {
     final db = ref.read(appDatabaseProvider);
-    final records = await (db.select(db.backupRecords)
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
-        .get();
+    final records = await (db.select(
+      db.backupRecords,
+    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
 
     if (!mounted) return;
 
@@ -71,6 +72,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
   Future<void> _backupData() async {
     setState(() => _isBackingUp = true);
+    final colors = context.growthColors;
 
     try {
       final backupService = ref.read(backupServiceProvider);
@@ -84,15 +86,15 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('备份成功: ${_fileName(filePath)}'),
-            backgroundColor: const Color(0xFF35C976),
+            backgroundColor: colors.success,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('备份失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('备份失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _isBackingUp = false);
@@ -113,7 +115,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: const Color(0xFFFF6B6B)),
+            style: TextButton.styleFrom(
+              foregroundColor: ctx.growthColors.danger,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -130,23 +134,23 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
         // 删除数据库记录
         final db = ref.read(appDatabaseProvider);
-        await (db.delete(db.backupRecords)
-              ..where((t) => t.id.equals(record.id)))
-            .go();
+        await (db.delete(
+          db.backupRecords,
+        )..where((t) => t.id.equals(record.id))).go();
 
         ref.invalidate(backupRecordsProvider);
         await _loadBackupOverview();
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已删除')));
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
         }
       }
     }
@@ -179,9 +183,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     Clipboard.setData(ClipboardData(text: path));
     HapticFeedback.lightImpact();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('路径已复制'),
-        backgroundColor: Color(0xFF35C976),
+      SnackBar(
+        content: const Text('路径已复制'),
+        backgroundColor: context.growthColors.success,
       ),
     );
   }
@@ -189,15 +193,14 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   // 分享备份文件
   Future<void> _shareBackup(BackupRecord record) async {
     try {
-      await Share.shareXFiles(
-        [XFile(record.backupPath)],
-        text: 'Growth OS 备份文件',
-      );
+      await Share.shareXFiles([
+        XFile(record.backupPath),
+      ], text: 'Growth OS 备份文件');
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('分享失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('分享失败，请重试')));
       }
     }
   }
@@ -211,9 +214,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: color.withValues(alpha: 0.15),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
         ),
         child: Text(
           label,
@@ -230,16 +231,17 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   @override
   Widget build(BuildContext context) {
     final records = ref.watch(backupRecordsProvider);
+    final colors = context.growthColors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF5E1),
+      backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '数据备份',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5C3D2E),
+            color: colors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -247,7 +249,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: const Color(0xFF5C3D2E),
+          color: colors.textPrimary,
           onPressed: () => context.pop(),
         ),
       ),
@@ -290,12 +292,14 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final colors = context.growthColors;
+
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF5C3D2E),
+        color: colors.textPrimary,
       ),
     );
   }
@@ -305,18 +309,20 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildOverviewCard() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF5C3D2E), Color(0xFF8B6F5E)],
+          colors: [colors.primaryDark, colors.primary],
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5C3D2E).withValues(alpha: 0.3),
+            color: colors.primary.withValues(alpha: 0.24),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -328,20 +334,20 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '备份文件大小',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white70,
+                    color: colors.textOnAccent.withValues(alpha: 0.72),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   _formatFileSize(_backupSizeInBytes),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: colors.textOnAccent,
                   ),
                 ),
               ],
@@ -350,7 +356,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           Container(
             width: 1,
             height: 40,
-            color: Colors.white.withValues(alpha: 0.2),
+            color: colors.textOnAccent.withValues(alpha: 0.2),
           ),
           Expanded(
             child: Padding(
@@ -358,11 +364,11 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     '最后备份',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.white70,
+                      color: colors.textOnAccent.withValues(alpha: 0.72),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -370,10 +376,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     _lastBackupTime != null
                         ? _formatDateTime(_lastBackupTime!)
                         : '未备份',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Colors.white,
+                      color: colors.textOnAccent,
                     ),
                   ),
                 ],
@@ -390,6 +396,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildBackupButton() {
+    final colors = context.growthColors;
+
     return GestureDetector(
       onTap: _isBackingUp ? null : _backupData,
       child: Container(
@@ -397,18 +405,18 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         decoration: BoxDecoration(
           gradient: _isBackingUp
               ? null
-              : const LinearGradient(
-                  colors: [Color(0xFFD4A574), Color(0xFFE8C9A0)],
+              : LinearGradient(
+                  colors: [colors.primary, colors.primaryLight],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-          color: _isBackingUp ? const Color(0xFFE8C9A0) : null,
+          color: _isBackingUp ? colors.primaryLight : null,
           borderRadius: BorderRadius.circular(12),
           boxShadow: _isBackingUp
               ? null
               : [
                   BoxShadow(
-                    color: const Color(0xFFD4A574).withValues(alpha: 0.3),
+                    color: colors.primary.withValues(alpha: 0.24),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -416,25 +424,29 @@ class _BackupPageState extends ConsumerState<BackupPage> {
         ),
         child: Center(
           child: _isBackingUp
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: colors.textOnAccent,
                   ),
                 )
-              : const Row(
+              : Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.backup_rounded, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
+                    Icon(
+                      Icons.backup_rounded,
+                      color: colors.textOnAccent,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
                       '立即备份',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
-                        color: Colors.white,
+                        color: colors.textOnAccent,
                       ),
                     ),
                   ],
@@ -449,29 +461,25 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildInfoCard() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1DF),
+        color: colors.softGold,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.info_outline_rounded,
-            color: Color(0xFFD4A574),
-            size: 18,
-          ),
+          Icon(Icons.info_outline_rounded, color: colors.primary, size: 18),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               '备份文件仅保存在本地设备，不会上传到云端，请妥善保管你的备份文件。',
               style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF8B6F5E),
+                color: colors.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -486,37 +494,31 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildEmptyState() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
           Icon(
             Icons.backup_outlined,
             size: 48,
-            color: const Color(0xFFB0A09A).withValues(alpha: 0.4),
+            color: colors.textTertiary.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             '暂无备份记录',
-            style: TextStyle(
-              fontSize: 14,
-              color: Color(0xFFB0A09A),
-            ),
+            style: TextStyle(fontSize: 14, color: colors.textSecondary),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             '点击上方按钮创建第一个备份',
-            style: TextStyle(
-              fontSize: 12,
-              color: Color(0xFFD0C4B8),
-            ),
+            style: TextStyle(fontSize: 12, color: colors.textTertiary),
           ),
         ],
       ),
@@ -528,6 +530,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildBackupTile(BackupRecord record) {
+    final colors = context.growthColors;
     final fileName = _fileName(record.backupPath);
     final fileSize = _formatFileSize(record.fileSize ?? 0);
     final dateTime = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
@@ -535,14 +538,12 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5C3D2E).withValues(alpha: 0.04),
+            color: colors.shadow.withValues(alpha: 0.18),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -559,21 +560,24 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF35C976), Color(0xFF2DB86A)],
+                    gradient: LinearGradient(
+                      colors: [
+                        colors.success,
+                        colors.success.withValues(alpha: 0.8),
+                      ],
                     ),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
-                        color: const Color(0xFF35C976).withValues(alpha: 0.25),
+                        color: colors.success.withValues(alpha: 0.25),
                         blurRadius: 8,
                         offset: const Offset(0, 3),
                       ),
                     ],
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.description_outlined,
-                    color: Colors.white,
+                    color: colors.textOnAccent,
                     size: 20,
                   ),
                 ),
@@ -584,10 +588,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                     children: [
                       Text(
                         fileName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Color(0xFF5C3D2E),
+                          color: colors.textPrimary,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -595,9 +599,9 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                       const SizedBox(height: 3),
                       Text(
                         '$fileSize · ${_formatDateTime(dateTime)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFFB0A09A),
+                          color: colors.textTertiary,
                         ),
                       ),
                     ],
@@ -612,23 +616,23 @@ class _BackupPageState extends ConsumerState<BackupPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFF8F4EF),
+                color: colors.surfaceVariant,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.folder_outlined,
                     size: 14,
-                    color: Color(0xFFB0A09A),
+                    color: colors.textTertiary,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       _dirPath(record.backupPath),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: Color(0xFFB0A09A),
+                        color: colors.textTertiary,
                         fontFamily: 'monospace',
                       ),
                       maxLines: 1,
@@ -646,19 +650,19 @@ class _BackupPageState extends ConsumerState<BackupPage> {
               children: [
                 _buildTextButton(
                   '复制路径',
-                  const Color(0xFF5D68F2),
+                  colors.primary,
                   () => _copyPath(record.backupPath),
                 ),
                 const SizedBox(width: 8),
                 _buildTextButton(
                   '分享',
-                  const Color(0xFF35C976),
+                  colors.success,
                   () => _shareBackup(record),
                 ),
                 const Spacer(),
                 _buildTextButton(
                   '删除',
-                  const Color(0xFFFF6B6B),
+                  colors.danger,
                   () => _deleteBackup(record),
                 ),
               ],

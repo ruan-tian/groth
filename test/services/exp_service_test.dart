@@ -318,44 +318,44 @@ void main() {
       expect(service.calculateLevel(0), equals(1));
     });
 
-    test('returns level 1 for exp < 100', () {
-      // sqrt(99/100) = 0.994.. → floor = 0 → +1 = 1
-      expect(service.calculateLevel(99), equals(1));
+    test('returns level 1 for exp < 5', () {
+      // sqrt(4/5) = 0.89.. → floor = 0 → +1 = 1
+      expect(service.calculateLevel(4), equals(1));
     });
 
-    test('returns level 2 at 100 exp', () {
-      // sqrt(100/100) = 1.0 → floor = 1 → +1 = 2
-      expect(service.calculateLevel(100), equals(2));
+    test('returns level 2 at 5 exp', () {
+      // sqrt(5/5) = 1.0 → floor = 1 → +1 = 2
+      expect(service.calculateLevel(5), equals(2));
     });
 
-    test('returns level 3 at 400 exp', () {
-      // sqrt(400/100) = sqrt(4) = 2.0 → floor = 2 → +1 = 3
-      expect(service.calculateLevel(400), equals(3));
+    test('returns level 3 at 20 exp', () {
+      // sqrt(20/5) = sqrt(4) = 2.0 → floor = 2 → +1 = 3
+      expect(service.calculateLevel(20), equals(3));
     });
 
-    test('returns level 4 at 900 exp', () {
-      // sqrt(900/100) = sqrt(9) = 3.0 → floor = 3 → +1 = 4
-      expect(service.calculateLevel(900), equals(4));
+    test('returns level 4 at 45 exp', () {
+      // sqrt(45/5) = sqrt(9) = 3.0 → floor = 3 → +1 = 4
+      expect(service.calculateLevel(45), equals(4));
     });
 
-    test('returns level 5 at 1600 exp', () {
-      // sqrt(1600/100) = sqrt(16) = 4.0 → floor = 4 → +1 = 5
-      expect(service.calculateLevel(1600), equals(5));
+    test('returns level 5 at 80 exp', () {
+      // sqrt(80/5) = sqrt(16) = 4.0 → floor = 4 → +1 = 5
+      expect(service.calculateLevel(80), equals(5));
     });
 
     test('returns correct level for non-perfect-square exp', () {
-      // sqrt(500/100) = sqrt(5) ≈ 2.236 → floor = 2 → +1 = 3
-      expect(service.calculateLevel(500), equals(3));
+      // sqrt(30/5) = sqrt(6) ≈ 2.449 → floor = 2 → +1 = 3
+      expect(service.calculateLevel(30), equals(3));
     });
 
-    test('returns level 10 at 8100 exp', () {
-      // sqrt(8100/100) = sqrt(81) = 9 → floor = 9 → +1 = 10
-      expect(service.calculateLevel(8100), equals(10));
+    test('returns level 10 at 405 exp', () {
+      // sqrt(405/5) = sqrt(81) = 9 → floor = 9 → +1 = 10
+      expect(service.calculateLevel(405), equals(10));
     });
 
-    test('returns level 11 at 10000 exp', () {
-      // sqrt(10000/100) = sqrt(100) = 10 → floor = 10 → +1 = 11
-      expect(service.calculateLevel(10000), equals(11));
+    test('returns level 11 at 500 exp', () {
+      // sqrt(500/5) = sqrt(100) = 10 → floor = 10 → +1 = 11
+      expect(service.calculateLevel(500), equals(11));
     });
   });
 
@@ -364,29 +364,29 @@ void main() {
   // ===========================================================================
 
   group('getExpForNextLevel', () {
-    test('returns 100 for level 1', () {
-      // 1*1*100 = 100
-      expect(service.getExpForNextLevel(1), equals(100));
+    test('returns 5 for level 1', () {
+      // 1*1*5 = 5
+      expect(service.getExpForNextLevel(1), equals(5));
     });
 
-    test('returns 400 for level 2', () {
-      // 2*2*100 = 400
-      expect(service.getExpForNextLevel(2), equals(400));
+    test('returns 20 for level 2', () {
+      // 2*2*5 = 20
+      expect(service.getExpForNextLevel(2), equals(20));
     });
 
-    test('returns 900 for level 3', () {
-      // 3*3*100 = 900
-      expect(service.getExpForNextLevel(3), equals(900));
+    test('returns 45 for level 3', () {
+      // 3*3*5 = 45
+      expect(service.getExpForNextLevel(3), equals(45));
     });
 
-    test('returns 1600 for level 4', () {
-      // 4*4*100 = 1600
-      expect(service.getExpForNextLevel(4), equals(1600));
+    test('returns 80 for level 4', () {
+      // 4*4*5 = 80
+      expect(service.getExpForNextLevel(4), equals(80));
     });
 
-    test('returns 10000 for level 10', () {
-      // 10*10*100 = 10000
-      expect(service.getExpForNextLevel(10), equals(10000));
+    test('returns 500 for level 10', () {
+      // 10*10*5 = 500
+      expect(service.getExpForNextLevel(10), equals(500));
     });
 
     test('returns 0 for level 0', () {
@@ -400,49 +400,44 @@ void main() {
 
   group('getExpProgress', () {
     test('returns totalExp when at level 1 (level start is 0)', () {
-      // levelStart = (1-1)^2 * 100 = 0
+      // levelStart = (1-1)^2 * 5 = 0
       // progress = 50 - 0 = 50
       expect(service.getExpProgress(50, 1), equals(50));
     });
 
     test('returns 0 when exactly at level boundary', () {
-      // totalExp = 100, level = 2
-      // levelStart = (2-1)^2 * 100 = 100
-      // progress = 100 - 100 = 0
-      expect(service.getExpProgress(100, 2), equals(0));
+      // totalExp = 5, level = 2
+      // levelStart = (2-1)^2 * 5 = 5
+      // progress = 5 - 5 = 0
+      expect(service.getExpProgress(5, 2), equals(0));
     });
 
     test('returns correct progress within level 2', () {
-      // totalExp = 250, level = 2
-      // levelStart = 1^2 * 100 = 100
-      // progress = 250 - 100 = 150
-      expect(service.getExpProgress(250, 2), equals(150));
+      // totalExp = 15, level = 2
+      // levelStart = 1^2 * 5 = 5
+      // progress = 15 - 5 = 10
+      expect(service.getExpProgress(15, 2), equals(10));
     });
 
     test('returns correct progress within level 3', () {
-      // totalExp = 600, level = 3
-      // levelStart = 2^2 * 100 = 400
-      // progress = 600 - 400 = 200
-      expect(service.getExpProgress(600, 3), equals(200));
+      // totalExp = 30, level = 3
+      // levelStart = 2^2 * 5 = 20
+      // progress = 30 - 20 = 10
+      expect(service.getExpProgress(30, 3), equals(10));
     });
 
     test('returns correct progress within level 5', () {
-      // totalExp = 2000, level = 5
-      // levelStart = 4^2 * 100 = 1600
-      // progress = 2000 - 1600 = 400
-      expect(service.getExpProgress(2000, 5), equals(400));
+      // totalExp = 100, level = 5
+      // levelStart = 4^2 * 5 = 80
+      // progress = 100 - 80 = 20
+      expect(service.getExpProgress(100, 5), equals(20));
     });
 
     test('returns full level range at level end', () {
-      // totalExp = 400, level = 3 (next level starts at 400)
-      // levelStart = 2^2 * 100 = 400
-      // Wait, level 3 starts at (3-1)^2 * 100 = 400
-      // So progress = 400 - 400 = 0 (just entered level 3)
-      // Actually level 3 starts at exp 400, level 4 starts at 900
-      // So at exp 899 we're still level 3
-      // levelStart = (3-1)^2 * 100 = 400
-      // progress = 899 - 400 = 499
-      expect(service.getExpProgress(899, 3), equals(499));
+      // totalExp = 19, level = 3
+      // levelStart = (3-1)^2 * 5 = 20
+      // progress = 19 - 20 = -1, but clamped to 0
+      expect(service.getExpProgress(19, 3), equals(0));
     });
   });
 
@@ -455,22 +450,22 @@ void main() {
       final progress = service.calculateLevelProgress(250);
 
       expect(progress.totalExp, equals(250));
-      expect(progress.level, equals(2));
-      expect(progress.levelStartExp, equals(100));
-      expect(progress.nextLevelExp, equals(400));
-      expect(progress.levelRange, equals(300));
-      expect(progress.expProgress, equals(150));
-      expect(progress.expRemaining, equals(150));
-      expect(progress.progressRatio, closeTo(0.5, 0.0001));
+      expect(progress.level, equals(8));
+      expect(progress.levelStartExp, equals(245));
+      expect(progress.nextLevelExp, equals(320));
+      expect(progress.levelRange, equals(75));
+      expect(progress.expProgress, equals(5));
+      expect(progress.expRemaining, equals(70));
+      expect(progress.progressRatio, closeTo(0.0667, 0.001));
     });
 
     test('clamps progress ratio at level boundaries', () {
       final progress = service.calculateLevelProgress(100);
 
-      expect(progress.level, equals(2));
-      expect(progress.expProgress, equals(0));
-      expect(progress.expRemaining, equals(300));
-      expect(progress.progressRatio, equals(0));
+      expect(progress.level, equals(5));
+      expect(progress.expProgress, equals(20));
+      expect(progress.expRemaining, equals(25));
+      expect(progress.progressRatio, closeTo(0.4444, 0.001));
     });
   });
 
@@ -484,7 +479,7 @@ void main() {
         final level = service.calculateLevel(totalExp);
         final progress = service.getExpProgress(totalExp, level);
         final nextLevelExp = service.getExpForNextLevel(level);
-        final currentLevelExp = (level - 1) * (level - 1) * 100;
+        final currentLevelExp = (level - 1) * (level - 1) * 5;
         final levelRange = nextLevelExp - currentLevelExp;
 
         expect(

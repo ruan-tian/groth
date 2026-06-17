@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/design/design.dart';
 import '../../../../core/database/app_database.dart';
+import '../../../../core/utils/date_utils.dart';
 import '../../../../shared/providers/task_provider.dart';
 import '../../../../shared/widgets/common/growth_time_picker.dart';
 
@@ -90,7 +91,7 @@ class _TaskTemplateDialogState extends ConsumerState<TaskTemplateDialog> {
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             style: TextButton.styleFrom(
-              foregroundColor: AppColors.danger,
+              foregroundColor: context.growthColors.danger,
             ),
             child: const Text('删除'),
           ),
@@ -209,16 +210,17 @@ class _TemplateTile extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            if (template.description != null && template.description!.isNotEmpty)
+            if (template.description != null &&
+                template.description!.isNotEmpty)
               Text(
                 template.description!,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             Text(
-              '${_formatTime(template.defaultStartHour, template.defaultStartMinute)}'
+              '${GrowthDateUtils.formatTime(template.defaultStartHour, template.defaultStartMinute)}'
               ' - '
-              '${_formatTime(template.defaultEndHour, template.defaultEndMinute)}',
+              '${GrowthDateUtils.formatTime(template.defaultEndHour, template.defaultEndMinute)}',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.outline,
               ),
@@ -249,10 +251,6 @@ class _TemplateTile extends StatelessWidget {
       ),
     );
   }
-
-  String _formatTime(int hour, int minute) {
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
-  }
 }
 
 // =============================================================================
@@ -263,16 +261,17 @@ class _CreateTemplateForm extends ConsumerStatefulWidget {
   const _CreateTemplateForm();
 
   @override
-  ConsumerState<_CreateTemplateForm> createState() => _CreateTemplateFormState();
+  ConsumerState<_CreateTemplateForm> createState() =>
+      _CreateTemplateFormState();
 }
 
 class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
   final _nameController = TextEditingController();
   final _descriptionController = TextEditingController();
-  
+
   TimeOfDay _startTime = const TimeOfDay(hour: 9, minute: 0);
   TimeOfDay _endTime = const TimeOfDay(hour: 10, minute: 0);
-  
+
   bool _saving = false;
 
   @override
@@ -288,10 +287,7 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(
-          '创建新模板',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('创建新模板', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: AppSpacing.md),
 
         // 模板名称
@@ -392,9 +388,9 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
 
   Future<void> _save() async {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请输入模板名称')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请输入模板名称')));
       return;
     }
 
@@ -407,9 +403,11 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
       await repo.insertTemplate(
         TaskTemplatesCompanion(
           name: Value(_nameController.text.trim()),
-          description: Value(_descriptionController.text.trim().isEmpty
-              ? null
-              : _descriptionController.text.trim()),
+          description: Value(
+            _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+          ),
           defaultStartHour: Value(_startTime.hour),
           defaultStartMinute: Value(_startTime.minute),
           defaultEndHour: Value(_endTime.hour),
@@ -431,15 +429,15 @@ class _CreateTemplateFormState extends ConsumerState<_CreateTemplateForm> {
           _endTime = const TimeOfDay(hour: 10, minute: 0);
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('模板已保存')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('模板已保存')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);

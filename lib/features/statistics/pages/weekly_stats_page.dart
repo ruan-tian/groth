@@ -81,11 +81,7 @@ class _WeeklyStatsContent extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.md),
       children: [
         // ── 周导航 ──
-        _WeekNavigator(
-          start: start,
-          end: end,
-          offset: offset,
-        ),
+        _WeekNavigator(start: start, end: end, offset: offset),
         const SizedBox(height: AppSpacing.lg),
 
         // ── 汇总卡片 ──
@@ -96,7 +92,7 @@ class _WeeklyStatsContent extends ConsumerWidget {
                 icon: Icons.menu_book_rounded,
                 label: '总学习',
                 value: formatMinutesShort(totalStudy),
-                color: AppColors.study,
+                color: context.growthColors.study,
               ),
             ),
             const SizedBox(width: 8),
@@ -105,7 +101,7 @@ class _WeeklyStatsContent extends ConsumerWidget {
                 icon: Icons.fitness_center_rounded,
                 label: '总健身',
                 value: formatMinutesShort(totalFitness),
-                color: AppColors.fitness,
+                color: context.growthColors.fitness,
               ),
             ),
             const SizedBox(width: 8),
@@ -114,7 +110,7 @@ class _WeeklyStatsContent extends ConsumerWidget {
                 icon: Icons.star_rounded,
                 label: '总经验',
                 value: formatExp(totalExp),
-                color: AppColors.primary,
+                color: context.growthColors.primary,
               ),
             ),
           ],
@@ -127,7 +123,7 @@ class _WeeklyStatsContent extends ConsumerWidget {
               .map((d) => d.studyMinutes + d.fitnessMinutes)
               .toList(),
           labels: stats.map((d) => '${d.date.month}/${d.date.day}').toList(),
-          lineColor: AppColors.study,
+          lineColor: context.growthColors.study,
           height: 200,
         ),
         const SizedBox(height: AppSpacing.lg),
@@ -288,7 +284,7 @@ class _DailyBreakdown extends StatelessWidget {
                         Text(
                           '+${formatExp(day.expGained)}',
                           style: theme.textTheme.labelMedium?.copyWith(
-                            color: AppColors.primary,
+                            color: context.growthColors.primary,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -352,11 +348,11 @@ class _MiniBar extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: studyMinutes.clamp(1, 9999),
-                      child: Container(color: AppColors.study),
+                      child: Container(color: context.growthColors.study),
                     ),
                     Expanded(
                       flex: fitnessMinutes.clamp(1, 9999),
-                      child: Container(color: AppColors.fitness),
+                      child: Container(color: context.growthColors.fitness),
                     ),
                   ],
                 ),
@@ -378,20 +374,19 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            Icon(Icons.error_outline, size: 48, color: colors.danger),
             const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.md),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('重试'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('重试')),
           ],
         ),
       ),

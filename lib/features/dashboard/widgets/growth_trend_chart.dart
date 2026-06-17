@@ -16,6 +16,7 @@ class GrowthTrendChart extends StatelessWidget {
         ? 0
         : weeklyStats.map((s) => s.expGained).reduce((a, b) => a > b ? a : b);
     final yMax = (maxExp * 1.22).clamp(10.0, double.infinity);
+    final colors = context.growthColors;
 
     return GrowthCard(
       padding: const EdgeInsets.all(18),
@@ -28,13 +29,13 @@ class GrowthTrendChart extends StatelessWidget {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: AppColors.softGreen,
+                  color: colors.softGreen,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.trending_up_rounded,
                   size: 20,
-                  color: AppColors.primary,
+                  color: colors.primary,
                 ),
               ),
               const SizedBox(width: 10),
@@ -53,12 +54,12 @@ class GrowthTrendChart extends StatelessWidget {
                       child: Text(
                         '暂无数据',
                         style: AppTextStyles.caption.copyWith(
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
                     )
                   : RepaintBoundary(
-                      child: LineChart(_buildChartData(yMax)),
+                      child: LineChart(_buildChartData(context, yMax)),
                     ),
             ),
           ),
@@ -67,16 +68,15 @@ class GrowthTrendChart extends StatelessWidget {
     );
   }
 
-  LineChartData _buildChartData(double yMax) {
+  LineChartData _buildChartData(BuildContext context, double yMax) {
+    final colors = context.growthColors;
     return LineChartData(
       gridData: FlGridData(
         show: true,
         drawVerticalLine: false,
         horizontalInterval: yMax / 4,
-        getDrawingHorizontalLine: (_) => FlLine(
-          color: AppColors.border.withValues(alpha: 0.8),
-          strokeWidth: 1,
-        ),
+        getDrawingHorizontalLine: (_) =>
+            FlLine(color: colors.border.withValues(alpha: 0.8), strokeWidth: 1),
       ),
       titlesData: FlTitlesData(
         bottomTitles: AxisTitles(
@@ -94,10 +94,7 @@ class GrowthTrendChart extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   '${date.month}/${date.day}',
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textTertiary,
-                  ),
+                  style: TextStyle(fontSize: 11, color: colors.textTertiary),
                 ),
               );
             },
@@ -110,10 +107,7 @@ class GrowthTrendChart extends StatelessWidget {
             interval: yMax / 4,
             getTitlesWidget: (value, meta) => Text(
               value.toInt().toString(),
-              style: const TextStyle(
-                fontSize: 11,
-                color: AppColors.textTertiary,
-              ),
+              style: TextStyle(fontSize: 11, color: colors.textTertiary),
             ),
           ),
         ),
@@ -125,13 +119,13 @@ class GrowthTrendChart extends StatelessWidget {
       borderData: FlBorderData(show: false),
       lineTouchData: LineTouchData(
         touchTooltipData: LineTouchTooltipData(
-          getTooltipColor: (_) => AppColors.ink.withValues(alpha: 0.9),
+          getTooltipColor: (_) => colors.textPrimary.withValues(alpha: 0.9),
           getTooltipItems: (spots) => spots.map((spot) {
             final date = weeklyStats[spot.x.toInt()].date;
             return LineTooltipItem(
               '${date.month}/${date.day}\n${spot.y.toInt()} EXP',
-              const TextStyle(
-                color: Colors.white,
+              TextStyle(
+                color: colors.textOnAccent,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
@@ -151,16 +145,16 @@ class GrowthTrendChart extends StatelessWidget {
           ),
           isCurved: true,
           preventCurveOverShooting: true,
-          color: AppColors.primary,
+          color: colors.primary,
           barWidth: 3,
           isStrokeCapRound: true,
           dotData: FlDotData(
             show: true,
             getDotPainter: (spot, percent, bar, index) => FlDotCirclePainter(
               radius: 4,
-              color: AppColors.accent,
+              color: colors.accent,
               strokeWidth: 2,
-              strokeColor: AppColors.surface,
+              strokeColor: colors.surface,
             ),
           ),
           belowBarData: BarAreaData(
@@ -169,8 +163,8 @@ class GrowthTrendChart extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                AppColors.primary.withValues(alpha: 0.22),
-                AppColors.primary.withValues(alpha: 0),
+                colors.primary.withValues(alpha: 0.22),
+                colors.primary.withValues(alpha: 0),
               ],
             ),
           ),

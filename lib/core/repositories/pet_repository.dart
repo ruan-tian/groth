@@ -121,6 +121,6 @@ class PetRepository {
 String normalizePetName(String? name) {
   final clean = name?.trim();
   if (clean == null || clean.isEmpty) return '甜甜';
-  if (clean.contains('鐢滅敎')) return '甜甜';
+  if (clean.contains('甜甜')) return '甜甜';
   return clean;
 }

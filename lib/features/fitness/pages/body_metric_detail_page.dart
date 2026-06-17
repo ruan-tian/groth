@@ -22,18 +22,24 @@ class BodyMetricDetailPage extends ConsumerStatefulWidget {
 class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
   int _selectedDays = 30;
   String _selectedMetric = 'weight';
-  String _selectedRange = 'month'; // 'week' | 'month' | 'year'
+
+  String get _selectedRange {
+    if (_selectedDays <= 7) return 'week';
+    if (_selectedDays <= 30) return 'month';
+    return 'year';
+  }
 
   @override
   Widget build(BuildContext context) {
     final metricsAsync = ref.watch(bodyMetricsTrendProvider(_selectedDays));
+    final colors = context.growthColors;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: Text('身体数据趋势', style: AppTextStyles.pageTitle),
         centerTitle: false,
-        backgroundColor: AppColors.background,
+        backgroundColor: colors.background,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
@@ -55,24 +61,23 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
   }
 
   Widget _buildEmptyState() {
+    final colors = context.growthColors;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.monitor_weight_outlined,
-            size: 64,
-            color: AppColors.textTertiary.withValues(alpha: 0.4),
-          ),
+          Icon(Icons.monitor_weight_outlined, size: 64, color: colors.textHint),
           const SizedBox(height: AppSpacing.md),
           Text(
             '还没有身体数据记录',
-            style: AppTextStyles.cardTitle.copyWith(color: AppColors.textSecondary),
+            style: AppTextStyles.cardTitle.copyWith(
+              color: colors.textSecondary,
+            ),
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
             '点击右上角 + 开始记录',
-            style: AppTextStyles.caption,
+            style: AppTextStyles.caption.copyWith(color: colors.textTertiary),
           ),
           const SizedBox(height: AppSpacing.lg),
           ElevatedButton.icon(
@@ -80,8 +85,8 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
             icon: const Icon(Icons.add),
             label: const Text('记录身体数据'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.fitness,
-              foregroundColor: Colors.white,
+              backgroundColor: colors.fitness,
+              foregroundColor: colors.textOnAccent,
             ),
           ),
         ],
@@ -107,9 +112,10 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
   }
 
   Widget _buildTimeRangeSelector() {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: colors.surfaceVariant,
         borderRadius: BorderRadius.circular(AppRadius.md),
       ),
       padding: const EdgeInsets.all(4),
@@ -125,21 +131,21 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
 
   Widget _buildRangeChip(String range, String label, int days) {
     final isSelected = _selectedRange == range;
+    final colors = context.growthColors;
     return Expanded(
       child: GestureDetector(
         onTap: () => setState(() {
-          _selectedRange = range;
           _selectedDays = days;
         }),
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
-            color: isSelected ? Colors.white : Colors.transparent,
+            color: isSelected ? colors.card : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.sm),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
+                      color: colors.shadow.withValues(alpha: 0.06),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -152,7 +158,7 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                color: isSelected ? AppColors.fitness : AppColors.textSecondary,
+                color: isSelected ? colors.fitness : colors.textSecondary,
               ),
             ),
           ),
@@ -162,6 +168,7 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
   }
 
   Widget _buildMetricSelector() {
+    final colors = context.growthColors;
     final metrics = [
       ('weight', '体重', Icons.monitor_weight_outlined),
       ('bodyFat', '体脂率', Icons.water_drop_outlined),
@@ -182,14 +189,17 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
             child: GestureDetector(
               onTap: () => setState(() => _selectedMetric = m.$1),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.fitness.withValues(alpha: 0.12)
-                      : AppColors.surfaceVariant,
+                      ? colors.fitness.withValues(alpha: 0.12)
+                      : colors.surfaceVariant,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppColors.fitness : Colors.transparent,
+                    color: isSelected ? colors.fitness : Colors.transparent,
                     width: 1.5,
                   ),
                 ),
@@ -199,15 +209,19 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
                     Icon(
                       m.$3,
                       size: 16,
-                      color: isSelected ? AppColors.fitness : AppColors.textTertiary,
+                      color: isSelected ? colors.fitness : colors.textTertiary,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       m.$2,
                       style: TextStyle(
                         fontSize: 13,
-                        fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                        color: isSelected ? AppColors.fitness : AppColors.textSecondary,
+                        fontWeight: isSelected
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                        color: isSelected
+                            ? colors.fitness
+                            : colors.textSecondary,
                       ),
                     ),
                   ],
@@ -243,29 +257,28 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
     }).toList();
 
     if (filteredMetrics.isEmpty) {
+      final colors = context.growthColors;
       return Container(
         padding: const EdgeInsets.all(AppSpacing.xl),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
         ),
         child: Center(
-          child: Text(
-            '暂无${_getMetricLabel()}数据',
-            style: AppTextStyles.caption,
-          ),
+          child: Text('暂无${_getMetricLabel()}数据', style: AppTextStyles.caption),
         ),
       );
     }
 
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: colors.shadow.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -276,14 +289,13 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
         children: [
           Row(
             children: [
-              Text(
-                '${_getMetricLabel()}趋势',
-                style: AppTextStyles.cardTitle,
-              ),
+              Text('${_getMetricLabel()}趋势', style: AppTextStyles.cardTitle),
               const Spacer(),
               Text(
                 _getMetricUnit(),
-                style: AppTextStyles.caption,
+                style: AppTextStyles.caption.copyWith(
+                  color: colors.textTertiary,
+                ),
               ),
             ],
           ),
@@ -295,55 +307,84 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
                 LineChartData(
                   clipData: const FlClipData.all(),
                   gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  horizontalInterval: _calculateInterval(filteredMetrics),
-                  getDrawingHorizontalLine: (value) {
-                    return FlLine(
-                      color: AppColors.border.withValues(alpha: 0.3),
-                      strokeWidth: 1,
-                    );
-                  },
-                ),
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        return Text(
-                          value.toStringAsFixed(1),
-                          style: AppTextStyles.caption,
-                        );
-                      },
-                    ),
+                    show: true,
+                    drawVerticalLine: false,
+                    horizontalInterval: _calculateInterval(filteredMetrics),
+                    getDrawingHorizontalLine: (value) {
+                      return FlLine(
+                        color: colors.divider.withValues(alpha: 0.3),
+                        strokeWidth: 1,
+                      );
+                    },
                   ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= 0 &&
-                            value.toInt() < filteredMetrics.length) {
-                          final date = DateTime.parse(
-                              filteredMetrics[value.toInt()].recordDate);
+                  titlesData: FlTitlesData(
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) {
+                          return Text(
+                            value.toStringAsFixed(1),
+                            style: AppTextStyles.caption,
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 40,
+                        getTitlesWidget: (value, meta) {
+                          // X 值是距首日的天数差，转换回日期
+                          if (filteredMetrics.isEmpty) {
+                            return const SizedBox.shrink();
+                          }
+                          final firstDate = DateTime.parse(
+                            filteredMetrics.first.recordDate,
+                          );
+                          final date = firstDate.add(
+                            Duration(days: value.toInt()),
+                          );
+                          // 只在有数据的日期附近显示标签
+                          final hasData = filteredMetrics.any((m) {
+                            final mDate = DateTime.parse(m.recordDate);
+                            return mDate.year == date.year &&
+                                mDate.month == date.month &&
+                                mDate.day == date.day;
+                          });
+                          if (!hasData && filteredMetrics.length > 7) {
+                            return const SizedBox.shrink();
+                          }
                           String mainLabel;
                           String subLabel = '';
-                          
+
                           if (_selectedRange == 'week') {
-                            const dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+                            const dayNames = [
+                              '周一',
+                              '周二',
+                              '周三',
+                              '周四',
+                              '周五',
+                              '周六',
+                              '周日',
+                            ];
                             mainLabel = dayNames[date.weekday - 1];
                             subLabel = '${date.month}/${date.day}';
                           } else if (_selectedRange == 'month') {
                             final weekNum = ((date.day - 1) / 7).floor() + 1;
                             mainLabel = '第${_weekCn(weekNum)}周';
-                            final weekStart = date.subtract(Duration(days: date.weekday - 1));
-                            final weekEnd = weekStart.add(const Duration(days: 6));
-                            subLabel = '${weekStart.month}/${weekStart.day}-${weekEnd.month}/${weekEnd.day}';
+                            final weekStart = date.subtract(
+                              Duration(days: date.weekday - 1),
+                            );
+                            final weekEnd = weekStart.add(
+                              const Duration(days: 6),
+                            );
+                            subLabel =
+                                '${weekStart.month}/${weekStart.day}-${weekEnd.month}/${weekEnd.day}';
                           } else {
                             mainLabel = '${date.month}月';
                           }
-                          
+
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
                             child: Column(
@@ -352,92 +393,92 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
                                 Text(
                                   mainLabel,
                                   style: TextStyle(
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: AppColors.textSecondary,
+                                    color: colors.textSecondary,
                                   ),
                                 ),
                                 if (subLabel.isNotEmpty)
                                   Text(
                                     subLabel,
                                     style: TextStyle(
-                                      fontSize: 9,
-                                      color: AppColors.textTertiary,
+                                      fontSize: 11,
+                                      color: colors.textTertiary,
                                     ),
                                   ),
                               ],
                             ),
                           );
-                        }
-                        return const SizedBox.shrink();
-                      },
+                        },
+                      ),
+                    ),
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
                     ),
                   ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _buildSpots(filteredMetrics),
-                    isCurved: true,
-                    preventCurveOverShooting: true,
-                    color: AppColors.fitness,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, bar, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: AppColors.fitness,
-                          strokeWidth: 2,
-                          strokeColor: Colors.white,
-                        );
-                      },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      color: AppColors.fitness.withValues(alpha: 0.1),
-                    ),
-                  ),
-                ],
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipItems: (touchedSpots) {
-                      return touchedSpots.map((spot) {
-                        final index = spot.x.toInt();
-                        if (index >= 0 && index < filteredMetrics.length) {
-                          final metric = filteredMetrics[index];
-                          final value = _getMetricValue(metric);
-                          return LineTooltipItem(
-                            '${metric.recordDate}\n',
-                            AppTextStyles.caption.copyWith(color: Colors.white),
-                            children: [
-                              TextSpan(
-                                text:
-                                    '${value?.toStringAsFixed(1) ?? '--'} ${_getMetricUnit()}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: _buildSpots(filteredMetrics),
+                      isCurved: true,
+                      preventCurveOverShooting: true,
+                      color: colors.fitness,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter: (spot, percent, bar, index) {
+                          return FlDotCirclePainter(
+                            radius: 4,
+                            color: colors.fitness,
+                            strokeWidth: 2,
+                            strokeColor: colors.card,
                           );
-                        }
-                        return null;
-                      }).toList();
-                    },
+                        },
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        color: colors.fitness.withValues(alpha: 0.1),
+                      ),
+                    ),
+                  ],
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipItems: (touchedSpots) {
+                        return touchedSpots.map((spot) {
+                          final index = spot.x.toInt();
+                          if (index >= 0 && index < filteredMetrics.length) {
+                            final metric = filteredMetrics[index];
+                            final value = _getMetricValue(metric);
+                            return LineTooltipItem(
+                              '${metric.recordDate}\n',
+                              AppTextStyles.caption.copyWith(
+                                color: colors.textOnAccent,
+                              ),
+                              children: [
+                                TextSpan(
+                                  text:
+                                      '${value?.toStringAsFixed(1) ?? '--'} ${_getMetricUnit()}',
+                                  style: TextStyle(
+                                    color: colors.textOnAccent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+                          return null;
+                        }).toList();
+                      },
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
           ),
         ],
       ),
@@ -445,9 +486,16 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
   }
 
   List<FlSpot> _buildSpots(List<BodyMetric> metrics) {
+    if (metrics.isEmpty) return [];
+    final firstDate = DateTime.parse(metrics.first.recordDate);
     return List.generate(metrics.length, (index) {
       final value = _getMetricValue(metrics[index]);
-      return FlSpot(index.toDouble(), value ?? 0);
+      final date = DateTime.parse(metrics[index].recordDate);
+      final dayDiff = date
+          .difference(DateTime(firstDate.year, firstDate.month, firstDate.day))
+          .inDays
+          .toDouble();
+      return FlSpot(dayDiff, value ?? 0);
     });
   }
 
@@ -526,6 +574,7 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
 
   Widget _buildLatestSummary(List<BodyMetric> metrics) {
     if (metrics.isEmpty) return const SizedBox.shrink();
+    final colors = context.growthColors;
 
     final latest = metrics.last;
     final previous = metrics.length > 1 ? metrics[metrics.length - 2] : null;
@@ -533,11 +582,11 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: colors.shadow.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -597,15 +646,16 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
 
   Widget _buildHistoryList(List<BodyMetric> metrics) {
     final reversed = metrics.reversed.toList();
+    final colors = context.growthColors;
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: colors.shadow.withValues(alpha: 0.04),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -616,10 +666,12 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
         children: [
           Text('历史记录', style: AppTextStyles.cardTitle),
           const SizedBox(height: AppSpacing.md),
-          ...reversed.map((metric) => _HistoryTile(
-                metric: metric,
-                onDelete: () => _confirmDelete(metric),
-              )),
+          ...reversed.map(
+            (metric) => _HistoryTile(
+              metric: metric,
+              onDelete: () => _confirmDelete(metric),
+            ),
+          ),
         ],
       ),
     );
@@ -638,7 +690,9 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -654,15 +708,15 @@ class _BodyMetricDetailPageState extends ConsumerState<BodyMetricDetailPage> {
         ref.invalidate(latestBodyMetricProvider);
         ref.invalidate(bodyMetricsTrendProvider);
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已删除')));
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
         }
       }
     }
@@ -688,8 +742,10 @@ class _SummaryRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final change =
-        value != null && previousValue != null ? value! - previousValue! : null;
+    final change = value != null && previousValue != null
+        ? value! - previousValue!
+        : null;
+    final colors = context.growthColors;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -697,7 +753,10 @@ class _SummaryRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 60,
-            child: Text(label, style: AppTextStyles.caption),
+            child: Text(
+              label,
+              style: AppTextStyles.caption.copyWith(color: colors.textTertiary),
+            ),
           ),
           Expanded(
             child: Text(
@@ -705,7 +764,7 @@ class _SummaryRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: context.growthColors.textPrimary,
               ),
             ),
           ),
@@ -725,7 +784,8 @@ class _ChangeIndicator extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isPositive = change > 0;
-    final color = isPositive ? AppColors.danger : AppColors.success;
+    final colors = context.growthColors;
+    final color = isPositive ? colors.danger : colors.success;
     final icon = isPositive ? Icons.arrow_upward : Icons.arrow_downward;
 
     return Row(
@@ -758,6 +818,7 @@ class _HistoryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
@@ -766,12 +827,12 @@ class _HistoryTile extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.fitness.withValues(alpha: 0.1),
+              color: colors.fitness.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Icon(
               Icons.monitor_weight_outlined,
-              color: AppColors.fitness,
+              color: colors.fitness,
               size: 20,
             ),
           ),
@@ -785,19 +846,16 @@ class _HistoryTile extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  _buildSubtitle(),
-                  style: AppTextStyles.caption,
-                ),
+                Text(_buildSubtitle(), style: AppTextStyles.caption),
               ],
             ),
           ),
           IconButton(
-            icon: Icon(Icons.delete_outline, color: AppColors.danger, size: 20),
+            icon: Icon(Icons.delete_outline, color: colors.danger, size: 20),
             onPressed: onDelete,
           ),
         ],

@@ -1,6 +1,6 @@
 part of '../study_page.dart';
 
-// ── 图表用格式化：30m / 1.5h ──
+// 鈹€鈹€ 鍥捐〃鐢ㄦ牸寮忓寲锛?0m / 1.5h 鈹€鈹€
 String _formatMinutesCompact(int minutes) {
   if (minutes <= 0) return '0m';
   if (minutes < 60) return '${minutes}m';
@@ -10,7 +10,7 @@ String _formatMinutesCompact(int minutes) {
 }
 
 // =============================================================================
-// 柱状图数据模型
+// 鏌辩姸鍥炬暟鎹ā鍨?
 // =============================================================================
 
 class _BarData {
@@ -38,7 +38,7 @@ class _BarData {
 }
 
 // =============================================================================
-// 学习趋势柱状图（fl_chart，支持周/月/年）
+// 瀛︿範瓒嬪娍鏌辩姸鍥撅紙fl_chart锛屾敮鎸佸懆/鏈?骞达級
 // =============================================================================
 
 class _StudyBarChart extends StatefulWidget {
@@ -62,6 +62,8 @@ class _StudyBarChartState extends State<_StudyBarChart> {
   int? _touchedIndex;
   DurationChartScale? _cachedScale;
 
+  AppThemeColors get _colors => context.growthColors;
+
   @override
   void didUpdateWidget(_StudyBarChart oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -70,11 +72,9 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     }
   }
 
-  static const _barColor = AppColors.study;
-  static const _tooltipBg = Color(0xFF1E293B);
-
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final minutesList = widget.stats.map((s) => s.value).toList();
     final scale = _cachedScale ??= buildDurationChartScale(minutesList);
     final yMax = scale.maxY;
@@ -86,15 +86,15 @@ class _StudyBarChartState extends State<_StudyBarChart> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.98),
-            AppColors.study.withValues(alpha: 0.045),
+            colors.card.withValues(alpha: 0.98),
+            colors.softBlue.withValues(alpha: 0.46),
           ],
         ),
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: AppColors.study.withValues(alpha: 0.14)),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: AppColors.study.withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: 0.14),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -102,7 +102,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
       ),
       child: Column(
         children: [
-          // ── 顶部统计 ──
+          // 鈹€鈹€ 椤堕儴缁熻 鈹€鈹€
           Row(
             children: [
               _buildStat(
@@ -123,7 +123,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          // ── 柱状图 + 顶部标签 ──
+          // 鈹€鈹€ 鏌辩姸鍥?+ 椤堕儴鏍囩 鈹€鈹€
           ClipRect(
             child: SizedBox(
               height: 240,
@@ -149,7 +149,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // ── 触摸交互 ──
+  // 鈹€鈹€ 瑙︽懜浜や簰 鈹€鈹€
   BarTouchData _buildTouchData() {
     final minutesList = widget.stats.map((s) => s.value).toList();
     final scale = buildDurationChartScale(minutesList);
@@ -157,24 +157,24 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     return BarTouchData(
       enabled: true,
       touchTooltipData: BarTouchTooltipData(
-        getTooltipColor: (_) => _tooltipBg,
-        tooltipRoundedRadius: 8,
+        getTooltipColor: (_) => _colors.surfaceVariant,
+        tooltipBorderRadius: BorderRadius.circular(8),
         tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
           final bar = widget.stats[group.x];
           final title = bar.label;
           return BarTooltipItem(
             '$title\n',
-            const TextStyle(
-              color: Colors.white70,
+            TextStyle(
+              color: _colors.textOnAccent.withValues(alpha: 0.70),
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
             children: [
               TextSpan(
                 text: scale.formatTooltipValue(bar.value.toDouble()),
-                style: const TextStyle(
-                  color: Colors.white,
+                style: TextStyle(
+                  color: _colors.textOnAccent,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),
@@ -184,7 +184,10 @@ class _StudyBarChartState extends State<_StudyBarChart> {
                 TextSpan(
                   text:
                       '日均 ${scale.formatTooltipValue(bar.avgValue!.toDouble())}',
-                  style: const TextStyle(color: Colors.white70, fontSize: 11),
+                  style: TextStyle(
+                    color: _colors.textOnAccent.withValues(alpha: 0.70),
+                    fontSize: 11,
+                  ),
                 ),
               ],
             ],
@@ -204,7 +207,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // ── 坐标轴标题 ──
+  // 鈹€鈹€ 鍧愭爣杞存爣棰?鈹€鈹€
   FlTitlesData _buildTitles(DurationChartScale scale, double yMax) {
     return FlTitlesData(
       show: true,
@@ -232,17 +235,14 @@ class _StudyBarChartState extends State<_StudyBarChart> {
               padding: const EdgeInsets.only(right: 4),
               child: Text(
                 scale.formatAxisLabel(value),
-                style: const TextStyle(
-                  fontSize: 10,
-                  color: AppColors.textTertiary,
-                ),
+                style: TextStyle(fontSize: 11, color: _colors.textTertiary),
                 textAlign: TextAlign.right,
               ),
             );
           },
         ),
       ),
-      // ── 顶部数值标签 ──
+      // 鈹€鈹€ 椤堕儴鏁板€兼爣绛?鈹€鈹€
       topTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
@@ -267,27 +267,27 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // ── 网格线 ──
+  // 鈹€鈹€ 缃戞牸绾?鈹€鈹€
   FlGridData _buildGrid(DurationChartScale scale) {
     return FlGridData(
       show: true,
       drawVerticalLine: false,
       horizontalInterval: scale.interval,
       getDrawingHorizontalLine: (value) => FlLine(
-        color: AppColors.border.withValues(alpha: 0.6),
+        color: _colors.border.withValues(alpha: 0.62),
         strokeWidth: 1,
         dashArray: [4, 4],
       ),
     );
   }
 
-  // ── 单个柱子 ──
+  // 鈹€鈹€ 鍗曚釜鏌卞瓙 鈹€鈹€
   BarChartGroupData _buildBarGroup(int index, double yMax) {
     final bar = widget.stats[index];
     final isTouched = index == _touchedIndex;
     final barColor = _isHighlighted(index)
-        ? _barColor
-        : _barColor.withValues(alpha: 0.3);
+        ? _colors.study
+        : _colors.study.withValues(alpha: 0.34);
 
     return BarChartGroupData(
       x: index,
@@ -303,7 +303,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
             toY: yMax,
-            color: AppColors.border.withValues(alpha: 0.3),
+            color: _colors.border.withValues(alpha: 0.32),
           ),
         ),
       ],
@@ -311,7 +311,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // ── 底部标签（双行：主标签 + 日期/范围）──
+  // 鈹€鈹€ 搴曢儴鏍囩锛堝弻琛岋細涓绘爣绛?+ 鏃ユ湡/鑼冨洿锛夆攢鈹€
   Widget _buildBottomLabel(int index) {
     final bar = widget.stats[index];
     final highlighted = _isHighlighted(index);
@@ -319,15 +319,15 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     final mainStyle = TextStyle(
       fontSize: _bottomLabelFontSize,
       fontWeight: highlighted ? FontWeight.w700 : FontWeight.w600,
-      color: highlighted ? _barColor : AppColors.textPrimary,
+      color: highlighted ? _colors.study : _colors.textPrimary,
     );
     final subStyle = TextStyle(
-      fontSize: 10,
-      color: highlighted ? _barColor : AppColors.textTertiary,
+      fontSize: 11,
+      color: highlighted ? _colors.study : _colors.textTertiary,
     );
 
     if (widget.range == 'week') {
-      // Two lines: 周一 / 6/2
+      // Two lines: 鍛ㄤ竴 / 6/2
       return Padding(
         padding: const EdgeInsets.only(top: 6),
         child: Column(
@@ -341,7 +341,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     }
 
     if (widget.range == 'month') {
-      // Two lines: 第一周 / 6/1-6/7
+      // Two lines: 绗竴鍛?/ 6/1-6/7
       return Padding(
         padding: const EdgeInsets.only(top: 6),
         child: Column(
@@ -367,7 +367,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
       case 'week':
         return 11;
       case 'month':
-        return 10;
+        return 11;
       case 'year':
         return 11;
       default:
@@ -375,7 +375,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     }
   }
 
-  // ── 图例 ──
+  // 鈹€鈹€ 鍥句緥 鈹€鈹€
   Widget _buildLegend() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -384,35 +384,35 @@ class _StudyBarChartState extends State<_StudyBarChart> {
           width: 10,
           height: 10,
           decoration: BoxDecoration(
-            color: _barColor,
+            color: _colors.study,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
         const SizedBox(width: 4),
-        const Text(
+        Text(
           '学习时长',
-          style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 11, color: _colors.textSecondary),
         ),
       ],
     );
   }
 
-  // ── 辅助方法 ──
+  // 鈹€鈹€ 杈呭姪鏂规硶 鈹€鈹€
   Widget _buildStat(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 12, color: _colors.textSecondary),
         ),
         const SizedBox(height: 2),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.primaryDark,
+            color: _colors.study,
           ),
         ),
       ],
@@ -445,7 +445,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
 }
 
 // =============================================================================
-// 柱顶数值气泡
+// 鏌遍《鏁板€兼皵娉?
 // =============================================================================
 
 class _ValueBubble extends StatelessWidget {
@@ -456,18 +456,19 @@ class _ValueBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.card,
             borderRadius: BorderRadius.circular(4),
-            border: Border.all(color: AppColors.border),
+            border: Border.all(color: colors.border),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
+                color: colors.shadow.withValues(alpha: 0.12),
                 blurRadius: 2,
                 offset: const Offset(0, 1),
               ),
@@ -475,10 +476,10 @@ class _ValueBubble extends StatelessWidget {
           ),
           child: Text(
             value,
-            style: const TextStyle(
-              fontSize: 10,
+            style: TextStyle(
+              fontSize: 11,
               fontWeight: FontWeight.w600,
-              color: AppColors.study,
+              color: colors.study,
             ),
           ),
         ),
@@ -486,11 +487,8 @@ class _ValueBubble extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(top: 2),
             child: Text(
-              '日$avgValue',
-              style: const TextStyle(
-                fontSize: 8,
-                color: AppColors.textTertiary,
-              ),
+              '日均 $avgValue',
+              style: TextStyle(fontSize: 11, color: colors.textTertiary),
             ),
           ),
       ],
@@ -499,7 +497,7 @@ class _ValueBubble extends StatelessWidget {
 }
 
 // =============================================================================
-// 快捷操作卡片
+// 蹇嵎鎿嶄綔鍗＄墖
 // =============================================================================
 
 class _QuickActionCard extends StatelessWidget {
@@ -517,40 +515,45 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSpacing.md,
-          horizontal: AppSpacing.xs,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.82),
-          borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: color.withValues(alpha: 0.12)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.06),
-              blurRadius: 14,
-              offset: const Offset(0, 6),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12,
-                color: color,
-                fontWeight: FontWeight.w500,
+    final colors = context.growthColors;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        child: Container(
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSpacing.md,
+            horizontal: AppSpacing.xs,
+          ),
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.86),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
+            border: Border.all(color: colors.border),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: 0.12),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
-            ),
-          ],
+            ],
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 24),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: color,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -558,7 +561,7 @@ class _QuickActionCard extends StatelessWidget {
 }
 
 // =============================================================================
-// 科目分布卡片（左饼图 + 右图例）
+// 绉戠洰鍒嗗竷鍗＄墖锛堝乏楗煎浘 + 鍙冲浘渚嬶級
 // =============================================================================
 
 class _SubjectDistributionCard extends StatefulWidget {
@@ -605,6 +608,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final dist = _cachedDistData ??= _computeDistributionData();
     final total = dist.total;
     final top5 = dist.top5;
@@ -616,15 +620,15 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Colors.white.withValues(alpha: 0.98),
-            AppColors.study.withValues(alpha: 0.04),
+            colors.card.withValues(alpha: 0.98),
+            colors.softBlue.withValues(alpha: 0.42),
           ],
         ),
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: AppColors.study.withValues(alpha: 0.14)),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: AppColors.study.withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: 0.14),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -633,7 +637,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // ── 左侧：饼图 ──
+          // 鈹€鈹€ 宸︿晶锛氶ゼ鍥?鈹€鈹€
           SizedBox(
             width: 160,
             height: 160,
@@ -661,13 +665,13 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                       borderData: FlBorderData(show: false),
                       sectionsSpace: 2,
                       centerSpaceRadius: 42,
-                      sections: _buildSections(top5, total),
+                      sections: _buildSections(context, top5, total),
                     ),
                     duration: const Duration(milliseconds: 150),
                     curve: Curves.linear,
                   ),
                 ),
-                // 中心总时长
+                // 涓績鎬绘椂闀?
                 Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -676,7 +680,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -684,7 +688,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                       '总时长',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.textTertiary,
+                        color: colors.textTertiary,
                       ),
                     ),
                   ],
@@ -695,13 +699,13 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
 
           const SizedBox(width: 20),
 
-          // ── 右侧：图例列表 ──
+          // 鈹€鈹€ 鍙充晶锛氬浘渚嬪垪琛?鈹€鈹€
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: List.generate(top5.length, (index) {
                 final entry = top5[index];
-                final color = _getSubjectColor(entry.key);
+                final color = _colorByIndex(context.growthColors, index);
                 final percent = total > 0
                     ? (entry.value / total * 100).round()
                     : 0;
@@ -733,7 +737,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                     ),
                     child: Row(
                       children: [
-                        // 彩色圆点
+                        // 褰╄壊鍦嗙偣
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           width: isSelected ? 10 : 8,
@@ -744,7 +748,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // 科目名
+                        // 绉戠洰鍚?
                         SizedBox(
                           width: 36,
                           child: Text(
@@ -754,17 +758,17 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                               fontWeight: isSelected
                                   ? FontWeight.w600
                                   : FontWeight.w500,
-                              color: AppColors.textPrimary,
+                              color: colors.textPrimary,
                             ),
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // 进度条
+                        // 杩涘害鏉?
                         Expanded(
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(3),
                             child: LinearProgressIndicator(
-                              value: entry.value / total,
+                              value: total > 0 ? entry.value / total : 0.0,
                               minHeight: 6,
                               backgroundColor: color.withValues(alpha: 0.1),
                               valueColor: AlwaysStoppedAnimation<Color>(color),
@@ -772,7 +776,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // 时长 + 百分比
+                        // 鏃堕暱 + 鐧惧垎姣?
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           mainAxisSize: MainAxisSize.min,
@@ -782,14 +786,14 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                               style: TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
-                                color: AppColors.textPrimary,
+                                color: colors.textPrimary,
                               ),
                             ),
                             Text(
                               '$percent%',
                               style: TextStyle(
-                                fontSize: 10,
-                                color: AppColors.textTertiary,
+                                fontSize: 11,
+                                color: colors.textTertiary,
                               ),
                             ),
                           ],
@@ -807,13 +811,15 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
   }
 
   List<PieChartSectionData> _buildSections(
+    BuildContext context,
     List<MapEntry<String, int>> entries,
     int total,
   ) {
+    final colors = context.growthColors;
     return List.generate(entries.length, (index) {
       final isTouched = _touchedIndex == index;
       final entry = entries[index];
-      final color = _getSubjectColor(entry.key);
+      final color = _colorByIndex(context.growthColors, index);
 
       return PieChartSectionData(
         color: color,
@@ -821,8 +827,8 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
         title: '',
         radius: isTouched ? 38 : 32,
         borderSide: isTouched
-            ? BorderSide(color: Colors.white, width: 2)
-            : BorderSide(color: Colors.white.withValues(alpha: 0.5), width: 1),
+            ? BorderSide(color: colors.card, width: 2)
+            : BorderSide(color: colors.card.withValues(alpha: 0.52), width: 1),
       );
     });
   }
@@ -839,9 +845,5 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
     final h = minutes ~/ 60;
     final m = minutes % 60;
     return m > 0 ? '${h}h${m}m' : '${h}h';
-  }
-
-  Color _getSubjectColor(String subject) {
-    return _subjectColors[subject] ?? AppColors.study;
   }
 }

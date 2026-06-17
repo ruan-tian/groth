@@ -1,8 +1,5 @@
 class MusicLyricLine {
-  const MusicLyricLine({
-    required this.time,
-    required this.text,
-  });
+  const MusicLyricLine({required this.time, required this.text});
 
   final Duration time;
   final String text;

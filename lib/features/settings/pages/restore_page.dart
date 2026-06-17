@@ -7,7 +7,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../shared/providers/service_providers.dart';
+import '../../../app/design/design.dart';
+import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/task_provider.dart';
+import '../../../shared/providers/study_provider.dart';
+import '../../../shared/providers/fitness_provider.dart';
+import '../../../shared/providers/journal_provider.dart';
+import '../../../shared/providers/focus_provider.dart';
+import '../../../shared/providers/sleep_provider.dart';
+import '../../../shared/providers/diet_provider.dart';
+import '../../../shared/providers/settings_provider.dart';
 import 'backup_page.dart';
 
 /// 恢复页面（褐色渐变风格）
@@ -78,13 +87,14 @@ class _RestorePageState extends ConsumerState<RestorePage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('文件选择失败: $e')));
+        ).showSnackBar(SnackBar(content: Text('文件选择失败，请重试')));
       }
     }
   }
 
   Future<void> _restoreData() async {
     if (_selectedFile == null || _selectedFile!.path == null) return;
+    final colors = context.growthColors;
 
     final confirmed = await showDialog<bool>(
       context: context,
@@ -99,9 +109,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFFD4A574),
-            ),
+            style: TextButton.styleFrom(foregroundColor: colors.primary),
             child: const Text('确定恢复'),
           ),
         ],
@@ -118,6 +126,23 @@ class _RestorePageState extends ConsumerState<RestorePage> {
       await backupService.importFromJson(content);
 
       ref.invalidate(backupRecordsProvider);
+      ref.invalidate(dashboardProvider);
+      ref.invalidate(todayTasksProvider);
+      ref.invalidate(todayStudyMinutesProvider);
+      ref.invalidate(todayFitnessMinutesProvider);
+      ref.invalidate(todayJournalCountProvider);
+      ref.invalidate(todayFocusMinutesProvider);
+      ref.invalidate(lastNightSleepRecordProvider);
+      ref.invalidate(todayDietCountProvider);
+
+      // 刷新设置 Provider
+      ref.invalidate(themeModeProvider);
+      ref.invalidate(defaultRecordModeProvider);
+      ref.invalidate(dailyGoalsProvider);
+      ref.invalidate(dailyCalorieGoalProvider);
+      ref.invalidate(dailyWaterGoalProvider);
+      ref.invalidate(sleepGoalProvider);
+      ref.invalidate(weeklyFitnessGoalProvider);
 
       if (mounted) {
         HapticFeedback.lightImpact();
@@ -133,7 +158,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('恢复失败: $e')));
+        ).showSnackBar(SnackBar(content: Text('恢复失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _isRestoring = false);
@@ -148,15 +173,17 @@ class _RestorePageState extends ConsumerState<RestorePage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF5E1),
+      backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '数据恢复',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5C3D2E),
+            color: colors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -164,7 +191,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: const Color(0xFF5C3D2E),
+          color: colors.textPrimary,
           onPressed: () => context.pop(),
         ),
       ),
@@ -214,12 +241,14 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final colors = context.growthColors;
+
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF5C3D2E),
+        color: colors.textPrimary,
       ),
     );
   }
@@ -229,14 +258,14 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildWarningCard() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1DF),
+        color: colors.softOrange,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFFF8A3D).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.warning.withValues(alpha: 0.35)),
       ),
       child: Row(
         children: [
@@ -244,22 +273,22 @@ class _RestorePageState extends ConsumerState<RestorePage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFFF8A3D).withValues(alpha: 0.2),
+              color: colors.warning.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.warning_amber_rounded,
-              color: Color(0xFFFF8A3D),
+              color: colors.warning,
               size: 20,
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               '恢复数据将覆盖当前所有数据，请谨慎操作。建议先备份当前数据。',
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF8B6F5E),
+                color: colors.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -274,53 +303,52 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildFilePicker() {
+    final colors = context.growthColors;
+
     return Semantics(
       button: true,
       label: '选择备份文件',
       child: GestureDetector(
-      onTap: _pickFile,
-      child: Container(
-        padding: const EdgeInsets.all(32),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-            width: 2,
+        onTap: _pickFile,
+        child: Container(
+          padding: const EdgeInsets.all(32),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.border, width: 2),
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: colors.primary.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(
+                  Icons.upload_file_rounded,
+                  color: colors.primary,
+                  size: 32,
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                '点击选择备份文件',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '支持 .json 格式的备份文件',
+                style: TextStyle(fontSize: 12, color: colors.textTertiary),
+              ),
+            ],
           ),
         ),
-        child: Column(
-          children: [
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: const Color(0xFFD4A574).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Icon(
-                Icons.upload_file_rounded,
-                color: Color(0xFFD4A574),
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              '点击选择备份文件',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF5C3D2E),
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              '支持 .json 格式的备份文件',
-              style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
-            ),
-          ],
-        ),
-      ),
       ),
     );
   }
@@ -330,14 +358,14 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildFileInfo() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -346,17 +374,15 @@ class _RestorePageState extends ConsumerState<RestorePage> {
             height: 48,
             decoration: BoxDecoration(
               color: _isCorrupted
-                  ? const Color(0xFFFF6B6B).withValues(alpha: 0.1)
-                  : const Color(0xFF35C976).withValues(alpha: 0.1),
+                  ? colors.danger.withValues(alpha: 0.12)
+                  : colors.success.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
               _isCorrupted
                   ? Icons.error_outline_rounded
                   : Icons.check_circle_outline_rounded,
-              color: _isCorrupted
-                  ? const Color(0xFFFF6B6B)
-                  : const Color(0xFF35C976),
+              color: _isCorrupted ? colors.danger : colors.success,
               size: 24,
             ),
           ),
@@ -367,10 +393,10 @@ class _RestorePageState extends ConsumerState<RestorePage> {
               children: [
                 Text(
                   _selectedFile!.name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF5C3D2E),
+                    color: colors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -378,10 +404,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
                 const SizedBox(height: 4),
                 Text(
                   _formatFileSize(_selectedFile!.size),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB0A09A),
-                  ),
+                  style: TextStyle(fontSize: 12, color: colors.textTertiary),
                 ),
               ],
             ),
@@ -390,21 +413,21 @@ class _RestorePageState extends ConsumerState<RestorePage> {
             button: true,
             label: '移除选中文件',
             child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _selectedFile = null;
-                _isCorrupted = false;
-                _restoreWarning = '';
-              });
-            },
-            child: Container(
-              padding: const EdgeInsets.all(8),
-              child: const Icon(
-                Icons.close_rounded,
-                color: Color(0xFFB0A09A),
-                size: 18,
+              onTap: () {
+                setState(() {
+                  _selectedFile = null;
+                  _isCorrupted = false;
+                  _restoreWarning = '';
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                child: Icon(
+                  Icons.close_rounded,
+                  color: colors.textTertiary,
+                  size: 18,
+                ),
               ),
-            ),
             ),
           ),
         ],
@@ -417,27 +440,23 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildErrorCard() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFFF6B6B).withValues(alpha: 0.1),
+        color: colors.danger.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFFF6B6B).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.danger.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.error_outline_rounded,
-            color: Color(0xFFFF6B6B),
-            size: 18,
-          ),
+          Icon(Icons.error_outline_rounded, color: colors.danger, size: 18),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               _restoreWarning,
-              style: const TextStyle(fontSize: 13, color: Color(0xFFFF6B6B)),
+              style: TextStyle(fontSize: 13, color: colors.danger),
             ),
           ),
         ],
@@ -450,60 +469,66 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildRestoreButton() {
+    final colors = context.growthColors;
+
     return Semantics(
       button: true,
       label: '开始恢复数据',
       child: GestureDetector(
-      onTap: _isRestoring ? null : _restoreData,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: _isRestoring
-              ? null
-              : const LinearGradient(
-                  colors: [Color(0xFFD4A574), Color(0xFFE8C9A0)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          color: _isRestoring ? const Color(0xFFE8C9A0) : null,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: _isRestoring
-              ? null
-              : [
-                  BoxShadow(
-                    color: const Color(0xFFD4A574).withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+        onTap: _isRestoring ? null : _restoreData,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            gradient: _isRestoring
+                ? null
+                : LinearGradient(
+                    colors: [colors.primary, colors.primaryLight],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
-        ),
-        child: Center(
-          child: _isRestoring
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.restore_rounded, color: Colors.white, size: 20),
-                    SizedBox(width: 8),
-                    Text(
-                      '开始恢复',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
+            color: _isRestoring ? colors.primaryLight : null,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _isRestoring
+                ? null
+                : [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.24),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
                     ),
                   ],
-                ),
+          ),
+          child: Center(
+            child: _isRestoring
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.textOnAccent,
+                    ),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.restore_rounded,
+                        color: colors.textOnAccent,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '开始恢复',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: colors.textOnAccent,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
         ),
-      ),
       ),
     );
   }
@@ -513,14 +538,14 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildInstructions() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -537,22 +562,24 @@ class _RestorePageState extends ConsumerState<RestorePage> {
   }
 
   Widget _buildInstructionItem(String number, String text) {
+    final colors = context.growthColors;
+
     return Row(
       children: [
         Container(
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: const Color(0xFFD4A574).withValues(alpha: 0.1),
+            color: colors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
             child: Text(
               number,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFFD4A574),
+                color: colors.primary,
               ),
             ),
           ),
@@ -561,7 +588,7 @@ class _RestorePageState extends ConsumerState<RestorePage> {
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 13, color: Color(0xFF8B6F5E)),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
           ),
         ),
       ],

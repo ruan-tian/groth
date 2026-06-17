@@ -3,8 +3,10 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../plan/services/reminder_notification_service.dart';
+import '../../plan/widgets/notification_permission_dialog.dart';
 import '../models/sleep_plan_state.dart';
 import '../providers/sleep_plan_provider.dart';
 import '../../../shared/widgets/common/growth_time_picker.dart';
@@ -188,14 +190,40 @@ class _SleepReminderTimerPageState
       return;
     }
 
-    await service.requestPermissions();
-    await service.scheduleReminder(
+    final permissionsGranted = await service.requestPermissions();
+    if (!permissionsGranted) {
+      if (!mounted) return;
+      final opened = await showNotificationPermissionGuide(context);
+      if (opened) {
+        final retry = await service.requestPermissions();
+        if (!retry) {
+          await _disableReminderAfterScheduleFailure('通知权限仍未开启，无法发送提醒。');
+          return;
+        }
+      } else {
+        await _disableReminderAfterScheduleFailure('需要通知权限才能发送睡前提醒。');
+        return;
+      }
+    }
+
+    final scheduled = await service.scheduleReminder(
       id: _sleepReminderNotificationId,
       scheduledAt: _nextTimeFor(plan.reminderTime),
       title: '睡前准备时间到啦',
       body: '离 ${plan.sleepTime} 入睡目标还有 ${plan.leadMinutes} 分钟，可以慢慢收心了。',
       payload: 'sleep_plan_reminder',
     );
+    if (!scheduled) {
+      await _disableReminderAfterScheduleFailure('睡前提醒创建失败，请检查系统通知设置。');
+    }
+  }
+
+  Future<void> _disableReminderAfterScheduleFailure(String message) async {
+    await ref.read(sleepPlanProvider.notifier).setReminderEnabled(false);
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   DateTime _nextTimeFor(String hhmm) {

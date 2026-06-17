@@ -70,8 +70,12 @@ class SettingsPage extends ConsumerWidget {
     ref.watch(journalUploadInitProvider);
     ref.watch(petDiaryAutoEnabledInitProvider);
 
+    // 初始化长期目标 Provider
+    ref.watch(targetWeightInitProvider);
+    ref.watch(totalStudyHoursInitProvider);
+
     return Scaffold(
-      backgroundColor: AppColors.softGold,
+      backgroundColor: context.growthColors.background,
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 60, 20, 20),
         child: Column(
@@ -132,7 +136,7 @@ class SettingsPage extends ConsumerWidget {
                 'Growth OS v0.1.0',
                 style: TextStyle(
                   fontSize: 12,
-                  color: const Color(0xFFB0A09A).withValues(alpha: 0.6),
+                  color: context.growthColors.textTertiary,
                 ),
               ),
             ),
@@ -147,12 +151,15 @@ class SettingsPage extends ConsumerWidget {
   // ---------------------------------------------------------------------------
 
   String _getLevelName(int level) {
-    if (level < 5) return '成长新手';
-    if (level < 10) return '习惯探索者';
-    if (level < 20) return '成长实践家';
-    if (level < 30) return '成长探索家';
-    if (level < 50) return '长期主义者';
-    return '成长大师';
+    if (level < 5) return '萌新';
+    if (level < 10) return '探索者';
+    if (level < 15) return '实践者';
+    if (level < 20) return '进阶者';
+    if (level < 30) return '精英';
+    if (level < 50) return '大师';
+    if (level < 80) return '传奇';
+    if (level < 100) return '神话';
+    return '永恒';
   }
 
   int _calcNextLevelExp(int currentLevel) {
@@ -175,17 +182,22 @@ class SettingsPage extends ConsumerWidget {
   // ---------------------------------------------------------------------------
 
   /// AI 自动分析开关
-  void _showAiAnalysisToggle(BuildContext context, WidgetRef ref) {
+  Future<void> _showAiAnalysisToggle(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final current = ref.read(autoAiAnalysisProvider);
     if (current) {
       // 关闭
       ref.read(autoAiAnalysisProvider.notifier).state = false;
-      ref
+      await ref
           .read(settingRepositoryProvider)
           .setSetting('auto_ai_analysis', 'false');
       // 同时关闭日记上传
       ref.read(journalUploadProvider.notifier).state = false;
-      ref.read(settingRepositoryProvider).setSetting('journal_upload', 'false');
+      await ref
+          .read(settingRepositoryProvider)
+          .setSetting('journal_upload', 'false');
     } else {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
@@ -195,9 +207,9 @@ class SettingsPage extends ConsumerWidget {
             '开启后，每次打开 app 会自动分析你的学习、健身、饮食、睡眠数据。\n\n'
             '⚠️ 数据将会发送到你配置的 AI 服务商服务器（如 DeepSeek、OpenAI 等）。\n\n'
             '📝 日记内容默认不会被上传。如需上传日记，请在开启后单独设置。',
-        onConfirm: () {
+        onConfirm: () async {
           ref.read(autoAiAnalysisProvider.notifier).state = true;
-          ref
+          await ref
               .read(settingRepositoryProvider)
               .setSetting('auto_ai_analysis', 'true');
         },
@@ -206,12 +218,17 @@ class SettingsPage extends ConsumerWidget {
   }
 
   /// 日记上传开关
-  void _showJournalUploadToggle(BuildContext context, WidgetRef ref) {
+  Future<void> _showJournalUploadToggle(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final current = ref.read(journalUploadProvider);
     if (current) {
       // 关闭
       ref.read(journalUploadProvider.notifier).state = false;
-      ref.read(settingRepositoryProvider).setSetting('journal_upload', 'false');
+      await ref
+          .read(settingRepositoryProvider)
+          .setSetting('journal_upload', 'false');
     } else {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
@@ -221,9 +238,9 @@ class SettingsPage extends ConsumerWidget {
             '开启后，AI 会分析你的日记内容，为你提供更个性化的成长建议。\n\n'
             '⚠️ 日记内容将会发送到你配置的 AI 服务商服务器。请确保你信任该服务商。\n\n'
             '💡 建议：不要在日记中记录密码、银行卡等敏感信息。',
-        onConfirm: () {
+        onConfirm: () async {
           ref.read(journalUploadProvider.notifier).state = true;
-          ref
+          await ref
               .read(settingRepositoryProvider)
               .setSetting('journal_upload', 'true');
         },
@@ -276,7 +293,10 @@ class SettingsPage extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('取消', style: TextStyle(color: Color(0xFF8B6F5E))),
+            child: Text(
+              '取消',
+              style: TextStyle(color: context.growthColors.textSecondary),
+            ),
           ),
           FilledButton(
             onPressed: () {
@@ -284,7 +304,7 @@ class SettingsPage extends ConsumerWidget {
               onConfirm();
             },
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFD4A574),
+              backgroundColor: context.growthColors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -310,8 +330,8 @@ class SettingsPage extends ConsumerWidget {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
+          decoration: BoxDecoration(
+            color: context.growthColors.paper,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           ),
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
@@ -323,17 +343,17 @@ class SettingsPage extends ConsumerWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFB0A09A).withValues(alpha: 0.3),
+                  color: context.growthColors.textHint.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
+              Text(
                 '主题模式',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF5C3D2E),
+                  color: context.growthColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 20),
@@ -383,21 +403,25 @@ class SettingsPage extends ConsumerWidget {
     required bool isSelected,
   }) {
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
         HapticFeedback.lightImpact();
         ref.read(themeModeProvider.notifier).state = mode;
-        ref.read(settingRepositoryProvider).setSetting('theme_mode', mode.name);
-        Navigator.pop(context);
+        await ref
+            .read(settingRepositoryProvider)
+            .setSetting('theme_mode', mode.name);
+        if (context.mounted) Navigator.pop(context);
       },
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFF1DF) : const Color(0xFFF8F8F8),
+          color: isSelected
+              ? context.growthColors.softBlue
+              : context.growthColors.surfaceVariant,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected
-                ? const Color(0xFFD4A574)
-                : const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+                ? context.growthColors.primary
+                : context.growthColors.border,
           ),
         ),
         child: Row(
@@ -405,8 +429,8 @@ class SettingsPage extends ConsumerWidget {
             Icon(
               icon,
               color: isSelected
-                  ? const Color(0xFFD4A574)
-                  : const Color(0xFF8B6F5E),
+                  ? context.growthColors.primary
+                  : context.growthColors.textSecondary,
               size: 24,
             ),
             const SizedBox(width: 12),
@@ -420,24 +444,24 @@ class SettingsPage extends ConsumerWidget {
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                       color: isSelected
-                          ? const Color(0xFF5C3D2E)
-                          : const Color(0xFF8B6F5E),
+                          ? context.growthColors.textPrimary
+                          : context.growthColors.textSecondary,
                     ),
                   ),
                   Text(
                     description,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFFB0A09A),
+                      color: context.growthColors.textTertiary,
                     ),
                   ),
                 ],
               ),
             ),
             if (isSelected)
-              const Icon(
+              Icon(
                 Icons.check_circle_rounded,
-                color: Color(0xFFD4A574),
+                color: context.growthColors.primary,
                 size: 20,
               ),
           ],
@@ -472,10 +496,10 @@ class SettingsPage extends ConsumerWidget {
               ? Icons.fitness_center_rounded
               : Icons.edit_note_rounded,
           color: g.name == '学习'
-              ? const Color(0xFF5D68F2)
+              ? context.growthColors.study
               : g.name == '健身'
-              ? const Color(0xFF35C976)
-              : const Color(0xFFFF8A3D),
+              ? context.growthColors.fitness
+              : context.growthColors.journal,
           value: g.target,
           unit: g.unit,
         ),
@@ -484,7 +508,7 @@ class SettingsPage extends ConsumerWidget {
         key: 'weekly_fitness_goal',
         label: '每周健身次数',
         icon: Icons.event_repeat_rounded,
-        color: const Color(0xFF35C976),
+        color: context.growthColors.fitness,
         value: weeklyFitnessGoal,
         unit: '次/周',
       ),
@@ -493,7 +517,7 @@ class SettingsPage extends ConsumerWidget {
         key: 'daily_calorie_goal',
         label: '每日摄入热量',
         icon: Icons.local_fire_department_rounded,
-        color: const Color(0xFFFF6B6B),
+        color: context.growthColors.danger,
         value: ref.read(dailyCalorieGoalProvider),
         unit: 'kcal',
       ),
@@ -502,7 +526,7 @@ class SettingsPage extends ConsumerWidget {
         key: 'daily_water_goal',
         label: '每日饮水量',
         icon: Icons.water_drop_rounded,
-        color: const Color(0xFF4FC3F7),
+        color: context.growthColors.softBlue,
         value: ref.read(dailyWaterGoalProvider),
         unit: 'ml',
       ),
@@ -511,18 +535,18 @@ class SettingsPage extends ConsumerWidget {
         key: 'daily_sleep_goal',
         label: '每日睡眠时长',
         icon: Icons.bedtime_rounded,
-        color: const Color(0xFF7E57C2),
+        color: context.growthColors.sleep,
         value: ref.read(sleepGoalProvider),
         unit: '小时',
       ),
-      // ── 长期目标（占位） ──
+      // ── 长期目标 ──
       _GoalItem(
         category: '长期目标',
         key: 'target_weight',
         label: '目标体重',
         icon: Icons.monitor_weight_outlined,
-        color: const Color(0xFFE8A87C),
-        value: 65,
+        color: context.growthColors.fitness,
+        value: ref.read(targetWeightProvider).round(),
         unit: 'kg',
       ),
       _GoalItem(
@@ -530,8 +554,8 @@ class SettingsPage extends ConsumerWidget {
         key: 'total_study_hours',
         label: '累计学习目标',
         icon: Icons.school_rounded,
-        color: const Color(0xFF5D68F2),
-        value: 1000,
+        color: context.growthColors.study,
+        value: ref.read(totalStudyHoursProvider),
         unit: '小时',
       ),
     ];
@@ -589,13 +613,17 @@ class SettingsPage extends ConsumerWidget {
     }
 
     // Persist remaining goals individually
-    final otherKeys = {
-      'target_weight',
-      'total_study_hours',
-    };
+    final otherKeys = {'target_weight', 'total_study_hours'};
     for (final g in updatedGoals) {
       if (otherKeys.contains(g.key)) {
         await repo.setSetting(g.key, g.value.toString());
+        // 更新全局 Provider
+        if (g.key == 'target_weight') {
+          ref.read(targetWeightProvider.notifier).state = g.value.toDouble();
+        }
+        if (g.key == 'total_study_hours') {
+          ref.read(totalStudyHoursProvider.notifier).state = g.value;
+        }
       }
       // 更新全局 Provider
       if (g.key == 'daily_sleep_goal') {
@@ -624,30 +652,37 @@ class SettingsPage extends ConsumerWidget {
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF1DF),
+                color: context.growthColors.softOrange,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text('🐱', style: TextStyle(fontSize: 24)),
             ),
             const SizedBox(width: 12),
-            const Text(
+            Text(
               'Growth OS',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF5C3D2E),
+                color: context.growthColors.textPrimary,
               ),
             ),
           ],
         ),
-        content: const Text(
+        content: Text(
           'Growth OS 是一款陪伴你持续成长的操作系统。\n\n通过数据记录、智能分析与温暖陪伴，帮你把每一天都活成进步的版本。',
-          style: TextStyle(fontSize: 14, color: Color(0xFF8B6F5E), height: 1.5),
+          style: TextStyle(
+            fontSize: 14,
+            color: context.growthColors.textSecondary,
+            height: 1.5,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('确定', style: TextStyle(color: Color(0xFFD4A574))),
+            child: Text(
+              '确定',
+              style: TextStyle(color: context.growthColors.primary),
+            ),
           ),
         ],
       ),

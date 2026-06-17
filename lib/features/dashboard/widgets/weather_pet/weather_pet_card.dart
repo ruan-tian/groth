@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../app/design/design.dart';
 import '../../../../shared/providers/weather_provider.dart';
 import 'weather_assets.dart';
 import 'weather_card_data.dart';
@@ -98,7 +99,7 @@ class _WeatherScene extends StatelessWidget {
                               ],
                       ),
                       border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.7),
+                        color: context.growthColors.card.withValues(alpha: 0.7),
                         width: 1.2,
                       ),
                     ),
@@ -351,9 +352,11 @@ class _ExtraChip extends StatelessWidget {
       constraints: const BoxConstraints(maxWidth: 152),
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.68),
+        color: context.growthColors.card.withValues(alpha: 0.68),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+        border: Border.all(
+          color: context.growthColors.card.withValues(alpha: 0.78),
+        ),
         boxShadow: [
           BoxShadow(
             color: color.withValues(alpha: 0.1),
@@ -426,8 +429,8 @@ class _TipBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: _BubbleTailPainter(
-        color: Colors.white.withValues(alpha: 0.78),
-        borderColor: Colors.white.withValues(alpha: 0.88),
+        color: context.growthColors.card.withValues(alpha: 0.78),
+        borderColor: context.growthColors.card.withValues(alpha: 0.88),
         alignment: tailAlignment,
       ),
       child: Container(
@@ -436,9 +439,11 @@ class _TipBubble extends StatelessWidget {
           vertical: compact ? 8 : 11,
         ),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.78),
+          color: context.growthColors.card.withValues(alpha: 0.78),
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: Colors.white.withValues(alpha: 0.88)),
+          border: Border.all(
+            color: context.growthColors.card.withValues(alpha: 0.88),
+          ),
           boxShadow: [
             BoxShadow(
               color: accentColor.withValues(alpha: 0.12),

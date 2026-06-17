@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/services/encryption_service.dart';
@@ -242,7 +243,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBar('连接测试失败: $e', isError: true);
+        _showSnackBar('连接测试失败，请重试', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isTesting = false);
@@ -250,12 +251,12 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   }
 
   void _showSnackBar(String message, {bool isError = false}) {
+    final colors = context.growthColors;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(message),
-        backgroundColor: isError
-            ? const Color(0xFFFF6B6B)
-            : const Color(0xFF35C976),
+        backgroundColor: isError ? colors.danger : colors.success,
       ),
     );
   }
@@ -322,7 +323,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
       }
     } catch (e) {
       if (mounted) {
-        _showSnackBar('保存失败: $e', isError: true);
+        _showSnackBar('保存失败，请重试', isError: true);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -331,15 +332,17 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF5E1),
+      backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'AI 配置',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5C3D2E),
+            color: colors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -347,7 +350,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: const Color(0xFF5C3D2E),
+          color: colors.textPrimary,
           onPressed: () => context.pop(),
         ),
       ),
@@ -415,12 +418,14 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final colors = context.growthColors;
+
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF5C3D2E),
+        color: colors.textPrimary,
       ),
     );
   }
@@ -430,16 +435,14 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildInfoCard() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Color(0xFFFFF1DF), Color(0xFFFFF8F0)],
-        ),
+        color: colors.softGold,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -447,22 +450,22 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: const Color(0xFFD4A574).withValues(alpha: 0.2),
+              color: colors.primary.withValues(alpha: 0.14),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.info_outline_rounded,
-              color: Color(0xFFD4A574),
+              color: colors.primary,
               size: 20,
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Text(
               '配置 AI 服务后，可使用 AI 分析学习、健身和成长数据，生成个性化建议。',
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF8B6F5E),
+                color: colors.textSecondary,
                 height: 1.4,
               ),
             ),
@@ -477,13 +480,13 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildProviderGrid() {
+    final colors = context.growthColors;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       padding: const EdgeInsets.all(12),
       child: GridView.builder(
@@ -506,87 +509,85 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   }
 
   Widget _buildProviderItem(AIProvider provider, bool isSelected) {
+    final colors = context.growthColors;
+
     return Semantics(
       button: true,
       label: '选择${provider.name}服务商',
       selected: isSelected,
       child: GestureDetector(
-      onTap: () {
-        HapticFeedback.lightImpact();
-        _selectProvider(provider);
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFFFFF1DF) : const Color(0xFFF8F8F8),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? const Color(0xFFD4A574)
-                : const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-            width: isSelected ? 2 : 1,
+        onTap: () {
+          HapticFeedback.lightImpact();
+          _selectProvider(provider);
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          decoration: BoxDecoration(
+            color: isSelected ? colors.softGold : colors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: isSelected ? colors.primary : colors.border,
+              width: isSelected ? 2 : 1,
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 4,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.asset(
-                  provider.imagePath,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => Container(
-                    color: const Color(0xFFF0F0F0),
-                    child: Center(
-                      child: Text(
-                        provider.icon,
-                        style: const TextStyle(fontSize: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colors.shadow.withValues(alpha: 0.35),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.asset(
+                    provider.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, _, _) => Container(
+                      color: colors.surfaceVariant,
+                      child: Center(
+                        child: Text(
+                          provider.icon,
+                          style: const TextStyle(fontSize: 24),
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              provider.name,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected
-                    ? const Color(0xFF5C3D2E)
-                    : const Color(0xFF8B6F5E),
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            if (isSelected)
-              Container(
-                margin: const EdgeInsets.only(top: 4),
-                width: 16,
-                height: 2,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFD4A574),
-                  borderRadius: BorderRadius.circular(1),
+              const SizedBox(height: 6),
+              Text(
+                provider.name,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected ? colors.textPrimary : colors.textSecondary,
                 ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-          ],
+              if (isSelected)
+                Container(
+                  margin: const EdgeInsets.only(top: 4),
+                  width: 16,
+                  height: 2,
+                  decoration: BoxDecoration(
+                    color: colors.primary,
+                    borderRadius: BorderRadius.circular(1),
+                  ),
+                ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
@@ -596,13 +597,13 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildApiConfigForm() {
+    final colors = context.growthColors;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -647,15 +648,17 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
     VoidCallback? onTap,
     TextInputAction? textInputAction,
   }) {
+    final colors = context.growthColors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF8B6F5E),
+            color: colors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
@@ -666,46 +669,39 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
           obscureText: isPassword && !_isApiKeyVisible,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
-            prefixIcon: Icon(icon, size: 18, color: const Color(0xFFD4A574)),
+            hintStyle: TextStyle(color: colors.textHint),
+            prefixIcon: Icon(icon, size: 18, color: colors.primary),
             suffixIcon: isPassword
                 ? Semantics(
                     button: true,
                     label: _isApiKeyVisible ? '隐藏API Key' : '显示API Key',
                     child: GestureDetector(
-                    onTap: () {
-                      setState(() => _isApiKeyVisible = !_isApiKeyVisible);
-                    },
-                    child: Icon(
-                      _isApiKeyVisible
-                          ? Icons.visibility_off_rounded
-                          : Icons.visibility_rounded,
-                      size: 18,
-                      color: const Color(0xFFB0A09A),
-                    ),
+                      onTap: () {
+                        setState(() => _isApiKeyVisible = !_isApiKeyVisible);
+                      },
+                      child: Icon(
+                        _isApiKeyVisible
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                        size: 18,
+                        color: colors.textTertiary,
+                      ),
                     ),
                   )
                 : null,
             filled: true,
-            fillColor: const Color(0xFFF8F8F8),
+            fillColor: colors.surfaceVariant,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-              ),
+              borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-              ),
+              borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFD4A574),
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: colors.primary, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
@@ -722,14 +718,14 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildAdvancedParams() {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -738,35 +734,35 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '温度 (Temperature)',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF5C3D2E),
+                  color: colors.textPrimary,
                 ),
               ),
               Text(
                 _temperature.toStringAsFixed(1),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFFD4A574),
+                  color: colors.primary,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             '控制输出的随机性。0=确定性，2=最大随机',
-            style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
+            style: TextStyle(fontSize: 12, color: colors.textTertiary),
           ),
           Slider(
             value: _temperature,
             min: 0.0,
             max: 2.0,
             divisions: 20,
-            activeColor: const Color(0xFFD4A574),
+            activeColor: colors.primary,
             onChanged: (v) => setState(() => _temperature = v),
           ),
           const SizedBox(height: 16),
@@ -775,35 +771,35 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 '最大 Token 数',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF5C3D2E),
+                  color: colors.textPrimary,
                 ),
               ),
               Text(
                 '$_maxTokens',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFFD4A574),
+                  color: colors.primary,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             '控制 AI 回复的最大长度。1 token ≈ 1.5 个中文字',
-            style: TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
+            style: TextStyle(fontSize: 12, color: colors.textTertiary),
           ),
           Slider(
             value: _maxTokens.toDouble(),
             min: 256,
             max: 8192,
             divisions: 32,
-            activeColor: const Color(0xFFD4A574),
+            activeColor: colors.primary,
             onChanged: (v) => setState(() => _maxTokens = v.round()),
           ),
         ],
@@ -816,13 +812,13 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildModelSelector() {
+    final colors = context.growthColors;
+
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       padding: const EdgeInsets.all(12),
       child: Wrap(
@@ -835,34 +831,33 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
             label: '选择$model模型',
             selected: isSelected,
             child: GestureDetector(
-            onTap: () {
-              HapticFeedback.lightImpact();
-              setState(() => _selectedModel = model);
-            },
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? const Color(0xFFFFF1DF)
-                    : const Color(0xFFF8F8F8),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: isSelected
-                      ? const Color(0xFFD4A574)
-                      : const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+              onTap: () {
+                HapticFeedback.lightImpact();
+                setState(() => _selectedModel = model);
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? colors.softGold : colors.surfaceVariant,
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: isSelected ? colors.primary : colors.border,
+                  ),
+                ),
+                child: Text(
+                  model,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    color: isSelected
+                        ? colors.textPrimary
+                        : colors.textSecondary,
+                  ),
                 ),
               ),
-              child: Text(
-                model,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  color: isSelected
-                      ? const Color(0xFF5C3D2E)
-                      : const Color(0xFF8B6F5E),
-                ),
-              ),
-            ),
             ),
           );
         }).toList(),
@@ -875,100 +870,102 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildTestButton() {
+    final colors = context.growthColors;
+
     return Semantics(
       button: true,
       label: '测试连接',
       child: GestureDetector(
-      onTap: _isTesting ? null : _testConnection,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
+        onTap: _isTesting ? null : _testConnection,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colors.border),
+          ),
+          child: Center(
+            child: _isTesting
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.wifi_tethering_rounded,
+                        size: 18,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '测试连接',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
-        child: Center(
-          child: _isTesting
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
-              : const Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.wifi_tethering_rounded,
-                      size: 18,
-                      color: Color(0xFF5D68F2),
-                    ),
-                    SizedBox(width: 8),
-                    Text(
-                      '测试连接',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF5D68F2),
-                      ),
-                    ),
-                  ],
-                ),
-        ),
-      ),
       ),
     );
   }
 
   Widget _buildSaveButton() {
+    final colors = context.growthColors;
+
     return Semantics(
       button: true,
       label: '保存配置',
       child: GestureDetector(
-      onTap: _isSaving ? null : _saveConfig,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          gradient: _isSaving
-              ? null
-              : const LinearGradient(
-                  colors: [Color(0xFFD4A574), Color(0xFFE8C9A0)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-          color: _isSaving ? const Color(0xFFE8C9A0) : null,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: _isSaving
-              ? null
-              : [
-                  BoxShadow(
-                    color: const Color(0xFFD4A574).withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
+        onTap: _isSaving ? null : _saveConfig,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          decoration: BoxDecoration(
+            gradient: _isSaving
+                ? null
+                : LinearGradient(
+                    colors: [colors.primary, colors.primaryLight],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                ],
+            color: _isSaving ? colors.primaryLight : null,
+            borderRadius: BorderRadius.circular(12),
+            boxShadow: _isSaving
+                ? null
+                : [
+                    BoxShadow(
+                      color: colors.primary.withValues(alpha: 0.24),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+          ),
+          child: Center(
+            child: _isSaving
+                ? SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: context.growthColors.textOnAccent,
+                    ),
+                  )
+                : Text(
+                    '保存配置',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textOnAccent,
+                    ),
+                  ),
+          ),
         ),
-        child: Center(
-          child: _isSaving
-              ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
-                )
-              : const Text(
-                  '保存配置',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-        ),
-      ),
       ),
     );
   }

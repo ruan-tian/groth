@@ -44,7 +44,9 @@ List<String> _parseTagsSafe(String? tagsString) {
   try {
     final decoded = jsonDecode(tagsString);
     if (decoded is List) return decoded.cast<String>();
-  } catch (_) {}
+  } catch (_) {
+    // JSON 解析失败，回退到逗号分隔
+  }
   return tagsString.split(',').where((t) => t.trim().isNotEmpty).toList();
 }
 

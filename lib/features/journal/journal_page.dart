@@ -12,12 +12,15 @@ import '../../shared/providers/dashboard_provider.dart';
 import '../../shared/providers/journal_provider.dart';
 import '../../shared/widgets/sort_button.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
+import '../../shared/widgets/common/growth_card.dart';
 import '../pet/models/pet_scene_model.dart';
 import '../../shared/providers/pet_scene_provider.dart';
 import '../plan/utils/plan_module_assets.dart';
 import '../plan/widgets/plan_module_visuals.dart';
+import 'models/inspiration_catalog.dart';
 import 'providers/journal_stats_provider.dart';
 import 'utils/journal_constants.dart';
+import '../../shared/widgets/common/error_retry_widget.dart';
 import 'widgets/journal_colors.dart';
 import '../statistics/widgets/heatmap_calendar.dart';
 
@@ -70,8 +73,10 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       return sorted;
     });
 
+    final colors = context.growthColors;
+
     return Scaffold(
-      backgroundColor: JournalColors.bg,
+      backgroundColor: JournalColors.bgOf(context),
       appBar: widget.isEmbedded
           ? null
           : AppBar(
@@ -123,10 +128,10 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 module: PlanModuleType.journal,
                 color: JournalColors.pinkMain,
               ),
-              const SizedBox(height: 16),
-
-              // ── 2. 今日记录 Hero ──
+              const SizedBox(height: 12),
               _buildTodayRecordCard(context, todayCount),
+              const SizedBox(height: 16),
+              _buildInspirationEntryCard(context),
               const SizedBox(height: 20),
 
               const SizedBox.shrink(),
@@ -215,6 +220,19 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           ),
         ),
       ),
+      floatingActionButton: Semantics(
+        button: true,
+        label: '开始写日记',
+        child: FloatingActionButton(
+          heroTag: widget.isEmbedded ? 'journal_fab_embedded' : 'journal_fab',
+          tooltip: '开始写日记',
+          onPressed: () => context.push('/plan/journal/write'),
+          backgroundColor: colors.journal,
+          foregroundColor: colors.textOnAccent,
+          elevation: 6,
+          child: const Icon(Icons.add_rounded, size: 28),
+        ),
+      ),
     );
   }
 
@@ -222,6 +240,145 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     return Text(
       title,
       style: AppTextStyles.sectionTitle.copyWith(fontSize: 16),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // Inspiration Bookmark Entry
+  // ---------------------------------------------------------------------------
+
+  Widget _buildInspirationEntryCard(BuildContext context) {
+    return FutureBuilder<InspirationCatalog>(
+      future: InspirationCatalog.load(),
+      builder: (context, snapshot) {
+        final catalog = snapshot.data;
+        final theme = catalog?.themes.isNotEmpty == true
+            ? catalog!.themes.first
+            : null;
+        final entry = theme == null
+            ? null
+            : InspirationCatalog.pickDailyEntry(theme.entries);
+
+        return GrowthCard(
+          onTap: () => context.push('/plan/journal/inspiration'),
+          semanticLabel: '灵感书签',
+          padding: EdgeInsets.zero,
+          borderRadius: 24,
+          backgroundColor: context.growthColors.card,
+          borderColor: JournalColors.pinkBorder,
+          shadow: [
+            BoxShadow(
+              color: JournalColors.pinkMain.withValues(alpha: 0.09),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(24),
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    JournalColors.pinkBgOf(context),
+                    context.growthColors.card,
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 15, 10, 15),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 30,
+                                height: 30,
+                                decoration: BoxDecoration(
+                                  color: JournalColors.pinkMain.withValues(
+                                    alpha: 0.12,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.auto_stories_rounded,
+                                  color: JournalColors.pinkMain,
+                                  size: 18,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '灵感书签',
+                                style: AppTextStyles.cardTitle.copyWith(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            entry?.text ?? '每天一句，给自己一点清醒和温柔',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.body.copyWith(
+                              color: context.growthColors.textPrimary,
+                              fontWeight: FontWeight.w800,
+                              height: 1.35,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            theme == null ? '进入灵感页' : '${theme.name} · 今日一句',
+                            style: AppTextStyles.caption.copyWith(
+                              color: JournalColors.pinkMain,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: SizedBox(
+                      width: 116,
+                      child: AspectRatio(
+                        aspectRatio: 16 / 9,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(14),
+                          child: theme == null
+                              ? const ColoredBox(color: JournalColors.pinkBg)
+                              : Image.asset(
+                                  theme.posterPath,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 260,
+                                  filterQuality: FilterQuality.medium,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return const ColoredBox(
+                                      color: JournalColors.pinkBg,
+                                      child: Icon(
+                                        Icons.auto_stories_outlined,
+                                        color: JournalColors.pinkMain,
+                                      ),
+                                    );
+                                  },
+                                ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -305,7 +462,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
@@ -350,7 +507,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('文件夹保存失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('文件夹保存失败，请重试')));
     }
   }
 
@@ -388,7 +545,9 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -408,7 +567,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('文件夹删除失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('文件夹删除失败，请重试')));
     }
   }
 
@@ -479,7 +638,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         );
       },
       loading: () => const SizedBox.shrink(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
@@ -491,7 +650,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.88),
+        color: context.growthColors.card.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: JournalColors.pinkBorder),
         boxShadow: [
@@ -585,7 +744,9 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -613,7 +774,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+          ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
         }
       }
     }

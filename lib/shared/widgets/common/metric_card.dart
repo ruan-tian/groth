@@ -58,7 +58,7 @@ class MetricCard extends StatelessWidget {
                       child: CircularProgressIndicator(
                         value: progress!.clamp(0.0, 1.0),
                         strokeWidth: 3,
-                        backgroundColor: AppColors.border,
+                        backgroundColor: context.growthColors.border,
                         valueColor: AlwaysStoppedAnimation<Color>(iconColor),
                       ),
                     ),
@@ -67,10 +67,10 @@ class MetricCard extends StatelessWidget {
               SizedBox(height: compact ? 10 : 14),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary,
+                  color: context.growthColors.textSecondary,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,

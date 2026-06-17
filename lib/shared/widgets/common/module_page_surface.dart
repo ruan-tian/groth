@@ -20,9 +20,9 @@ class ModulePageSurface extends StatelessWidget {
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
           colors: [
-            AppColors.paper,
-            color.withValues(alpha: 0.035),
-            AppColors.paper,
+            context.growthColors.paper,
+            color.withValues(alpha: 0.025),
+            context.growthColors.paper,
           ],
           stops: const [0, 0.42, 1],
         ),

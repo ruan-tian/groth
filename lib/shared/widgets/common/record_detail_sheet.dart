@@ -87,13 +87,15 @@ class RecordDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -104,7 +106,7 @@ class RecordDetailSheet extends StatelessWidget {
             width: 42,
             height: 5,
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
+              color: colors.divider,
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
@@ -118,19 +120,19 @@ class RecordDetailSheet extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF1F2329),
+                      color: colors.textPrimary,
                     ),
                   ),
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
-                  child: const Icon(
+                  child: Icon(
                     Icons.close,
                     size: 24,
-                    color: Color(0xFF86909C),
+                    color: colors.textTertiary,
                   ),
                 ),
               ],
@@ -145,11 +147,11 @@ class RecordDetailSheet extends StatelessWidget {
               child: Column(
                 children: [
                   // 主指标卡片
-                  _buildPrimaryMetricCard(),
+                  _buildPrimaryMetricCard(context),
                   const SizedBox(height: 16),
 
                   // 详情网格
-                  _buildDetailGrid(),
+                  _buildDetailGrid(context),
                   const SizedBox(height: 16),
 
                   // 额外卡片
@@ -171,7 +173,7 @@ class RecordDetailSheet extends StatelessWidget {
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: accentColor,
-                  foregroundColor: Colors.white,
+                  foregroundColor: colors.textOnAccent,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -187,7 +189,9 @@ class RecordDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildPrimaryMetricCard() {
+  Widget _buildPrimaryMetricCard(BuildContext context) {
+    final colors = context.growthColors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -200,23 +204,27 @@ class RecordDetailSheet extends StatelessWidget {
       child: Column(
         children: [
           if (primaryMetricIcon != null) ...[
-            Icon(primaryMetricIcon!, color: Colors.white70, size: 24),
+            Icon(
+              primaryMetricIcon!,
+              color: colors.textOnAccent.withValues(alpha: 0.72),
+              size: 24,
+            ),
             const SizedBox(height: 8),
           ],
           Text(
             primaryMetricLabel,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
-              color: Colors.white70,
+              color: colors.textOnAccent.withValues(alpha: 0.72),
             ),
           ),
           const SizedBox(height: 8),
           Text(
             primaryMetricValue,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 36,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: colors.textOnAccent,
             ),
           ),
         ],
@@ -224,7 +232,7 @@ class RecordDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailGrid() {
+  Widget _buildDetailGrid(BuildContext context) {
     final pairs = <List<DetailItem>>[];
     for (var i = 0; i < detailItems.length; i += 2) {
       final row = <DetailItem>[detailItems[i]];
@@ -240,10 +248,10 @@ class RecordDetailSheet extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 12),
           child: Row(
             children: [
-              Expanded(child: _buildDetailItemWidget(row[0])),
+              Expanded(child: _buildDetailItemWidget(context, row[0])),
               if (row.length > 1) ...[
                 const SizedBox(width: 12),
-                Expanded(child: _buildDetailItemWidget(row[1])),
+                Expanded(child: _buildDetailItemWidget(context, row[1])),
               ] else
                 const Expanded(child: SizedBox.shrink()),
             ],
@@ -253,12 +261,15 @@ class RecordDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailItemWidget(DetailItem item) {
+  Widget _buildDetailItemWidget(BuildContext context, DetailItem item) {
+    final colors = context.growthColors;
+
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: accentColorLight ?? accentColor.withValues(alpha: 0.06),
+        color: accentColorLight ?? accentColor.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -266,10 +277,7 @@ class RecordDetailSheet extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             item.label,
-            style: const TextStyle(
-              fontSize: 11,
-              color: Color(0xFF86909C),
-            ),
+            style: TextStyle(fontSize: 11, color: colors.textSecondary),
           ),
           const SizedBox(height: 4),
           Text(

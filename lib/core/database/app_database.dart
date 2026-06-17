@@ -20,6 +20,13 @@ part 'app_database.g.dart';
     JournalFolders,
     DailyJournals,
     FocusSessions,
+    KnowledgeCards,
+    KnowledgeReviewLogs,
+    KnowledgeCustomTemplates,
+    KnowledgeCustomTemplateModules,
+    KnowledgeSources,
+    KnowledgeChunks,
+    KnowledgeCardSourceLinks,
     GrowthExpLogs,
     AppSettings,
     AiConfigs,
@@ -37,6 +44,9 @@ part 'app_database.g.dart';
     ApiConfigs,
     WeatherSearchHistoryTable,
     MusicTracks,
+    MusicPlaylists,
+    MusicPlaylistTracks,
+    AiChatMessages,
   ],
 )
 class AppDatabase extends _$AppDatabase {
@@ -52,7 +62,7 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 20;
+  int get schemaVersion => 27;
 
   @override
   MigrationStrategy get migration {
@@ -141,6 +151,42 @@ class AppDatabase extends _$AppDatabase {
           await m.addColumn(dailyJournals, dailyJournals.folderId);
           await _createPerformanceIndexes();
         }
+        if (from < 21) {
+          await m.createTable(musicPlaylists);
+          await m.createTable(musicPlaylistTracks);
+          await _createPerformanceIndexes();
+        }
+        if (from < 22) {
+          await m.addColumn(musicTracks, musicTracks.sceneOverride);
+          await _createPerformanceIndexes();
+        }
+        if (from < 23) {
+          await m.createTable(knowledgeCards);
+          await m.createTable(knowledgeReviewLogs);
+          await _createPerformanceIndexes();
+        }
+        if (from < 24) {
+          await m.addColumn(knowledgeCards, knowledgeCards.goalKey);
+          await m.addColumn(knowledgeCards, knowledgeCards.goalName);
+          await m.addColumn(knowledgeCards, knowledgeCards.moduleKey);
+          await m.addColumn(knowledgeCards, knowledgeCards.moduleName);
+          await _createPerformanceIndexes();
+        }
+        if (from < 25) {
+          await m.createTable(knowledgeCustomTemplates);
+          await m.createTable(knowledgeCustomTemplateModules);
+          await _createPerformanceIndexes();
+        }
+        if (from < 27) {
+          await m.createTable(aiChatMessages);
+          await _createPerformanceIndexes();
+        }
+        if (from < 26) {
+          await m.createTable(knowledgeSources);
+          await m.createTable(knowledgeChunks);
+          await m.createTable(knowledgeCardSourceLinks);
+          await _createPerformanceIndexes();
+        }
       },
     );
   }
@@ -150,6 +196,18 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_study_records_created_at ON study_records(created_at)',
       'CREATE INDEX IF NOT EXISTS idx_fitness_records_created_at ON fitness_records(created_at)',
       'CREATE INDEX IF NOT EXISTS idx_focus_sessions_created_at ON focus_sessions(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_cards_deck ON knowledge_cards(deck_key, archived)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_cards_goal ON knowledge_cards(goal_key, archived)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_cards_module ON knowledge_cards(goal_key, module_key, archived)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_cards_due ON knowledge_cards(due_at, archived)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_review_logs_card ON knowledge_review_logs(card_id, reviewed_at)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_custom_templates_active ON knowledge_custom_templates(archived, sort_order, created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_custom_template_modules_template ON knowledge_custom_template_modules(template_id, archived, sort_order, created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_sources_scope ON knowledge_sources(goal_key, module_key, archived, updated_at)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_sources_created_at ON knowledge_sources(created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_chunks_source ON knowledge_chunks(source_id, chunk_index)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_card_source_links_card ON knowledge_card_source_links(card_id, created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_knowledge_card_source_links_chunk ON knowledge_card_source_links(chunk_id)',
       'CREATE INDEX IF NOT EXISTS idx_growth_exp_logs_created_at ON growth_exp_logs(created_at)',
       'CREATE INDEX IF NOT EXISTS idx_growth_exp_logs_source_created ON growth_exp_logs(source_type, created_at)',
       'CREATE INDEX IF NOT EXISTS idx_body_metrics_created_at ON body_metrics(created_at)',
@@ -173,6 +231,11 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_pet_diaries_diary_date ON pet_diaries(diary_date)',
       'CREATE INDEX IF NOT EXISTS idx_music_tracks_created_at ON music_tracks(created_at)',
       'CREATE INDEX IF NOT EXISTS idx_music_tracks_last_played_at ON music_tracks(last_played_at)',
+      'CREATE INDEX IF NOT EXISTS idx_music_tracks_scene_override ON music_tracks(scene_override)',
+      'CREATE INDEX IF NOT EXISTS idx_music_playlists_sort ON music_playlists(sort_order, created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_music_playlist_tracks_playlist ON music_playlist_tracks(playlist_id, created_at)',
+      'CREATE INDEX IF NOT EXISTS idx_music_playlist_tracks_track ON music_playlist_tracks(track_id)',
+      'CREATE INDEX IF NOT EXISTS idx_ai_chat_messages_session ON ai_chat_messages(session_id, created_at)',
     ];
 
     for (final statement in statements) {

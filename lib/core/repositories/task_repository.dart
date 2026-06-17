@@ -71,8 +71,9 @@ class DailyTaskRepository {
 
   /// 获取任务详情。
   Future<DailyTask?> getTaskById(int id) {
-    return (_db.select(_db.dailyTasks)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.dailyTasks,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// 获取未完成的任务数量。
@@ -129,7 +130,9 @@ class TaskTemplateRepository {
   Future<void> incrementUsageCount(int id) async {
     final template = await getTemplateById(id);
     if (template != null) {
-      await (_db.update(_db.taskTemplates)..where((t) => t.id.equals(id))).write(
+      await (_db.update(
+        _db.taskTemplates,
+      )..where((t) => t.id.equals(id))).write(
         TaskTemplatesCompanion(
           usageCount: Value(template.usageCount + 1),
           updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
@@ -144,15 +147,16 @@ class TaskTemplateRepository {
 
   /// 获取所有模板，按使用次数倒序排列。
   Future<List<TaskTemplate>> getAllTemplates() {
-    return (_db.select(_db.taskTemplates)
-          ..orderBy([(t) => OrderingTerm.desc(t.usageCount)]))
-        .get();
+    return (_db.select(
+      _db.taskTemplates,
+    )..orderBy([(t) => OrderingTerm.desc(t.usageCount)])).get();
   }
 
   /// 获取模板详情。
   Future<TaskTemplate?> getTemplateById(int id) {
-    return (_db.select(_db.taskTemplates)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.taskTemplates,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   /// 获取最常用的模板（Top N）。

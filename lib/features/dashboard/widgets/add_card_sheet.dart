@@ -54,9 +54,9 @@ class _AddCardSheetState extends State<AddCardSheet>
     final available = _availableCards;
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.growthColors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -67,7 +67,7 @@ class _AddCardSheetState extends State<AddCardSheet>
             width: 42,
             height: 5,
             decoration: BoxDecoration(
-              color: AppColors.textHint.withValues(alpha: 0.4),
+              color: context.growthColors.textHint.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
@@ -82,17 +82,17 @@ class _AddCardSheetState extends State<AddCardSheet>
                   width: 36,
                   height: 36,
                   decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
+                    color: context.growthColors.primaryLight,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.add_circle_outline_rounded,
                     size: 20,
-                    color: AppColors.primary,
+                    color: context.growthColors.primary,
                   ),
                 ),
                 const SizedBox(width: 12),
-                const Expanded(
+                Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -101,15 +101,15 @@ class _AddCardSheetState extends State<AddCardSheet>
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
+                          color: context.growthColors.textPrimary,
                         ),
                       ),
-                      SizedBox(height: 2),
+                      const SizedBox(height: 2),
                       Text(
                         '选择要在首页显示的数据卡片',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: context.growthColors.textSecondary,
                         ),
                       ),
                     ],
@@ -122,13 +122,13 @@ class _AddCardSheetState extends State<AddCardSheet>
                     width: 32,
                     height: 32,
                     decoration: BoxDecoration(
-                      color: AppColors.surfaceVariant,
+                      color: context.growthColors.surfaceVariant,
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.close_rounded,
                       size: 18,
-                      color: AppColors.textSecondary,
+                      color: context.growthColors.textSecondary,
                     ),
                   ),
                 ),
@@ -157,23 +157,23 @@ class _AddCardSheetState extends State<AddCardSheet>
           Icon(
             Icons.check_circle_outline_rounded,
             size: 48,
-            color: AppColors.success.withValues(alpha: 0.5),
+            color: context.growthColors.success.withValues(alpha: 0.5),
           ),
           const SizedBox(height: 12),
-          const Text(
+          Text(
             '所有卡片都已添加',
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: context.growthColors.textSecondary,
             ),
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             '长按首页卡片可以移除',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.textTertiary,
+              color: context.growthColors.textTertiary,
             ),
           ),
         ],
@@ -245,18 +245,14 @@ class _AddableCardItemState extends State<_AddableCardItem>
     _scaleAnimation = Tween<double>(
       begin: 0.6,
       end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeOutBack,
-    ));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _controller,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
+      ),
+    );
 
     // 延迟启动动画，实现交错效果
     Future.delayed(Duration(milliseconds: widget.animationDelay), () {
@@ -277,10 +273,7 @@ class _AddableCardItemState extends State<_AddableCardItem>
       builder: (context, child) {
         return FadeTransition(
           opacity: _fadeAnimation,
-          child: ScaleTransition(
-            scale: _scaleAnimation,
-            child: child,
-          ),
+          child: ScaleTransition(scale: _scaleAnimation, child: child),
         );
       },
       child: GestureDetector(

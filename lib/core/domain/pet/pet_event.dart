@@ -120,10 +120,7 @@ class PetEvent {
     );
   }
 
-  factory PetEvent.levelUp({
-    required int oldLevel,
-    required int newLevel,
-  }) {
+  factory PetEvent.levelUp({required int oldLevel, required int newLevel}) {
     return PetEvent(
       eventId: 'level_up_${oldLevel}_to_$newLevel',
       source: PetEventSource.system,
@@ -152,7 +149,8 @@ class PetEvent {
 
   factory PetEvent.musicCompleted({String? eventId}) {
     return PetEvent(
-      eventId: eventId ?? 'music_completed_${DateTime.now().millisecondsSinceEpoch}',
+      eventId:
+          eventId ?? 'music_completed_${DateTime.now().millisecondsSinceEpoch}',
       source: PetEventSource.userAction,
       type: PetEventType.musicCompleted,
       module: 'music',
@@ -171,7 +169,8 @@ class PetEvent {
   factory PetEvent.accountingCompleted({String? eventId}) {
     return PetEvent(
       eventId:
-          eventId ?? 'accounting_completed_${DateTime.now().millisecondsSinceEpoch}',
+          eventId ??
+          'accounting_completed_${DateTime.now().millisecondsSinceEpoch}',
       source: PetEventSource.userAction,
       type: PetEventType.accountingCompleted,
       module: 'accounting',

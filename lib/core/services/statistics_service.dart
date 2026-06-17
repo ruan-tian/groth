@@ -42,8 +42,7 @@ class DailyStats {
   final int taskTotal;
   final int taskCompleted;
 
-  double get completionRate =>
-      taskTotal > 0 ? taskCompleted / taskTotal : 0.0;
+  double get completionRate => taskTotal > 0 ? taskCompleted / taskTotal : 0.0;
 
   int get activeModules {
     int count = 0;
@@ -60,21 +59,21 @@ class DailyStats {
 
   /// 零值占位实例，用于日期无数据时返回
   factory DailyStats.empty(DateTime date) => DailyStats(
-        date: date,
-        studyMinutes: 0,
-        studySessions: 0,
-        fitnessMinutes: 0,
-        fitnessSessions: 0,
-        journalCount: 0,
-        journalWordCount: 0,
-        dietCount: 0,
-        sleepMinutes: 0,
-        focusMinutes: 0,
-        focusSessions: 0,
-        expGained: 0,
-        taskTotal: 0,
-        taskCompleted: 0,
-      );
+    date: date,
+    studyMinutes: 0,
+    studySessions: 0,
+    fitnessMinutes: 0,
+    fitnessSessions: 0,
+    journalCount: 0,
+    journalWordCount: 0,
+    dietCount: 0,
+    sleepMinutes: 0,
+    focusMinutes: 0,
+    focusSessions: 0,
+    expGained: 0,
+    taskTotal: 0,
+    taskCompleted: 0,
+  );
 }
 
 /// 月度聚合统计
@@ -164,9 +163,7 @@ class StatisticsService {
     final months = <String>[];
     var cursor = DateTime(now.year, now.month, 1);
     for (int i = 0; i < 12; i++) {
-      months.add(
-        '${cursor.year}-${cursor.month.toString().padLeft(2, '0')}',
-      );
+      months.add('${cursor.year}-${cursor.month.toString().padLeft(2, '0')}');
       cursor = DateTime(cursor.year, cursor.month - 1, 1);
     }
     months.sort();
@@ -220,8 +217,9 @@ class StatisticsService {
     final endDate = _startOfDay(end);
     final startMs = startDate.millisecondsSinceEpoch;
     // end 当天 23:59:59.999 → 即 end+1 天 00:00:00
-    final endExclusiveMs =
-        endDate.add(const Duration(days: 1)).millisecondsSinceEpoch;
+    final endExclusiveMs = endDate
+        .add(const Duration(days: 1))
+        .millisecondsSinceEpoch;
     final startDateStr = _formatDate(startDate);
     final endDateStr = _formatDate(endDate);
 
@@ -229,30 +227,30 @@ class StatisticsService {
     final dateList = _generateDateRange(startDate, endDate);
 
     // ---- Step 2: 学习记录 (createdAt INTEGER ms) ----
-    final studyRecords = await (_db.select(_db.studyRecords)
-          ..where(
-            (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endExclusiveMs),
-          ))
-        .get();
+    final studyRecords =
+        await (_db.select(_db.studyRecords)..where(
+              (t) =>
+                  t.createdAt.isBiggerOrEqualValue(startMs) &
+                  t.createdAt.isSmallerThanValue(endExclusiveMs),
+            ))
+            .get();
 
     // ---- Step 3: 健身记录 (createdAt INTEGER ms) ----
-    final fitnessRecords = await (_db.select(_db.fitnessRecords)
-          ..where(
-            (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endExclusiveMs),
-          ))
-        .get();
+    final fitnessRecords =
+        await (_db.select(_db.fitnessRecords)..where(
+              (t) =>
+                  t.createdAt.isBiggerOrEqualValue(startMs) &
+                  t.createdAt.isSmallerThanValue(endExclusiveMs),
+            ))
+            .get();
 
     // ---- Step 4: 健身动作（用于去重计算 session 数） ----
     final fitnessRecordIds = fitnessRecords.map((r) => r.id).toList();
     final exercisesByRecordId = <int, int>{};
     if (fitnessRecordIds.isNotEmpty) {
-      final exerciseRows = await (_db.select(_db.fitnessExercises)
-            ..where(
-              (t) => t.fitnessRecordId.isIn(fitnessRecordIds),
-            ))
-          .get();
+      final exerciseRows = await (_db.select(
+        _db.fitnessExercises,
+      )..where((t) => t.fitnessRecordId.isIn(fitnessRecordIds))).get();
       for (final ex in exerciseRows) {
         exercisesByRecordId[ex.fitnessRecordId] =
             (exercisesByRecordId[ex.fitnessRecordId] ?? 0) + 1;
@@ -260,56 +258,58 @@ class StatisticsService {
     }
 
     // ---- Step 5: 日记 (journalDate TEXT) ----
-    final journalRows = await (_db.select(_db.dailyJournals)
-          ..where(
-            (t) =>
-                t.journalDate.isBiggerOrEqualValue(startDateStr) &
-                t.journalDate.isSmallerOrEqualValue(endDateStr),
-          ))
-        .get();
+    final journalRows =
+        await (_db.select(_db.dailyJournals)..where(
+              (t) =>
+                  t.journalDate.isBiggerOrEqualValue(startDateStr) &
+                  t.journalDate.isSmallerOrEqualValue(endDateStr),
+            ))
+            .get();
 
     // ---- Step 6: 饮食 (mealDate TEXT) ----
-    final dietRows = await (_db.select(_db.dietRecords)
-          ..where(
-            (t) =>
-                t.mealDate.isBiggerOrEqualValue(startDateStr) &
-                t.mealDate.isSmallerOrEqualValue(endDateStr),
-          ))
-        .get();
+    final dietRows =
+        await (_db.select(_db.dietRecords)..where(
+              (t) =>
+                  t.mealDate.isBiggerOrEqualValue(startDateStr) &
+                  t.mealDate.isSmallerOrEqualValue(endDateStr),
+            ))
+            .get();
 
     // ---- Step 7: 睡眠 (sleepDate TEXT) ----
-    final sleepRows = await (_db.select(_db.sleepRecords)
-          ..where(
-            (t) =>
-                t.sleepDate.isBiggerOrEqualValue(startDateStr) &
-                t.sleepDate.isSmallerOrEqualValue(endDateStr),
-          ))
-        .get();
+    final sleepRows =
+        await (_db.select(_db.sleepRecords)..where(
+              (t) =>
+                  t.sleepDate.isBiggerOrEqualValue(startDateStr) &
+                  t.sleepDate.isSmallerOrEqualValue(endDateStr),
+            ))
+            .get();
 
     // ---- Step 8: 专注 (createdAt INTEGER ms) ----
-    final focusRows = await (_db.select(_db.focusSessions)
-          ..where(
-            (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endExclusiveMs),
-          ))
-        .get();
+    final focusRows =
+        await (_db.select(_db.focusSessions)..where(
+              (t) =>
+                  t.createdAt.isBiggerOrEqualValue(startMs) &
+                  t.createdAt.isSmallerThanValue(endExclusiveMs),
+            ))
+            .get();
 
     // ---- Step 9: 经验日志 (createdAt INTEGER ms) ----
-    final expRows = await (_db.select(_db.growthExpLogs)
-          ..where(
-            (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endExclusiveMs),
-          ))
-        .get();
+    final expRows =
+        await (_db.select(_db.growthExpLogs)..where(
+              (t) =>
+                  t.createdAt.isBiggerOrEqualValue(startMs) &
+                  t.createdAt.isSmallerThanValue(endExclusiveMs),
+            ))
+            .get();
 
     // ---- Step 10: 每日任务 (taskDate TEXT) ----
-    final taskRows = await (_db.select(_db.dailyTasks)
-          ..where(
-            (t) =>
-                t.taskDate.isBiggerOrEqualValue(startDateStr) &
-                t.taskDate.isSmallerOrEqualValue(endDateStr),
-          ))
-        .get();
+    final taskRows =
+        await (_db.select(_db.dailyTasks)..where(
+              (t) =>
+                  t.taskDate.isBiggerOrEqualValue(startDateStr) &
+                  t.taskDate.isSmallerOrEqualValue(endDateStr),
+            ))
+            .get();
 
     // ---- Step 11: 在 Dart 层按日期分组合并 ----
 
@@ -420,8 +420,9 @@ class StatisticsService {
         journalWordCount: journal?.wordCount ?? 0,
         dietCount: dietByDate[key] ?? 0,
         sleepMinutes: sleep?.minutes ?? 0,
-        sleepQuality:
-            sleep != null && sleep.count > 0 ? sleep.qualitySum / sleep.count : null,
+        sleepQuality: sleep != null && sleep.count > 0
+            ? sleep.qualitySum / sleep.count
+            : null,
         focusMinutes: focus?.minutes ?? 0,
         focusSessions: focus?.sessions ?? 0,
         expGained: expByDate[key] ?? 0,

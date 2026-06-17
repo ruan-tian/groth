@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
+
 class PetDiaryDataPreviewSheet extends StatelessWidget {
   const PetDiaryDataPreviewSheet({
     super.key,
@@ -14,6 +16,7 @@ class PetDiaryDataPreviewSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final study = summary['study'] as Map<String, dynamic>? ?? {};
     final fitness = summary['fitness'] as Map<String, dynamic>? ?? {};
     final sleep = summary['sleep'] as Map<String, dynamic>? ?? {};
@@ -24,9 +27,9 @@ class PetDiaryDataPreviewSheet extends StatelessWidget {
     return SafeArea(
       child: Container(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-        decoration: const BoxDecoration(
-          color: Color(0xFFFFF7FB),
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -37,27 +40,27 @@ class PetDiaryDataPreviewSheet extends StatelessWidget {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE8A8C7).withValues(alpha: 0.6),
+                  color: colors.border,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
             ),
             const SizedBox(height: 18),
-            const Text(
+            Text(
               '让甜甜写今天的日记',
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF6E4A58),
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
+            Text(
               '生成前只会发送昨天的统计摘要，不发送你的完整日记正文。',
               style: TextStyle(
                 fontSize: 13,
                 height: 1.45,
-                color: Color(0xFF8E6D78),
+                color: colors.textSecondary,
               ),
             ),
             const SizedBox(height: 16),
@@ -95,16 +98,16 @@ class PetDiaryDataPreviewSheet extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.72),
+                color: colors.surfaceVariant.withValues(alpha: 0.68),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFF0C7D8)),
+                border: Border.all(color: colors.border),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
                     Icons.lock_outline_rounded,
                     size: 18,
-                    color: Color(0xFFD8709B),
+                    color: colors.journal,
                   ),
                   SizedBox(width: 8),
                   Expanded(
@@ -113,7 +116,7 @@ class PetDiaryDataPreviewSheet extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.4,
-                        color: Color(0xFF8E6D78),
+                        color: colors.textSecondary,
                       ),
                     ),
                   ),
@@ -127,8 +130,8 @@ class PetDiaryDataPreviewSheet extends StatelessWidget {
                   child: OutlinedButton(
                     onPressed: isLoading ? null : () => Navigator.pop(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFF8E6D78),
-                      side: const BorderSide(color: Color(0xFFE8A8C7)),
+                      foregroundColor: colors.textSecondary,
+                      side: BorderSide(color: colors.border),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -141,18 +144,19 @@ class PetDiaryDataPreviewSheet extends StatelessWidget {
                   child: FilledButton(
                     onPressed: isLoading ? null : onConfirm,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFE889B5),
+                      backgroundColor: colors.journal,
+                      foregroundColor: colors.textOnAccent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: isLoading
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 18,
                             height: 18,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              color: Colors.white,
+                              color: colors.textOnAccent,
                             ),
                           )
                         : const Text('确认生成'),
@@ -175,24 +179,25 @@ class _SummaryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: colors.surfaceVariant.withValues(alpha: 0.68),
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: const Color(0xFFF2D2E1)),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 15, color: const Color(0xFFD8709B)),
+          Icon(icon, size: 15, color: colors.journal),
           const SizedBox(width: 5),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF7A5661),
+              color: colors.textSecondary,
             ),
           ),
         ],

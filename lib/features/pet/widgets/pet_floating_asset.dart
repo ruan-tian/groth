@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
+
 class PetFloatingAsset extends StatelessWidget {
   const PetFloatingAsset({
     super.key,
@@ -22,6 +24,7 @@ class PetFloatingAsset extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final image = Opacity(
       opacity: opacity,
       child: Padding(
@@ -30,11 +33,8 @@ class PetFloatingAsset extends StatelessWidget {
           asset,
           fit: fit,
           filterQuality: FilterQuality.medium,
-          errorBuilder: (_, _, _) => Icon(
-            Icons.pets_rounded,
-            size: size * 0.58,
-            color: const Color(0xFFD79A78),
-          ),
+          errorBuilder: (_, _, _) =>
+              Icon(Icons.pets_rounded, size: size * 0.58, color: colors.accent),
         ),
       ),
     );
@@ -53,7 +53,7 @@ class PetFloatingAsset extends StatelessWidget {
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.white.withValues(alpha: 0.72),
+                      color: colors.card.withValues(alpha: 0.72),
                       blurRadius: size * 0.28,
                       spreadRadius: size * 0.03,
                     ),
@@ -69,11 +69,11 @@ class PetFloatingAsset extends StatelessWidget {
               height: size * 0.18,
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: const Color(0xFF8B5E45).withValues(alpha: 0.13),
+                  color: colors.shadow.withValues(alpha: 0.13),
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF8B5E45).withValues(alpha: 0.10),
+                      color: colors.shadow.withValues(alpha: 0.10),
                       blurRadius: size * 0.18,
                     ),
                   ],

@@ -38,10 +38,8 @@ class BottomSheetContainer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.background,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(topRadius),
-        ),
+        color: context.growthColors.background,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(topRadius)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -52,7 +50,7 @@ class BottomSheetContainer extends StatelessWidget {
             width: 42,
             height: 5,
             decoration: BoxDecoration(
-              color: AppColors.textHint.withValues(alpha: 0.4),
+              color: context.growthColors.textHint.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
@@ -68,10 +66,10 @@ class BottomSheetContainer extends StatelessWidget {
                     child: title != null
                         ? Text(
                             title!,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.textPrimary,
+                              color: context.growthColors.textPrimary,
                             ),
                           )
                         : const SizedBox.shrink(),
@@ -85,13 +83,13 @@ class BottomSheetContainer extends StatelessWidget {
                         width: 32,
                         height: 32,
                         decoration: BoxDecoration(
-                          color: AppColors.surfaceVariant,
+                          color: context.growthColors.surfaceVariant,
                           borderRadius: BorderRadius.circular(16),
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.close,
                           size: 18,
-                          color: AppColors.textSecondary,
+                          color: context.growthColors.textSecondary,
                         ),
                       ),
                     ),
@@ -100,10 +98,7 @@ class BottomSheetContainer extends StatelessWidget {
             ),
 
           // ── 内容区域 ──
-          Padding(
-            padding: padding,
-            child: child,
-          ),
+          Padding(padding: padding, child: child),
         ],
       ),
     );

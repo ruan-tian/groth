@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../../app/design/app_colors.dart';
-import '../../../app/design/app_text_styles.dart';
+import '../../../app/design/design.dart';
 
 /// Growth OS 统一目标编辑弹窗
 ///
@@ -78,10 +77,12 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
@@ -92,7 +93,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
+              color: colors.divider,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -101,10 +102,10 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
           // 标题
           Text(
             widget.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1F2329),
+              color: colors.textPrimary,
             ),
           ),
           const SizedBox(height: 24),
@@ -133,10 +134,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
                   ),
                   Text(
                     widget.unit,
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 14, color: colors.textSecondary),
                   ),
                 ],
               ),
@@ -154,7 +152,12 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
           // 建议
           if (widget.suggestion != null) ...[
             const SizedBox(height: 8),
-            Text(widget.suggestion!, style: AppTextStyles.caption),
+            Text(
+              widget.suggestion!,
+              style: AppTextStyles.caption.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
           ],
 
           const SizedBox(height: 24),
@@ -169,7 +172,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: widget.color,
-                foregroundColor: Colors.white,
+                foregroundColor: colors.textOnAccent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

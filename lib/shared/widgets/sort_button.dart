@@ -4,8 +4,10 @@ import 'package:flutter/material.dart';
 enum SortOption {
   /// 按时间最新排序
   newest,
+
   /// 按时间最早排序
   oldest,
+
   /// 按经验值最高排序
   highestExp,
 }
@@ -33,21 +35,9 @@ class SortButton extends StatelessWidget {
       tooltip: '排序方式',
       onSelected: onSortChanged,
       itemBuilder: (context) => [
-        _buildItem(
-          SortOption.newest,
-          Icons.access_time,
-          '时间最新',
-        ),
-        _buildItem(
-          SortOption.oldest,
-          Icons.history,
-          '时间最早',
-        ),
-        _buildItem(
-          SortOption.highestExp,
-          Icons.star,
-          '经验值最高',
-        ),
+        _buildItem(SortOption.newest, Icons.access_time, '时间最新'),
+        _buildItem(SortOption.oldest, Icons.history, '时间最早'),
+        _buildItem(SortOption.highestExp, Icons.star, '经验值最高'),
       ],
     );
   }

@@ -22,16 +22,17 @@ class LevelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = nextExp > 0 ? (currentExp / nextExp).clamp(0.0, 1.0) : 0.0;
+    final colors = context.growthColors;
 
     return GrowthCard(
       onTap: onTap,
       padding: const EdgeInsets.all(18),
-      backgroundColor: AppColors.surface,
-      borderColor: AppColors.primary.withValues(alpha: 0.12),
-      shadow: AppColors.elevatedShadow,
+      backgroundColor: colors.surface,
+      borderColor: colors.primary.withValues(alpha: 0.12),
+      shadow: AppShadows.lg,
       child: Row(
         children: [
-          _buildHexagonLevel(),
+          _buildHexagonLevel(context),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -41,8 +42,8 @@ class LevelCard extends StatelessWidget {
                   'Lv.$level $title',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.textPrimary,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
                   ),
@@ -50,8 +51,8 @@ class LevelCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'EXP $currentExp / $nextExp',
-                  style: const TextStyle(
-                    color: AppColors.textSecondary,
+                  style: TextStyle(
+                    color: colors.textSecondary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -62,10 +63,8 @@ class LevelCard extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: progress,
                     minHeight: 8,
-                    backgroundColor: AppColors.softPurple,
-                    valueColor: const AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
+                    backgroundColor: colors.softPurple,
+                    valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
                   ),
                 ),
               ],
@@ -76,12 +75,12 @@ class LevelCard extends StatelessWidget {
             width: 34,
             height: 34,
             decoration: BoxDecoration(
-              color: AppColors.softPurple,
+              color: colors.softPurple,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.arrow_forward_ios_rounded,
-              color: AppColors.primary,
+              color: colors.primary,
               size: 15,
             ),
           ),
@@ -90,15 +89,16 @@ class LevelCard extends StatelessWidget {
     );
   }
 
-  Widget _buildHexagonLevel() {
+  Widget _buildHexagonLevel(BuildContext context) {
+    final colors = context.growthColors;
     return ClipPath(
       clipper: _HexagonClipper(),
       child: Container(
         width: 56,
         height: 56,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primaryLight, AppColors.primary],
+            colors: [colors.primaryLight, colors.primary],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -106,8 +106,8 @@ class LevelCard extends StatelessWidget {
         child: Center(
           child: Text(
             '$level',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textOnAccent,
               fontSize: 22,
               fontWeight: FontWeight.w900,
             ),

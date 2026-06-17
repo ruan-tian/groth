@@ -24,7 +24,7 @@ class _KeyboardToolbar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.9),
+        color: context.growthColors.card.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: JournalColors.pinkBorder),
         boxShadow: [
@@ -161,7 +161,7 @@ class _ToolRail extends StatelessWidget {
           width: 64,
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.92),
+            color: context.growthColors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: JournalColors.pinkBorder),
             boxShadow: [
@@ -244,7 +244,9 @@ class _RailButton extends StatelessWidget {
           ),
           child: Icon(
             icon,
-            color: active ? Colors.white : JournalColors.textSecondary,
+            color: active
+                ? context.growthColors.textOnAccent
+                : JournalColors.textSecondary,
             size: 22,
           ),
         ),
@@ -556,7 +558,7 @@ class _PanelShell extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.94),
+          color: context.growthColors.card.withValues(alpha: 0.94),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: JournalColors.pinkBorder),
           boxShadow: [
@@ -616,7 +618,7 @@ class _PanelIconButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
           decoration: BoxDecoration(
-            color: active ? JournalColors.pinkBg : Colors.white,
+            color: active ? JournalColors.pinkBg : context.growthColors.card,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: active ? JournalColors.pinkSoft : JournalColors.pinkBorder,
@@ -670,7 +672,7 @@ class _ChipButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
         decoration: BoxDecoration(
-          color: active ? JournalColors.pinkMain : Colors.white,
+          color: active ? JournalColors.pinkMain : context.growthColors.card,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: active ? JournalColors.pinkMain : JournalColors.pinkBorder,
@@ -679,7 +681,9 @@ class _ChipButton extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: active ? Colors.white : JournalColors.textDark,
+            color: active
+                ? context.growthColors.textOnAccent
+                : JournalColors.textDark,
             fontWeight: FontWeight.w800,
           ),
         ),

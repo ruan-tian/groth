@@ -5,10 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
+import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/fitness_provider.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../models/workout_session_state.dart';
 import '../providers/workout_session_provider.dart';
@@ -32,6 +32,7 @@ class _FitnessTrainingTimerPageState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final templates = ref.watch(fitnessWorkoutTemplatesProvider);
     final session = ref.watch(workoutSessionProvider);
 
@@ -43,17 +44,25 @@ class _FitnessTrainingTimerPageState
     });
 
     return Scaffold(
-      backgroundColor: AppColors.softOrange,
+      backgroundColor: colors.softOrange,
       body: SafeArea(
         child: templates.when(
           data: (items) {
             _ensureInitialTemplateLoaded(items);
             return _buildContent(items, session);
           },
-          loading: () => const Center(
-            child: CircularProgressIndicator(color: AppColors.fitness),
+          loading: () =>
+              Center(child: CircularProgressIndicator(color: colors.fitness)),
+          error: (error, _) => Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                '训练模板加载失败: $error',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: colors.textSecondary),
+              ),
+            ),
           ),
-          error: (error, _) => Center(child: Text('训练模板加载失败: $error')),
         ),
       ),
     );
@@ -246,7 +255,6 @@ class _FitnessTrainingTimerPageState
       hasFeeling: feeling.trim().isNotEmpty,
     );
 
-    // 原子操作：插入记录 + 插入动作 + 更新EXP + 写入经验日志
     final db = ref.read(databaseProvider);
     final oldTotal = await expRepo.getTotalExp();
     final oldLevel = expService.calculateLevel(oldTotal);
@@ -318,13 +326,14 @@ class _FitnessTrainingTimerPageState
       ),
     );
 
-    // Send system notification for training completion
-    await ref.read(reminderNotificationServiceProvider).showImmediate(
-      id: 5206,
-      title: '训练完成',
-      body: '${session.templateName} 已完成，辛苦啦！记录一下今天的感受吧～',
-      payload: 'fitness_complete',
-    );
+    await ref
+        .read(reminderNotificationServiceProvider)
+        .showImmediate(
+          id: 5206,
+          title: '训练完成',
+          body: '${session.templateName} 已完成，辛苦啦！记录一下今天的感受吧',
+          payload: 'fitness_complete',
+        );
 
     ref.invalidate(recentFitnessRecordsProvider);
     ref.invalidate(todayFitnessMinutesProvider);

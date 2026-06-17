@@ -1,4 +1,4 @@
-﻿part of '../pages/sleep_reminder_timer_page.dart';
+part of '../pages/sleep_reminder_timer_page.dart';
 
 enum _SleepTimeField { sleep, wake }
 
@@ -54,7 +54,7 @@ class _RoundIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.84),
+      color: context.growthColors.card.withValues(alpha: 0.84),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -343,7 +343,7 @@ class _ReminderCard extends StatelessWidget {
               ),
               Switch(
                 value: plan.reminderEnabled,
-                activeThumbColor: Colors.white,
+                activeThumbColor: context.growthColors.textOnAccent,
                 activeTrackColor: _SleepColors.primary,
                 onChanged: onToggle,
               ),
@@ -817,7 +817,7 @@ class _CompanionBubble extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.94),
+              color: context.growthColors.card.withValues(alpha: 0.94),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: _SleepColors.line),
               boxShadow: [
@@ -1014,7 +1014,7 @@ class _LeadMinutesSheetState extends State<_LeadMinutesSheet> {
               onPressed: () => Navigator.pop(context, _value),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _SleepColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: context.growthColors.textOnAccent,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
@@ -1047,8 +1047,8 @@ class _SheetFrame extends StatelessWidget {
         22,
         22 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: context.growthColors.paper,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
@@ -1139,7 +1139,7 @@ class _SheetSwitchAction extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
       value: value,
-      activeThumbColor: Colors.white,
+      activeThumbColor: context.growthColors.textOnAccent,
       activeTrackColor: _SleepColors.primary,
       onChanged: onChanged,
     );

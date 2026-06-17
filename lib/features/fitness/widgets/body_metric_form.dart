@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
@@ -95,16 +96,16 @@ class _BodyMetricFormState extends ConsumerState<BodyMetricForm> {
       ref.invalidate(fitnessChartDataProvider(365));
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('身体数据已保存')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('身体数据已保存')));
         widget.onSaved?.call();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) {
@@ -247,12 +248,12 @@ class _BodyMetricFormState extends ConsumerState<BodyMetricForm> {
             FilledButton.icon(
               onPressed: _isSaving ? null : _save,
               icon: _isSaving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: context.growthColors.textOnAccent,
                       ),
                     )
                   : const Icon(Icons.save),
@@ -300,9 +301,7 @@ class _MetricField extends StatelessWidget {
         labelText: label,
         suffixText: unit,
         prefixIcon: Icon(icon, size: 20),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 12,
           vertical: 10,

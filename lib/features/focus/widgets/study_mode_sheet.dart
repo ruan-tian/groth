@@ -22,12 +22,13 @@ class _StudyModeSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final currentMode = ref.watch(focusStudyModeProvider);
 
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
         top: false,
@@ -40,17 +41,14 @@ class _StudyModeSheet extends ConsumerWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.border,
+                color: colors.border,
                 borderRadius: BorderRadius.circular(99),
               ),
             ),
             const SizedBox(height: 20),
             const Text('选择学习模式', style: AppTextStyles.sectionTitle),
             const SizedBox(height: 6),
-            Text(
-              '切换后科目列表会自动更新',
-              style: AppTextStyles.caption,
-            ),
+            Text('切换后科目列表会自动更新', style: AppTextStyles.caption),
             const SizedBox(height: 20),
             // 模式列表
             Flexible(
@@ -98,6 +96,7 @@ class _ModeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: GestureDetector(
@@ -107,13 +106,13 @@ class _ModeTile extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.fitness.withValues(alpha: 0.08)
-                : Colors.white,
+                ? colors.focus.withValues(alpha: 0.10)
+                : colors.card,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected
-                  ? AppColors.fitness.withValues(alpha: 0.3)
-                  : AppColors.border,
+                  ? colors.focus.withValues(alpha: 0.32)
+                  : colors.border,
               width: isSelected ? 1.5 : 1,
             ),
           ),
@@ -125,8 +124,8 @@ class _ModeTile extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.fitness.withValues(alpha: 0.12)
-                      : AppColors.softOrange,
+                      ? colors.focus.withValues(alpha: 0.12)
+                      : colors.surfaceVariant,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Center(
@@ -143,11 +142,10 @@ class _ModeTile extends StatelessWidget {
                       mode.label,
                       style: TextStyle(
                         fontSize: 15,
-                        fontWeight:
-                            isSelected ? FontWeight.w700 : FontWeight.w600,
-                        color: isSelected
-                            ? AppColors.fitness
-                            : AppColors.textPrimary,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        color: isSelected ? colors.focus : colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 3),
@@ -163,11 +161,7 @@ class _ModeTile extends StatelessWidget {
               ),
               // 选中指示
               if (isSelected)
-                Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.fitness,
-                  size: 22,
-                ),
+                Icon(Icons.check_circle_rounded, color: colors.focus, size: 22),
             ],
           ),
         ),

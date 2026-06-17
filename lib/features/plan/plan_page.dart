@@ -25,13 +25,16 @@ class _PlanPageState extends ConsumerState<PlanPage> {
   int _currentIndex = 0;
   late final PageController _pageController;
 
-  final List<_PlanTab> _tabs = [
-    const _PlanTab(label: '学习', color: AppColors.study),
-    const _PlanTab(label: '健身', color: AppColors.fitness),
-    const _PlanTab(label: '日记', color: AppColors.journal),
-    const _PlanTab(label: '饮食', color: AppColors.diet),
-    const _PlanTab(label: '睡眠', color: AppColors.sleep),
-  ];
+  List<_PlanTab> _getTabs(BuildContext context) {
+    final colors = context.growthColors;
+    return [
+      _PlanTab(label: '学习', color: colors.study),
+      _PlanTab(label: '健身', color: colors.fitness),
+      _PlanTab(label: '日记', color: colors.journal),
+      _PlanTab(label: '饮食', color: colors.diet),
+      _PlanTab(label: '睡眠', color: colors.sleep),
+    ];
+  }
 
   @override
   void initState() {
@@ -63,8 +66,9 @@ class _PlanPageState extends ConsumerState<PlanPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colors.paper,
       body: Column(
         children: [
           _buildCapsuleNav(),
@@ -88,6 +92,9 @@ class _PlanPageState extends ConsumerState<PlanPage> {
 
   /// 构建胶囊导航栏
   Widget _buildCapsuleNav() {
+    final colors = context.growthColors;
+    final tabs = _getTabs(context);
+
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -95,38 +102,35 @@ class _PlanPageState extends ConsumerState<PlanPage> {
         AppSpacing.lg,
         AppSpacing.sm,
       ),
-      color: AppColors.paper,
+      color: colors.paper,
       child: SafeArea(
         bottom: false,
         child: Container(
           height: 44,
           padding: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
+            gradient: LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: [Color(0xFFFFFAF5), Color(0xFFFFF5EC)],
+              colors: [colors.card, colors.surfaceTint],
             ),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(
-              color: Colors.white.withValues(alpha: 0.6),
-              width: 0.5,
-            ),
+            border: Border.all(color: colors.border, width: 0.5),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.04),
+                color: colors.shadow.withValues(alpha: 0.04),
                 blurRadius: 12,
                 offset: const Offset(0, 2),
               ),
               BoxShadow(
-                color: _tabs[_currentIndex].color.withValues(alpha: 0.06),
+                color: tabs[_currentIndex].color.withValues(alpha: 0.06),
                 blurRadius: 8,
               ),
             ],
           ),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final tabWidth = (constraints.maxWidth - 6) / _tabs.length;
+              final tabWidth = (constraints.maxWidth - 6) / tabs.length;
 
               return Stack(
                 children: [
@@ -140,20 +144,20 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                     width: tabWidth,
                     child: Container(
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: colors.card,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: colors.card.withValues(alpha: 0.9),
                           width: 0.5,
                         ),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.04),
+                            color: colors.shadow.withValues(alpha: 0.04),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                           BoxShadow(
-                            color: _tabs[_currentIndex].color.withValues(
+                            color: tabs[_currentIndex].color.withValues(
                               alpha: 0.08,
                             ),
                             blurRadius: 6,
@@ -164,7 +168,7 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                   ),
                   // ── Tab 项 ──
                   Row(
-                    children: _tabs.asMap().entries.map((entry) {
+                    children: tabs.asMap().entries.map((entry) {
                       final index = entry.key;
                       final tab = entry.value;
                       final isSelected = index == _currentIndex;
@@ -183,7 +187,7 @@ class _PlanPageState extends ConsumerState<PlanPage> {
                                     : FontWeight.w600,
                                 color: isSelected
                                     ? tab.color
-                                    : const Color(0xFF9E8E82),
+                                    : colors.textTertiary,
                                 letterSpacing: 0,
                               ),
                             ),

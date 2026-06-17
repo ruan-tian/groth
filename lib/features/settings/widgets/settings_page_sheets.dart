@@ -1,8 +1,4 @@
-﻿part of '../settings_page.dart';
-
-// =============================================================================
-// _GoalItem — 每条目标的数据模型
-// =============================================================================
+part of '../settings_page.dart';
 
 class _GoalItem {
   _GoalItem({
@@ -34,10 +30,6 @@ class _GoalItem {
   );
 }
 
-// =============================================================================
-// _DailyGoalsSheet — 今日目标编辑 Bottom Sheet
-// =============================================================================
-
 class _DailyGoalsSheet extends StatefulWidget {
   const _DailyGoalsSheet({required this.goals});
 
@@ -58,10 +50,10 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
 
   @override
   Widget build(BuildContext context) {
-    // Group by category
+    final colors = context.growthColors;
     final categories = <String, List<_GoalItem>>{};
-    for (final g in _goals) {
-      categories.putIfAbsent(g.category, () => []).add(g);
+    for (final goal in _goals) {
+      categories.putIfAbsent(goal.category, () => []).add(goal);
     }
 
     return DraggableScrollableSheet(
@@ -71,31 +63,30 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
       expand: false,
       builder: (ctx, scrollController) {
         return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          decoration: BoxDecoration(
+            color: colors.paper,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           ),
           child: Column(
             children: [
-              // ── 拖拽条 + 标题 ──
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Container(
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFB0A09A).withValues(alpha: 0.3),
+                    color: colors.textTertiary.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 '今日目标',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF5C3D2E),
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -103,26 +94,22 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                 '点击目标项可修改数值',
                 style: TextStyle(
                   fontSize: 12,
-                  color: const Color(0xFFB0A09A).withValues(alpha: 0.8),
+                  color: colors.textTertiary.withValues(alpha: 0.8),
                 ),
               ),
               const SizedBox(height: 16),
-
-              // ── 目标列表 ──
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   itemCount: categories.length,
                   itemBuilder: (ctx, index) {
-                    final catName = categories.keys.elementAt(index);
-                    final items = categories[catName]!;
-                    return _buildCategory(catName, items);
+                    final categoryName = categories.keys.elementAt(index);
+                    final items = categories[categoryName]!;
+                    return _buildCategory(categoryName, items);
                   },
                 ),
               ),
-
-              // ── 保存按钮 ──
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 child: SizedBox(
@@ -131,8 +118,8 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, _goals),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5C3D2E),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.primary,
+                      foregroundColor: colors.textOnAccent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
@@ -156,6 +143,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
   }
 
   Widget _buildCategory(String name, List<_GoalItem> items) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -167,40 +155,39 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                 width: 4,
                 height: 16,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD4A574),
+                  color: colors.primary,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(width: 8),
               Text(
                 name,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF5C3D2E),
+                  color: colors.textPrimary,
                 ),
               ),
             ],
           ),
         ),
-        ...items.map((g) => _buildGoalTile(g)),
+        ...items.map(_buildGoalTile),
         const SizedBox(height: 16),
       ],
     );
   }
 
   Widget _buildGoalTile(_GoalItem goal) {
+    final colors = context.growthColors;
     return GestureDetector(
       onTap: () => _showGoalEditDialog(goal),
       child: Container(
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.softGold,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: const Color(0xFFE8C9A0).withValues(alpha: 0.4),
-          ),
+          border: Border.all(color: colors.border.withValues(alpha: 0.55)),
         ),
         child: Row(
           children: [
@@ -220,19 +207,16 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                 children: [
                   Text(
                     goal.label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF5C3D2E),
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     '${goal.value} ${goal.unit}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFFB0A09A),
-                    ),
+                    style: TextStyle(fontSize: 12, color: colors.textTertiary),
                   ),
                 ],
               ),
@@ -256,7 +240,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
             Icon(
               Icons.edit_rounded,
               size: 16,
-              color: const Color(0xFFB0A09A).withValues(alpha: 0.5),
+              color: colors.textTertiary.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -265,6 +249,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
   }
 
   Future<void> _showGoalEditDialog(_GoalItem goal) async {
+    final colors = context.growthColors;
     final controller = TextEditingController(text: goal.value.toString());
     final formKey = GlobalKey<FormState>();
 
@@ -272,6 +257,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
+          backgroundColor: colors.paper,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
@@ -290,10 +276,10 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
               Expanded(
                 child: Text(
                   goal.label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF5C3D2E),
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -313,33 +299,30 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                   decoration: InputDecoration(
                     labelText: '目标值',
                     suffixText: goal.unit,
-                    suffixStyle: const TextStyle(
-                      color: Color(0xFFB0A09A),
+                    suffixStyle: TextStyle(
+                      color: colors.textTertiary,
                       fontSize: 14,
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFE8C9A0)),
+                      borderSide: BorderSide(color: colors.border),
                     ),
                     focusedBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12),
                       borderSide: BorderSide(color: goal.color, width: 2),
                     ),
                   ),
-                  validator: (v) {
-                    if (v == null || v.isEmpty) return '请输入目标值';
-                    final n = int.tryParse(v);
-                    if (n == null || n <= 0) return '请输入正整数';
+                  validator: (value) {
+                    if (value == null || value.isEmpty) return '请输入目标值';
+                    final number = int.tryParse(value);
+                    if (number == null || number <= 0) return '请输入正整数';
                     return null;
                   },
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  '当前设定：${goal.value} ${goal.unit}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFFB0A09A),
-                  ),
+                  '当前设定: ${goal.value} ${goal.unit}',
+                  style: TextStyle(fontSize: 12, color: colors.textTertiary),
                 ),
               ],
             ),
@@ -347,10 +330,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                '取消',
-                style: TextStyle(color: Color(0xFFB0A09A)),
-              ),
+              child: Text('取消', style: TextStyle(color: colors.textTertiary)),
             ),
             ElevatedButton(
               onPressed: () {
@@ -360,7 +340,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: goal.color,
-                foregroundColor: Colors.white,
+                foregroundColor: colors.textOnAccent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -381,12 +361,6 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
   }
 }
 
-// =============================================================================
-// _DailyGoalsSheet — 目标编辑弹窗
-// =============================================================================
-// 等级详情弹窗
-// =============================================================================
-
 class _LevelDetailSheet extends StatelessWidget {
   const _LevelDetailSheet({
     required this.currentLevel,
@@ -400,6 +374,7 @@ class _LevelDetailSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final nextLevelExp = currentLevel * currentLevel * 100;
     final progress = nextLevelExp > 0
         ? (expProgress / nextLevelExp).clamp(0.0, 1.0)
@@ -409,31 +384,26 @@ class _LevelDetailSheet extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.75,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // 顶部拖拽条
           const SizedBox(height: 12),
           Container(
             width: 42,
             height: 5,
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
+              color: colors.border,
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
           const SizedBox(height: 20),
-
-          // 当前等级信息
           _buildCurrentLevel(context, progress, nextLevelExp),
           const SizedBox(height: 24),
-
-          // 等级梯队
-          Expanded(child: _buildLevelTiers()),
+          Expanded(child: _buildLevelTiers(context)),
         ],
       ),
     );
@@ -444,24 +414,24 @@ class _LevelDetailSheet extends StatelessWidget {
     double progress,
     int nextLevelExp,
   ) {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          // 等级图标
           Container(
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              gradient: const LinearGradient(
+              gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [Color(0xFFD4A574), Color(0xFFE8C9A0)],
+                colors: [colors.primary, colors.primaryDark],
               ),
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFFD4A574).withValues(alpha: 0.3),
+                  color: colors.primary.withValues(alpha: 0.3),
                   blurRadius: 16,
                   offset: const Offset(0, 6),
                 ),
@@ -470,114 +440,60 @@ class _LevelDetailSheet extends StatelessWidget {
             child: Center(
               child: Text(
                 'Lv.$currentLevel',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.w700,
-                  color: Colors.white,
+                  color: colors.textOnAccent,
                 ),
               ),
             ),
           ),
           const SizedBox(height: 16),
-
-          // 等级名称
           Text(
             _getLevelName(currentLevel),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF5C3D2E),
+              color: colors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-
-          // 经验值
           Text(
             'EXP $totalExp / $nextLevelExp',
-            style: const TextStyle(fontSize: 14, color: Color(0xFF8B6F5E)),
+            style: TextStyle(fontSize: 14, color: colors.textSecondary),
           ),
           const SizedBox(height: 12),
-
-          // 进度条
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,
-              backgroundColor: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFFD4A574),
-              ),
+              backgroundColor: colors.border.withValues(alpha: 0.3),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
             ),
           ),
           const SizedBox(height: 8),
-
-          // 距下一级
           Text(
-            '距下一级还需 ${nextLevelExp - expProgress} EXP',
-            style: const TextStyle(fontSize: 12, color: Color(0xFFB0A09A)),
+            '距离下一级还需 ${nextLevelExp - expProgress} EXP',
+            style: TextStyle(fontSize: 12, color: colors.textTertiary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLevelTiers() {
+  Widget _buildLevelTiers(BuildContext context) {
+    final colors = context.growthColors;
     final tiers = [
-      _LevelTier(
-        level: 1,
-        name: '萌新',
-        minExp: 0,
-        color: const Color(0xFF9E9E9E),
-      ),
-      _LevelTier(
-        level: 5,
-        name: '探索者',
-        minExp: 1600,
-        color: const Color(0xFF4CAF50),
-      ),
-      _LevelTier(
-        level: 10,
-        name: '实践者',
-        minExp: 8100,
-        color: const Color(0xFF2196F3),
-      ),
-      _LevelTier(
-        level: 15,
-        name: '进阶者',
-        minExp: 20000,
-        color: const Color(0xFF9C27B0),
-      ),
-      _LevelTier(
-        level: 20,
-        name: '精英',
-        minExp: 38000,
-        color: const Color(0xFFFF9800),
-      ),
-      _LevelTier(
-        level: 30,
-        name: '大师',
-        minExp: 85000,
-        color: const Color(0xFFE91E63),
-      ),
-      _LevelTier(
-        level: 50,
-        name: '传奇',
-        minExp: 250000,
-        color: const Color(0xFFFF5722),
-      ),
-      _LevelTier(
-        level: 80,
-        name: '神话',
-        minExp: 640000,
-        color: const Color(0xFF673AB7),
-      ),
-      _LevelTier(
-        level: 100,
-        name: '永恒',
-        minExp: 1000000,
-        color: const Color(0xFF1A237E),
-      ),
+      _LevelTier(level: 1, name: '萌新', minExp: 0, color: colors.textTertiary),
+      _LevelTier(level: 5, name: '探索者', minExp: 1600, color: colors.success),
+      _LevelTier(level: 10, name: '实践者', minExp: 8100, color: colors.study),
+      _LevelTier(level: 15, name: '进阶者', minExp: 20000, color: colors.primary),
+      _LevelTier(level: 20, name: '精英', minExp: 38000, color: colors.warning),
+      _LevelTier(level: 30, name: '大师', minExp: 85000, color: colors.journal),
+      _LevelTier(level: 50, name: '传奇', minExp: 250000, color: colors.fitness),
+      _LevelTier(level: 80, name: '神话', minExp: 640000, color: colors.sleep),
+      _LevelTier(level: 100, name: '永恒', minExp: 1000000, color: colors.accent),
     ];
 
     return ListView.builder(
@@ -591,34 +507,37 @@ class _LevelDetailSheet extends StatelessWidget {
             (index == tiers.length - 1 ||
                 currentLevel < tiers[index + 1].level);
 
-        return _buildTierItem(tier, isUnlocked, isCurrent);
+        return _buildTierItem(context, tier, isUnlocked, isCurrent);
       },
     );
   }
 
-  Widget _buildTierItem(_LevelTier tier, bool isUnlocked, bool isCurrent) {
+  Widget _buildTierItem(
+    BuildContext context,
+    _LevelTier tier,
+    bool isUnlocked,
+    bool isCurrent,
+  ) {
+    final colors = context.growthColors;
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isCurrent
-            ? tier.color.withValues(alpha: 0.1)
-            : const Color(0xFFF8F8F8),
+        color: isCurrent ? tier.color.withValues(alpha: 0.1) : colors.surface,
         borderRadius: BorderRadius.circular(16),
         border: isCurrent
             ? Border.all(color: tier.color, width: 2)
-            : Border.all(color: const Color(0xFFE8C9A0).withValues(alpha: 0.3)),
+            : Border.all(color: colors.border.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
-          // 等级图标
           Container(
             width: 48,
             height: 48,
             decoration: BoxDecoration(
               color: isUnlocked
                   ? tier.color.withValues(alpha: 0.15)
-                  : const Color(0xFFE0E0E0),
+                  : colors.surfaceVariant,
               borderRadius: BorderRadius.circular(14),
             ),
             child: Center(
@@ -627,14 +546,12 @@ class _LevelDetailSheet extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: isUnlocked ? tier.color : const Color(0xFFB0A09A),
+                  color: isUnlocked ? tier.color : colors.textTertiary,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 14),
-
-          // 等级信息
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -645,8 +562,8 @@ class _LevelDetailSheet extends StatelessWidget {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: isUnlocked
-                        ? const Color(0xFF5C3D2E)
-                        : const Color(0xFFB0A09A),
+                        ? colors.textPrimary
+                        : colors.textTertiary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -654,16 +571,12 @@ class _LevelDetailSheet extends StatelessWidget {
                   '${tier.minExp} EXP',
                   style: TextStyle(
                     fontSize: 12,
-                    color: isUnlocked
-                        ? const Color(0xFF8B6F5E)
-                        : const Color(0xFFC9CDD4),
+                    color: isUnlocked ? colors.textSecondary : colors.textHint,
                   ),
                 ),
               ],
             ),
           ),
-
-          // 状态
           if (isCurrent)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -671,23 +584,19 @@ class _LevelDetailSheet extends StatelessWidget {
                 color: tier.color,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Text(
+              child: Text(
                 '当前',
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: Colors.white,
+                  color: colors.textOnAccent,
                 ),
               ),
             )
           else if (isUnlocked)
             Icon(Icons.check_circle_rounded, size: 20, color: tier.color)
           else
-            Icon(
-              Icons.lock_outline_rounded,
-              size: 20,
-              color: const Color(0xFFC9CDD4),
-            ),
+            Icon(Icons.lock_outline_rounded, size: 20, color: colors.textHint),
         ],
       ),
     );

@@ -5,6 +5,7 @@ import 'dart:math' show Random;
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart' as audio;
+import 'package:path/path.dart' as p;
 
 import '../../../core/database/app_database.dart';
 import '../../../core/repositories/music_repository.dart';
@@ -16,6 +17,7 @@ import '../services/music_import_service.dart';
 import '../services/music_lyrics_service.dart';
 import '../services/music_player_service.dart';
 import '../utils/music_assets.dart';
+import '../utils/music_scene.dart';
 
 final musicImportServiceProvider = Provider<MusicImportService>((ref) {
   return MusicImportService();
@@ -65,6 +67,8 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   Future<void> _bootstrap() async {
     try {
       final tracks = await _resolveDefaultCovers(await _musicRepo.getTracks());
+      final playlists = await _musicRepo.getPlaylists();
+      final playlistTracks = await _musicRepo.getPlaylistTracks();
       final volumeText = await _settings.getSetting(_volumeKey);
       final currentTrackText = await _settings.getSetting(_currentTrackKey);
       final positionText = await _settings.getSetting(_positionKey);
@@ -93,6 +97,8 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       _setState(
         state.copyWith(
           tracks: tracks,
+          playlists: playlists,
+          playlistTracks: playlistTracks,
           currentTrackId: initialTrackId,
           selectedCollection: collection,
           volume: volume,
@@ -103,7 +109,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       );
       await _loadLyricsForCurrentTrack();
     } catch (error) {
-      _setState(state.copyWith(errorMessage: '音乐初始化失败：$error'));
+      _setState(state.copyWith(errorMessage: '音乐初始化失败，请重试'));
     }
   }
 
@@ -154,35 +160,146 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   }
 
   Future<void> selectCollection(MusicCollection collection) async {
-    _setState(state.copyWith(selectedCollection: collection));
+    _setState(
+      state.copyWith(selectedCollection: collection, selectedPlaylistId: null),
+    );
     await _settings.setSetting(_collectionKey, collection.name);
   }
 
-  Future<void> importTracks() async {
+  void selectPlaylist(int playlistId) {
+    _setState(state.copyWith(selectedPlaylistId: playlistId));
+  }
+
+  Future<int> createPlaylist({
+    required String name,
+    required String coverAsset,
+  }) async {
+    final playlistId = await _musicRepo.createPlaylist(
+      name: name,
+      coverAsset: coverAsset,
+    );
+    await refreshTracks();
+    _setState(state.copyWith(selectedPlaylistId: playlistId));
+    return playlistId;
+  }
+
+  Future<void> deletePlaylist(int playlistId) async {
+    await _musicRepo.deletePlaylist(playlistId);
+    await refreshTracks();
+    if (state.selectedPlaylistId == playlistId) {
+      _setState(state.copyWith(selectedPlaylistId: null));
+    }
+  }
+
+  Future<void> setTrackPlaylists({
+    required int trackId,
+    required Iterable<int> playlistIds,
+  }) async {
+    await _musicRepo.setTrackPlaylists(
+      trackId: trackId,
+      playlistIds: playlistIds,
+    );
+    await refreshTracks();
+  }
+
+  Future<void> setTrackOrganization({
+    required int trackId,
+    required Iterable<int> playlistIds,
+    required MusicScene? sceneOverride,
+  }) async {
+    await _musicRepo.setTrackPlaylists(
+      trackId: trackId,
+      playlistIds: playlistIds,
+    );
+    await _musicRepo.updateSceneOverride(trackId, sceneOverride?.name);
+    await refreshTracks();
+  }
+
+  Future<void> setTrackSceneOverride({
+    required int trackId,
+    required MusicScene? sceneOverride,
+  }) async {
+    await _musicRepo.updateSceneOverride(trackId, sceneOverride?.name);
+    await refreshTracks();
+  }
+
+  Future<void> importTracks({
+    Iterable<int> playlistIds = const [],
+    MusicScene? sceneOverride,
+  }) async {
+    await _importFiles(
+      loader: _importService.pickAndCopyTracks,
+      playlistIds: playlistIds,
+      sceneOverride: sceneOverride,
+      failureMessage: '导入音乐失败，请重试',
+    );
+  }
+
+  Future<void> scanFolder({
+    Iterable<int> playlistIds = const [],
+    MusicScene? sceneOverride,
+  }) async {
+    await _importFiles(
+      loader: _importService.pickAndCopyDirectory,
+      playlistIds: playlistIds,
+      sceneOverride: sceneOverride,
+      failureMessage: '扫描文件夹失败，请重试',
+    );
+  }
+
+  Future<void> _importFiles({
+    required Future<List<ImportedMusicFile>> Function() loader,
+    required String failureMessage,
+    required Iterable<int> playlistIds,
+    required MusicScene? sceneOverride,
+  }) async {
     _setState(state.copyWith(isImporting: true, errorMessage: null));
     try {
-      final imported = await _importService.pickAndCopyTracks();
+      final imported = await loader();
       var inserted = 0;
+      final targetPlaylistIds = playlistIds.toSet();
       for (final file in imported) {
         final existing = await _musicRepo.getTrackByOriginalPath(
           file.originalPath,
         );
-        if (existing != null) continue;
+        if (existing != null) {
+          await _deleteCopiedDuplicate(file.filePath);
+          if (sceneOverride != null) {
+            await _musicRepo.updateSceneOverride(
+              existing.id,
+              sceneOverride.name,
+            );
+          }
+          for (final playlistId in targetPlaylistIds) {
+            await _musicRepo.addTrackToPlaylist(
+              playlistId: playlistId,
+              trackId: existing.id,
+            );
+          }
+          continue;
+        }
 
         final now = DateTime.now().millisecondsSinceEpoch;
-        final coverAsset = MusicAssets.coverForTitle(
-          '${file.title} ${file.originalPath}',
-        );
-        await _musicRepo.insertTrack(
+        final coverAsset = sceneOverride == null
+            ? MusicAssets.coverForTitle('${file.title} ${file.originalPath}')
+            : MusicArtworkMapper.forScene(sceneOverride).cover;
+        final trackId = await _musicRepo.insertTrack(
           MusicTracksCompanion.insert(
             title: file.title,
             filePath: file.filePath,
             originalPath: Value(file.originalPath),
             coverAsset: Value(coverAsset),
+            sceneOverride: Value(sceneOverride?.name),
             createdAt: now,
             updatedAt: now,
           ),
         );
+        for (final playlistId in targetPlaylistIds) {
+          await _musicRepo.addTrackToPlaylist(
+            playlistId: playlistId,
+            trackId: trackId,
+          );
+        }
         inserted++;
       }
       await refreshTracks();
@@ -191,19 +308,51 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
         _setState(state.copyWith(currentTrackId: current.id));
       }
     } catch (error) {
-      _setState(state.copyWith(errorMessage: '导入音乐失败：$error'));
+      _setState(state.copyWith(errorMessage: failureMessage));
     } finally {
       _setState(state.copyWith(isImporting: false));
     }
   }
 
+  Future<void> _deleteCopiedDuplicate(String copiedPath) async {
+    final copiedFile = File(copiedPath);
+    if (await copiedFile.exists()) {
+      await copiedFile.delete();
+    }
+    final lrcFile = File(
+      p.join(
+        p.dirname(copiedPath),
+        '${p.basenameWithoutExtension(copiedPath)}.lrc',
+      ),
+    );
+    if (await lrcFile.exists()) {
+      await lrcFile.delete();
+    }
+  }
+
   Future<void> refreshTracks() async {
     final tracks = await _resolveDefaultCovers(await _musicRepo.getTracks());
+    final playlists = await _musicRepo.getPlaylists();
+    final playlistTracks = await _musicRepo.getPlaylistTracks();
     final currentId = state.currentTrackId;
     final nextCurrentId = tracks.any((track) => track.id == currentId)
         ? currentId
         : (tracks.isEmpty ? null : tracks.first.id);
-    _setState(state.copyWith(tracks: tracks, currentTrackId: nextCurrentId));
+    final currentPlaylistId = state.selectedPlaylistId;
+    final nextPlaylistId =
+        currentPlaylistId != null &&
+            playlists.any((playlist) => playlist.id == currentPlaylistId)
+        ? currentPlaylistId
+        : null;
+    _setState(
+      state.copyWith(
+        tracks: tracks,
+        playlists: playlists,
+        playlistTracks: playlistTracks,
+        currentTrackId: nextCurrentId,
+        selectedPlaylistId: nextPlaylistId,
+      ),
+    );
     if (nextCurrentId != currentId) {
       await _loadLyricsForCurrentTrack();
     }
@@ -214,12 +363,9 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   ) async {
     final resolved = <MusicTrack>[];
     for (final track in tracks) {
-      final cover = MusicAssets.coverForTitle(
-        '${track.title} ${track.filePath}',
-      );
+      final cover = MusicArtworkMapper.coverForTrack(track);
       final shouldUpdate =
-          (track.coverAsset == null ||
-              track.coverAsset == MusicAssets.coverDefault) &&
+          MusicArtworkMapper.isGeneratedCover(track.coverAsset) &&
           cover != (track.coverAsset ?? MusicAssets.coverDefault);
       if (shouldUpdate) {
         await _musicRepo.updateCoverAsset(track.id, cover);
@@ -248,6 +394,10 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
     final modes = PlayMode.values;
     final nextIndex = (modes.indexOf(state.playMode) + 1) % modes.length;
     _setState(state.copyWith(playMode: modes[nextIndex]));
+  }
+
+  void setPlayMode(PlayMode playMode) {
+    _setState(state.copyWith(playMode: playMode));
   }
 
   Future<void> playTrack(MusicTrack track) async {
@@ -287,7 +437,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
         state.copyWith(
           isPlaying: false,
           isLoading: false,
-          errorMessage: '播放失败：$error',
+          errorMessage: '播放失败，请重试',
         ),
       );
     }
@@ -348,7 +498,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       // 刷新列表
       await refreshTracks();
     } catch (error) {
-      _setState(state.copyWith(errorMessage: '删除歌曲失败：$error'));
+      _setState(state.copyWith(errorMessage: '删除歌曲失败，请重试'));
     }
   }
 
@@ -376,7 +526,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       // 刷新列表
       await refreshTracks();
     } catch (error) {
-      _setState(state.copyWith(errorMessage: '从列表移除失败：$error'));
+      _setState(state.copyWith(errorMessage: '从列表移除失败，请重试'));
     }
   }
 

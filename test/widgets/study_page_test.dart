@@ -14,6 +14,7 @@ import 'package:growth_os/features/study/study_page.dart';
 import 'package:growth_os/shared/providers/pet_ai_result_provider.dart';
 import 'package:growth_os/shared/providers/pet_orchestrator_provider.dart';
 import 'package:growth_os/shared/providers/pet_projection_provider.dart';
+import 'package:growth_os/shared/providers/knowledge_card_provider.dart';
 import 'package:growth_os/shared/providers/settings_provider.dart';
 import 'package:growth_os/shared/providers/study_provider.dart';
 
@@ -26,10 +27,7 @@ class _TestPetOrchestrator extends PetOrchestrator {
   }
 
   _TestPetOrchestrator._(AppDatabase db)
-      : super(
-          expRepository: ExpRepository(db),
-          petRepository: PetRepository(db),
-        );
+    : super(expRepository: ExpRepository(db), petRepository: PetRepository(db));
 
   @override
   void init() {}
@@ -146,7 +144,24 @@ List<Override> _studyPageOverrides({
     ),
     todayStudyRecordsProvider.overrideWith((_) async => todayRecords),
     recentStudyRecordsProvider.overrideWith((_) async => recentRecords),
+    knowledgeCardsProvider.overrideWith((_) async => const <KnowledgeCard>[]),
+    knowledgeGoalSummariesProvider.overrideWith(
+      (_) async => const <KnowledgeGoalSummary>[],
+    ),
+    knowledgeDeckSummariesProvider.overrideWith(
+      (_) async => const <KnowledgeDeckSummary>[],
+    ),
+    dueKnowledgeCardsCountProvider.overrideWith((_) async => 0),
     subjectDistributionProvider.overrideWith((_) async => subjectDistribution),
+    subjectDistributionByRangeProvider(
+      1,
+    ).overrideWith((_) async => subjectDistribution),
+    subjectDistributionByRangeProvider(
+      7,
+    ).overrideWith((_) async => subjectDistribution),
+    subjectDistributionByRangeProvider(
+      30,
+    ).overrideWith((_) async => subjectDistribution),
     weeklyDailyStudyProvider.overrideWith((_) async => _dailyStats(7)),
     monthlyDailyStudyProvider.overrideWith((_) async => _dailyStats(30)),
     yearlyMonthlyStudyProvider.overrideWith((_) async => _monthlyStats()),
@@ -274,6 +289,11 @@ void main() {
       await tester.pump();
 
       expect(find.byType(CircularProgressIndicator), findsWidgets);
+
+      // Complete the futures to avoid pending timers
+      todayCompleter.complete(0);
+      weeklyCompleter.complete(0);
+      await tester.pump();
     });
   });
 }

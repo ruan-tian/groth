@@ -2,10 +2,10 @@ import '../../../core/database/app_database.dart';
 import 'music_lyrics.dart';
 
 enum PlayMode {
-  sequential,  // 顺序播放
-  loopAll,     // 列表循环
-  loopSingle,  // 单曲循环
-  shuffle,     // 随机播放
+  sequential, // 顺序播放
+  loopAll, // 列表循环
+  loopSingle, // 单曲循环
+  shuffle, // 随机播放
 }
 
 enum MusicCollection {
@@ -25,8 +25,11 @@ enum MusicCollection {
 class MusicPlayerState {
   const MusicPlayerState({
     this.tracks = const [],
+    this.playlists = const [],
+    this.playlistTracks = const [],
     this.currentTrackId,
     this.selectedCollection = MusicCollection.all,
+    this.selectedPlaylistId,
     this.playMode = PlayMode.loopAll,
     this.isPlaying = false,
     this.isExpanded = false,
@@ -45,8 +48,11 @@ class MusicPlayerState {
   });
 
   final List<MusicTrack> tracks;
+  final List<MusicPlaylist> playlists;
+  final List<MusicPlaylistTrack> playlistTracks;
   final int? currentTrackId;
   final MusicCollection selectedCollection;
+  final int? selectedPlaylistId;
   final PlayMode playMode;
   final bool isPlaying;
   final bool isExpanded;
@@ -82,6 +88,8 @@ class MusicPlayerState {
   }
 
   List<MusicTrack> get selectedTracks {
+    final playlistId = selectedPlaylistId;
+    if (playlistId != null) return tracksForPlaylist(playlistId);
     return tracksForCollection(selectedCollection);
   }
 
@@ -91,6 +99,30 @@ class MusicPlayerState {
       MusicCollection.favorites => favoriteTracks,
       MusicCollection.recent => recentTracks,
     };
+  }
+
+  List<MusicTrack> tracksForPlaylist(int playlistId) {
+    final ids = playlistTracks
+        .where((item) => item.playlistId == playlistId)
+        .map((item) => item.trackId)
+        .toSet();
+    return tracks.where((track) => ids.contains(track.id)).toList();
+  }
+
+  List<int> playlistIdsForTrack(int trackId) {
+    return playlistTracks
+        .where((item) => item.trackId == trackId)
+        .map((item) => item.playlistId)
+        .toList(growable: false);
+  }
+
+  MusicPlaylist? get selectedPlaylist {
+    final playlistId = selectedPlaylistId;
+    if (playlistId == null) return null;
+    for (final playlist in playlists) {
+      if (playlist.id == playlistId) return playlist;
+    }
+    return null;
   }
 
   bool get hasTracks => tracks.isNotEmpty;
@@ -140,8 +172,11 @@ class MusicPlayerState {
 
   MusicPlayerState copyWith({
     List<MusicTrack>? tracks,
+    List<MusicPlaylist>? playlists,
+    List<MusicPlaylistTrack>? playlistTracks,
     Object? currentTrackId = _sentinel,
     MusicCollection? selectedCollection,
+    Object? selectedPlaylistId = _sentinel,
     PlayMode? playMode,
     bool? isPlaying,
     bool? isExpanded,
@@ -160,10 +195,15 @@ class MusicPlayerState {
   }) {
     return MusicPlayerState(
       tracks: tracks ?? this.tracks,
+      playlists: playlists ?? this.playlists,
+      playlistTracks: playlistTracks ?? this.playlistTracks,
       currentTrackId: currentTrackId == _sentinel
           ? this.currentTrackId
           : currentTrackId as int?,
       selectedCollection: selectedCollection ?? this.selectedCollection,
+      selectedPlaylistId: selectedPlaylistId == _sentinel
+          ? this.selectedPlaylistId
+          : selectedPlaylistId as int?,
       playMode: playMode ?? this.playMode,
       isPlaying: isPlaying ?? this.isPlaying,
       isExpanded: isExpanded ?? this.isExpanded,

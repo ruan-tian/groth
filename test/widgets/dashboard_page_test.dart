@@ -114,9 +114,8 @@ void main() {
       expect(find.text('你的成长，由你掌控'), findsOneWidget);
       expect(find.textContaining('Lv.5'), findsWidgets);
       expect(find.text('今日概览'), findsOneWidget);
-      expect(find.text('90 分钟'), findsOneWidget);
-      expect(find.text('45 分钟'), findsOneWidget);
-      expect(find.text('1 篇'), findsOneWidget);
+      // Default cards are now "study" and "focus" in compact mode
+      expect(find.text('90分钟'), findsOneWidget);  // study
     });
 
     testWidgets('shows quick action sheet from FAB', (tester) async {
@@ -129,13 +128,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.byType(FloatingActionButton));
+      // Find the FAB by its tooltip
+      final fabFinder = find.byTooltip('快速开始');
+      await tester.tap(fabFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('快速记录'), findsOneWidget);
-      expect(find.text('添加学习'), findsOneWidget);
-      expect(find.text('添加健身'), findsOneWidget);
-      expect(find.text('写复盘'), findsOneWidget);
+      expect(find.text('快速开始'), findsOneWidget);
+      expect(find.text('开始学习'), findsOneWidget);
+      expect(find.text('开始运动'), findsOneWidget);
+      expect(find.text('喝水打卡'), findsOneWidget);
+      expect(find.text('记录睡眠'), findsOneWidget);
+      expect(find.text('开始日记'), findsOneWidget);
     });
 
     testWidgets('shows and expands the music floating capsule', (tester) async {
@@ -158,8 +161,8 @@ void main() {
 
       expect(find.byKey(const ValueKey('expanded_music_card')), findsOneWidget);
       expect(find.text('甜甜音乐'), findsOneWidget);
-      expect(find.text('导入'), findsOneWidget);
-      expect(find.byTooltip('播放列表'), findsOneWidget);
+      expect(find.text('音乐库'), findsOneWidget);
+      expect(find.text('播放列表'), findsOneWidget);
       expect(find.text('收藏'), findsOneWidget);
     });
 

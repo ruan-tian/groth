@@ -28,7 +28,7 @@ KnowledgeCardsCompanion _card({
   );
 }
 
-Widget _buildPage(AppDatabase db, {bool onboardingDone = true}) {
+Widget _buildPage(AppDatabase db) {
   final router = GoRouter(
     routes: [
       GoRoute(
@@ -37,7 +37,8 @@ Widget _buildPage(AppDatabase db, {bool onboardingDone = true}) {
       ),
       GoRoute(
         path: '/plan/study/knowledge/add',
-        builder: (context, state) => const SizedBox.shrink(),
+        builder: (context, state) =>
+            Text('add-${state.uri.queryParameters['editCardId'] ?? 'new'}'),
       ),
       GoRoute(
         path: '/plan/study/knowledge/review',
@@ -75,9 +76,7 @@ Widget _buildPage(AppDatabase db, {bool onboardingDone = true}) {
   );
 
   return ProviderScope(
-    overrides: [
-      appDatabaseProvider.overrideWithValue(db),
-    ],
+    overrides: [appDatabaseProvider.overrideWithValue(db)],
     child: MaterialApp.router(routerConfig: router),
   );
 }
@@ -96,13 +95,15 @@ void main() {
   setUp(() async {
     db = AppDatabase(NativeDatabase.memory());
     // Pre-set onboarding done to avoid navigation in tests
-    await db.into(db.appSettings).insert(
-      AppSettingsCompanion.insert(
-        key: 'knowledge_onboarding_done',
-        value: 'true',
-        updatedAt: DateTime.now().millisecondsSinceEpoch,
-      ),
-    );
+    await db
+        .into(db.appSettings)
+        .insert(
+          AppSettingsCompanion.insert(
+            key: 'knowledge_onboarding_done',
+            value: 'true',
+            updatedAt: DateTime.now().millisecondsSinceEpoch,
+          ),
+        );
   });
 
   tearDown(() async {
@@ -133,7 +134,12 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(find.byWidgetPredicate((w) => w is ListView && w.scrollDirection == Axis.vertical), const Offset(0, -240));
+    await tester.drag(
+      find.byWidgetPredicate(
+        (w) => w is ListView && w.scrollDirection == Axis.vertical,
+      ),
+      const Offset(0, -240),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('进程与线程'));
     await tester.pumpAndSettle();
@@ -197,6 +203,49 @@ void main() {
     expect(find.textContaining('进程是资源分配单位'), findsWidgets);
   });
 
+  testWidgets('knowledge cards home stays stable on compact width', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 844));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    await db.into(db.knowledgeCards).insert(_card(title: '进程与线程'));
+    await db.into(db.knowledgeCards).insert(_card(title: '分页机制'));
+
+    await tester.pumpWidget(_buildPage(db));
+    await tester.pumpAndSettle();
+
+    expect(find.text('知识抽卡'), findsWidgets);
+    expect(find.textContaining('薄弱卡片'), findsOneWidget);
+    expect(find.text('立即复习'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('card tile exposes edit action from home page', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(900, 1200));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+
+    final cardId = await db
+        .into(db.knowledgeCards)
+        .insert(_card(title: '进程与线程'));
+
+    await tester.pumpWidget(_buildPage(db));
+    await tester.pumpAndSettle();
+
+    final cardTile = find.byKey(ValueKey('knowledge-card-manage-tile-$cardId'));
+    await tester.scrollUntilVisible(
+      cardTile,
+      500,
+      scrollable: find.byType(Scrollable).first,
+    );
+
+    expect(find.text('编辑'), findsOneWidget);
+    await tester.tap(find.text('编辑'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('add-$cardId'), findsOneWidget);
+  });
+
   testWidgets('bulk mode archives selected cards', (tester) async {
     await tester.binding.setSurfaceSize(const Size(900, 1200));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -219,7 +268,12 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(find.byWidgetPredicate((w) => w is ListView && w.scrollDirection == Axis.vertical), const Offset(0, -240));
+    await tester.drag(
+      find.byWidgetPredicate(
+        (w) => w is ListView && w.scrollDirection == Axis.vertical,
+      ),
+      const Offset(0, -240),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('进程与线程'));
     await tester.pumpAndSettle();
@@ -262,7 +316,12 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.drag(find.byWidgetPredicate((w) => w is ListView && w.scrollDirection == Axis.vertical), const Offset(0, -240));
+    await tester.drag(
+      find.byWidgetPredicate(
+        (w) => w is ListView && w.scrollDirection == Axis.vertical,
+      ),
+      const Offset(0, -240),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('进程与线程'));
     await tester.pumpAndSettle();

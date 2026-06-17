@@ -25,8 +25,10 @@ class _MusicLibrarySheetState extends ConsumerState<_MusicLibrarySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final state = ref.watch(musicPlayerProvider);
     final controller = ref.read(musicPlayerProvider.notifier);
+    final selectedPlaylist = state.selectedPlaylist;
 
     return GrowthEntrance(
       duration: AppMotion.normal,
@@ -36,13 +38,13 @@ class _MusicLibrarySheetState extends ConsumerState<_MusicLibrarySheet> {
         margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
         padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFCF7),
+          color: colors.card,
           borderRadius: BorderRadius.circular(30),
-          boxShadow: const [
+          boxShadow: [
             BoxShadow(
-              color: Color(0x32715AA6),
+              color: colors.shadow.withValues(alpha: 0.28),
               blurRadius: 26,
-              offset: Offset(0, 12),
+              offset: const Offset(0, 12),
             ),
           ],
         ),
@@ -54,7 +56,7 @@ class _MusicLibrarySheetState extends ConsumerState<_MusicLibrarySheet> {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE7DAF8),
+                  color: colors.border,
                   borderRadius: BorderRadius.circular(999),
                 ),
               ),
@@ -81,10 +83,10 @@ class _MusicLibrarySheetState extends ConsumerState<_MusicLibrarySheet> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           '音乐库',
                           style: TextStyle(
-                            color: _MusicColors.ink,
+                            color: colors.textPrimary,
                             fontSize: 20,
                             fontWeight: FontWeight.w900,
                           ),
@@ -92,8 +94,8 @@ class _MusicLibrarySheetState extends ConsumerState<_MusicLibrarySheet> {
                         const SizedBox(height: 5),
                         Text(
                           '左右滑动切换歌单 · ${state.tracks.length} 首本地音乐',
-                          style: const TextStyle(
-                            color: _MusicColors.muted,
+                          style: TextStyle(
+                            color: colors.textSecondary,
                             fontSize: 13,
                             fontWeight: FontWeight.w700,
                           ),
@@ -133,22 +135,38 @@ class _MusicLibrarySheetState extends ConsumerState<_MusicLibrarySheet> {
                 },
               ),
               const SizedBox(height: 12),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    controller.selectCollection(MusicCollection.values[index]);
-                  },
-                  children: MusicCollection.values
-                      .map((collection) {
-                        return _MusicTrackList(
-                          collection: collection,
-                          tracks: state.tracksForCollection(collection),
-                          state: state,
-                        );
-                      })
-                      .toList(growable: false),
+              if (state.playlists.isNotEmpty) ...[
+                _LibraryPlaylistRail(
+                  playlists: state.playlists,
+                  selectedPlaylistId: state.selectedPlaylistId,
+                  onSelected: controller.selectPlaylist,
                 ),
+                const SizedBox(height: 12),
+              ],
+              Expanded(
+                child: selectedPlaylist == null
+                    ? PageView(
+                        controller: _pageController,
+                        onPageChanged: (index) {
+                          controller.selectCollection(
+                            MusicCollection.values[index],
+                          );
+                        },
+                        children: MusicCollection.values
+                            .map((collection) {
+                              return _MusicTrackList(
+                                collection: collection,
+                                tracks: state.tracksForCollection(collection),
+                                state: state,
+                              );
+                            })
+                            .toList(growable: false),
+                      )
+                    : _MusicTrackList(
+                        collection: MusicCollection.all,
+                        tracks: state.tracksForPlaylist(selectedPlaylist.id),
+                        state: state,
+                      ),
               ),
             ],
           ),
@@ -166,10 +184,11 @@ class _LibraryTabs extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF4EDFF),
+        color: colors.surfaceVariant,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Row(
@@ -186,14 +205,14 @@ class _LibraryTabs extends StatelessWidget {
                     curve: AppMotion.standard,
                     padding: const EdgeInsets.symmetric(vertical: 9),
                     decoration: BoxDecoration(
-                      color: active ? Colors.white : Colors.transparent,
+                      color: active ? colors.card : Colors.transparent,
                       borderRadius: BorderRadius.circular(999),
                       boxShadow: active
-                          ? const [
+                          ? [
                               BoxShadow(
-                                color: Color(0x198B75F6),
+                                color: colors.shadow.withValues(alpha: 0.16),
                                 blurRadius: 10,
-                                offset: Offset(0, 4),
+                                offset: const Offset(0, 4),
                               ),
                             ]
                           : null,
@@ -202,9 +221,7 @@ class _LibraryTabs extends StatelessWidget {
                       collection.label,
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        color: active
-                            ? _MusicColors.primary
-                            : _MusicColors.muted,
+                        color: active ? colors.primary : colors.textSecondary,
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
                       ),
@@ -214,6 +231,79 @@ class _LibraryTabs extends StatelessWidget {
               );
             })
             .toList(growable: false),
+      ),
+    );
+  }
+}
+
+class _LibraryPlaylistRail extends StatelessWidget {
+  const _LibraryPlaylistRail({
+    required this.playlists,
+    required this.selectedPlaylistId,
+    required this.onSelected,
+  });
+
+  final List<MusicPlaylist> playlists;
+  final int? selectedPlaylistId;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return SizedBox(
+      height: 58,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: playlists.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final playlist = playlists[index];
+          final selected = playlist.id == selectedPlaylistId;
+          final cover = playlist.coverAsset ?? MusicAssets.playlistCustom01;
+          return InkWell(
+            borderRadius: BorderRadius.circular(18),
+            onTap: () => onSelected(playlist.id),
+            child: AnimatedContainer(
+              duration: AppMotion.normal,
+              width: 142,
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: selected ? colors.softPurple : colors.card,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(
+                  color: selected ? colors.primary : colors.border,
+                ),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(13),
+                    child: Image.asset(
+                      cover,
+                      width: 44,
+                      height: 44,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      playlist.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: selected ? colors.primary : colors.textPrimary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -237,7 +327,9 @@ class _MusicTrackList extends ConsumerWidget {
       return _EmptyMusicList(
         collection: collection,
         onImport: collection == MusicCollection.all
-            ? controller.importTracks
+            ? () {
+                showMusicImportDestinationSheet(context, ref);
+              }
             : null,
       );
     }
@@ -268,6 +360,7 @@ class _EmptyMusicList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final image = switch (collection) {
       MusicCollection.all => MusicAssets.emptyImport,
       MusicCollection.favorites => MusicAssets.emptyFavorite,
@@ -292,8 +385,8 @@ class _EmptyMusicList extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             title,
-            style: const TextStyle(
-              color: _MusicColors.ink,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 17,
               fontWeight: FontWeight.w900,
             ),
@@ -302,8 +395,8 @@ class _EmptyMusicList extends StatelessWidget {
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: _MusicColors.muted,
+            style: TextStyle(
+              color: colors.textSecondary,
               fontSize: 13,
               fontWeight: FontWeight.w700,
             ),
@@ -315,8 +408,8 @@ class _EmptyMusicList extends StatelessWidget {
               icon: const Icon(Icons.add_rounded),
               label: const Text('导入音乐'),
               style: FilledButton.styleFrom(
-                backgroundColor: _MusicColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: colors.primary,
+                foregroundColor: colors.textOnAccent,
               ),
             ),
           ],
@@ -341,6 +434,7 @@ class _TrackTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final duration = track.durationMs == null
         ? '--:--'
         : _formatDuration(Duration(milliseconds: track.durationMs!));
@@ -352,17 +446,15 @@ class _TrackTile extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF1E9FF) : Colors.white,
+          color: selected ? colors.softPurple : colors.card,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? const Color(0xFFCDBBFF) : const Color(0xFFF0E8F5),
-          ),
+          border: Border.all(color: selected ? colors.primary : colors.border),
           boxShadow: selected
-              ? const [
+              ? [
                   BoxShadow(
-                    color: Color(0x1A8B75F6),
+                    color: colors.shadow.withValues(alpha: 0.16),
                     blurRadius: 14,
-                    offset: Offset(0, 7),
+                    offset: const Offset(0, 7),
                   ),
                 ]
               : null,
@@ -379,8 +471,8 @@ class _TrackTile extends ConsumerWidget {
                     track.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      color: _MusicColors.ink,
+                    style: TextStyle(
+                      color: colors.textPrimary,
                       fontSize: 14,
                       fontWeight: FontWeight.w900,
                     ),
@@ -388,8 +480,8 @@ class _TrackTile extends ConsumerWidget {
                   const SizedBox(height: 3),
                   Text(
                     duration,
-                    style: const TextStyle(
-                      color: _MusicColors.muted,
+                    style: TextStyle(
+                      color: colors.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                     ),
@@ -405,13 +497,11 @@ class _TrackTile extends ConsumerWidget {
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
               ),
-              color: track.isFavorite
-                  ? const Color(0xFFFF7BA9)
-                  : _MusicColors.muted,
+              color: track.isFavorite ? colors.journal : colors.textSecondary,
             ),
             Icon(
               selected ? Icons.graphic_eq_rounded : Icons.play_arrow_rounded,
-              color: _MusicColors.primary,
+              color: colors.primary,
             ),
           ],
         ),
@@ -420,7 +510,9 @@ class _TrackTile extends ConsumerWidget {
   }
 
   void _showTrackOptions(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final controller = ref.read(musicPlayerProvider.notifier);
+    final parentContext = context;
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -429,13 +521,13 @@ class _TrackTile extends ConsumerWidget {
           margin: const EdgeInsets.all(12),
           padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
           decoration: BoxDecoration(
-            color: const Color(0xFFFFFCF7),
+            color: colors.card,
             borderRadius: BorderRadius.circular(30),
-            boxShadow: const [
+            boxShadow: [
               BoxShadow(
-                color: Color(0x32715AA6),
+                color: colors.shadow.withValues(alpha: 0.28),
                 blurRadius: 26,
-                offset: Offset(0, 12),
+                offset: const Offset(0, 12),
               ),
             ],
           ),
@@ -448,7 +540,7 @@ class _TrackTile extends ConsumerWidget {
                   width: 42,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE7DAF8),
+                    color: colors.border,
                     borderRadius: BorderRadius.circular(999),
                   ),
                 ),
@@ -465,8 +557,8 @@ class _TrackTile extends ConsumerWidget {
                             track.title,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: _MusicColors.ink,
+                            style: TextStyle(
+                              color: colors.textPrimary,
                               fontSize: 18,
                               fontWeight: FontWeight.w900,
                             ),
@@ -474,8 +566,8 @@ class _TrackTile extends ConsumerWidget {
                           const SizedBox(height: 5),
                           Text(
                             track.artist ?? '未知艺术家',
-                            style: const TextStyle(
-                              color: _MusicColors.muted,
+                            style: TextStyle(
+                              color: colors.textSecondary,
                               fontSize: 13,
                               fontWeight: FontWeight.w700,
                             ),
@@ -492,9 +584,7 @@ class _TrackTile extends ConsumerWidget {
                       ? Icons.favorite_rounded
                       : Icons.favorite_border_rounded,
                   label: track.isFavorite ? '取消收藏' : '收藏',
-                  color: track.isFavorite
-                      ? const Color(0xFFFF7BA9)
-                      : _MusicColors.primary,
+                  color: track.isFavorite ? colors.journal : colors.primary,
                   onTap: () {
                     Navigator.pop(context);
                     controller.toggleFavorite(track);
@@ -502,9 +592,19 @@ class _TrackTile extends ConsumerWidget {
                 ),
                 _buildOption(
                   context,
+                  icon: Icons.playlist_add_check_rounded,
+                  label: '管理歌单',
+                  color: colors.primary,
+                  onTap: () {
+                    Navigator.pop(context);
+                    showTrackPlaylistSheet(parentContext, ref, track);
+                  },
+                ),
+                _buildOption(
+                  context,
                   icon: Icons.delete_rounded,
                   label: '删除',
-                  color: const Color(0xFFFF4757),
+                  color: colors.danger,
                   onTap: () {
                     Navigator.pop(context);
                     _showDeleteConfirmation(context, ref);
@@ -514,7 +614,7 @@ class _TrackTile extends ConsumerWidget {
                   context,
                   icon: Icons.close_rounded,
                   label: '取消',
-                  color: _MusicColors.muted,
+                  color: colors.textSecondary,
                   onTap: () => Navigator.pop(context),
                 ),
               ],
@@ -532,6 +632,7 @@ class _TrackTile extends ConsumerWidget {
     required Color color,
     required VoidCallback onTap,
   }) {
+    final colors = context.growthColors;
     return GrowthPressable(
       onTap: onTap,
       semanticLabel: label,
@@ -540,9 +641,9 @@ class _TrackTile extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
         margin: const EdgeInsets.only(bottom: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.surfaceVariant,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFF0E8F5)),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
@@ -582,9 +683,9 @@ class _TrackTile extends ConsumerWidget {
                 Navigator.pop(context);
                 ref.read(musicPlayerProvider.notifier).deleteTrack(track.id);
               },
-              child: const Text(
+              child: Text(
                 '删除',
-                style: TextStyle(color: Color(0xFFFF4757)),
+                style: TextStyle(color: context.growthColors.danger),
               ),
             ),
           ],

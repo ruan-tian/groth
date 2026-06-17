@@ -1,4 +1,4 @@
-name: growth_os
+﻿name: growth_os
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -38,7 +38,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.28
   freezed_annotation: ^2.4.4
   json_annotation: ^4.9.0
-  fl_chart: ^0.70.2
+  fl_chart: ^1.2.0
   flutter_local_notifications: ^18.0.1
   timezone: ^0.10.1
   shared_preferences: ^2.3.4
@@ -52,15 +52,17 @@ dependencies:
   flutter_markdown: ^0.7.6
   markdown: ^7.3.0
   flutter_quill: ^11.0.0
-  flutter_quill_extensions: ^11.0.0
   crypto: ^3.0.6
   encrypt: ^5.0.3
   geolocator: ^13.0.0
   flutter_slidable: ^3.1.1
-  confetti: ^0.7.0
+  confetti: ^0.8.0
   shimmer: ^3.0.0
+  app_settings: ^5.1.1
   just_audio: ^0.9.43
   just_audio_background: ^0.0.1-beta.11
+  doc_text_extractor: ^2.1.0
+  html: ^0.15.6
 
 dev_dependencies:
   flutter_test:
@@ -68,7 +70,7 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   build_runner: ^2.4.14
   freezed: ^2.5.7
-  json_serializable: ^6.9.2
+  json_serializable: ^6.9.5
   drift_dev: ^2.23.1
 
 # For information on the generic Dart part of this file, see the
@@ -102,6 +104,7 @@ flutter:
     - assets/pet/sports/
     - assets/audio/noise/
     - assets/data/
+    - assets/data/inspiration/
     - assets/images/weather/cats/
     - assets/images/weather/backgrounds/
     - assets/images/weather/foregrounds/
@@ -126,8 +129,12 @@ flutter:
     - assets/images/fitness_timer/
     - assets/images/timer_common/
     - assets/images/ai_providers/
+    - assets/images/quick_actions/
+    - assets/images/drinks/
+    - assets/images/inspiration/
     - assets/images/health_timer/water/
     - assets/images/health_timer/sleep/
+    - assets/images/knowledge_cards/
     - assets/images/music/
     - assets/images/journal/backgrounds/
     - assets/images/journal/cats/

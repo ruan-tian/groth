@@ -126,7 +126,8 @@ class _OptimizedListState<T> extends State<OptimizedList<T>> {
       return;
     }
     final position = _scrollController.position;
-    if (position.pixels >= position.maxScrollExtent - widget.loadMoreThreshold) {
+    if (position.pixels >=
+        position.maxScrollExtent - widget.loadMoreThreshold) {
       widget.onLoadMore!();
     }
   }
@@ -138,7 +139,8 @@ class _OptimizedListState<T> extends State<OptimizedList<T>> {
       return widget.emptyWidget ?? const _DefaultEmptyState();
     }
 
-    final itemCount = widget.items.length + (widget.hasMore || widget.isLoadingMore ? 1 : 0);
+    final itemCount =
+        widget.items.length + (widget.hasMore || widget.isLoadingMore ? 1 : 0);
 
     // With separator: use a two-pass approach (item + separator interleaved).
     if (widget.separator != null) {
@@ -220,7 +222,9 @@ class _DefaultEmptyState extends StatelessWidget {
             Text(
               '添加一些记录后这里会显示出来',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.6,
+                ),
               ),
               textAlign: TextAlign.center,
             ),

@@ -23,12 +23,13 @@ class PetAIResultSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       height: MediaQuery.of(context).size.height * 0.75,
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -39,7 +40,7 @@ class PetAIResultSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.textTertiary.withValues(alpha: 0.3),
+                color: colors.border,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -53,19 +54,23 @@ class PetAIResultSheet extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.success.withValues(alpha: 0.1),
+                  color: colors.success.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Icon(Icons.check_circle_outline, color: AppColors.success, size: 22),
+                child: Icon(
+                  Icons.check_circle_outline,
+                  color: colors.success,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
                   result.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
               ),
@@ -85,8 +90,11 @@ class PetAIResultSheet extends StatelessWidget {
                       width: double.infinity,
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.06),
+                        color: colors.primary.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: colors.primary.withValues(alpha: 0.14),
+                        ),
                       ),
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -95,9 +103,9 @@ class PetAIResultSheet extends StatelessWidget {
                           Expanded(
                             child: Text(
                               result.petMessage,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 14,
-                                color: AppColors.textPrimary,
+                                color: colors.textPrimary,
                                 height: 1.5,
                               ),
                             ),
@@ -110,25 +118,48 @@ class PetAIResultSheet extends StatelessWidget {
 
                   // 总结
                   if (result.summary.isNotEmpty) ...[
-                    _buildSection('总结', result.summary, Icons.summarize_outlined),
+                    _buildSection(
+                      colors,
+                      '总结',
+                      result.summary,
+                      Icons.summarize_outlined,
+                    ),
                     const SizedBox(height: 16),
                   ],
 
                   // 亮点
                   if (result.highlights.isNotEmpty) ...[
-                    _buildListSection('亮点', result.highlights, Icons.star_outline_rounded, AppColors.success),
+                    _buildListSection(
+                      colors,
+                      '亮点',
+                      result.highlights,
+                      Icons.star_outline_rounded,
+                      colors.success,
+                    ),
                     const SizedBox(height: 16),
                   ],
 
                   // 注意
                   if (result.risks.isNotEmpty) ...[
-                    _buildListSection('注意', result.risks, Icons.info_outline_rounded, AppColors.warning),
+                    _buildListSection(
+                      colors,
+                      '注意',
+                      result.risks,
+                      Icons.info_outline_rounded,
+                      colors.warning,
+                    ),
                     const SizedBox(height: 16),
                   ],
 
                   // 建议
                   if (result.suggestions.isNotEmpty) ...[
-                    _buildListSection('建议', result.suggestions, Icons.lightbulb_outline_rounded, AppColors.primary),
+                    _buildListSection(
+                      colors,
+                      '建议',
+                      result.suggestions,
+                      Icons.lightbulb_outline_rounded,
+                      colors.primary,
+                    ),
                   ],
                 ],
               ),
@@ -142,15 +173,18 @@ class PetAIResultSheet extends StatelessWidget {
             child: ElevatedButton(
               onPressed: () => Navigator.pop(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: colors.primary,
+                foregroundColor: colors.textOnAccent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 elevation: 0,
               ),
-              child: const Text('关闭', style: TextStyle(fontWeight: FontWeight.w600)),
+              child: const Text(
+                '关闭',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
             ),
           ),
         ],
@@ -158,15 +192,27 @@ class PetAIResultSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildSection(String title, String content, IconData icon) {
+  Widget _buildSection(
+    AppThemeColors colors,
+    String title,
+    String content,
+    IconData icon,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Icon(icon, size: 18, color: AppColors.textSecondary),
+            Icon(icon, size: 18, color: colors.textSecondary),
             const SizedBox(width: 6),
-            Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -174,16 +220,30 @@ class PetAIResultSheet extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: AppColors.textTertiary.withValues(alpha: 0.05),
+            color: colors.surfaceVariant.withValues(alpha: 0.62),
             borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: colors.border),
           ),
-          child: Text(content, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.6)),
+          child: Text(
+            content,
+            style: TextStyle(
+              fontSize: 14,
+              color: colors.textSecondary,
+              height: 1.6,
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildListSection(String title, List<String> items, IconData icon, Color color) {
+  Widget _buildListSection(
+    AppThemeColors colors,
+    String title,
+    List<String> items,
+    IconData icon,
+    Color color,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -191,31 +251,47 @@ class PetAIResultSheet extends StatelessWidget {
           children: [
             Icon(icon, size: 18, color: color),
             const SizedBox(width: 6),
-            Text(title, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: color)),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
-        ...items.map((item) => Padding(
-          padding: const EdgeInsets.only(bottom: 8, left: 4),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 6),
-                width: 6,
-                height: 6,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(bottom: 8, left: 4),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 6),
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.6),
+                    shape: BoxShape.circle,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(item, style: const TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.5)),
-              ),
-            ],
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: colors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }

@@ -152,7 +152,7 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
 
   void _invalidateSleepData() {
     _ref.invalidate(lastNightSleepRecordProvider);
-    _ref.invalidate(recentSleepRecordsProvider);
+    _ref.invalidate(recentSleepRecordsProvider(5));
     _ref.invalidate(weeklyAvgSleepDurationProvider);
     _ref.invalidate(monthlyAvgSleepDurationProvider);
     _ref.invalidate(weeklyAvgSleepQualityProvider);

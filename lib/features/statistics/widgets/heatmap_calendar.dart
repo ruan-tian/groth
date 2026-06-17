@@ -63,7 +63,6 @@ class HeatmapCalendar extends StatelessWidget {
 
   // ── 强度色阶 (0~4) ──
 
-  static const _defaultBase = Color(0xFFEBEDF0);
   static const _defaultMax = Color(0xFF216E39);
   static const _levels = [
     Color(0xFFEBEDF0), // 0: 无活动
@@ -76,6 +75,7 @@ class HeatmapCalendar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
+    final colors = context.growthColors;
 
     // 计算起始日期（monthsToShow 个月前的第一天）
     final startDate = DateTime(now.year, now.month - monthsToShow + 1, 1);
@@ -106,7 +106,7 @@ class HeatmapCalendar extends StatelessWidget {
                 _WeekdayLabels(cellSize: cellSize, cellSpacing: cellSpacing),
                 const SizedBox(width: 4),
                 // 网格
-                ...weeks.map((week) => _buildWeekColumn(week)),
+                ...weeks.map((week) => _buildWeekColumn(context, week)),
               ],
             ),
           ),
@@ -115,7 +115,7 @@ class HeatmapCalendar extends StatelessWidget {
           if (showLegend) ...[
             const SizedBox(height: AppSpacing.md),
             _HeatmapLegend(
-              baseColor: baseColor ?? _defaultBase,
+              baseColor: baseColor ?? colors.surfaceVariant,
               maxColor: maxColor ?? _defaultMax,
             ),
           ],
@@ -125,7 +125,9 @@ class HeatmapCalendar extends StatelessWidget {
   }
 
   /// 构建一周的列（7 行）
-  Widget _buildWeekColumn(List<DateTime?> week) {
+  Widget _buildWeekColumn(BuildContext context, List<DateTime?> week) {
+    final colors = context.growthColors;
+
     return Column(
       children: List.generate(7, (dayIndex) {
         final date = week[dayIndex];
@@ -140,7 +142,7 @@ class HeatmapCalendar extends StatelessWidget {
 
         final normalized = _normalizeDate(date);
         final intensity = (data[normalized] ?? 0).clamp(0, 4);
-        final color = _colorForIntensity(intensity);
+        final color = _colorForIntensity(context, intensity);
 
         final isToday =
             date.year == DateTime.now().year &&
@@ -159,12 +161,12 @@ class HeatmapCalendar extends StatelessWidget {
                 color: color,
                 borderRadius: BorderRadius.circular(AppRadius.xxs),
                 border: isToday
-                    ? Border.all(color: Colors.white, width: 2)
+                    ? Border.all(color: colors.card, width: 2)
                     : null,
                 boxShadow: isToday
                     ? [
                         BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
+                          color: colors.shadow.withValues(alpha: 0.45),
                           blurRadius: 4,
                         ),
                       ]
@@ -178,8 +180,10 @@ class HeatmapCalendar extends StatelessWidget {
   }
 
   /// 根据强度值返回对应颜色
-  Color _colorForIntensity(int intensity) {
-    if (intensity <= 0) return baseColor ?? _defaultBase;
+  Color _colorForIntensity(BuildContext context, int intensity) {
+    if (intensity <= 0) {
+      return baseColor ?? context.growthColors.surfaceVariant;
+    }
     if (intensity >= 4) return maxColor ?? _defaultMax;
     return _levels[intensity];
   }

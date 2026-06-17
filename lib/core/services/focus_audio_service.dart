@@ -25,13 +25,20 @@ class FocusAudioService {
 
   static String displayNameForSound(String soundType) {
     switch (soundType) {
-      case 'rain': return '雨声';
-      case 'ocean': return '海浪';
-      case 'forest': return '森林';
-      case 'cafe': return '咖啡馆';
-      case 'white_noise': return '白噪声';
-      case 'wind': return '风声';
-      default: return soundType;
+      case 'rain':
+        return '雨声';
+      case 'ocean':
+        return '海浪';
+      case 'forest':
+        return '森林';
+      case 'cafe':
+        return '咖啡馆';
+      case 'white_noise':
+        return '白噪声';
+      case 'wind':
+        return '风声';
+      default:
+        return soundType;
     }
   }
 

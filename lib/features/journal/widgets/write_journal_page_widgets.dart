@@ -8,6 +8,7 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return SizedBox(
       height: 68,
       child: Stack(
@@ -18,7 +19,7 @@ class _TopBar extends StatelessWidget {
             child: _SquareIconButton(
               icon: Icons.chevron_left_rounded,
               onTap: onBack,
-              color: JournalColors.textDark,
+              color: colors.textPrimary,
             ),
           ),
           const Text(
@@ -35,7 +36,7 @@ class _TopBar extends StatelessWidget {
             child: _SquareIconButton(
               icon: Icons.save_rounded,
               onTap: onSave,
-              color: JournalColors.pinkMain,
+              color: colors.journal,
             ),
           ),
         ],
@@ -57,6 +58,7 @@ class _MoodCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _SoftCard(
       padding: EdgeInsets.fromLTRB(20, compact ? 18 : 22, 20, 20),
       child: Column(
@@ -79,7 +81,7 @@ class _MoodCard extends StatelessWidget {
                       duration: const Duration(milliseconds: 180),
                       height: compact ? 82 : 92,
                       decoration: BoxDecoration(
-                        color: selected ? JournalColors.pinkBg : Colors.white,
+                        color: selected ? colors.softPink : colors.card,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: selected
@@ -100,8 +102,8 @@ class _MoodCard extends StatelessWidget {
                             mood.label,
                             style: TextStyle(
                               color: selected
-                                  ? JournalColors.pinkMain
-                                  : JournalColors.textSecondary,
+                                  ? colors.journal
+                                  : colors.textSecondary,
                               fontSize: 13,
                               fontWeight: selected
                                   ? FontWeight.w700
@@ -157,6 +159,7 @@ class _JournalPaperCard extends StatelessWidget {
                 child: TextField(
                   controller: titleController,
                   textInputAction: TextInputAction.next,
+                  maxLength: 100,
                   style: const TextStyle(
                     color: JournalColors.textDark,
                     fontSize: 22,
@@ -167,6 +170,7 @@ class _JournalPaperCard extends StatelessWidget {
                     hintStyle: TextStyle(color: JournalColors.textMuted),
                     border: InputBorder.none,
                     isDense: true,
+                    counterText: '',
                   ),
                 ),
               ),
@@ -182,6 +186,7 @@ class _JournalPaperCard extends StatelessWidget {
                 child: TextField(
                   controller: contentController,
                   textInputAction: TextInputAction.newline,
+                  maxLength: 10000,
                   minLines: 12,
                   maxLines: null,
                   keyboardType: TextInputType.multiline,
@@ -306,6 +311,7 @@ class _TagSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final commonTags = presetTags.take(6).toList();
     final extraTags = selectedTags.where((tag) => !commonTags.contains(tag));
     final chips = [...commonTags, ...extraTags];
@@ -322,10 +328,10 @@ class _TagSection extends StatelessWidget {
               avatar: const Icon(Icons.add_rounded, size: 18),
               label: const Text('自定义'),
               onPressed: onCustom,
-              backgroundColor: Colors.white,
-              side: const BorderSide(color: JournalColors.pinkBorder),
-              labelStyle: const TextStyle(
-                color: JournalColors.textSecondary,
+              backgroundColor: colors.card,
+              side: BorderSide(color: colors.border),
+              labelStyle: TextStyle(
+                color: colors.textSecondary,
                 fontWeight: FontWeight.w700,
               ),
             );
@@ -336,18 +342,12 @@ class _TagSection extends StatelessWidget {
             label: Text(tag),
             selected: selected,
             onSelected: (_) => onToggle(tag),
-            backgroundColor: Colors.white,
-            selectedColor: JournalColors.pinkBg,
-            checkmarkColor: JournalColors.pinkMain,
-            side: BorderSide(
-              color: selected
-                  ? JournalColors.pinkSoft
-                  : JournalColors.pinkBorder,
-            ),
+            backgroundColor: colors.card,
+            selectedColor: colors.softPink,
+            checkmarkColor: colors.journal,
+            side: BorderSide(color: selected ? colors.journal : colors.border),
             labelStyle: TextStyle(
-              color: selected
-                  ? JournalColors.pinkMain
-                  : JournalColors.textSecondary,
+              color: selected ? colors.journal : colors.textSecondary,
               fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
             ),
           );
@@ -370,8 +370,9 @@ class _FolderSaveSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Material(
-      color: Colors.white.withValues(alpha: 0.86),
+      color: colors.card,
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
@@ -380,7 +381,7 @@ class _FolderSaveSection extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: JournalColors.pinkBorder),
+            border: Border.all(color: colors.border),
           ),
           child: Row(
             children: [
@@ -402,10 +403,10 @@ class _FolderSaveSection extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '保存到',
                       style: TextStyle(
-                        color: JournalColors.textSecondary,
+                        color: colors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -415,8 +416,8 @@ class _FolderSaveSection extends StatelessWidget {
                       folderName ?? '未分类',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: JournalColors.textDark,
+                      style: TextStyle(
+                        color: colors.textPrimary,
                         fontSize: 15,
                         fontWeight: FontWeight.w800,
                       ),
@@ -424,10 +425,7 @@ class _FolderSaveSection extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: JournalColors.textSecondary,
-              ),
+              Icon(Icons.chevron_right_rounded, color: colors.textSecondary),
             ],
           ),
         ),
@@ -611,6 +609,7 @@ class _BottomActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Expanded(
@@ -633,23 +632,26 @@ class _BottomActions extends StatelessWidget {
               ),
               child: Center(
                 child: saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 22,
                         height: 22,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: Colors.white,
+                          color: colors.textOnAccent,
                         ),
                       )
-                    : const Row(
+                    : Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.check_circle_rounded, color: Colors.white),
-                          SizedBox(width: 10),
+                          Icon(
+                            Icons.check_circle_rounded,
+                            color: colors.textOnAccent,
+                          ),
+                          const SizedBox(width: 10),
                           Text(
                             '保存日记',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: colors.textOnAccent,
                               fontSize: 20,
                               fontWeight: FontWeight.w800,
                             ),
@@ -694,15 +696,16 @@ class _SoftCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.74),
+        color: colors.card.withValues(alpha: 0.9),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: JournalColors.pinkBorder),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: JournalColors.pinkMain.withValues(alpha: 0.06),
+            color: colors.shadow.withValues(alpha: 0.18),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -720,15 +723,16 @@ class _SoftSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return SafeArea(
       top: false,
       child: Container(
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: JournalColors.bg,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: JournalColors.pinkBorder),
+          border: Border.all(color: colors.border),
         ),
         child: child,
       ),
@@ -749,12 +753,13 @@ class _SummaryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.76),
+        color: colors.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: JournalColors.pinkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
@@ -776,8 +781,8 @@ class _SummaryTile extends StatelessWidget {
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: JournalColors.textDark,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 15,
                     fontWeight: FontWeight.w800,
                   ),
@@ -787,10 +792,7 @@ class _SummaryTile extends StatelessWidget {
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: JournalColors.textSecondary,
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: colors.textSecondary, fontSize: 12),
                 ),
               ],
             ),
@@ -809,12 +811,13 @@ class _MetricTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: JournalColors.pinkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -827,10 +830,7 @@ class _MetricTile extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 4),
-          Text(
-            label,
-            style: const TextStyle(color: JournalColors.textSecondary),
-          ),
+          Text(label, style: TextStyle(color: colors.textSecondary)),
         ],
       ),
     );
@@ -844,14 +844,15 @@ class _DateChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     final text = '${date.month}月${date.day}日 ${weekdays[date.weekday - 1]}';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.78),
+        color: colors.surfaceVariant,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: JournalColors.pinkBorder),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -864,8 +865,8 @@ class _DateChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             text,
-            style: const TextStyle(
-              color: JournalColors.textDark,
+            style: TextStyle(
+              color: colors.textPrimary,
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
@@ -889,8 +890,9 @@ class _SquareIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Material(
-      color: Colors.white.withValues(alpha: 0.8),
+      color: colors.surfaceVariant,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: onTap,
@@ -898,10 +900,7 @@ class _SquareIconButton extends StatelessWidget {
         child: SizedBox(
           width: 52,
           height: 52,
-          child: Icon(
-            icon,
-            color: onTap == null ? JournalColors.textMuted : color,
-          ),
+          child: Icon(icon, color: onTap == null ? colors.textHint : color),
         ),
       ),
     );
@@ -921,10 +920,11 @@ class _TinyActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: colors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: onTap,
@@ -955,8 +955,9 @@ class _ToolButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Material(
-      color: Colors.white.withValues(alpha: 0.78),
+      color: colors.surfaceVariant,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         onTap: action.onTap,
@@ -966,7 +967,7 @@ class _ToolButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: JournalColors.pinkBorder),
+            border: Border.all(color: colors.border),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -978,8 +979,8 @@ class _ToolButton extends StatelessWidget {
                   action.label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: JournalColors.textDark,
+                  style: TextStyle(
+                    color: colors.textPrimary,
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
                   ),

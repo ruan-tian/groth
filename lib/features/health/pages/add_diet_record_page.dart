@@ -16,7 +16,6 @@ import '../../../shared/providers/repository_providers.dart'
 import '../../../shared/providers/service_providers.dart'
     show expServiceProvider;
 
-/// 添加饮食记录页面
 class AddDietRecordPage extends ConsumerStatefulWidget {
   const AddDietRecordPage({super.key});
 
@@ -119,7 +118,6 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
         updatedAt: Value(now.millisecondsSinceEpoch),
       );
 
-      // 原子操作：插入记录 + 经验日志
       final expService = ref.read(expServiceProvider);
       final db = ref.read(databaseProvider);
       final repo = ref.read(dietRepositoryProvider);
@@ -134,14 +132,16 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
         hasReasonableTarget:
             _proteinLevel == 'medium' || _proteinLevel == 'high',
       );
+
+      late final int recordId;
       await db.transaction(() async {
-        await repo.insertDietRecord(companion);
+        recordId = await repo.insertDietRecord(companion);
 
         if (dietExp > 0) {
           await expRepo.insertExpLog(
             GrowthExpLogsCompanion.insert(
               sourceType: 'diet',
-              sourceId: 0,
+              sourceId: recordId,
               expValue: dietExp,
               reason: '饮食: ${_foodController.text.trim()}',
               createdAt: now.millisecondsSinceEpoch,
@@ -168,30 +168,25 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       ref.invalidate(dailyCalorieWaterProvider(365));
 
       if (mounted) {
-        // 发送宠物事件
-        final eventId = 'diet_${DateTime.now().millisecondsSinceEpoch}';
         PetEventBus.instance.emit(
           PetEvent.moduleCompleted(
-            eventId: eventId,
+            eventId: 'diet_${DateTime.now().millisecondsSinceEpoch}',
             type: PetEventType.dietCompleted,
             module: 'diet',
           ),
         );
 
         HapticFeedback.lightImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('饮食记录已保存'),
-            backgroundColor: Color(0xFF6B8E23),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('饮食记录已保存')));
         context.pop();
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+        ).showSnackBar(const SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -200,17 +195,21 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFFFFFBF6),
+      backgroundColor: colors.background,
       appBar: AppBar(
-        title: Text('记录饮食', style: AppTextStyles.pageTitle),
+        title: Text(
+          '记录饮食',
+          style: AppTextStyles.pageTitle.copyWith(color: colors.textPrimary),
+        ),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: AppColors.textPrimary,
+          color: colors.textPrimary,
           onPressed: () => context.pop(),
         ),
       ),
@@ -253,20 +252,17 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
   }
 
   Widget _buildDietHeroCard() {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.diet, Color(0xFFFFC36B)],
+        gradient: LinearGradient(
+          colors: [colors.diet, Color.lerp(colors.diet, colors.warning, 0.42)!],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        boxShadow: AppShadows.colored(
-          AppColors.diet,
-          blurRadius: 26,
-          offsetY: 12,
-        ),
+        boxShadow: AppShadows.colored(colors.diet, blurRadius: 26, offsetY: 12),
       ),
       child: Stack(
         children: [
@@ -276,7 +272,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             child: Icon(
               Icons.restaurant_rounded,
               size: 118,
-              color: Colors.white.withValues(alpha: 0.14),
+              color: colors.textOnAccent.withValues(alpha: 0.14),
             ),
           ),
           Column(
@@ -288,13 +284,13 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: colors.textOnAccent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
                   _mealLabel,
                   style: AppTextStyles.caption.copyWith(
-                    color: Colors.white,
+                    color: colors.textOnAccent,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -305,7 +301,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.numberLarge.copyWith(
-                  color: Colors.white,
+                  color: colors.textOnAccent,
                   fontSize: 28,
                 ),
               ),
@@ -315,7 +311,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.body.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: colors.textOnAccent.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -360,61 +356,34 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final colors = context.growthColors;
     return Text(
       title,
-      style: AppTextStyles.cardTitle.copyWith(fontWeight: FontWeight.w800),
+      style: AppTextStyles.cardTitle.copyWith(
+        color: colors.textPrimary,
+        fontWeight: FontWeight.w800,
+      ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // 餐次选择
-  // ---------------------------------------------------------------------------
 
   Widget _buildMealTypeSelector() {
     return _buildFormCard(
       title: '餐次',
       subtitle: '先确定这条记录属于哪一餐',
       icon: Icons.schedule_rounded,
-      child: Container(
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFFBF6),
-          borderRadius: BorderRadius.circular(AppRadius.full),
-          border: Border.all(color: AppColors.diet.withValues(alpha: 0.12)),
-        ),
-        padding: const EdgeInsets.all(4),
-        child: Row(
-          children: [
-            Expanded(
-              child: _buildMealTypeChip(
-                'breakfast',
-                '早餐',
-                Icons.free_breakfast_rounded,
-              ),
-            ),
-            Expanded(
-              child: _buildMealTypeChip(
-                'lunch',
-                '午餐',
-                Icons.lunch_dining_rounded,
-              ),
-            ),
-            Expanded(
-              child: _buildMealTypeChip(
-                'dinner',
-                '晚餐',
-                Icons.dinner_dining_rounded,
-              ),
-            ),
-            Expanded(
-              child: _buildMealTypeChip('snack', '加餐', Icons.cookie_rounded),
-            ),
-          ],
-        ),
+      child: _buildSegmentSurface(
+        children: [
+          _buildMealTypeChip('breakfast', '早餐', Icons.free_breakfast_rounded),
+          _buildMealTypeChip('lunch', '午餐', Icons.lunch_dining_rounded),
+          _buildMealTypeChip('dinner', '晚餐', Icons.dinner_dining_rounded),
+          _buildMealTypeChip('snack', '加餐', Icons.cookie_rounded),
+        ],
       ),
     );
   }
 
   Widget _buildMealTypeChip(String value, String label, IconData icon) {
+    final colors = context.growthColors;
     final isSelected = _mealType == value;
     return Semantics(
       button: true,
@@ -430,14 +399,14 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           curve: AppMotion.standard,
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.diet : Colors.transparent,
+            color: isSelected ? colors.diet : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Column(
             children: [
               Icon(
                 icon,
-                color: isSelected ? Colors.white : AppColors.textSecondary,
+                color: isSelected ? colors.textOnAccent : colors.textSecondary,
                 size: 20,
               ),
               const SizedBox(height: 3),
@@ -445,7 +414,9 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 label,
                 style: AppTextStyles.caption.copyWith(
                   fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  color: isSelected
+                      ? colors.textOnAccent
+                      : colors.textSecondary,
                 ),
               ),
             ],
@@ -455,30 +426,31 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 食物描述
-  // ---------------------------------------------------------------------------
-
   Widget _buildFoodField() {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF6),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: AppColors.diet.withValues(alpha: 0.14)),
+        border: Border.all(color: colors.diet.withValues(alpha: 0.14)),
       ),
       child: TextField(
         controller: _foodController,
         textInputAction: TextInputAction.next,
+        maxLength: 500,
         minLines: 1,
         maxLines: 2,
-        style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+        style: AppTextStyles.body.copyWith(
+          color: colors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
         decoration: InputDecoration(
           hintText: '例如：鸡胸肉 + 米饭 + 青菜',
-          hintStyle: AppTextStyles.body.copyWith(color: AppColors.textHint),
+          hintStyle: AppTextStyles.body.copyWith(color: colors.textHint),
           prefixIcon: Icon(
             Icons.restaurant_rounded,
             size: 18,
-            color: AppColors.diet.withValues(alpha: 0.72),
+            color: colors.diet.withValues(alpha: 0.72),
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -489,10 +461,6 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // 份量选择
-  // ---------------------------------------------------------------------------
 
   Widget _buildPortionSelector() {
     return _buildSegmentSurface(
@@ -510,11 +478,8 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 热量选择
-  // ---------------------------------------------------------------------------
-
   Widget _buildCalorieSelector() {
+    final colors = context.growthColors;
     return _buildSegmentSurface(
       children: [
         _buildDietSegmentChip(
@@ -522,31 +487,28 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           '偏低',
           _calorieLevel,
           (value) => setState(() => _calorieLevel = value),
-          color: AppColors.success,
+          color: colors.success,
         ),
         _buildDietSegmentChip(
           'normal',
           '适中',
           _calorieLevel,
           (value) => setState(() => _calorieLevel = value),
-          color: AppColors.diet,
+          color: colors.diet,
         ),
         _buildDietSegmentChip(
           'high',
           '偏高',
           _calorieLevel,
           (value) => setState(() => _calorieLevel = value),
-          color: AppColors.danger,
+          color: colors.danger,
         ),
       ],
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 蛋白质选择
-  // ---------------------------------------------------------------------------
-
   Widget _buildProteinSelector() {
+    final colors = context.growthColors;
     return _buildSegmentSurface(
       children: [
         _buildDietSegmentChip(
@@ -554,32 +516,33 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           '偏少',
           _proteinLevel,
           (value) => setState(() => _proteinLevel = value),
-          color: AppColors.warning,
+          color: colors.warning,
         ),
         _buildDietSegmentChip(
           'medium',
           '适中',
           _proteinLevel,
           (value) => setState(() => _proteinLevel = value),
-          color: AppColors.diet,
+          color: colors.diet,
         ),
         _buildDietSegmentChip(
           'high',
           '充足',
           _proteinLevel,
           (value) => setState(() => _proteinLevel = value),
-          color: AppColors.success,
+          color: colors.success,
         ),
       ],
     );
   }
 
   Widget _buildSegmentSurface({required List<Widget> children}) {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF6),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: AppColors.diet.withValues(alpha: 0.12)),
+        border: Border.all(color: colors.diet.withValues(alpha: 0.12)),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
@@ -593,8 +556,10 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     String label,
     String groupValue,
     ValueChanged<String> onChanged, {
-    Color color = AppColors.diet,
+    Color? color,
   }) {
+    final colors = context.growthColors;
+    final selectedColor = color ?? colors.diet;
     final isSelected = value == groupValue;
     return Semantics(
       button: true,
@@ -610,7 +575,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           curve: AppMotion.standard,
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: isSelected ? color : Colors.transparent,
+            color: isSelected ? selectedColor : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           alignment: Alignment.center,
@@ -620,7 +585,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             overflow: TextOverflow.ellipsis,
             style: AppTextStyles.caption.copyWith(
               fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+              color: isSelected ? colors.textOnAccent : colors.textSecondary,
             ),
           ),
         ),
@@ -634,18 +599,21 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     required IconData icon,
     required Widget child,
   }) {
+    final colors = context.growthColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: AppColors.diet.withValues(alpha: 0.1)),
-        boxShadow: AppShadows.colored(
-          AppColors.diet,
-          blurRadius: 18,
-          offsetY: 8,
-        ),
+        border: Border.all(color: colors.diet.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -657,10 +625,10 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.softGold,
+                  color: colors.softGold,
                   borderRadius: BorderRadius.circular(AppRadius.mlg),
                 ),
-                child: Icon(icon, color: AppColors.diet, size: 21),
+                child: Icon(icon, color: colors.diet, size: 21),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -669,10 +637,18 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                   children: [
                     Text(
                       title,
-                      style: AppTextStyles.sectionTitle.copyWith(fontSize: 17),
+                      style: AppTextStyles.sectionTitle.copyWith(
+                        color: colors.textPrimary,
+                        fontSize: 17,
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: AppTextStyles.caption),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -685,11 +661,8 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 健康评分
-  // ---------------------------------------------------------------------------
-
   Widget _buildHealthScoreSelector() {
+    final colors = context.growthColors;
     return _buildFormCard(
       title: '健康评分',
       subtitle: _healthText,
@@ -698,9 +671,9 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: const Color(0xFFFFFBF6),
+          color: colors.surface,
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: AppColors.diet.withValues(alpha: 0.12)),
+          border: Border.all(color: colors.diet.withValues(alpha: 0.12)),
         ),
         child: Column(
           children: [
@@ -727,9 +700,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                             ? Icons.star_rounded
                             : Icons.star_border_rounded,
                         size: 38,
-                        color: isSelected
-                            ? AppColors.warning
-                            : AppColors.ratingInactive,
+                        color: isSelected ? colors.warning : colors.textHint,
                       ),
                     ),
                   ),
@@ -740,7 +711,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             Text(
               _healthText,
               style: AppTextStyles.cardTitle.copyWith(
-                color: AppColors.diet,
+                color: colors.diet,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -750,23 +721,22 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 备注
-  // ---------------------------------------------------------------------------
-
   Widget _buildNoteField() {
+    final colors = context.growthColors;
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.xxxl),
-          border: Border.all(color: AppColors.diet.withValues(alpha: 0.1)),
-          boxShadow: AppShadows.colored(
-            AppColors.diet,
-            blurRadius: 18,
-            offsetY: 8,
-          ),
+          border: Border.all(color: colors.diet.withValues(alpha: 0.1)),
+          boxShadow: [
+            BoxShadow(
+              color: colors.shadow.withValues(alpha: 0.22),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: ExpansionTile(
           tilePadding: const EdgeInsets.symmetric(
@@ -779,24 +749,23 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          iconColor: AppColors.diet,
-          collapsedIconColor: AppColors.textSecondary,
+          iconColor: colors.diet,
+          collapsedIconColor: colors.textSecondary,
           leading: Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppColors.softGold,
+              color: colors.softGold,
               borderRadius: BorderRadius.circular(AppRadius.mlg),
             ),
-            child: const Icon(
-              Icons.note_alt_rounded,
-              color: AppColors.diet,
-              size: 21,
-            ),
+            child: Icon(Icons.note_alt_rounded, color: colors.diet, size: 21),
           ),
           title: Text(
             '补充说明',
-            style: AppTextStyles.sectionTitle.copyWith(fontSize: 17),
+            style: AppTextStyles.sectionTitle.copyWith(
+              color: colors.textPrimary,
+              fontSize: 17,
+            ),
           ),
           subtitle: Text(
             _noteController.text.trim().isEmpty
@@ -804,31 +773,33 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 : _noteController.text.trim(),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: AppTextStyles.caption,
+            style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
           ),
           children: [
             Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFBF6),
+                color: colors.surface,
                 borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(
-                  color: AppColors.diet.withValues(alpha: 0.14),
-                ),
+                border: Border.all(color: colors.diet.withValues(alpha: 0.14)),
               ),
               child: TextField(
                 controller: _noteController,
                 textInputAction: TextInputAction.newline,
+                maxLength: 1000,
                 maxLines: 3,
-                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                style: AppTextStyles.body.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
                 decoration: InputDecoration(
                   hintText: '记录其他信息...',
                   hintStyle: AppTextStyles.body.copyWith(
-                    color: AppColors.textHint,
+                    color: colors.textHint,
                   ),
                   prefixIcon: Icon(
                     Icons.note_outlined,
                     size: 18,
-                    color: AppColors.diet.withValues(alpha: 0.72),
+                    color: colors.diet.withValues(alpha: 0.72),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -844,11 +815,8 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 保存按钮
-  // ---------------------------------------------------------------------------
-
   Widget _buildSaveButton() {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -857,15 +825,15 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
         AppSpacing.lg,
       ),
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.96),
+        color: colors.card.withValues(alpha: 0.96),
         border: Border(
-          top: BorderSide(color: AppColors.border.withValues(alpha: 0.9)),
+          top: BorderSide(color: colors.border.withValues(alpha: 0.9)),
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
+            color: colors.shadow.withValues(alpha: 0.24),
             blurRadius: 22,
-            offset: Offset(0, -8),
+            offset: const Offset(0, -8),
           ),
         ],
       ),
@@ -881,6 +849,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.cardTitle.copyWith(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -888,7 +857,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 Text(
                   '预计 +$_estimatedDietExp EXP',
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.diet,
+                    color: colors.diet,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -908,36 +877,34 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 height: 52,
                 decoration: BoxDecoration(
                   color: _isSaving
-                      ? AppColors.diet.withValues(alpha: 0.55)
-                      : AppColors.diet,
+                      ? colors.diet.withValues(alpha: 0.55)
+                      : colors.diet,
                   borderRadius: BorderRadius.circular(AppRadius.full),
-                  boxShadow: _isSaving
-                      ? null
-                      : AppShadows.colored(AppColors.diet),
+                  boxShadow: _isSaving ? null : AppShadows.colored(colors.diet),
                 ),
                 child: Center(
                   child: _isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.2,
-                            color: Colors.white,
+                            color: colors.textOnAccent,
                           ),
                         )
                       : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_rounded,
-                              color: Colors.white,
+                              color: colors.textOnAccent,
                               size: 20,
                             ),
                             const SizedBox(width: AppSpacing.xs),
                             Text(
                               '保存',
                               style: AppTextStyles.cardTitle.copyWith(
-                                color: Colors.white,
+                                color: colors.textOnAccent,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),

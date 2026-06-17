@@ -103,21 +103,12 @@ class _DashboardCardState extends State<DashboardCard>
         ? (widget.currentValue / widget.targetValue).clamp(0.0, 1.0)
         : 0.0;
 
-    return AnimatedBuilder(
-      animation: _localAnimController,
-      builder: (context, child) {
-        return SlideTransition(
-          position: _slideAnimation,
-          child: FadeTransition(
-            opacity: _fadeAnimation,
-            child: ScaleTransition(scale: _scaleAnimation, child: child),
-          ),
-        );
-      },
-      child: Semantics(
-        button: true,
-        label: '${widget.config.name}卡片，当前${widget.currentValue}${widget.config.unit}',
-        child: GestureDetector(
+    // Build the card content
+    final cardContent = Semantics(
+      button: true,
+      label:
+          '${widget.config.name}卡片，当前${widget.currentValue}${widget.config.unit}',
+      child: GestureDetector(
         onTapDown: (_) => setState(() => _isPressed = true),
         onTapUp: (_) => setState(() => _isPressed = false),
         onTapCancel: () => setState(() => _isPressed = false),
@@ -136,7 +127,7 @@ class _DashboardCardState extends State<DashboardCard>
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Colors.white,
+                  context.growthColors.card,
                   widget.config.softColor.withValues(alpha: 0.48),
                 ],
               ),
@@ -172,7 +163,26 @@ class _DashboardCardState extends State<DashboardCard>
           ),
         ),
       ),
-      ),
+    );
+
+    // If no external controller, skip animation wrapper
+    if (widget.animationController == null) {
+      return cardContent;
+    }
+
+    // With external controller, wrap with animation
+    return AnimatedBuilder(
+      animation: _localAnimController,
+      builder: (context, child) {
+        return SlideTransition(
+          position: _slideAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: ScaleTransition(scale: _scaleAnimation, child: child),
+          ),
+        );
+      },
+      child: cardContent,
     );
   }
 
@@ -184,7 +194,7 @@ class _DashboardCardState extends State<DashboardCard>
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.72),
+            color: context.growthColors.card.withValues(alpha: 0.72),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: widget.config.color.withValues(alpha: 0.10),
@@ -198,8 +208,8 @@ class _DashboardCardState extends State<DashboardCard>
             widget.config.name,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
+            style: TextStyle(
+              color: context.growthColors.textPrimary,
               fontSize: 14,
               fontWeight: FontWeight.w900,
             ),
@@ -211,7 +221,7 @@ class _DashboardCardState extends State<DashboardCard>
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: AppColors.textHint,
+            color: context.growthColors.textHint,
             borderRadius: BorderRadius.circular(3),
           ),
         ),
@@ -258,7 +268,9 @@ class _DashboardCardState extends State<DashboardCard>
               return LinearProgressIndicator(
                 value: value,
                 minHeight: 7,
-                backgroundColor: Colors.white.withValues(alpha: 0.72),
+                backgroundColor: context.growthColors.card.withValues(
+                  alpha: 0.72,
+                ),
                 valueColor: AlwaysStoppedAnimation<Color>(widget.config.color),
               );
             },
@@ -268,9 +280,9 @@ class _DashboardCardState extends State<DashboardCard>
         // 目标文字
         Text(
           '目标 ${widget.targetValue}${widget.config.unit}',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 11,
-            color: AppColors.textSecondary,
+            color: context.growthColors.textSecondary,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -328,62 +340,64 @@ class _AddDashboardCardButtonState extends State<AddDashboardCardButton>
         button: true,
         label: '添加卡片',
         child: GestureDetector(
-        onTapDown: (_) => setState(() => _isPressed = true),
-        onTapUp: (_) {
-          setState(() => _isPressed = false);
-          widget.onTap();
-        },
-        onTapCancel: () => setState(() => _isPressed = false),
-        child: AnimatedScale(
-          scale: _isPressed ? 0.95 : 1.0,
-          duration: const Duration(milliseconds: 100),
-          curve: Curves.easeOutCubic,
-          child: Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.72),
-              borderRadius: BorderRadius.circular(24),
-              border: Border.all(
-                color: const Color(0xFFDCD4F7),
-                width: 1.2,
-                strokeAlign: BorderSide.strokeAlignInside,
+          onTapDown: (_) => setState(() => _isPressed = true),
+          onTapUp: (_) {
+            setState(() => _isPressed = false);
+            widget.onTap();
+          },
+          onTapCancel: () => setState(() => _isPressed = false),
+          child: AnimatedScale(
+            scale: _isPressed ? 0.95 : 1.0,
+            duration: const Duration(milliseconds: 100),
+            curve: Curves.easeOutCubic,
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: context.growthColors.card.withValues(alpha: 0.72),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: const Color(0xFFDCD4F7),
+                  width: 1.2,
+                  strokeAlign: BorderSide.strokeAlignInside,
+                ),
               ),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // 虚线圆形 + 图标
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: AppColors.primary.withValues(alpha: 0.55),
-                      width: 1.5,
-                      strokeAlign: BorderSide.strokeAlignInside,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 虚线圆形 + 图标
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: context.growthColors.primary.withValues(
+                          alpha: 0.55,
+                        ),
+                        width: 1.5,
+                        strokeAlign: BorderSide.strokeAlignInside,
+                      ),
+                    ),
+                    child: Icon(
+                      Icons.add_rounded,
+                      size: 18,
+                      color: context.growthColors.primary,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.add_rounded,
-                    size: 18,
-                    color: AppColors.primary,
+                  const SizedBox(height: 8),
+                  Text(
+                    '添加',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: context.growthColors.primary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                const Text(
-                  '添加',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }

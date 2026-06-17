@@ -25,13 +25,14 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final recentRecords = ref.watch(sortedRecentStudyRecordsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: Text('学习记录', style: AppTextStyles.pageTitle),
-        backgroundColor: AppColors.background,
+        backgroundColor: colors.background,
         surfaceTintColor: Colors.transparent,
         centerTitle: false,
         elevation: 0,
@@ -40,10 +41,10 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
             icon: Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.study.withValues(alpha: 0.08),
+                color: colors.study.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(Icons.sort_rounded, color: AppColors.study, size: 20),
+              child: Icon(Icons.sort_rounded, color: colors.study, size: 20),
             ),
             onSelected: (option) => setState(() => _sortOption = option),
             shape: RoundedRectangleBorder(
@@ -51,9 +52,21 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
             ),
             elevation: 4,
             itemBuilder: (context) => [
-              _buildSortItem(StudySortOption.newest, '最新优先', Icons.access_time_rounded),
-              _buildSortItem(StudySortOption.oldest, '最早优先', Icons.history_rounded),
-              _buildSortItem(StudySortOption.highestExp, '经验值最高', Icons.star_rounded),
+              _buildSortItem(
+                StudySortOption.newest,
+                '最新优先',
+                Icons.access_time_rounded,
+              ),
+              _buildSortItem(
+                StudySortOption.oldest,
+                '最早优先',
+                Icons.history_rounded,
+              ),
+              _buildSortItem(
+                StudySortOption.highestExp,
+                '经验值最高',
+                Icons.star_rounded,
+              ),
             ],
           ),
           const SizedBox(width: AppSpacing.sm),
@@ -75,7 +88,7 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
                 height: 32,
                 child: CircularProgressIndicator(
                   strokeWidth: 3,
-                  color: AppColors.study,
+                  color: colors.study,
                 ),
               ),
               const SizedBox(height: AppSpacing.md),
@@ -87,12 +100,17 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.error_outline_rounded, size: 48, color: AppColors.textTertiary),
+              Icon(
+                Icons.error_outline_rounded,
+                size: 48,
+                color: colors.textTertiary,
+              ),
               const SizedBox(height: AppSpacing.md),
               Text('加载失败: $e', style: AppTextStyles.body),
               const SizedBox(height: AppSpacing.lg),
               TextButton.icon(
-                onPressed: () => ref.invalidate(sortedRecentStudyRecordsProvider),
+                onPressed: () =>
+                    ref.invalidate(sortedRecentStudyRecordsProvider),
                 icon: const Icon(Icons.refresh_rounded, size: 18),
                 label: const Text('重试'),
               ),
@@ -108,6 +126,7 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
     String text,
     IconData icon,
   ) {
+    final colors = context.growthColors;
     final isSelected = _sortOption == option;
     return PopupMenuItem(
       value: option,
@@ -116,7 +135,7 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
           Icon(
             icon,
             size: 18,
-            color: isSelected ? AppColors.study : AppColors.textSecondary,
+            color: isSelected ? colors.study : colors.textSecondary,
           ),
           const SizedBox(width: 10),
           Expanded(
@@ -125,12 +144,12 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? AppColors.study : AppColors.textPrimary,
+                color: isSelected ? colors.study : colors.textPrimary,
               ),
             ),
           ),
           if (isSelected)
-            Icon(Icons.check_rounded, size: 18, color: AppColors.study),
+            Icon(Icons.check_rounded, size: 18, color: colors.study),
         ],
       ),
     );
@@ -141,11 +160,15 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildRecordList(List<StudyRecord> records) {
+    final colors = context.growthColors;
     final sorted = _sortRecords(records);
 
     // 统计汇总
     final totalCount = sorted.length;
-    final totalMinutes = sorted.fold<int>(0, (sum, r) => sum + r.durationMinutes);
+    final totalMinutes = sorted.fold<int>(
+      0,
+      (sum, r) => sum + r.durationMinutes,
+    );
     final totalExp = sorted.fold<int>(0, (sum, r) => sum + r.expGained);
 
     // 按日期分组
@@ -163,14 +186,19 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
     }
 
     return RefreshIndicator(
-      color: AppColors.study,
-      backgroundColor: Colors.white,
+      color: colors.study,
+      backgroundColor: colors.card,
       onRefresh: () async {
         ref.invalidate(sortedRecentStudyRecordsProvider);
         await Future.delayed(const Duration(milliseconds: 600));
       },
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.xxl),
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.lg,
+          0,
+          AppSpacing.lg,
+          AppSpacing.xxl,
+        ),
         itemCount: items.length + 1, // +1 for stats header
         itemBuilder: (context, index) {
           if (index == 0) {
@@ -195,23 +223,21 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildStatsHeader(int count, int minutes, int exp) {
+    final colors = context.growthColors;
     final hours = (minutes / 60).toStringAsFixed(1);
     return Container(
       margin: const EdgeInsets.only(top: AppSpacing.sm, bottom: AppSpacing.lg),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [
-            AppColors.study,
-            AppColors.study.withValues(alpha: 0.78),
-          ],
+          colors: [colors.study, colors.study.withValues(alpha: 0.78)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppRadius.xl),
         boxShadow: [
           BoxShadow(
-            color: AppColors.study.withValues(alpha: 0.3),
+            color: colors.study.withValues(alpha: 0.3),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -247,6 +273,7 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildEmptyState() {
+    final colors = context.growthColors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -257,13 +284,13 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: AppColors.study.withValues(alpha: 0.08),
+                color: colors.study.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.menu_book_rounded,
                 size: 40,
-                color: AppColors.study.withValues(alpha: 0.5),
+                color: colors.study.withValues(alpha: 0.5),
               ),
             ),
             const SizedBox(height: AppSpacing.xl),
@@ -318,17 +345,22 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 20),
+        Icon(
+          icon,
+          color: colors.textOnAccent.withValues(alpha: 0.85),
+          size: 20,
+        ),
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: colors.textOnAccent,
             height: 1.1,
           ),
         ),
@@ -338,7 +370,7 @@ class _StatItem extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w400,
-            color: Colors.white.withValues(alpha: 0.7),
+            color: colors.textOnAccent.withValues(alpha: 0.7),
           ),
         ),
       ],
@@ -349,15 +381,16 @@ class _StatItem extends StatelessWidget {
 class _StatDivider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: 1,
       height: 40,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            Colors.white.withValues(alpha: 0.0),
-            Colors.white.withValues(alpha: 0.25),
-            Colors.white.withValues(alpha: 0.0),
+            colors.textOnAccent.withValues(alpha: 0.0),
+            colors.textOnAccent.withValues(alpha: 0.25),
+            colors.textOnAccent.withValues(alpha: 0.0),
           ],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
@@ -378,6 +411,7 @@ class _DateGroupLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.only(top: AppSpacing.xs, bottom: AppSpacing.sm),
       child: Text(
@@ -385,7 +419,7 @@ class _DateGroupLabel extends StatelessWidget {
         style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
+          color: colors.textSecondary,
           letterSpacing: 0.2,
         ),
       ),
@@ -405,6 +439,7 @@ class _RecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final dt = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
     final timeStr =
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
@@ -416,15 +451,15 @@ class _RecordCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(
-            color: AppColors.study.withValues(alpha: 0.08),
+            color: colors.study.withValues(alpha: 0.08),
             width: 1,
           ),
           boxShadow: [
             BoxShadow(
-              color: AppColors.study.withValues(alpha: 0.04),
+              color: colors.study.withValues(alpha: 0.04),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -437,12 +472,12 @@ class _RecordCard extends StatelessWidget {
               width: 46,
               height: 46,
               decoration: BoxDecoration(
-                color: AppColors.study.withValues(alpha: 0.08),
+                color: colors.study.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(13),
               ),
               child: Icon(
                 Icons.menu_book_rounded,
-                color: AppColors.study,
+                color: colors.study,
                 size: 21,
               ),
             ),
@@ -457,31 +492,32 @@ class _RecordCard extends StatelessWidget {
                     record.title,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                       height: 1.25,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Row(
                     children: [
-                      if (record.subject != null && record.subject!.isNotEmpty) ...[
+                      if (record.subject != null &&
+                          record.subject!.isNotEmpty) ...[
                         Text(
                           record.subject!,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                         Text(
                           '  ·  ',
                           style: TextStyle(
                             fontSize: 13,
-                            color: AppColors.textHint,
+                            color: colors.textHint,
                           ),
                         ),
                       ],
@@ -489,21 +525,18 @@ class _RecordCard extends StatelessWidget {
                         '${record.durationMinutes}分钟',
                         style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textSecondary,
+                          color: colors.textSecondary,
                         ),
                       ),
                       Text(
                         '  ·  ',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: AppColors.textHint,
-                        ),
+                        style: TextStyle(fontSize: 13, color: colors.textHint),
                       ),
                       Text(
                         timeStr,
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textTertiary,
+                          color: colors.textTertiary,
                         ),
                       ),
                     ],
@@ -519,13 +552,13 @@ class _RecordCard extends StatelessWidget {
               children: [
                 _Badge(
                   text: '+${record.expGained}',
-                  color: AppColors.study,
+                  color: colors.study,
                   icon: Icons.star_rounded,
                 ),
                 const SizedBox(height: 5),
                 _Badge(
                   text: isProfessional ? '专业' : '简单',
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ],
             ),
@@ -541,11 +574,7 @@ class _RecordCard extends StatelessWidget {
 // =============================================================================
 
 class _Badge extends StatelessWidget {
-  const _Badge({
-    required this.text,
-    required this.color,
-    this.icon,
-  });
+  const _Badge({required this.text, required this.color, this.icon});
 
   final String text;
   final Color color;
@@ -586,12 +615,8 @@ class _Badge extends StatelessWidget {
 // =============================================================================
 
 class _ListItem {
-  _ListItem.header(this.headerLabel)
-      : record = null,
-        isHeader = true;
-  _ListItem.record(this.record)
-      : headerLabel = null,
-        isHeader = false;
+  _ListItem.header(this.headerLabel) : record = null, isHeader = true;
+  _ListItem.record(this.record) : headerLabel = null, isHeader = false;
 
   final String? headerLabel;
   final StudyRecord? record;

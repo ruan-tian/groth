@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import '../utils/date_utils.dart';
 
 /// 成长日记仓库
 ///
@@ -41,7 +42,7 @@ class JournalRepository {
   /// DailyJournals 使用 `journalDate`（YYYY-MM-DD 字符串）存储日期，
   /// 直接按字符串匹配即可。
   Future<List<DailyJournal>> getJournalsByDate(DateTime date) {
-    final dateStr = _formatDate(date);
+    final dateStr = GrowthDateUtils.formatDateKey(date);
     return (_db.select(_db.dailyJournals)
           ..where((t) => t.journalDate.equals(dateStr))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
@@ -53,8 +54,8 @@ class JournalRepository {
   /// 由于 `journalDate` 是 YYYY-MM-DD 格式字符串，字典序等价于日期序，
   /// 可直接用字符串比较进行范围过滤。
   Future<List<DailyJournal>> getJournalsByRange(DateTime start, DateTime end) {
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(end);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(end);
     return (_db.select(_db.dailyJournals)
           ..where(
             (t) =>
@@ -196,17 +197,5 @@ class JournalRepository {
     return (_db.delete(
       _db.journalAssets,
     )..where((t) => t.journalId.equals(journalId))).go();
-  }
-
-  // ---------------------------------------------------------------------------
-  // 内部工具
-  // ---------------------------------------------------------------------------
-
-  /// 将 [DateTime] 格式化为 YYYY-MM-DD 字符串。
-  String _formatDate(DateTime date) {
-    final y = date.year.toString().padLeft(4, '0');
-    final m = date.month.toString().padLeft(2, '0');
-    final d = date.day.toString().padLeft(2, '0');
-    return '$y-$m-$d';
   }
 }

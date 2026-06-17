@@ -38,6 +38,7 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final sceneState = ref.watch(petSceneProvider(PetModuleType.journal));
     final bannerPath = sceneState.config.state.bannerPath;
 
@@ -53,10 +54,10 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard>
         height: 180,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: JournalColors.pinkBorder, width: 1),
+          border: Border.all(color: colors.border, width: 1),
           boxShadow: [
             BoxShadow(
-              color: JournalColors.shadow,
+              color: colors.shadow.withValues(alpha: 0.2),
               blurRadius: 16,
               offset: const Offset(0, 6),
             ),
@@ -80,14 +81,14 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard>
                       Container(color: JournalColors.pinkBg),
                 ),
                 // 第2层：渐变遮罩（左→右，左侧透明显示人物，右侧半透明白覆盖文字区）
-                const DecoratedBox(
+                DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       begin: Alignment.centerLeft,
                       end: Alignment.centerRight,
                       colors: [
-                        Color(0x00FFFFFF), // 左侧透明
-                        Color(0xD9FFFFFF), // 右侧半透明白 (85%)
+                        Colors.transparent,
+                        colors.card.withValues(alpha: 0.86),
                       ],
                       stops: [0.3, 0.6],
                     ),
@@ -196,6 +197,7 @@ class _JournalHeatmapSectionState
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final selectedYear = ref.watch(selectedHeatmapYearProvider);
     final heatmap = ref.watch(journalHeatmapProvider(selectedYear));
     final currentYear = DateTime.now().year;
@@ -210,11 +212,12 @@ class _JournalHeatmapSectionState
       constraints: const BoxConstraints(minHeight: 230),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
+        border: Border.all(color: colors.border),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: JournalColors.shadow,
+            color: colors.shadow.withValues(alpha: 0.22),
             blurRadius: 16,
             offset: const Offset(0, 6),
           ),
@@ -439,14 +442,16 @@ class _StatsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
+        border: Border.all(color: colors.border),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: JournalColors.shadow,
+            color: colors.shadow.withValues(alpha: 0.2),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -472,7 +477,7 @@ class _StatsCard extends StatelessWidget {
               Text(
                 '$value',
                 style: AppTextStyles.numberMedium.copyWith(
-                  color: JournalColors.textDark,
+                  color: colors.textPrimary,
                   height: 1.1,
                 ),
               ),
@@ -514,6 +519,7 @@ class _TagChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
       label: selected ? '取消筛选：$label' : '筛选：$label',
@@ -529,12 +535,10 @@ class _TagChip extends StatelessWidget {
           curve: Curves.easeOutCubic,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? JournalColors.pinkMain : Colors.white,
+            color: selected ? colors.journal : colors.card,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: selected
-                  ? JournalColors.pinkMain
-                  : JournalColors.pinkBorder,
+              color: selected ? colors.journal : colors.border,
             ),
           ),
           child: Text(
@@ -542,7 +546,7 @@ class _TagChip extends StatelessWidget {
             style: TextStyle(
               fontSize: 13,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-              color: selected ? Colors.white : JournalColors.textSecondary,
+              color: selected ? colors.textOnAccent : colors.textSecondary,
             ),
           ),
         ),
@@ -559,6 +563,7 @@ class _FolderEditSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _JournalSheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -573,14 +578,14 @@ class _FolderEditSheet extends StatelessWidget {
             decoration: InputDecoration(
               hintText: '例如：灵感、复盘、旅行',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: colors.card,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: JournalColors.pinkBorder),
+                borderSide: BorderSide(color: colors.border),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: JournalColors.pinkBorder),
+                borderSide: BorderSide(color: colors.border),
               ),
             ),
             onSubmitted: (value) => Navigator.pop(context, value),
@@ -635,9 +640,9 @@ class _FolderActionSheet extends StatelessWidget {
           ),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(
+            leading: Icon(
               Icons.delete_outline_rounded,
-              color: AppColors.danger,
+              color: context.growthColors.danger,
             ),
             title: const Text('删除文件夹'),
             subtitle: const Text('日记会回到未分类'),
@@ -715,7 +720,7 @@ class _MoveJournalSheetState extends State<_MoveJournalSheet> {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('移动失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('移动失败，请重试')));
     } finally {
       if (mounted) setState(() => _moving = false);
     }
@@ -763,18 +768,19 @@ class _JournalSheetShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return SafeArea(
       top: false,
       child: Container(
         margin: const EdgeInsets.all(12),
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: JournalColors.bg,
+          color: colors.surface,
           borderRadius: BorderRadius.circular(28),
-          border: Border.all(color: JournalColors.pinkBorder),
+          border: Border.all(color: colors.border),
           boxShadow: [
             BoxShadow(
-              color: JournalColors.pinkMain.withValues(alpha: 0.08),
+              color: colors.shadow.withValues(alpha: 0.22),
               blurRadius: 24,
               offset: const Offset(0, 12),
             ),
@@ -803,6 +809,7 @@ class _JournalListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final moodEmoji = getMoodEmoji(journal.mood);
 
     return Semantics(
@@ -814,11 +821,12 @@ class _JournalListItem extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 12),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: colors.card,
+            border: Border.all(color: colors.border),
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: JournalColors.shadow,
+                color: colors.shadow.withValues(alpha: 0.18),
                 blurRadius: 10,
                 offset: const Offset(0, 2),
               ),

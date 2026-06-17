@@ -35,8 +35,9 @@ class LocalErrorLogService {
         '',
       ].join('\n');
       await file.writeAsString(entry, mode: FileMode.append, flush: true);
-    } catch (_) {
+    } catch (e) {
       // Error logging must never become the reason the app crashes.
+      debugPrint('写入错误日志失败: $e');
     }
   }
 
@@ -47,7 +48,8 @@ class LocalErrorLogService {
       final lines = await file.readAsLines();
       if (lines.length <= limit) return lines;
       return lines.sublist(lines.length - limit);
-    } catch (_) {
+    } catch (e) {
+      debugPrint('读取错误日志失败: $e');
       return const [];
     }
   }
@@ -58,7 +60,9 @@ class LocalErrorLogService {
       if (await file.exists()) {
         await file.delete();
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('清除错误日志失败: $e');
+    }
   }
 
   static Future<File> _logFile() async {

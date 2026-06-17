@@ -16,18 +16,22 @@ import '../widgets/markdown_preview.dart';
 
 const _moodEmojiMap = {
   'happy': '😊',
+  'calm': '😌',
   'neutral': '😐',
   'sad': '😢',
+  'great': '🥳',
   'angry': '😠',
   'thinking': '🤔',
 };
 
 const _moodLabelMap = {
   'happy': '开心',
-  'neutral': '平静',
+  'calm': '平静',
+  'neutral': '一般',
   'sad': '难过',
+  'great': '很棒',
   'angry': '生气',
-  'thinking': '思考',
+  'thinking': '思考中',
 };
 
 class JournalDetailPage extends ConsumerWidget {
@@ -67,7 +71,11 @@ class _ErrorState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.search_off, size: 48, color: AppColors.textTertiary),
+          Icon(
+            Icons.search_off,
+            size: 48,
+            color: context.growthColors.textTertiary,
+          ),
           const SizedBox(height: AppSpacing.md),
           Text(message, style: AppTextStyles.body),
           const SizedBox(height: AppSpacing.lg),
@@ -109,10 +117,10 @@ class _DetailContent extends ConsumerWidget {
                         children: [
                           Text(
                             journal.title,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 28,
                               fontWeight: FontWeight.w800,
-                              color: Color(0xFF1F2329),
+                              color: context.growthColors.textPrimary,
                               height: 1.22,
                             ),
                           ),
@@ -169,7 +177,7 @@ class _ReadingCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF7),
+        color: context.growthColors.paper,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: JournalColors.pinkBorder),
         boxShadow: [
@@ -201,7 +209,7 @@ class _FloatingTopBar extends ConsumerWidget {
         margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
         padding: const EdgeInsets.symmetric(horizontal: 8),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.90),
+          color: context.growthColors.card.withValues(alpha: 0.90),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: JournalColors.pinkBorder),
           boxShadow: [
@@ -218,7 +226,7 @@ class _FloatingTopBar extends ConsumerWidget {
               tooltip: '返回',
               onPressed: () => context.pop(),
               icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-              color: const Color(0xFF1F2329),
+              color: context.growthColors.textPrimary,
             ),
             const Spacer(),
             IconButton(
@@ -231,13 +239,13 @@ class _FloatingTopBar extends ConsumerWidget {
               tooltip: '编辑',
               onPressed: () => context.push('/plan/journal/edit/${journal.id}'),
               icon: const Icon(Icons.edit_outlined, size: 20),
-              color: AppColors.primary,
+              color: context.growthColors.primary,
             ),
             IconButton(
               tooltip: '删除',
               onPressed: () => _confirmDelete(context, ref),
               icon: const Icon(Icons.delete_outline, size: 20),
-              color: AppColors.danger,
+              color: context.growthColors.danger,
             ),
           ],
         ),
@@ -258,7 +266,9 @@ class _FloatingTopBar extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -280,7 +290,7 @@ class _FloatingTopBar extends ConsumerWidget {
       if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+        ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
       }
     }
   }
@@ -349,7 +359,7 @@ class _FloatingTopBar extends ConsumerWidget {
       if (context.mounted) Navigator.pop(context);
       messenger?.showSnackBar(const SnackBar(content: Text('已移动日记')));
     } catch (e) {
-      messenger?.showSnackBar(SnackBar(content: Text('移动失败: $e')));
+      messenger?.showSnackBar(SnackBar(content: Text('移动失败，请重试')));
     }
   }
 
@@ -388,11 +398,17 @@ class _MetaRow extends StatelessWidget {
       children: [
         Text(
           dateStr,
-          style: const TextStyle(fontSize: 13, color: Color(0xFF86909C)),
+          style: TextStyle(
+            fontSize: 13,
+            color: context.growthColors.textTertiary,
+          ),
         ),
         Text(
           '$wordCount字',
-          style: const TextStyle(fontSize: 13, color: Color(0xFF86909C)),
+          style: TextStyle(
+            fontSize: 13,
+            color: context.growthColors.textTertiary,
+          ),
         ),
         if (moodEmoji != null)
           Tooltip(
@@ -469,14 +485,14 @@ class _TagWrap extends StatelessWidget {
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: AppColors.journal.withValues(alpha: 0.1),
+            color: context.growthColors.journal.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(16),
           ),
           child: Text(
             '#$tag',
             style: TextStyle(
               fontSize: 13,
-              color: AppColors.journal,
+              color: context.growthColors.journal,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -497,20 +513,24 @@ class _ExpBadge extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.08),
+          color: context.growthColors.primary.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.star_rounded, size: 18, color: AppColors.primary),
+            Icon(
+              Icons.star_rounded,
+              size: 18,
+              color: context.growthColors.primary,
+            ),
             const SizedBox(width: 6),
             Text(
               '+$exp EXP',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+                color: context.growthColors.primary,
               ),
             ),
           ],
@@ -537,7 +557,9 @@ class _MoveTargetListTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Icon(
         selected ? Icons.folder_rounded : Icons.folder_outlined,
-        color: selected ? JournalColors.pinkMain : AppColors.textTertiary,
+        color: selected
+            ? JournalColors.pinkMain
+            : context.growthColors.textTertiary,
       ),
       title: Text(title),
       trailing: selected

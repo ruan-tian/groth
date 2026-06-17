@@ -7,6 +7,7 @@ class _StudyAnalysisTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final analysisState = ref.watch(aiAnalysisStateProvider);
     final recentRecords = ref.watch(recentStudyRecordsProvider);
+    final knowledgeContext = ref.watch(knowledgeContextServiceProvider);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -22,9 +23,9 @@ class _StudyAnalysisTab extends ConsumerWidget {
                   _buildSectionTitle('数据预览'),
                   const SizedBox(height: 8),
                   recentRecords.when(
-                    loading: () => const Center(
+                    loading: () => Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFD4A574),
+                        color: context.growthColors.primary,
                       ),
                     ),
                     error: (e, _) => _buildErrorCard('加载学习记录失败: $e'),
@@ -32,7 +33,20 @@ class _StudyAnalysisTab extends ConsumerWidget {
                       if (records.isEmpty) {
                         return _buildEmptyCard('暂无学习记录，请先添加一些学习记录。');
                       }
-                      return _buildStudyDataPreview(records);
+                      return FutureBuilder<KnowledgeContextBundle>(
+                        future: knowledgeContext.buildForStudyRecords(records),
+                        builder: (context, snapshot) {
+                          final bundle = snapshot.data;
+                          return _buildStudyDataPreview(
+                            context,
+                            records,
+                            bundle: bundle,
+                            isLoadingContext:
+                                snapshot.connectionState ==
+                                ConnectionState.waiting,
+                          );
+                        },
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
@@ -42,6 +56,13 @@ class _StudyAnalysisTab extends ConsumerWidget {
                     _buildSectionTitle('分析中'),
                     const SizedBox(height: 8),
                     const _LoadingCard(),
+                  ] else if (analysisState.isStreaming &&
+                      analysisState.partialResult != null) ...[
+                  _buildSectionTitle('分析中'),
+                  const SizedBox(height: 8),
+                  AiAnalysisResultCard(
+                    result: analysisState.partialResult!,
+                  ),
                   ] else if (analysisState.error != null) ...[
                     _buildSectionTitle('分析失败'),
                     const SizedBox(height: 8),
@@ -49,7 +70,10 @@ class _StudyAnalysisTab extends ConsumerWidget {
                   ] else if (analysisState.result != null) ...[
                     _buildSectionTitle('分析结果'),
                     const SizedBox(height: 8),
-                    _buildResultCard(analysisState.result!),
+                    AiAnalysisResultCard(
+                      result: analysisState.result!,
+                      referenceContext: analysisState.referenceContext,
+                    ),
                   ],
                 ],
               ),
@@ -62,14 +86,14 @@ class _StudyAnalysisTab extends ConsumerWidget {
           SizedBox(
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: analysisState.isLoading
+              onPressed: (analysisState.isLoading || analysisState.isStreaming)
                   ? null
-                  : () => _startStudyAnalysis(ref),
+                  : () => _startStudyAnalysis(context, ref),
               icon: const Icon(Icons.psychology),
               label: const Text('开始分析'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD4A574),
-                foregroundColor: Colors.white,
+                backgroundColor: context.growthColors.primary,
+                foregroundColor: context.growthColors.textOnAccent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -82,7 +106,7 @@ class _StudyAnalysisTab extends ConsumerWidget {
     );
   }
 
-  Future<void> _startStudyAnalysis(WidgetRef ref) async {
+  Future<void> _startStudyAnalysis(BuildContext context, WidgetRef ref) async {
     final config = await ref.read(enabledAiConfigProvider.future);
     if (config == null) {
       ref
@@ -102,19 +126,34 @@ class _StudyAnalysisTab extends ConsumerWidget {
     }
 
     final aiService = ref.read(aiServiceProvider);
+    final knowledgeContext = ref.read(knowledgeContextServiceProvider);
+    final bundle = await knowledgeContext.buildForStudyRecords(records);
+    if (!context.mounted) return;
+    final confirmedBundle = await showKnowledgeContextConfirmSheet(
+      context: context,
+      bundle: bundle,
+    );
+    if (confirmedBundle == null) return;
     await ref
         .read(aiAnalysisStateProvider.notifier)
-        .runAnalysis(
-          () => aiService.analyzeStudy(
+        .runStreamAnalysis(
+          () => aiService.analyzeStudyStream(
             apiKey: config.apiKey,
             baseUrl: config.baseUrl,
             model: config.modelName,
             records: records,
+            knowledgeContext: confirmedBundle.toPromptSection(),
           ),
+          referenceContext: confirmedBundle,
         );
   }
 
-  Widget _buildStudyDataPreview(List<StudyRecord> records) {
+  Widget _buildStudyDataPreview(
+    BuildContext context,
+    List<StudyRecord> records, {
+    KnowledgeContextBundle? bundle,
+    bool isLoadingContext = false,
+  }) {
     final totalMinutes = records.fold<int>(0, (s, r) => s + r.durationMinutes);
     return Card(
       child: Padding(
@@ -138,6 +177,7 @@ class _StudyAnalysisTab extends ConsumerWidget {
             const Divider(),
             _buildInfoRow('总学习时长', '$totalMinutes 分钟'),
             _buildInfoRow('记录条数', '${records.length} 条'),
+            ..._buildKnowledgeContextRows(bundle, isLoading: isLoadingContext),
             const SizedBox(height: 8),
             ...records.take(3).map((r) {
               final date = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
@@ -157,7 +197,10 @@ class _StudyAnalysisTab extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '... 还有 ${records.length - 3} 条记录',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(
+                    color: context.growthColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
               ),
           ],
@@ -178,6 +221,7 @@ class _FitnessAnalysisTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final analysisState = ref.watch(aiAnalysisStateProvider);
     final recentRecords = ref.watch(recentFitnessRecordsProvider);
+    final knowledgeContext = ref.watch(knowledgeContextServiceProvider);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -192,9 +236,9 @@ class _FitnessAnalysisTab extends ConsumerWidget {
                   _buildSectionTitle('数据预览'),
                   const SizedBox(height: 8),
                   recentRecords.when(
-                    loading: () => const Center(
+                    loading: () => Center(
                       child: CircularProgressIndicator(
-                        color: Color(0xFFD4A574),
+                        color: context.growthColors.primary,
                       ),
                     ),
                     error: (e, _) => _buildErrorCard('加载健身记录失败: $e'),
@@ -202,7 +246,20 @@ class _FitnessAnalysisTab extends ConsumerWidget {
                       if (records.isEmpty) {
                         return _buildEmptyCard('暂无健身记录，请先添加一些训练记录。');
                       }
-                      return _buildFitnessDataPreview(records);
+                      final query = _fitnessContextQuery(records);
+                      return FutureBuilder<KnowledgeContextBundle>(
+                        future: knowledgeContext.buildForQuery(query),
+                        builder: (context, snapshot) {
+                          return _buildFitnessDataPreview(
+                            context,
+                            records,
+                            bundle: snapshot.data,
+                            isLoadingContext:
+                                snapshot.connectionState ==
+                                ConnectionState.waiting,
+                          );
+                        },
+                      );
                     },
                   ),
                   const SizedBox(height: 16),
@@ -210,6 +267,13 @@ class _FitnessAnalysisTab extends ConsumerWidget {
                     _buildSectionTitle('分析中'),
                     const SizedBox(height: 8),
                     const _LoadingCard(),
+                  ] else if (analysisState.isStreaming &&
+                      analysisState.partialResult != null) ...[
+                  _buildSectionTitle('分析中'),
+                  const SizedBox(height: 8),
+                  AiAnalysisResultCard(
+                    result: analysisState.partialResult!,
+                  ),
                   ] else if (analysisState.error != null) ...[
                     _buildSectionTitle('分析失败'),
                     const SizedBox(height: 8),
@@ -217,7 +281,10 @@ class _FitnessAnalysisTab extends ConsumerWidget {
                   ] else if (analysisState.result != null) ...[
                     _buildSectionTitle('分析结果'),
                     const SizedBox(height: 8),
-                    _buildResultCard(analysisState.result!),
+                    AiAnalysisResultCard(
+                      result: analysisState.result!,
+                      referenceContext: analysisState.referenceContext,
+                    ),
                   ],
                 ],
               ),
@@ -227,14 +294,14 @@ class _FitnessAnalysisTab extends ConsumerWidget {
           SizedBox(
             height: 48,
             child: ElevatedButton.icon(
-              onPressed: analysisState.isLoading
+              onPressed: (analysisState.isLoading || analysisState.isStreaming)
                   ? null
-                  : () => _startFitnessAnalysis(ref),
+                  : () => _startFitnessAnalysis(context, ref),
               icon: const Icon(Icons.fitness_center),
               label: const Text('开始分析'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFD4A574),
-                foregroundColor: Colors.white,
+                backgroundColor: context.growthColors.primary,
+                foregroundColor: context.growthColors.textOnAccent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -247,7 +314,10 @@ class _FitnessAnalysisTab extends ConsumerWidget {
     );
   }
 
-  Future<void> _startFitnessAnalysis(WidgetRef ref) async {
+  Future<void> _startFitnessAnalysis(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final config = await ref.read(enabledAiConfigProvider.future);
     if (config == null) {
       ref
@@ -267,19 +337,36 @@ class _FitnessAnalysisTab extends ConsumerWidget {
     }
 
     final aiService = ref.read(aiServiceProvider);
+    final knowledgeContext = ref.read(knowledgeContextServiceProvider);
+    final bundle = await knowledgeContext.buildForQuery(
+      _fitnessContextQuery(records),
+    );
+    if (!context.mounted) return;
+    final confirmedBundle = await showKnowledgeContextConfirmSheet(
+      context: context,
+      bundle: bundle,
+    );
+    if (confirmedBundle == null) return;
     await ref
         .read(aiAnalysisStateProvider.notifier)
-        .runAnalysis(
-          () => aiService.analyzeFitness(
+        .runStreamAnalysis(
+          () => aiService.analyzeFitnessStream(
             apiKey: config.apiKey,
             baseUrl: config.baseUrl,
             model: config.modelName,
             records: records,
+            knowledgeContext: confirmedBundle.toPromptSection(),
           ),
+          referenceContext: confirmedBundle,
         );
   }
 
-  Widget _buildFitnessDataPreview(List<FitnessRecord> records) {
+  Widget _buildFitnessDataPreview(
+    BuildContext context,
+    List<FitnessRecord> records, {
+    KnowledgeContextBundle? bundle,
+    bool isLoadingContext = false,
+  }) {
     final totalMinutes = records.fold<int>(0, (s, r) => s + r.durationMinutes);
     // 按部位分组
     final bodyPartCount = <String, int>{};
@@ -310,6 +397,7 @@ class _FitnessAnalysisTab extends ConsumerWidget {
             _buildInfoRow('总训练时长', '$totalMinutes 分钟'),
             _buildInfoRow('训练次数', '${records.length} 次'),
             _buildInfoRow('训练部位', bodyPartCount.keys.join('、')),
+            ..._buildKnowledgeContextRows(bundle, isLoading: isLoadingContext),
             const SizedBox(height: 8),
             ...records.take(3).map((r) {
               final date = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
@@ -329,13 +417,24 @@ class _FitnessAnalysisTab extends ConsumerWidget {
                 padding: const EdgeInsets.only(top: 4),
                 child: Text(
                   '... 还有 ${records.length - 3} 条记录',
-                  style: TextStyle(color: Colors.grey[600], fontSize: 13),
+                  style: TextStyle(
+                    color: context.growthColors.textSecondary,
+                    fontSize: 13,
+                  ),
                 ),
               ),
           ],
         ),
       ),
     );
+  }
+
+  String _fitnessContextQuery(List<FitnessRecord> records) {
+    return _joinContextTerms([
+      '健身 训练 恢复 强度 动作',
+      for (final record in records.take(8)) record.bodyPart,
+      for (final record in records.take(8)) record.title,
+    ]);
   }
 }
 

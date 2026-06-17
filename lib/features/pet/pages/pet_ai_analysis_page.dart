@@ -40,6 +40,7 @@ class _PetAIAnalysisPageState extends ConsumerState<PetAIAnalysisPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     ref.listen<PetAIState>(petAIProvider, (previous, current) {
       if (current.result != null && previous?.result != current.result) {
         final type = current.analysisType;
@@ -60,7 +61,7 @@ class _PetAIAnalysisPageState extends ConsumerState<PetAIAnalysisPage> {
     final aiState = ref.watch(petAIProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7EF),
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: const Text('甜甜分析'),
         centerTitle: true,
@@ -155,6 +156,7 @@ class _AiHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _PaperCard(
       child: Row(
         children: [
@@ -164,7 +166,7 @@ class _AiHeroCard extends StatelessWidget {
             padding: 2,
           ),
           const SizedBox(width: 16),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -173,16 +175,16 @@ class _AiHeroCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
-                SizedBox(height: 7),
+                const SizedBox(height: 7),
                 Text(
                   '选择一个方向，先确认数据预览，再生成分析建议。',
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.45,
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -202,48 +204,49 @@ class _AnalysisGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final entries = const [
+    final colors = context.growthColors;
+    final entries = [
       _AnalysisEntry(
         type: PetAIAnalysisType.study,
         asset: PetAssets.studyReading,
         title: '学习分析',
         subtitle: '节奏、科目和复习建议',
-        color: AppColors.study,
+        color: colors.study,
       ),
       _AnalysisEntry(
         type: PetAIAnalysisType.fitness,
         asset: PetAssets.fitnessDone,
         title: '健身分析',
         subtitle: '训练量、强度和恢复',
-        color: AppColors.fitness,
+        color: colors.fitness,
       ),
       _AnalysisEntry(
         type: PetAIAnalysisType.diet,
         asset: PetAssets.dietPlate,
         title: '饮食分析',
         subtitle: '餐次、饮水和健康评分',
-        color: AppColors.diet,
+        color: colors.diet,
       ),
       _AnalysisEntry(
         type: PetAIAnalysisType.sleep,
         asset: PetAssets.sleepSleeping,
         title: '睡眠分析',
         subtitle: '时长、质量和作息',
-        color: AppColors.sleep,
+        color: colors.sleep,
       ),
       _AnalysisEntry(
         type: PetAIAnalysisType.weeklyReport,
         asset: PetAssets.eventWeeklyRpt,
         title: '成长周报',
         subtitle: '一周亮点和调整方向',
-        color: AppColors.primary,
+        color: colors.primary,
       ),
       _AnalysisEntry(
         type: PetAIAnalysisType.monthlyReport,
         asset: PetAssets.eventMonthlyRpt,
         title: '成长月报',
         subtitle: '长期趋势和里程碑',
-        color: AppColors.accent,
+        color: colors.accent,
       ),
     ];
 
@@ -295,6 +298,7 @@ class _AnalysisCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: disabled ? null : onTap,
@@ -315,10 +319,10 @@ class _AnalysisCard extends StatelessWidget {
                 entry.title,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 4),
@@ -326,10 +330,10 @@ class _AnalysisCard extends StatelessWidget {
                 entry.subtitle,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
                   height: 1.25,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -345,7 +349,7 @@ class _PrivacyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _PaperCard(
+    return _PaperCard(
       child: _Header(
         asset: PetAssets.aiPrivacy,
         title: '隐私确认',
@@ -360,15 +364,13 @@ class _LoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _PaperCard(
+    final colors = context.growthColors;
+    return _PaperCard(
       child: Column(
         children: [
-          CircularProgressIndicator(color: Color(0xFFE89B68)),
+          CircularProgressIndicator(color: colors.accent),
           SizedBox(height: 14),
-          Text(
-            '甜甜正在认真分析中...',
-            style: TextStyle(color: AppColors.textSecondary),
-          ),
+          Text('甜甜正在认真分析中...', style: TextStyle(color: colors.textSecondary)),
         ],
       ),
     );
@@ -382,6 +384,7 @@ class _ErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _PaperCard(
       child: Row(
         children: [
@@ -390,10 +393,10 @@ class _ErrorCard extends StatelessWidget {
           Expanded(
             child: Text(
               error,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 height: 1.45,
-                color: AppColors.danger,
+                color: colors.danger,
               ),
             ),
           ),
@@ -410,6 +413,7 @@ class _ResultCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return InkWell(
       borderRadius: BorderRadius.circular(22),
       onTap: () => PetAIResultSheet.show(context: context, result: result),
@@ -425,19 +429,19 @@ class _ResultCard extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               result.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
+                color: colors.textPrimary,
               ),
             ),
             const SizedBox(height: 7),
             Text(
               result.petMessage,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 height: 1.45,
-                color: AppColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
           ],
@@ -460,6 +464,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         PetFloatingAsset(asset: asset, size: 42, padding: 1),
@@ -470,19 +475,19 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   height: 1.35,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -500,14 +505,15 @@ class _PaperCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: colors.card.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB97A52).withValues(alpha: 0.10),
+            color: colors.shadow.withValues(alpha: 0.10),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),

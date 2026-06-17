@@ -67,21 +67,26 @@ final yearlyMonthlyStudyProvider = FutureProvider<List<MonthlyAggregate>>((
   return statsService.getYearlyStats();
 });
 
-/// 按科目统计学习时长分布（最近 30 天）
-final subjectDistributionProvider = FutureProvider<Map<String, int>>((
-  ref,
-) async {
-  final repo = ref.watch(studyRepositoryProvider);
-  final now = DateTime.now();
-  final monthAgo = now.subtract(const Duration(days: 30));
-  final records = await repo.getStudyRecordsByRange(monthAgo, now);
+/// 按天数范围获取科目分布
+final subjectDistributionByRangeProvider =
+    FutureProvider.family<Map<String, int>, int>((ref, days) async {
+      final repo = ref.watch(studyRepositoryProvider);
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+      final records = await repo.getStudyRecordsByRange(start, now);
 
-  final distribution = <String, int>{};
-  for (final r in records) {
-    final subject = r.subject ?? '未分类';
-    distribution[subject] = (distribution[subject] ?? 0) + r.durationMinutes;
-  }
-  return distribution;
+      final distribution = <String, int>{};
+      for (final r in records) {
+        final subject = r.subject ?? '未分类';
+        distribution[subject] =
+            (distribution[subject] ?? 0) + r.durationMinutes;
+      }
+      return distribution;
+    });
+
+/// 按科目统计学习时长分布（最近 30 天，向后兼容）
+final subjectDistributionProvider = FutureProvider<Map<String, int>>((ref) {
+  return ref.watch(subjectDistributionByRangeProvider(30).future);
 });
 
 // =============================================================================

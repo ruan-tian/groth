@@ -58,16 +58,16 @@ class LifeSession {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'imageName': imageName,
-        'imagePath': imagePath,
-        'directory': directory,
-        'messages': messages,
-        'aiMessage': aiMessage,
-        'startedAt': startedAt.millisecondsSinceEpoch,
-        'expiresAt': expiresAt.millisecondsSinceEpoch,
-        'aiUsed': aiUsed,
-      };
+    'id': id,
+    'imageName': imageName,
+    'imagePath': imagePath,
+    'directory': directory,
+    'messages': messages,
+    'aiMessage': aiMessage,
+    'startedAt': startedAt.millisecondsSinceEpoch,
+    'expiresAt': expiresAt.millisecondsSinceEpoch,
+    'aiUsed': aiUsed,
+  };
 
   factory LifeSession.fromJson(Map<String, dynamic> json) {
     return LifeSession(

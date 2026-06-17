@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/constants/fitness_constants.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 
 /// 宠物数据收集器
@@ -63,7 +64,7 @@ class PetDataCollector {
     final records = await repo.getFitnessRecordsByRange(start, now);
 
     final totalMinutes = records.fold<int>(0, (s, r) => s + r.durationMinutes);
-    final totalCalories = (totalMinutes * 7.5).toInt();
+    final totalCalories = FitnessConstants.estimateCalories(totalMinutes);
     final fitnessDays = records
         .map((r) {
           final dt = DateTime.fromMillisecondsSinceEpoch(r.createdAt);

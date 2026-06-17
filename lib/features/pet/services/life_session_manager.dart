@@ -20,8 +20,8 @@ class LifeSessionManager {
   LifeSessionManager({
     required SettingRepository settingRepository,
     required bool aiLifeMessageEnabled,
-  })  : _settingRepository = settingRepository,
-        _aiLifeMessageEnabled = aiLifeMessageEnabled;
+  }) : _settingRepository = settingRepository,
+       _aiLifeMessageEnabled = aiLifeMessageEnabled;
 
   final SettingRepository _settingRepository;
   final bool _aiLifeMessageEnabled;

@@ -333,10 +333,8 @@ class _ParticleBurstState extends State<ParticleBurst>
   void initState() {
     super.initState();
     _random = math.Random();
-    _controller = AnimationController(
-      vsync: this,
-      duration: kBurstDuration,
-    )..addListener(_onTick);
+    _controller = AnimationController(vsync: this, duration: kBurstDuration)
+      ..addListener(_onTick);
 
     widget.trigger.addListener(_onTrigger);
   }
@@ -369,7 +367,8 @@ class _ParticleBurstState extends State<ParticleBurst>
   void _spawnParticles() {
     _activeType = widget.type;
     final palette = _paletteFor(_activeType);
-    final count = kMinParticleCount +
+    final count =
+        kMinParticleCount +
         _random.nextInt(kMaxParticleCount - kMinParticleCount + 1);
 
     _particles = List<_Particle>.generate(count, (_) {
@@ -385,8 +384,7 @@ class _ParticleBurstState extends State<ParticleBurst>
         size: _lerp(kMinParticleSize, kMaxParticleSize, _random.nextDouble()),
         opacity: 1.0,
         rotation: _lerp(kMinRotation, kMaxRotation, _random.nextDouble()),
-        angularVelocity:
-            (_random.nextDouble() - 0.5) * 2 * kAngularSpeedRange,
+        angularVelocity: (_random.nextDouble() - 0.5) * 2 * kAngularSpeedRange,
         color: palette[_random.nextInt(palette.length)],
       );
     });

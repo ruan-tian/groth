@@ -38,10 +38,10 @@ class GrowthCard extends StatelessWidget {
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: backgroundColor ?? AppColors.surface,
+            color: backgroundColor ?? context.growthColors.surface,
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
-              color: borderColor ?? AppColors.border,
+              color: borderColor ?? context.growthColors.border,
               width: 0.6,
             ),
             boxShadow: shadow ?? AppColors.cardShadow,

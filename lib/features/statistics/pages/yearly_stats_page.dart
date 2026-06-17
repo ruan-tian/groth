@@ -119,8 +119,10 @@ class _YearlyContent extends ConsumerWidget {
 
     // 计算年度汇总
     final totalStudy = monthlyStats.fold<int>(0, (s, m) => s + m.studyMinutes);
-    final totalFitness =
-        monthlyStats.fold<int>(0, (s, m) => s + m.fitnessMinutes);
+    final totalFitness = monthlyStats.fold<int>(
+      0,
+      (s, m) => s + m.fitnessMinutes,
+    );
     final totalExp = monthlyStats.fold<int>(0, (s, m) => s + m.expGained);
 
     return ListView(
@@ -249,7 +251,7 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.menu_book_rounded,
             label: '总学习',
             value: formatMinutesShort(totalStudy),
-            color: AppColors.study,
+            color: context.growthColors.study,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -258,7 +260,7 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.fitness_center_rounded,
             label: '总健身',
             value: formatMinutesShort(totalFitness),
-            color: AppColors.fitness,
+            color: context.growthColors.fitness,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -267,7 +269,7 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.star_rounded,
             label: '总经验',
             value: formatExp(totalExp),
-            color: AppColors.primary,
+            color: context.growthColors.primary,
           ),
         ),
       ],
@@ -316,7 +318,7 @@ class _MonthlyTrendChart extends StatelessWidget {
               labels: monthlyStats
                   .map((m) => '${int.parse(m.month.split('-')[1])}月')
                   .toList(),
-              barColor: AppColors.study,
+              barColor: context.growthColors.study,
               height: 200,
             ),
           ],
@@ -384,10 +386,11 @@ class _HeatmapSection extends StatelessWidget {
                 for (final stat in stats) {
                   if (stat.isActiveDay) {
                     heatmapData[DateTime(
-                      stat.date.year,
-                      stat.date.month,
-                      stat.date.day,
-                    )] = stat.activeModules;
+                          stat.date.year,
+                          stat.date.month,
+                          stat.date.day,
+                        )] =
+                        stat.activeModules;
                   }
                 }
                 return HeatmapCalendar(
@@ -428,7 +431,7 @@ class _ExpTrendPlaceholder extends StatelessWidget {
                 Icon(
                   Icons.trending_up_rounded,
                   size: 18,
-                  color: AppColors.primary,
+                  color: context.growthColors.primary,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
@@ -480,10 +483,8 @@ class _MonthlyBreakdown extends StatelessWidget {
         Text('月度明细', style: theme.textTheme.titleMedium),
         const SizedBox(height: AppSpacing.sm),
         ...monthlyStats.map(
-          (month) => _MonthlyBreakdownItem(
-            month: month,
-            maxMinutes: maxMinutes,
-          ),
+          (month) =>
+              _MonthlyBreakdownItem(month: month, maxMinutes: maxMinutes),
         ),
       ],
     );
@@ -492,10 +493,7 @@ class _MonthlyBreakdown extends StatelessWidget {
 
 /// 单月明细项
 class _MonthlyBreakdownItem extends StatelessWidget {
-  const _MonthlyBreakdownItem({
-    required this.month,
-    required this.maxMinutes,
-  });
+  const _MonthlyBreakdownItem({required this.month, required this.maxMinutes});
 
   final MonthlyAggregate month;
   final int maxMinutes;
@@ -558,7 +556,7 @@ class _MonthlyBreakdownItem extends StatelessWidget {
                   Text(
                     '+${formatExp(month.expGained)}',
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: AppColors.primary,
+                      color: context.growthColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -610,11 +608,11 @@ class _MonthlyMiniBar extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: studyMinutes.clamp(1, 99999),
-                      child: Container(color: AppColors.study),
+                      child: Container(color: context.growthColors.study),
                     ),
                     Expanded(
                       flex: fitnessMinutes.clamp(1, 99999),
-                      child: Container(color: AppColors.fitness),
+                      child: Container(color: context.growthColors.fitness),
                     ),
                   ],
                 ),
@@ -636,20 +634,19 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            Icon(Icons.error_outline, size: 48, color: colors.danger),
             const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.md),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('重试'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('重试')),
           ],
         ),
       ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../app/design/design.dart';
+
 /// 统一的空状态组件
 class EmptyStateWidget extends StatelessWidget {
   const EmptyStateWidget({
@@ -17,40 +19,33 @@ class EmptyStateWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: accentColor.withValues(alpha: 0.2),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            icon,
-            size: 48,
-            color: accentColor.withValues(alpha: 0.4),
-          ),
+          Icon(icon, size: 48, color: accentColor.withValues(alpha: 0.4)),
           const SizedBox(height: 16),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF1F2329),
+              color: colors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
           Text(
             subtitle,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF86909C),
-            ),
+            style: TextStyle(fontSize: 13, color: colors.textSecondary),
             textAlign: TextAlign.center,
           ),
         ],

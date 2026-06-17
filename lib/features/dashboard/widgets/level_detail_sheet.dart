@@ -32,70 +32,69 @@ class LevelDetailSheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => LevelDetailSheet(
-        currentLevel: currentLevel,
-        totalExp: totalExp,
-      ),
+      builder: (context) =>
+          LevelDetailSheet(currentLevel: currentLevel, totalExp: totalExp),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
+    final colors = context.growthColors;
 
     return Container(
       height: screenHeight * 0.75,
-      decoration: const BoxDecoration(
-        color: AppColors.card,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x146B5CEA),
+            color: colors.primary.withValues(alpha: 0.08),
             blurRadius: 12,
-            offset: Offset(0, -2),
+            offset: const Offset(0, -2),
           ),
         ],
       ),
       child: Column(
         children: [
           // 顶部拖拽指示器
-          _buildDragHandle(),
+          _buildDragHandle(context),
 
           // 头部：紫色六边形等级图标 + 等级名称 + 经验值
-          _buildHeader(),
+          _buildHeader(context),
 
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+          Divider(height: 1, color: colors.divider),
 
           // 等级体系列表
-          Expanded(
-            child: _buildLevelList(),
-          ),
+          Expanded(child: _buildLevelList(context)),
 
           // 当前等级权益列表
-          _buildBenefitsList(),
+          _buildBenefitsList(context),
 
           // 底部提示文字
-          _buildFooterHint(),
+          _buildFooterHint(context),
         ],
       ),
     );
   }
 
   /// 顶部拖拽指示器
-  Widget _buildDragHandle() {
+  Widget _buildDragHandle(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       margin: const EdgeInsets.only(top: 12),
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: AppColors.textHint.withValues(alpha: 0.4),
+        color: colors.textHint.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(2),
       ),
     );
   }
 
   /// 头部：紫色六边形等级图标 + 等级名称 + 经验值
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
+    final colors = context.growthColors;
     final levelData = _getLevelDataForLevel(currentLevel);
 
     return Padding(
@@ -103,7 +102,7 @@ class LevelDetailSheet extends StatelessWidget {
       child: Row(
         children: [
           // 紫色六边形等级图标
-          _buildHexagonIcon(currentLevel),
+          _buildHexagonIcon(context, currentLevel),
           const SizedBox(width: 16),
 
           // 等级名称 + 经验值
@@ -113,19 +112,16 @@ class LevelDetailSheet extends StatelessWidget {
               children: [
                 Text(
                   'Lv.$currentLevel ${levelData?.name ?? '未知'}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '总经验值: $totalExp EXP',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 14, color: colors.textSecondary),
                 ),
               ],
             ),
@@ -136,15 +132,16 @@ class LevelDetailSheet extends StatelessWidget {
   }
 
   /// 紫色六边形等级图标
-  Widget _buildHexagonIcon(int level) {
+  Widget _buildHexagonIcon(BuildContext context, int level) {
+    final colors = context.growthColors;
     return ClipPath(
       clipper: _HexagonClipper(),
       child: Container(
         width: 56,
         height: 56,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [AppColors.primaryLight, AppColors.primary],
+            colors: [colors.primaryLight, colors.primary],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -152,8 +149,8 @@ class LevelDetailSheet extends StatelessWidget {
         child: Center(
           child: Text(
             '$level',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: colors.textOnAccent,
               fontSize: 22,
               fontWeight: FontWeight.w900,
             ),
@@ -164,7 +161,7 @@ class LevelDetailSheet extends StatelessWidget {
   }
 
   /// 等级体系列表（显示当前等级和相邻等级）
-  Widget _buildLevelList() {
+  Widget _buildLevelList(BuildContext context) {
     final allLevels = _getAllLevelData();
     final currentIndex = allLevels.indexWhere((l) => l.level == currentLevel);
 
@@ -192,7 +189,8 @@ class LevelDetailSheet extends StatelessWidget {
   }
 
   /// 当前等级权益列表（紫色对勾）
-  Widget _buildBenefitsList() {
+  Widget _buildBenefitsList(BuildContext context) {
+    final colors = context.growthColors;
     final benefits = _getBenefitsForLevel(currentLevel);
 
     return Container(
@@ -200,44 +198,40 @@ class LevelDetailSheet extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '当前权益',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
           const SizedBox(height: 8),
-          ...benefits.map((benefit) => Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: AppColors.primary,
-                      size: 18,
+          ...benefits.map(
+            (benefit) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle, color: colors.primary, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      benefit,
+                      style: TextStyle(fontSize: 14, color: colors.textPrimary),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        benefit,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              )),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
   /// 底部提示文字
-  Widget _buildFooterHint() {
+  Widget _buildFooterHint(BuildContext context) {
+    final colors = context.growthColors;
     final nextLevelExp = (currentLevel) * (currentLevel) * 100;
     final remainingExp = nextLevelExp - totalExp;
 
@@ -247,10 +241,7 @@ class LevelDetailSheet extends StatelessWidget {
         remainingExp > 0
             ? '距离下一级还需 $remainingExp 经验值，继续加油！'
             : '已达最高等级，继续积累经验值吧！',
-        style: const TextStyle(
-          fontSize: 12,
-          color: AppColors.textSecondary,
-        ),
+        style: TextStyle(fontSize: 12, color: colors.textSecondary),
         textAlign: TextAlign.center,
       ),
     );
@@ -278,18 +269,90 @@ class LevelDetailSheet extends StatelessWidget {
   /// 获取所有等级数据
   List<LevelData> _getAllLevelData() {
     return [
-      const LevelData(level: 1, name: '萌新', icon: Icons.child_care, color: Colors.grey, requiredExp: 0),
-      const LevelData(level: 2, name: '探索者', icon: Icons.explore, color: Colors.brown, requiredExp: 100),
-      const LevelData(level: 3, name: '新手', icon: Icons.school, color: Colors.orange, requiredExp: 400),
-      const LevelData(level: 5, name: '入门者', icon: Icons.auto_stories, color: Colors.blue, requiredExp: 1600),
-      const LevelData(level: 8, name: '学习者', icon: Icons.psychology, color: Colors.teal, requiredExp: 4900),
-      const LevelData(level: 10, name: '进阶者', icon: Icons.trending_up, color: Colors.green, requiredExp: 8100),
-      const LevelData(level: 15, name: '高手', icon: Icons.star, color: Colors.purple, requiredExp: 19600),
-      const LevelData(level: 20, name: '精英', icon: Icons.diamond, color: Colors.indigo, requiredExp: 36100),
-      const LevelData(level: 30, name: '大师', icon: Icons.workspace_premium, color: Colors.amber, requiredExp: 84100),
-      const LevelData(level: 50, name: '传奇', icon: Icons.local_fire_department, color: Colors.red, requiredExp: 240100),
-      const LevelData(level: 80, name: '神话', icon: Icons.auto_fix_high, color: Colors.deepOrange, requiredExp: 624100),
-      const LevelData(level: 100, name: '永恒', icon: Icons.all_inclusive, color: Colors.black87, requiredExp: 980100),
+      const LevelData(
+        level: 1,
+        name: '萌新',
+        icon: Icons.child_care,
+        color: Colors.grey,
+        requiredExp: 0,
+      ),
+      const LevelData(
+        level: 2,
+        name: '探索者',
+        icon: Icons.explore,
+        color: Colors.brown,
+        requiredExp: 100,
+      ),
+      const LevelData(
+        level: 3,
+        name: '新手',
+        icon: Icons.school,
+        color: Colors.orange,
+        requiredExp: 400,
+      ),
+      const LevelData(
+        level: 5,
+        name: '入门者',
+        icon: Icons.auto_stories,
+        color: Colors.blue,
+        requiredExp: 1600,
+      ),
+      const LevelData(
+        level: 8,
+        name: '学习者',
+        icon: Icons.psychology,
+        color: Colors.teal,
+        requiredExp: 4900,
+      ),
+      const LevelData(
+        level: 10,
+        name: '进阶者',
+        icon: Icons.trending_up,
+        color: Colors.green,
+        requiredExp: 8100,
+      ),
+      const LevelData(
+        level: 15,
+        name: '高手',
+        icon: Icons.star,
+        color: Colors.purple,
+        requiredExp: 19600,
+      ),
+      const LevelData(
+        level: 20,
+        name: '精英',
+        icon: Icons.diamond,
+        color: Colors.indigo,
+        requiredExp: 36100,
+      ),
+      const LevelData(
+        level: 30,
+        name: '大师',
+        icon: Icons.workspace_premium,
+        color: Colors.amber,
+        requiredExp: 84100,
+      ),
+      const LevelData(
+        level: 50,
+        name: '传奇',
+        icon: Icons.local_fire_department,
+        color: Colors.red,
+        requiredExp: 240100,
+      ),
+      const LevelData(
+        level: 80,
+        name: '神话',
+        icon: Icons.auto_fix_high,
+        color: Colors.deepOrange,
+        requiredExp: 624100,
+      ),
+      const LevelData(
+        level: 100,
+        name: '永恒',
+        icon: Icons.all_inclusive,
+        color: Colors.black87,
+        requiredExp: 980100,
+      ),
     ];
   }
 }
@@ -348,31 +411,30 @@ class _LevelTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         color: isCurrentLevel
-            ? AppColors.primaryLight.withValues(alpha: 0.3)
+            ? colors.primaryLight.withValues(alpha: 0.3)
             : null,
         border: isCurrentLevel
-            ? Border.all(
-                color: AppColors.primary.withValues(alpha: 0.5),
-                width: 2,
-              )
+            ? Border.all(color: colors.primary.withValues(alpha: 0.5), width: 2)
             : null,
       ),
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: _buildIcon(),
-        title: _buildTitle(),
-        subtitle: _buildSubtitle(),
-        trailing: _buildTrailing(),
+        leading: _buildIcon(context),
+        title: _buildTitle(context),
+        subtitle: _buildSubtitle(context),
+        trailing: _buildTrailing(context),
       ),
     );
   }
 
-  Widget _buildIcon() {
+  Widget _buildIcon(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: 48,
       height: 48,
@@ -380,19 +442,20 @@ class _LevelTile extends StatelessWidget {
         shape: BoxShape.circle,
         color: isUnlocked
             ? levelData.color.withValues(alpha: 0.15)
-            : AppColors.textHint.withValues(alpha: 0.3),
+            : colors.textHint.withValues(alpha: 0.3),
       ),
       child: Icon(
         levelData.icon,
         color: isUnlocked
             ? levelData.color
-            : AppColors.textHint.withValues(alpha: 0.5),
+            : colors.textHint.withValues(alpha: 0.5),
         size: 24,
       ),
     );
   }
 
-  Widget _buildTitle() {
+  Widget _buildTitle(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Text(
@@ -400,9 +463,7 @@ class _LevelTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isUnlocked
-                ? AppColors.textSecondary
-                : AppColors.textHint,
+            color: isUnlocked ? colors.textSecondary : colors.textHint,
           ),
         ),
         const SizedBox(width: 8),
@@ -411,9 +472,7 @@ class _LevelTile extends StatelessWidget {
           style: TextStyle(
             fontSize: 16,
             fontWeight: isCurrentLevel ? FontWeight.bold : FontWeight.w500,
-            color: isUnlocked
-                ? AppColors.textPrimary
-                : AppColors.textHint,
+            color: isUnlocked ? colors.textPrimary : colors.textHint,
           ),
         ),
         if (isCurrentLevel) ...[
@@ -421,14 +480,14 @@ class _LevelTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: colors.primary,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Text(
+            child: Text(
               '当前',
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.white,
+                color: colors.textOnAccent,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -438,41 +497,38 @@ class _LevelTile extends StatelessWidget {
     );
   }
 
-  Widget _buildSubtitle() {
+  Widget _buildSubtitle(BuildContext context) {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.only(top: 4),
       child: Text(
         '需要 ${_formatExp(levelData.requiredExp)} EXP',
         style: TextStyle(
           fontSize: 12,
-          color: isUnlocked
-              ? AppColors.primary
-              : AppColors.textHint,
+          color: isUnlocked ? colors.primary : colors.textHint,
           fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
 
-  Widget _buildTrailing() {
+  Widget _buildTrailing(BuildContext context) {
+    final colors = context.growthColors;
     if (isUnlocked && !isCurrentLevel) {
-      return const Icon(
-        Icons.check_circle,
-        color: AppColors.success,
-        size: 24,
-      );
+      return Icon(Icons.check_circle, color: colors.success, size: 24);
     }
 
     if (!isUnlocked) {
       return Icon(
         Icons.lock_outline,
-        color: AppColors.textHint.withValues(alpha: 0.5),
+        color: colors.textHint.withValues(alpha: 0.5),
         size: 24,
       );
     }
 
     // 当前等级显示进度
-    final currentLevelStart = (levelData.level - 1) * (levelData.level - 1) * 100;
+    final currentLevelStart =
+        (levelData.level - 1) * (levelData.level - 1) * 100;
     final nextLevelExp = levelData.level * levelData.level * 100;
     final progressExp = totalExp - currentLevelStart;
     final requiredForNext = nextLevelExp - currentLevelStart;
@@ -487,10 +543,10 @@ class _LevelTile extends StatelessWidget {
         children: [
           Text(
             '${(progress * 100).toInt()}%',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: AppColors.primary,
+              color: colors.primary,
             ),
           ),
           const SizedBox(height: 4),
@@ -499,10 +555,8 @@ class _LevelTile extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 4,
-              backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                AppColors.primary,
-              ),
+              backgroundColor: colors.primary.withValues(alpha: 0.15),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
             ),
           ),
         ],

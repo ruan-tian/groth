@@ -18,8 +18,7 @@ class AddStudyRecordPage extends ConsumerStatefulWidget {
   const AddStudyRecordPage({super.key});
 
   @override
-  ConsumerState<AddStudyRecordPage> createState() =>
-      _AddStudyRecordPageState();
+  ConsumerState<AddStudyRecordPage> createState() => _AddStudyRecordPageState();
 }
 
 class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
@@ -144,10 +143,8 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
       final companion = StudyRecordsCompanion.insert(
         mode: _isProfessional ? 'professional' : 'simple',
         title: _titleController.text.trim(),
-        subject:
-            Value(_isProfessional ? _subjectController.text.trim() : null),
-        chapter:
-            Value(_isProfessional ? _chapterController.text.trim() : null),
+        subject: Value(_isProfessional ? _subjectController.text.trim() : null),
+        chapter: Value(_isProfessional ? _chapterController.text.trim() : null),
         startTime: _startTime.millisecondsSinceEpoch,
         endTime: _endTime.millisecondsSinceEpoch,
         durationMinutes: duration,
@@ -190,25 +187,26 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
         final studyRepo = ref.read(studyRepositoryProvider);
         recordId = await studyRepo.insertStudyRecord(companion);
         await studyRepo.updateStudyRecordExp(recordId, exp);
-        await ref.read(expRepositoryProvider).insertExpLog(
-          GrowthExpLogsCompanion.insert(
-            sourceType: 'study',
-            sourceId: recordId,
-            expValue: exp,
-            reason: '学习: ${_titleController.text.trim()} ($duration min)',
-            createdAt: now,
-          ),
-        );
+        await ref
+            .read(expRepositoryProvider)
+            .insertExpLog(
+              GrowthExpLogsCompanion.insert(
+                sourceType: 'study',
+                sourceId: recordId,
+                expValue: exp,
+                reason: '学习: ${_titleController.text.trim()} ($duration min)',
+                createdAt: now,
+              ),
+            );
       });
 
       // 等级提升检测
       final newTotal = oldTotal + exp;
       final newLevel = expService.calculateLevel(newTotal);
       if (newLevel > oldLevel) {
-        PetEventBus.instance.emit(PetEvent.levelUp(
-          oldLevel: oldLevel,
-          newLevel: newLevel,
-        ));
+        PetEventBus.instance.emit(
+          PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
+        );
       }
 
       // 刷新相关 Provider
@@ -221,22 +219,24 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
       if (mounted) {
         // 发送宠物事件
         final eventId = 'study_${DateTime.now().millisecondsSinceEpoch}';
-        PetEventBus.instance.emit(PetEvent.moduleCompleted(
-          eventId: eventId,
-          type: PetEventType.studyCompleted,
-          module: 'study',
-        ));
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('已保存，获得 $exp EXP')),
+        PetEventBus.instance.emit(
+          PetEvent.moduleCompleted(
+            eventId: eventId,
+            type: PetEventType.studyCompleted,
+            module: 'study',
+          ),
         );
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('已保存，获得 $exp EXP')));
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -250,11 +250,11 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.growthColors.background,
       appBar: AppBar(
         title: const Text('添加学习记录'),
         centerTitle: true,
-        backgroundColor: AppColors.background,
+        backgroundColor: context.growthColors.background,
       ),
       body: SafeArea(
         child: Form(
@@ -281,9 +281,8 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
                         label: '学习内容',
                         hint: '例如：学习 Flutter',
                         icon: Icons.book_rounded,
-                        validator: (v) => (v == null || v.trim().isEmpty)
-                            ? '请输入学习内容'
-                            : null,
+                        validator: (v) =>
+                            (v == null || v.trim().isEmpty) ? '请输入学习内容' : null,
                       ),
                       const SizedBox(height: AppSpacing.lg),
 
@@ -298,6 +297,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
                           if (v == null || v.trim().isEmpty) return '请输入学习时长';
                           final n = int.tryParse(v.trim());
                           if (n == null || n <= 0) return '请输入有效时长';
+                          if (n > 1440) return '单次学习时长不能超过24小时';
                           return null;
                         },
                       ),
@@ -369,8 +369,7 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
                         const SizedBox(height: AppSpacing.sm),
                         RatingSelector(
                           value: _masteryLevel,
-                          onChanged: (v) =>
-                              setState(() => _masteryLevel = v),
+                          onChanged: (v) => setState(() => _masteryLevel = v),
                         ),
                         const SizedBox(height: AppSpacing.lg),
 
@@ -446,13 +445,19 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
         const SizedBox(height: AppSpacing.sm),
         TextFormField(
           controller: controller,
-          textInputAction: textInputAction ?? (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
+          textInputAction:
+              textInputAction ??
+              (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
           keyboardType: keyboardType,
           maxLines: maxLines,
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 20),
+            prefixIcon: Icon(
+              icon,
+              color: context.growthColors.textTertiary,
+              size: 20,
+            ),
           ),
         ),
       ],
@@ -492,15 +497,15 @@ class _DateTimeField extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             decoration: BoxDecoration(
-              color: AppColors.card,
-              border: Border.all(color: AppColors.border),
+              color: context.growthColors.card,
+              border: Border.all(color: context.growthColors.border),
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
             child: Row(
               children: [
                 Icon(
                   Icons.access_time_rounded,
-                  color: AppColors.textTertiary,
+                  color: context.growthColors.textTertiary,
                   size: 20,
                 ),
                 const SizedBox(width: AppSpacing.sm),

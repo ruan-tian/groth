@@ -46,10 +46,10 @@ class DateGroupHeader extends StatelessWidget {
       padding: const EdgeInsets.only(top: AppSpacing.lg, bottom: AppSpacing.sm),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: AppColors.textSecondary,
+          color: context.growthColors.textSecondary,
         ),
       ),
     );

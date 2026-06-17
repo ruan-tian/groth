@@ -9,38 +9,22 @@ class AppShadows {
 
   /// Subtle lift for cards, chips, list items.
   static const List<BoxShadow> sm = [
-    BoxShadow(
-      color: Color(0x0A000000),
-      blurRadius: 8,
-      offset: Offset(0, 2),
-    ),
+    BoxShadow(color: Color(0x0A000000), blurRadius: 8, offset: Offset(0, 2)),
   ];
 
   /// Standard card elevation.
   static const List<BoxShadow> md = [
-    BoxShadow(
-      color: Color(0x10000000),
-      blurRadius: 16,
-      offset: Offset(0, 4),
-    ),
+    BoxShadow(color: Color(0x10000000), blurRadius: 16, offset: Offset(0, 4)),
   ];
 
   /// Prominent cards, bottom sheets.
   static const List<BoxShadow> lg = [
-    BoxShadow(
-      color: Color(0x14000000),
-      blurRadius: 24,
-      offset: Offset(0, 8),
-    ),
+    BoxShadow(color: Color(0x14000000), blurRadius: 24, offset: Offset(0, 8)),
   ];
 
   /// Floating elements: FAB, modals, dropdowns.
   static const List<BoxShadow> xl = [
-    BoxShadow(
-      color: Color(0x1A000000),
-      blurRadius: 32,
-      offset: Offset(0, 12),
-    ),
+    BoxShadow(color: Color(0x1A000000), blurRadius: 32, offset: Offset(0, 12)),
   ];
 
   /// Inset shadow for pressed/active states.
@@ -54,7 +38,11 @@ class AppShadows {
   ];
 
   /// Create a shadow tinted with a module accent color.
-  static List<BoxShadow> colored(Color color, {double blurRadius = 18, double offsetY = 8}) {
+  static List<BoxShadow> colored(
+    Color color, {
+    double blurRadius = 18,
+    double offsetY = 8,
+  }) {
     return [
       BoxShadow(
         color: color.withValues(alpha: 0.12),

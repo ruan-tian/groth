@@ -1,4 +1,4 @@
-﻿part of '../pages/fitness_training_timer_page.dart';
+part of '../pages/fitness_training_timer_page.dart';
 
 class _TemplatePickerSheet extends StatelessWidget {
   const _TemplatePickerSheet({
@@ -13,6 +13,7 @@ class _TemplatePickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _SheetFrame(
       title: '选择训练模板',
       child: Column(
@@ -20,10 +21,19 @@ class _TemplatePickerSheet extends StatelessWidget {
           final selected = template.id == selectedTemplateId;
           return ListTile(
             contentPadding: EdgeInsets.zero,
-            title: Text(template.name),
-            subtitle: Text(template.description ?? template.bodyPart),
+            title: Text(
+              template.name,
+              style: TextStyle(
+                color: colors.textPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            subtitle: Text(
+              template.description ?? template.bodyPart,
+              style: TextStyle(color: colors.textSecondary),
+            ),
             trailing: selected
-                ? const Icon(Icons.check_circle, color: AppColors.fitness)
+                ? Icon(Icons.check_circle, color: colors.fitness)
                 : null,
             onTap: () => onSelect(template),
           );
@@ -65,6 +75,7 @@ class _PlanEditorSheetState extends State<_PlanEditorSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _SheetFrame(
       title: '训练编排',
       child: Column(
@@ -119,8 +130,12 @@ class _PlanEditorSheetState extends State<_PlanEditorSheet> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             value: _saveAsTemplate,
+            activeThumbColor: colors.fitness,
             onChanged: (value) => setState(() => _saveAsTemplate = value),
-            title: const Text('保存为自定义模板'),
+            title: Text(
+              '保存为自定义模板',
+              style: TextStyle(color: colors.textPrimary),
+            ),
           ),
           ElevatedButton(
             onPressed: _exercises.isEmpty
@@ -139,8 +154,8 @@ class _PlanEditorSheetState extends State<_PlanEditorSheet> {
                     ),
                   ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.fitness,
-              foregroundColor: Colors.white,
+              backgroundColor: colors.fitness,
+              foregroundColor: colors.textOnAccent,
               minimumSize: const Size.fromHeight(50),
             ),
             child: const Text('应用编排'),
@@ -168,9 +183,14 @@ class _EditableExerciseTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Card(
       elevation: 0,
-      color: const Color(0xFFFFF8F1),
+      color: colors.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: colors.border.withValues(alpha: 0.7)),
+      ),
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
@@ -282,10 +302,7 @@ class _SmallNumberField extends StatelessWidget {
       child: TextFormField(
         initialValue: '$value',
         textInputAction: TextInputAction.next,
-        decoration: InputDecoration(
-          labelText: label,
-          isDense: true,
-        ),
+        decoration: InputDecoration(labelText: label, isDense: true),
         keyboardType: TextInputType.number,
         onChanged: (value) => onChanged(int.tryParse(value) ?? 0),
       ),
@@ -318,6 +335,7 @@ class _SaveSummarySheetState extends State<_SaveSummarySheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _SheetFrame(
       title: '保存训练记录',
       child: Column(
@@ -325,7 +343,10 @@ class _SaveSummarySheetState extends State<_SaveSummarySheet> {
         children: [
           Text(
             '${widget.session.completedSets} 组 · ${_formatDuration(Duration(seconds: widget.session.totalElapsedSeconds))} · ${widget.session.estimatedCalories} kcal',
-            style: const TextStyle(fontWeight: FontWeight.w800),
+            style: TextStyle(
+              color: colors.textPrimary,
+              fontWeight: FontWeight.w800,
+            ),
           ),
           const SizedBox(height: 14),
           _RatingRow(
@@ -358,8 +379,8 @@ class _SaveSummarySheetState extends State<_SaveSummarySheet> {
                     if (context.mounted) Navigator.pop(context, true);
                   },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.fitness,
-              foregroundColor: Colors.white,
+              backgroundColor: colors.fitness,
+              foregroundColor: colors.textOnAccent,
               minimumSize: const Size.fromHeight(52),
             ),
             child: Text(_saving ? '保存中...' : '确认保存'),
@@ -383,18 +404,22 @@ class _RatingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
         children: [
-          SizedBox(width: 82, child: Text(label)),
+          SizedBox(
+            width: 82,
+            child: Text(label, style: TextStyle(color: colors.textPrimary)),
+          ),
           ...List.generate(5, (index) {
             final selected = index < value;
             return IconButton(
               onPressed: () => onChanged(index + 1),
               icon: Icon(
                 selected ? Icons.star_rounded : Icons.star_border_rounded,
-                color: AppColors.fitness,
+                color: selected ? colors.fitness : colors.textHint,
               ),
             );
           }),
@@ -412,6 +437,7 @@ class _SheetFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.86,
@@ -422,9 +448,9 @@ class _SheetFrame extends StatelessWidget {
         22,
         22 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: colors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SingleChildScrollView(
         child: Column(
@@ -436,13 +462,18 @@ class _SheetFrame extends StatelessWidget {
                 width: 42,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.border,
+                  color: colors.border,
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
             ),
             const SizedBox(height: 16),
-            Text(title, style: AppTextStyles.pageTitle),
+            Text(
+              title,
+              style: AppTextStyles.pageTitle.copyWith(
+                color: colors.textPrimary,
+              ),
+            ),
             const SizedBox(height: 14),
             child,
           ],
@@ -466,14 +497,15 @@ class _PlanEditResult {
   final bool saveAsTemplate;
 }
 
-BoxDecoration _cardDecoration() {
+BoxDecoration _cardDecoration(BuildContext context) {
+  final colors = context.growthColors;
   return BoxDecoration(
-    color: Colors.white.withValues(alpha: 0.94),
+    color: colors.paper.withValues(alpha: 0.94),
     borderRadius: BorderRadius.circular(26),
-    border: Border.all(color: AppColors.fitness.withValues(alpha: 0.13)),
+    border: Border.all(color: colors.fitness.withValues(alpha: 0.14)),
     boxShadow: [
       BoxShadow(
-        color: AppColors.fitness.withValues(alpha: 0.08),
+        color: colors.shadow.withValues(alpha: 0.24),
         blurRadius: 18,
         offset: const Offset(0, 8),
       ),

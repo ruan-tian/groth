@@ -51,10 +51,7 @@ class DietRepository {
   }
 
   /// 获取指定日期范围内的饮食记录（按日期正序）。
-  Future<List<DietRecord>> getDietRecordsByRange(
-    DateTime start,
-    DateTime end,
-  ) {
+  Future<List<DietRecord>> getDietRecordsByRange(DateTime start, DateTime end) {
     final startStr = _formatDate(start);
     final endStr = _formatDate(end);
     return (_db.select(_db.dietRecords)
@@ -69,8 +66,9 @@ class DietRepository {
 
   /// 根据 ID 获取单条饮食记录。
   Future<DietRecord?> getDietRecordById(int id) {
-    return (_db.select(_db.dietRecords)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.dietRecords,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   // ---------------------------------------------------------------------------
@@ -80,20 +78,22 @@ class DietRepository {
   /// 获取指定日期的饮食次数。
   Future<int> getDietCountByDate(DateTime date) async {
     final dateStr = _formatDate(date);
-    final result = await (_db.selectOnly(_db.dietRecords)
-          ..addColumns([_db.dietRecords.id.count()])
-          ..where(_db.dietRecords.mealDate.equals(dateStr)))
-        .getSingle();
+    final result =
+        await (_db.selectOnly(_db.dietRecords)
+              ..addColumns([_db.dietRecords.id.count()])
+              ..where(_db.dietRecords.mealDate.equals(dateStr)))
+            .getSingle();
     return result.read(_db.dietRecords.id.count()) ?? 0;
   }
 
   /// 获取指定日期的平均健康评分。
   Future<double?> getAvgHealthScoreByDate(DateTime date) async {
     final dateStr = _formatDate(date);
-    final result = await (_db.selectOnly(_db.dietRecords)
-          ..addColumns([_db.dietRecords.healthScore.avg()])
-          ..where(_db.dietRecords.mealDate.equals(dateStr)))
-        .getSingle();
+    final result =
+        await (_db.selectOnly(_db.dietRecords)
+              ..addColumns([_db.dietRecords.healthScore.avg()])
+              ..where(_db.dietRecords.mealDate.equals(dateStr)))
+            .getSingle();
     return result.read(_db.dietRecords.healthScore.avg());
   }
 

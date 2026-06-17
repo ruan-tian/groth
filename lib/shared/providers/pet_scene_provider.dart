@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -55,14 +55,16 @@ class PetSceneState {
 /// 每个模块独立拥有一个实例，互不干扰。
 class PetSceneNotifier extends StateNotifier<PetSceneState> {
   PetSceneNotifier(PetModuleType module)
-      : _module = module,
-        super(PetSceneState(
+    : _module = module,
+      super(
+        PetSceneState(
           config: PetSceneConfig(
             state: module.idleStates.first,
             message: PetSceneResolver.getWelcomeBubble(module),
             decoration: getDecorationForState(module.idleStates.first),
           ),
-        ));
+        ),
+      );
 
   final PetModuleType _module;
   Timer? _idleTimer;
@@ -132,7 +134,10 @@ class PetSceneNotifier extends StateNotifier<PetSceneState> {
   }
 
   /// 显示自定义气泡
-  void showBubble(String text, {Duration duration = const Duration(seconds: 3)}) {
+  void showBubble(
+    String text, {
+    Duration duration = const Duration(seconds: 3),
+  }) {
     _bubbleTimer?.cancel();
     state = state.copyWith(showBubble: true, bubbleText: text);
     _bubbleTimer = Timer(duration, () {
@@ -157,7 +162,8 @@ class PetSceneNotifier extends StateNotifier<PetSceneState> {
   }
 
   /// 切换到 AI 完成状态（带完整报告数据）
-  void setReport(String petMessage, {
+  void setReport(
+    String petMessage, {
     String? title,
     List<String> highlights = const [],
     List<String> suggestions = const [],
@@ -230,7 +236,11 @@ class PetSceneNotifier extends StateNotifier<PetSceneState> {
 }
 
 /// 宠物场景 Provider（按模块分组，每个模块独立状态）
-final petSceneProvider = StateNotifierProvider.family<
-    PetSceneNotifier, PetSceneState, PetModuleType>((ref, module) {
-  return PetSceneNotifier(module);
-});
+final petSceneProvider =
+    StateNotifierProvider.family<
+      PetSceneNotifier,
+      PetSceneState,
+      PetModuleType
+    >((ref, module) {
+      return PetSceneNotifier(module);
+    });

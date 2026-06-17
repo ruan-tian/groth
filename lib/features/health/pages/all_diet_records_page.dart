@@ -37,27 +37,27 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
     final recordsAsync = ref.watch(recentDietRecordsProvider(_loadLimit));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.growthColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '全部饮食记录',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: context.growthColors.textPrimary,
           ),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.background,
+        backgroundColor: context.growthColors.background,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: AppColors.textPrimary,
+          color: context.growthColors.textPrimary,
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           PopupMenuButton<DietSortOption>(
-            icon: const Icon(Icons.sort, color: AppColors.textSecondary),
+            icon: Icon(Icons.sort, color: context.growthColors.textSecondary),
             onSelected: (option) => setState(() => _sortOption = option),
             itemBuilder: (context) => [
               _buildSortItem(DietSortOption.newest, '最新优先'),
@@ -79,7 +79,7 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
         error: (e, _) => Center(
           child: Text(
             '加载失败: $e',
-            style: const TextStyle(color: AppColors.textSecondary),
+            style: TextStyle(color: context.growthColors.textSecondary),
           ),
         ),
       ),
@@ -100,7 +100,10 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
         children: [
           Text(
             text,
-            style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+            style: TextStyle(
+              fontSize: 14,
+              color: context.growthColors.textPrimary,
+            ),
           ),
           if (_sortOption == option) ...[
             const Spacer(),
@@ -398,20 +401,20 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '食物描述',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: context.growthColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   foodText,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textPrimary,
+                    color: context.growthColors.textPrimary,
                   ),
                 ),
               ],
@@ -427,15 +430,15 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
+        color: context.growthColors.surfaceVariant,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.note_outlined,
-            color: AppColors.textSecondary,
+            color: context.growthColors.textSecondary,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -443,19 +446,19 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   '备注',
                   style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textSecondary,
+                    color: context.growthColors.textSecondary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   note,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textPrimary,
+                    color: context.growthColors.textPrimary,
                   ),
                 ),
               ],
@@ -474,29 +477,34 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(
+        title: Text(
           '删除确认',
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: context.growthColors.textPrimary,
           ),
         ),
         content: Text(
           '确定要删除「${record.foodText}」吗？',
-          style: const TextStyle(fontSize: 14, color: AppColors.textSecondary),
+          style: TextStyle(
+            fontSize: 14,
+            color: context.growthColors.textSecondary,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               '取消',
-              style: TextStyle(color: AppColors.textSecondary),
+              style: TextStyle(color: context.growthColors.textSecondary),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('删除'),
           ),
         ],
@@ -519,7 +527,7 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
 
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+      ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
     }
   }
 
@@ -616,14 +624,18 @@ class _StatItem extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 22),
+        Icon(
+          icon,
+          color: context.growthColors.textOnAccent.withValues(alpha: 0.85),
+          size: 22,
+        ),
         const SizedBox(height: 6),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.w700,
-            color: Colors.white,
+            color: context.growthColors.textOnAccent,
           ),
         ),
         const SizedBox(height: 2),
@@ -631,7 +643,7 @@ class _StatItem extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withValues(alpha: 0.8),
+            color: context.growthColors.textOnAccent.withValues(alpha: 0.8),
           ),
         ),
       ],
@@ -672,7 +684,7 @@ class _DietRecordTile extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
         padding: const EdgeInsets.all(AppSpacing.md),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: context.growthColors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
           border: Border.all(color: _accent.withValues(alpha: 0.12)),
         ),
@@ -703,10 +715,10 @@ class _DietRecordTile extends StatelessWidget {
                     record.foodText,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: context.growthColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 3),
@@ -714,9 +726,9 @@ class _DietRecordTile extends StatelessWidget {
                     '$dateStr · ${_mealTypeLabel(record.mealType)} · ${_portionLabel(record.portionLevel)}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: context.growthColors.textSecondary,
                     ),
                   ),
                 ],

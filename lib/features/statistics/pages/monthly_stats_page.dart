@@ -196,7 +196,7 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.menu_book_rounded,
             label: '总学习',
             value: formatMinutesShort(totalStudy),
-            color: AppColors.study,
+            color: context.growthColors.study,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -205,7 +205,7 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.fitness_center_rounded,
             label: '总健身',
             value: formatMinutesShort(totalFitness),
-            color: AppColors.fitness,
+            color: context.growthColors.fitness,
           ),
         ),
         const SizedBox(width: AppSpacing.sm),
@@ -214,7 +214,7 @@ class _SummaryCards extends StatelessWidget {
             icon: Icons.star_rounded,
             label: '总经验',
             value: formatExp(totalExp),
-            color: AppColors.primary,
+            color: context.growthColors.primary,
           ),
         ),
       ],
@@ -267,7 +267,7 @@ class _TrendChart extends StatelessWidget {
             DurationLineChart(
               valuesInMinutes: values,
               labels: labels,
-              lineColor: AppColors.primary,
+              lineColor: context.growthColors.primary,
               height: 200,
             ),
           ],
@@ -331,7 +331,7 @@ class _HeatmapPlaceholder extends StatelessWidget {
                 Icon(
                   Icons.grid_view_rounded,
                   size: 18,
-                  color: AppColors.primary,
+                  color: context.growthColors.primary,
                 ),
                 const SizedBox(width: AppSpacing.sm),
                 Text(
@@ -381,10 +381,11 @@ class _DailyBreakdown extends StatelessWidget {
     final theme = Theme.of(context);
 
     // 过滤掉无数据的天（全为 0），按日期倒序
-    final activeStats = stats
-        .where((d) => d.studyMinutes + d.fitnessMinutes + d.expGained > 0)
-        .toList()
-      ..sort((a, b) => b.date.compareTo(a.date));
+    final activeStats =
+        stats
+            .where((d) => d.studyMinutes + d.fitnessMinutes + d.expGained > 0)
+            .toList()
+          ..sort((a, b) => b.date.compareTo(a.date));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -423,10 +424,7 @@ class _DailyBreakdown extends StatelessWidget {
 
 /// 单日明细项
 class _DailyBreakdownItem extends StatelessWidget {
-  const _DailyBreakdownItem({
-    required this.day,
-    required this.maxMinutes,
-  });
+  const _DailyBreakdownItem({required this.day, required this.maxMinutes});
 
   final DailyStats day;
   final int maxMinutes;
@@ -487,7 +485,7 @@ class _DailyBreakdownItem extends StatelessWidget {
                   Text(
                     '+${formatExp(day.expGained)}',
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: AppColors.primary,
+                      color: context.growthColors.primary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -539,11 +537,11 @@ class _MiniBar extends StatelessWidget {
                   children: [
                     Expanded(
                       flex: studyMinutes.clamp(1, 9999),
-                      child: Container(color: AppColors.study),
+                      child: Container(color: context.growthColors.study),
                     ),
                     Expanded(
                       flex: fitnessMinutes.clamp(1, 9999),
-                      child: Container(color: AppColors.fitness),
+                      child: Container(color: context.growthColors.fitness),
                     ),
                   ],
                 ),
@@ -565,20 +563,19 @@ class _ErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xl),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            Icon(Icons.error_outline, size: 48, color: colors.danger),
             const SizedBox(height: AppSpacing.md),
             Text(message, textAlign: TextAlign.center),
             const SizedBox(height: AppSpacing.md),
-            FilledButton(
-              onPressed: onRetry,
-              child: const Text('重试'),
-            ),
+            FilledButton(onPressed: onRetry, child: const Text('重试')),
           ],
         ),
       ),

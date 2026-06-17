@@ -37,11 +37,16 @@ class RecentRecordTile extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: AppSpacing.sm),
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
+        padding: const EdgeInsets.symmetric(
+          horizontal: AppSpacing.md,
+          vertical: AppSpacing.md,
+        ),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: context.growthColors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.border.withValues(alpha: 0.6)),
+          border: Border.all(
+            color: context.growthColors.border.withValues(alpha: 0.6),
+          ),
         ),
         child: Row(
           children: [
@@ -69,7 +74,7 @@ class RecentRecordTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: context.growthColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -79,7 +84,7 @@ class RecentRecordTile extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.textSecondary,
+                      color: context.growthColors.textSecondary,
                     ),
                   ),
                 ],
@@ -95,14 +100,16 @@ class RecentRecordTile extends StatelessWidget {
                   if (primaryBadge != null)
                     _Badge(
                       label: primaryBadge!,
-                      color: primaryBadgeColor ?? AppColors.primary,
+                      color: primaryBadgeColor ?? context.growthColors.primary,
                     ),
                   if (primaryBadge != null && secondaryBadge != null)
                     const SizedBox(height: 2),
                   if (secondaryBadge != null)
                     _Badge(
                       label: secondaryBadge!,
-                      color: secondaryBadgeColor ?? AppColors.textSecondary,
+                      color:
+                          secondaryBadgeColor ??
+                          context.growthColors.textSecondary,
                     ),
                 ],
               ),

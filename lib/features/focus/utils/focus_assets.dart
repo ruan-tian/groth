@@ -12,7 +12,8 @@ class FocusAssets {
       '$_root/backgrounds/bg_focus_session_landscape.webp';
 
   static const deskPortrait = '$_root/foregrounds/fg_focus_desk_portrait.png';
-  static const deskLandscape = '$_root/foregrounds/fg_focus_desk_landscape.webp';
+  static const deskLandscape =
+      '$_root/foregrounds/fg_focus_desk_landscape.webp';
 
   static const catIdle = '$_root/cats/focus_cat_idle.webp';
   static const catReading = '$_root/cats/focus_cat_reading.webp';

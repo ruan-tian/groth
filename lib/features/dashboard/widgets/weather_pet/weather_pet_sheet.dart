@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../../../app/design/design.dart';
 import 'weather_pet_card.dart';
 
 class WeatherPetSheet extends StatelessWidget {
@@ -9,7 +11,7 @@ class WeatherPetSheet extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: '关闭天气卡片',
-      barrierColor: Colors.black.withValues(alpha: 0.22),
+      barrierColor: context.growthColors.shadow.withValues(alpha: 0.22),
       transitionDuration: const Duration(milliseconds: 240),
       pageBuilder: (_, _, _) => const WeatherPetSheet(),
       transitionBuilder: (_, animation, _, child) {
@@ -18,10 +20,7 @@ class WeatherPetSheet extends StatelessWidget {
           curve: Curves.easeOutCubic,
           reverseCurve: Curves.easeInCubic,
         );
-        return FadeTransition(
-          opacity: curved,
-          child: child,
-        );
+        return FadeTransition(opacity: curved, child: child);
       },
     );
   }
@@ -47,7 +46,9 @@ class WeatherPetSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(26),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.18),
+                      color: context.growthColors.shadow.withValues(
+                        alpha: 0.18,
+                      ),
                       blurRadius: 32,
                       offset: const Offset(0, 18),
                     ),

@@ -13,7 +13,7 @@ class SegmentedTabs extends StatelessWidget {
     required this.onChanged,
     this.height = 40.0,
     this.backgroundColor = const Color(0xFFF0F1F6),
-    this.selectedColor = Colors.white,
+    this.selectedColor,
     this.borderRadius = 12.0,
   });
 
@@ -33,13 +33,14 @@ class SegmentedTabs extends StatelessWidget {
   final Color backgroundColor;
 
   /// 选中项颜色
-  final Color selectedColor;
+  final Color? selectedColor;
 
   /// 圆角半径
   final double borderRadius;
 
   @override
   Widget build(BuildContext context) {
+    final effectiveSelectedColor = selectedColor ?? context.growthColors.card;
     return Container(
       height: height,
       padding: const EdgeInsets.all(3),
@@ -58,7 +59,9 @@ class SegmentedTabs extends StatelessWidget {
                 curve: Curves.easeInOut,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: isSelected ? selectedColor : Colors.transparent,
+                  color: isSelected
+                      ? effectiveSelectedColor
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(borderRadius - 3),
                   boxShadow: isSelected
                       ? [
@@ -74,11 +77,10 @@ class SegmentedTabs extends StatelessWidget {
                   tabs[index],
                   style: TextStyle(
                     fontSize: 14,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w500,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
+                        ? context.growthColors.textPrimary
+                        : context.growthColors.textSecondary,
                   ),
                 ),
               ),

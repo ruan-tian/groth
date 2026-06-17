@@ -10,34 +10,46 @@ import '../../core/database/app_database.dart';
 import '../../core/services/statistics_service.dart';
 import '../../core/utils/chart_scale_utils.dart';
 import '../../shared/providers/dashboard_provider.dart';
+import '../../shared/providers/knowledge_card_provider.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/providers/study_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
 import '../plan/utils/plan_module_assets.dart';
 import '../plan/widgets/plan_module_visuals.dart';
+import 'utils/knowledge_card_assets.dart';
 
 part 'widgets/study_page_widgets.dart';
 
 // =============================================================================
-// 科目颜色映射（沉稳蓝风格）
+// 科目调色板（按排序 index 分配颜色，最多 15 色）
 // =============================================================================
 
-const _subjectColors = <String, Color>{
-  '数学': AppColors.study,
-  '英语': AppColors.success,
-  '物理': Color(0xFF3B82F6),
-  '化学': Color(0xFF06B6D4),
-  '编程': AppColors.primaryDark,
-  '语文': Color(0xFF4ADE80),
-  '历史': Color(0xFF6366F1),
-  '地理': Color(0xFF14B8A6),
-  '生物': Color(0xFF0EA5E9),
-  '其他': AppColors.textTertiary,
-};
+List<Color> _subjectPalette(AppThemeColors c) => [
+  c.danger, // 1 红
+  c.fitness, // 2 橙
+  c.diet, // 3 琥珀
+  c.accent, // 4 金
+  const Color(0xFF65A30D), // 5 黄绿
+  const Color(0xFF059669), // 6 翠绿
+  c.focus, // 7 青
+  const Color(0xFF2563EB), // 8 钢蓝
+  c.study, // 9 蓝
+  c.sleep, // 10 紫
+  const Color(0xFF7C3AED), // 11 紫罗兰
+  const Color(0xFFDB2777), // 12 品红
+  const Color(0xFFBE185D), // 13 玫红
+  c.journal, // 14 玫粉
+  c.primaryLight, // 15 浅靛
+];
+
+Color _colorByIndex(AppThemeColors colors, int index) {
+  final palette = _subjectPalette(colors);
+  return palette[index % palette.length];
+}
 
 // =============================================================================
-// StudyPage（沉稳蓝配色）
+// StudyPage锛堟矇绋宠摑閰嶈壊锛?
 // =============================================================================
 
 class StudyPage extends ConsumerStatefulWidget {
@@ -51,14 +63,19 @@ class StudyPage extends ConsumerStatefulWidget {
 
 class _StudyPageState extends ConsumerState<StudyPage> {
   String _selectedRange = 'week'; // 'week' | 'month' | 'year'
+  int _subjectDistDays = 30; // 科目分布范围: 1/7/30
   bool _isRecentExpanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final todayMinutes = ref.watch(todayStudyMinutesProvider);
     final todayRecords = ref.watch(todayStudyRecordsProvider);
     final recentRecords = ref.watch(recentStudyRecordsProvider);
-    final subjectDist = ref.watch(subjectDistributionProvider);
+    final subjectDist = ref.watch(
+      subjectDistributionByRangeProvider(_subjectDistDays),
+    );
+    final knowledgeGoals = ref.watch(knowledgeGoalSummariesProvider);
     final dailyGoals = ref.watch(dailyGoalsProvider);
     final studyGoal = dailyGoals.firstWhere(
       (g) => g.name == '学习',
@@ -66,26 +83,29 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
-              title: Text('学习', style: AppTextStyles.pageTitle),
+              title: Text(
+                '学习',
+                style: AppTextStyles.pageTitle.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
               centerTitle: false,
-              backgroundColor: AppColors.paper,
+              backgroundColor: colors.paper,
+              surfaceTintColor: Colors.transparent,
               actions: [
                 IconButton(
                   tooltip: '专注计时',
                   onPressed: () => context.push('/focus'),
-                  icon: const Icon(
-                    Icons.timer_outlined,
-                    color: AppColors.primaryDark,
-                  ),
+                  icon: Icon(Icons.timer_outlined, color: colors.study),
                 ),
               ],
             ),
       body: ModulePageSurface(
-        color: AppColors.study,
+        color: colors.study,
         child: RefreshIndicator(
           onRefresh: () async {
             ref.invalidate(todayStudyMinutesProvider);
@@ -96,26 +116,35 @@ class _StudyPageState extends ConsumerState<StudyPage> {
             ref.invalidate(yearlyMonthlyStudyProvider);
             ref.invalidate(recentStudyRecordsProvider);
             ref.invalidate(subjectDistributionProvider);
+            ref.invalidate(knowledgeCardsProvider);
+            ref.invalidate(knowledgeGoalSummariesProvider);
+            ref.invalidate(knowledgeDeckSummariesProvider);
+            ref.invalidate(dueKnowledgeCardsCountProvider);
+            ref.invalidate(
+              subjectDistributionByRangeProvider(_subjectDistDays),
+            );
           },
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── 小猫提示条 ──
+                // 鈹€鈹€ 灏忕尗鎻愮ず鏉?鈹€鈹€
                 PlanModuleVisualHeader(
                   module: PlanModuleType.study,
-                  color: AppColors.study,
+                  color: colors.study,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 PlanModuleActionImageCard(
                   module: PlanModuleType.study,
-                  color: AppColors.study,
+                  color: colors.study,
                   onTap: () => context.push('/focus'),
                 ),
+                const SizedBox(height: AppSpacing.md),
+                _buildKnowledgeReviewEntry(context, knowledgeGoals),
                 const SizedBox(height: AppSpacing.lg),
 
-                // ── 顶部数据卡片 ──
+                // 鈹€鈹€ 椤堕儴鏁版嵁鍗＄墖 鈹€鈹€
                 _buildStatsCards(
                   context,
                   ref,
@@ -125,20 +154,20 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                // ── 学习趋势 ──
-                _buildStudyTrendSection(context),
-                const SizedBox(height: AppSpacing.xl),
-
-                // ── 快捷操作 ──
+                // 鈹€鈹€ 瀛︿範瓒嬪娍 鈹€鈹€
+                // 鈹€鈹€ 蹇嵎鎿嶄綔 鈹€鈹€
                 _buildQuickActions(context),
                 const SizedBox(height: AppSpacing.xl),
 
-                // ── 科目分布 ──
-                _buildSubjectDistribution(context, subjectDist),
+                // 鈹€鈹€ 绉戠洰鍒嗗竷 鈹€鈹€
+                // 鈹€鈹€ 鏈€杩戣褰?鈹€鈹€
+                _buildRecentRecords(context, ref, recentRecords),
                 const SizedBox(height: AppSpacing.xl),
 
-                // ── 最近记录 ──
-                _buildRecentRecords(context, ref, recentRecords),
+                _buildStudyTrendSection(context),
+                const SizedBox(height: AppSpacing.xl),
+
+                _buildSubjectDistribution(context, subjectDist),
                 const SizedBox(height: AppSpacing.xl),
               ],
             ),
@@ -147,14 +176,141 @@ class _StudyPageState extends ConsumerState<StudyPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/plan/study/add'),
-        backgroundColor: AppColors.study,
-        foregroundColor: Colors.white,
+        backgroundColor: colors.study,
+        foregroundColor: colors.textOnAccent,
         child: const Icon(Icons.add_rounded),
       ),
     );
   }
 
-  // ── 顶部数据卡片（模块英雄卡片）──
+  Widget _buildKnowledgeReviewEntry(
+    BuildContext context,
+    AsyncValue<List<KnowledgeGoalSummary>> summaries,
+  ) {
+    final colors = context.growthColors;
+    return summaries.when(
+      data: (items) {
+        final total = items.fold<int>(0, (sum, item) => sum + item.totalCards);
+        final due = items.fold<int>(0, (sum, item) => sum + item.dueCards);
+        final hasCards = total > 0;
+
+        return Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () => context.push('/plan/study/knowledge'),
+            borderRadius: BorderRadius.circular(AppRadius.xxxl),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.xxxl),
+              child: AspectRatio(
+                aspectRatio: 2.33,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.asset(
+                      KnowledgeCardAssets.goalEntryWide,
+                      fit: BoxFit.cover,
+                      cacheWidth: 900,
+                    ),
+                    DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            colors.card.withValues(alpha: 0.96),
+                            colors.card.withValues(alpha: 0.68),
+                            colors.card.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+                        border: Border.all(color: colors.border),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 250),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '目标抽卡复习',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.sectionTitle.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.xs),
+                              Text(
+                                hasCards
+                                    ? '今日 $due 张待复习，共 $total 张知识卡'
+                                    : '选择目标模板，再建立知识卡',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: colors.textSecondary,
+                                  height: 1.35,
+                                ),
+                              ),
+                              const SizedBox(height: AppSpacing.md),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: AppSpacing.md,
+                                  vertical: AppSpacing.sm,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.study,
+                                  borderRadius: BorderRadius.circular(99),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.style_rounded,
+                                      color: colors.textOnAccent,
+                                      size: 18,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      hasCards ? '去抽卡' : '去建卡',
+                                      style: TextStyle(
+                                        color: colors.textOnAccent,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+      loading: () => Container(
+        height: 150,
+        decoration: BoxDecoration(
+          color: colors.card,
+          borderRadius: BorderRadius.circular(AppRadius.xxxl),
+          border: Border.all(color: colors.border),
+        ),
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+
+  // 鈹€鈹€ 椤堕儴鏁版嵁鍗＄墖锛堟ā鍧楄嫳闆勫崱鐗囷級鈹€鈹€
   Widget _buildStatsCards(
     BuildContext context,
     WidgetRef ref,
@@ -162,6 +318,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     AsyncValue<List<StudyRecord>> todayRecords,
     DailyGoal studyGoal,
   ) {
+    final colors = context.growthColors;
     return todayMinutes.when(
       data: (minutes) {
         final progress = studyGoal.target > 0
@@ -172,7 +329,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           title: '今日学习',
           primaryValue: _formatMinutes(minutes),
           primaryLabel: '今日已学习',
-          color: AppColors.study,
+          color: colors.study,
           progress: progress,
           targetLabel: '目标 ${_formatMinutes(studyGoal.target)}',
           metrics: [
@@ -201,22 +358,69 @@ class _StudyPageState extends ConsumerState<StudyPage> {
       loading: () => Container(
         height: 200,
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
-        child: const Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator(color: colors.study)),
       ),
       error: (_, _) => const SizedBox.shrink(),
     );
   }
 
-  // ── 目标编辑弹窗 ──
+  Widget _buildSubjectDistRangeSelector() {
+    final colors = context.growthColors;
+    const ranges = [
+      {'label': '日', 'days': 1},
+      {'label': '周', 'days': 7},
+      {'label': '月', 'days': 30},
+    ];
+
+    return Container(
+      height: 30,
+      decoration: BoxDecoration(
+        color: colors.study.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      padding: const EdgeInsets.all(2),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: ranges.map((range) {
+          final isSelected = _subjectDistDays == range['days'];
+          return GestureDetector(
+            onTap: () =>
+                setState(() => _subjectDistDays = range['days'] as int),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isSelected ? colors.study : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                range['label'] as String,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  color: isSelected
+                      ? colors.textOnAccent
+                      : colors.textSecondary,
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  // 鈹€鈹€ 鐩爣缂栬緫寮圭獥 鈹€鈹€
   void _showGoalEditSheet(
     BuildContext context,
     WidgetRef ref,
     DailyGoal currentGoal,
   ) {
+    final colors = context.growthColors;
     GoalEditSheet.show(
       context: context,
       title: '设置每日学习目标',
@@ -226,7 +430,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
       max: 480,
       step: 10,
       suggestion: '建议每天学习 60~180 分钟',
-      color: AppColors.study,
+      color: colors.study,
       onSave: (value) async {
         final goals = ref.read(dailyGoalsProvider);
         final newGoals = goals.map((g) {
@@ -246,42 +450,54 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return jsonEncode(goals.map((g) => g.toJson()).toList());
   }
 
-  // ── 学习趋势区域（带时间范围选择器）──
+  // 鈹€鈹€ 瀛︿範瓒嬪娍鍖哄煙锛堝甫鏃堕棿鑼冨洿閫夋嫨鍣級鈹€鈹€
   Widget _buildStudyTrendSection(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(children: [Text('学习趋势', style: AppTextStyles.sectionTitle)]),
+        Row(
+          children: [
+            Text(
+              '学习趋势',
+              style: AppTextStyles.sectionTitle.copyWith(
+                color: colors.textPrimary,
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: AppSpacing.md),
-        // ── 时间范围选择器 ──
-        _buildRangeSelector(),
+        // 鈹€鈹€ 鏃堕棿鑼冨洿閫夋嫨鍣?鈹€鈹€
+        _buildRangeSelector(context),
         const SizedBox(height: AppSpacing.md),
-        // ── 图表 ──
+        // 鈹€鈹€ 鍥捐〃 鈹€鈹€
         _buildChartForRange(),
       ],
     );
   }
 
-  // ── 时间范围选择器 ──
-  Widget _buildRangeSelector() {
+  // 鈹€鈹€ 鏃堕棿鑼冨洿閫夋嫨鍣?鈹€鈹€
+  Widget _buildRangeSelector(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
-      height: 36,
+      height: 44,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.72),
+        color: colors.card.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(AppRadius.mlg),
-        border: Border.all(color: AppColors.study.withValues(alpha: 0.10)),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
-          _buildRangeTab('week', '本周'),
-          _buildRangeTab('month', '本月'),
-          _buildRangeTab('year', '本年'),
+          _buildRangeTab(context, 'week', '本周'),
+          _buildRangeTab(context, 'month', '本月'),
+          _buildRangeTab(context, 'year', '本年'),
         ],
       ),
     );
   }
 
-  Widget _buildRangeTab(String value, String label) {
+  Widget _buildRangeTab(BuildContext context, String value, String label) {
+    final colors = context.growthColors;
     final isSelected = _selectedRange == value;
     return Expanded(
       child: GestureDetector(
@@ -294,12 +510,12 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.all(3),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.study : Colors.transparent,
+            color: isSelected ? colors.study : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.sm),
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: AppColors.study.withValues(alpha: 0.3),
+                      color: colors.shadow.withValues(alpha: 0.24),
                       blurRadius: 4,
                       offset: const Offset(0, 1),
                     ),
@@ -312,7 +528,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
             style: TextStyle(
               fontSize: 13,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: isSelected ? Colors.white : AppColors.textSecondary,
+              color: isSelected ? colors.textOnAccent : colors.textSecondary,
             ),
           ),
         ),
@@ -320,7 +536,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // ── 根据范围构建图表 ──
+  // 鈹€鈹€ 鏍规嵁鑼冨洿鏋勫缓鍥捐〃 鈹€鈹€
   Widget _buildChartForRange() {
     switch (_selectedRange) {
       case 'week':
@@ -361,7 +577,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         );
       },
       loading: () => _buildChartLoading(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
@@ -385,7 +601,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         );
       },
       loading: () => _buildChartLoading(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
@@ -415,7 +631,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     // Build 4 week buckets based on calendar weeks within the month
     final List<List<DailyStats>> buckets = [[], [], [], []];
     for (final d in sorted) {
-      // Week index: day 1-7 → 0, 8-14 → 1, 15-21 → 2, 22-31 → 3
+      // Week index: day 1-7 鈫?0, 8-14 鈫?1, 15-21 鈫?2, 22-31 鈫?3
       final weekIdx = ((d.date.day - 1) / 7).floor().clamp(0, 3);
       buckets[weekIdx].add(d);
     }
@@ -475,7 +691,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         );
       },
       loading: () => _buildChartLoading(),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
@@ -492,9 +708,9 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return Container(
       height: 200,
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: context.growthColors.border),
       ),
       child: const Center(child: CircularProgressIndicator()),
     );
@@ -505,15 +721,16 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return names[date.weekday - 1];
   }
 
-  // ── 快捷操作 ──
+  // 鈹€鈹€ 蹇嵎鎿嶄綔 鈹€鈹€
   Widget _buildQuickActions(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Expanded(
           child: _QuickActionCard(
             icon: Icons.add_rounded,
             label: '添加记录',
-            color: AppColors.study,
+            color: colors.study,
             onTap: () => context.push('/plan/study/add'),
           ),
         ),
@@ -522,7 +739,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           child: _QuickActionCard(
             icon: Icons.timer_outlined,
             label: '专注计时',
-            color: AppColors.success,
+            color: colors.success,
             onTap: () => context.push('/focus'),
           ),
         ),
@@ -531,7 +748,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           child: _QuickActionCard(
             icon: Icons.history_rounded,
             label: '全部记录',
-            color: AppColors.textTertiary,
+            color: colors.textTertiary,
             onTap: () => context.push('/plan/study/recent'),
           ),
         ),
@@ -539,33 +756,38 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // ── 科目分布 ──
+  // 鈹€鈹€ 绉戠洰鍒嗗竷 鈹€鈹€
   Widget _buildSubjectDistribution(
     BuildContext context,
     AsyncValue<Map<String, int>> subjectDist,
   ) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           children: [
-            Text('科目分布', style: AppTextStyles.sectionTitle),
+            Text(
+              '科目分布',
+              style: AppTextStyles.sectionTitle.copyWith(
+                color: colors.textPrimary,
+              ),
+            ),
             const Spacer(),
+            _buildSubjectDistRangeSelector(),
+            const SizedBox(width: 8),
             GestureDetector(
               onTap: () => context.push('/plan/study/subjects'),
               child: Row(
                 children: [
                   Text(
-                    '查看详情',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
+                    '详情',
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
                   ),
                   Icon(
                     Icons.chevron_right,
                     size: 18,
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ],
               ),
@@ -576,36 +798,37 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         subjectDist.when(
           data: (dist) {
             if (dist.isEmpty) {
-              return const EmptyStateWidget(
+              return EmptyStateWidget(
                 icon: Icons.pie_chart_outline,
                 title: '暂无科目数据',
-                subtitle: '开始学习后，科目分布将在此显示',
-                accentColor: AppColors.study,
+                subtitle: '开始学习后，科目分布会显示在这里',
+                accentColor: colors.study,
               );
             }
             return _SubjectDistributionCard(dist: dist);
           },
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (_, _) => const SizedBox.shrink(),
+          error: (_, _) => const ErrorRetryWidget(),
         ),
       ],
     );
   }
 
-  // ── 最近记录 ──
+  // 鈹€鈹€ 鏈€杩戣褰?鈹€鈹€
   Widget _buildRecentRecords(
     BuildContext context,
     WidgetRef ref,
     AsyncValue<List<StudyRecord>> recentRecords,
   ) {
+    final colors = context.growthColors;
     return recentRecords.when(
       data: (records) {
         if (records.isEmpty) {
-          return const EmptyStateWidget(
+          return EmptyStateWidget(
             icon: Icons.menu_book_outlined,
             title: '还没有学习记录',
             subtitle: '点击右下角按钮开始学习',
-            accentColor: AppColors.study,
+            accentColor: colors.study,
           );
         }
         const maxVisible = 5;
@@ -616,7 +839,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           title: '最近记录',
           action: '查看全部',
           onActionTap: () => context.push('/plan/study/recent'),
-          color: AppColors.study,
+          color: colors.study,
           recordCount: records.length,
           maxVisible: maxVisible,
           isExpanded: _isRecentExpanded,
@@ -633,8 +856,16 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 final confirmed = await showDialog<bool>(
                   context: context,
                   builder: (ctx) => AlertDialog(
-                    title: const Text('删除确认'),
-                    content: const Text('确定要删除这条学习记录吗？'),
+                    backgroundColor: colors.card,
+                    surfaceTintColor: colors.card,
+                    title: Text(
+                      '删除确认',
+                      style: TextStyle(color: colors.textPrimary),
+                    ),
+                    content: Text(
+                      '确定要删除这条学习记录吗？',
+                      style: TextStyle(color: colors.textSecondary),
+                    ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, false),
@@ -643,7 +874,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                       TextButton(
                         onPressed: () => Navigator.pop(ctx, true),
                         style: TextButton.styleFrom(
-                          foregroundColor: AppColors.danger,
+                          foregroundColor: colors.danger,
                         ),
                         child: const Text('删除'),
                       ),
@@ -662,6 +893,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                       context,
                     ).showSnackBar(const SnackBar(content: Text('已删除')));
                   }
+                  return true;
                 }
                 return false;
               },
@@ -670,13 +902,13 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 icon: record.mode == 'professional'
                     ? Icons.school
                     : Icons.menu_book,
-                iconColor: Colors.white,
-                iconBackgroundColor: AppColors.study,
+                iconColor: colors.textOnAccent,
+                iconBackgroundColor: colors.study,
                 title: record.title,
                 subtitle:
                     '${record.subject ?? ''} · ${record.durationMinutes}分钟 · $dateStr',
                 primaryBadge: '+${record.expGained} EXP',
-                primaryBadgeColor: AppColors.study,
+                primaryBadgeColor: colors.study,
                 secondaryBadge: null,
                 onTap: () => _showStudyRecordDetail(context, record),
               ),
@@ -685,15 +917,18 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         );
       },
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('加载失败: $e')),
+      error: (e, _) => Center(
+        child: Text('加载失败：$e', style: TextStyle(color: colors.textSecondary)),
+      ),
     );
   }
 
-  // ─── 记录详情弹窗 ────────────────────────────────────────────────────────
+  // 鈹€鈹€鈹€ 璁板綍璇︽儏寮圭獥 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
 
   void _showStudyRecordDetail(BuildContext context, StudyRecord record) {
+    final colors = context.growthColors;
     final date = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
-    final weekday = [
+    final weekday = const [
       '周一',
       '周二',
       '周三',
@@ -736,7 +971,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.study.withValues(alpha: 0.06),
+              color: colors.softBlue.withValues(alpha: 0.58),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -744,14 +979,14 @@ class _StudyPageState extends ConsumerState<StudyPage> {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.notes_rounded, size: 16, color: AppColors.study),
+                    Icon(Icons.notes_rounded, size: 16, color: colors.study),
                     const SizedBox(width: 6),
                     Text(
                       '备注',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.study,
+                        color: colors.study,
                       ),
                     ),
                   ],
@@ -759,9 +994,9 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 const SizedBox(height: 8),
                 Text(
                   record.note!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     height: 1.5,
                   ),
                 ),
@@ -779,7 +1014,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         primaryMetricLabel: '学习时长',
         primaryMetricValue: '${record.durationMinutes} 分钟',
         detailItems: detailItems,
-        accentColor: AppColors.study,
+        accentColor: colors.study,
         extraCards: noteCard,
       ),
     );

@@ -30,6 +30,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final nameAsync = ref.watch(petNameProvider);
     final autoDiaryAsync = ref.watch(
       settingProvider(PetDiaryService.autoEnabledKey),
@@ -42,7 +43,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7EF),
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: const Text('小窝设置'),
         centerTitle: true,
@@ -77,7 +78,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
                     counterText: '',
                     hintText: '给甜甜取个名字',
                     filled: true,
-                    fillColor: const Color(0xFFFFF8F2),
+                    fillColor: colors.surfaceVariant.withValues(alpha: 0.62),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(16),
                       borderSide: BorderSide.none,
@@ -92,8 +93,8 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
                     icon: const Icon(Icons.check_rounded, size: 18),
                     label: const Text('保存名称'),
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFFE89B68),
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.accent,
+                      foregroundColor: colors.textOnAccent,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
@@ -113,7 +114,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
                   subtitle: '开启后，甜甜会在满足条件时整理昨日摘要',
                   trailing: Switch(
                     value: autoDiary,
-                    activeThumbColor: const Color(0xFFE89B68),
+                    activeThumbColor: colors.accent,
                     onChanged: (value) => _setAutoDiary(value),
                   ),
                 ),
@@ -180,6 +181,7 @@ class _HeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _PaperCard(
       child: Row(
         children: [
@@ -195,19 +197,19 @@ class _HeroCard extends StatelessWidget {
               children: [
                 Text(
                   '$name 的偏好',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 7),
-                const Text(
+                Text(
                   '这里专管小窝体验，通用主题、备份和账号资料仍然在“我的”设置里。',
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.45,
-                    color: AppColors.textSecondary,
+                    color: colors.textSecondary,
                   ),
                 ),
               ],
@@ -236,6 +238,7 @@ class _SettingRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
@@ -251,19 +254,19 @@ class _SettingRow extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w800,
-                      color: AppColors.textPrimary,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       height: 1.35,
-                      color: AppColors.textSecondary,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ],
@@ -290,6 +293,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         _ImageBadge(asset: asset),
@@ -300,19 +304,19 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   height: 1.35,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -330,14 +334,15 @@ class _PaperCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: colors.card.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB97A52).withValues(alpha: 0.10),
+            color: colors.shadow.withValues(alpha: 0.10),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -364,9 +369,7 @@ class _Divider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 20,
-      color: const Color(0xFFE8D3C4).withValues(alpha: 0.55),
-    );
+    final colors = context.growthColors;
+    return Divider(height: 20, color: colors.divider);
   }
 }

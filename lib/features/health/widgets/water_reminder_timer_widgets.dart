@@ -1,4 +1,4 @@
-﻿part of '../pages/water_reminder_timer_page.dart';
+part of '../pages/water_reminder_timer_page.dart';
 
 class _WaterColors {
   static const primary = Color(0xFF63BE5A);
@@ -49,7 +49,7 @@ class _RoundIconButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white.withValues(alpha: 0.80),
+      color: context.growthColors.card.withValues(alpha: 0.80),
       shape: const CircleBorder(),
       child: InkWell(
         customBorder: const CircleBorder(),
@@ -297,7 +297,7 @@ class _QuickCheckCard extends StatelessWidget {
                 ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: _WaterColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: context.growthColors.textOnAccent,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(999),
@@ -372,13 +372,17 @@ class _AmountChip extends StatelessWidget {
                 ),
               ),
               if (selected)
-                const Positioned(
+                Positioned(
                   top: -8,
                   right: -7,
                   child: CircleAvatar(
                     radius: 13,
                     backgroundColor: _WaterColors.primary,
-                    child: Icon(Icons.check, color: Colors.white, size: 17),
+                    child: Icon(
+                      Icons.check,
+                      color: context.growthColors.textOnAccent,
+                      size: 17,
+                    ),
                   ),
                 ),
             ],
@@ -439,7 +443,7 @@ class _ReminderSettingsCard extends StatelessWidget {
                 const Spacer(),
                 Switch(
                   value: plan.reminderEnabled,
-                  activeThumbColor: Colors.white,
+                  activeThumbColor: context.growthColors.textOnAccent,
                   activeTrackColor: _WaterColors.primary,
                   onChanged: onToggle,
                 ),
@@ -698,7 +702,7 @@ class _CompanionBubble extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.92),
+              color: context.growthColors.card.withValues(alpha: 0.92),
               borderRadius: BorderRadius.circular(24),
               border: Border.all(color: const Color(0xFFE7EBD9)),
             ),
@@ -729,7 +733,7 @@ class _WaterCard extends StatelessWidget {
       width: double.infinity,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.86),
+        color: context.growthColors.card.withValues(alpha: 0.86),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: const Color(0xFFE6E9D8)),
         boxShadow: [
@@ -820,7 +824,7 @@ class _NumberEditSheetState extends State<_NumberEditSheet> {
               onPressed: () => Navigator.pop(context, _value),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _WaterColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: context.growthColors.textOnAccent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
                 ),
@@ -883,7 +887,7 @@ class _WindowEditSheetState extends State<_WindowEditSheet> {
                   Navigator.pop(context, (start: _start, end: _end)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _WaterColors.primary,
-                foregroundColor: Colors.white,
+                foregroundColor: context.growthColors.textOnAccent,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(999),
                 ),
@@ -960,9 +964,9 @@ class _SheetFrame extends StatelessWidget {
         22,
         22 + MediaQuery.of(context).viewInsets.bottom,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: context.growthColors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: SafeArea(
         top: false,

@@ -48,15 +48,16 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final weeklyCount = ref.watch(weeklyFitnessCountProvider);
     final recentRecords = ref.watch(sortedRecentFitnessRecordsProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: Text('本周训练', style: AppTextStyles.pageTitle),
         centerTitle: false,
-        backgroundColor: AppColors.background,
+        backgroundColor: colors.background,
         actions: [
           IconButton(
             tooltip: '设置周目标',
@@ -90,6 +91,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
   }
 
   Widget _buildWeeklyProgressCard(AsyncValue<int> weeklyCount) {
+    final colors = context.growthColors;
     return weeklyCount.when(
       data: (count) {
         final progress = _weeklyGoal > 0
@@ -99,17 +101,14 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [
-                AppColors.fitness,
-                AppColors.fitness.withValues(alpha: 0.8),
-              ],
+              colors: [colors.fitness, colors.fitness.withValues(alpha: 0.8)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
-                color: AppColors.fitness.withValues(alpha: 0.3),
+                color: colors.fitness.withValues(alpha: 0.3),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
               ),
@@ -127,16 +126,16 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                         '本周训练进度',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.8),
+                          color: colors.textOnAccent.withValues(alpha: 0.8),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$count / $_weeklyGoal 次',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: colors.textOnAccent,
                         ),
                       ),
                     ],
@@ -145,16 +144,16 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                     width: 56,
                     height: 56,
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: colors.textOnAccent.withValues(alpha: 0.2),
                       shape: BoxShape.circle,
                     ),
                     child: Center(
                       child: Text(
                         '${(progress * 100).toInt()}%',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w700,
-                          color: Colors.white,
+                          color: colors.textOnAccent,
                         ),
                       ),
                     ),
@@ -167,8 +166,10 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 8,
-                  backgroundColor: Colors.white.withValues(alpha: 0.2),
-                  valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
+                  backgroundColor: colors.textOnAccent.withValues(alpha: 0.2),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    colors.textOnAccent,
+                  ),
                 ),
               ),
             ],
@@ -176,7 +177,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
         );
       },
       loading: () => const SizedBox(height: 140),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
@@ -194,7 +195,8 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(7, (index) {
               final day = weekStart.add(Duration(days: index));
-              final isToday = day.year == now.year &&
+              final isToday =
+                  day.year == now.year &&
                   day.month == now.month &&
                   day.day == now.day;
               final isPast = day.isBefore(now) && !isToday;
@@ -213,7 +215,10 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
     );
   }
 
-  Widget _buildWeeklyRecordsList(AsyncValue<List<FitnessRecord>> recentRecords) {
+  Widget _buildWeeklyRecordsList(
+    AsyncValue<List<FitnessRecord>> recentRecords,
+  ) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -224,10 +229,15 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
             // Filter to this week
             final now = DateTime.now();
             final weekStart = now.subtract(Duration(days: now.weekday - 1));
-            final weekStartMs = DateTime(weekStart.year, weekStart.month, weekStart.day)
-                .millisecondsSinceEpoch;
+            final weekStartMs = DateTime(
+              weekStart.year,
+              weekStart.month,
+              weekStart.day,
+            ).millisecondsSinceEpoch;
 
-            final weekRecords = records.where((r) => r.createdAt >= weekStartMs).toList();
+            final weekRecords = records
+                .where((r) => r.createdAt >= weekStartMs)
+                .toList();
 
             if (weekRecords.isEmpty) {
               return GrowthCard(
@@ -236,7 +246,11 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                     padding: const EdgeInsets.all(AppSpacing.xl),
                     child: Column(
                       children: [
-                        Icon(Icons.fitness_center, size: 48, color: AppColors.textTertiary),
+                        Icon(
+                          Icons.fitness_center,
+                          size: 48,
+                          color: colors.textTertiary,
+                        ),
                         const SizedBox(height: AppSpacing.md),
                         Text('本周还没有训练记录', style: AppTextStyles.caption),
                       ],
@@ -247,18 +261,23 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
             }
 
             return Column(
-              children: weekRecords.map((r) => SwipeDeleteTile(
-                key: ValueKey('weekly_fitness_${r.id}'),
-                onConfirmDelete: () async {
-                  _deleteRecord(context, ref, r);
-                  return false;
-                },
-                onDismissed: () {},
-                child: _WeeklyRecordTile(
-                  record: r,
-                  onTap: () => context.push('/plan/fitness/detail/${r.id}'),
-                ),
-              )).toList(),
+              children: weekRecords
+                  .map(
+                    (r) => SwipeDeleteTile(
+                      key: ValueKey('weekly_fitness_${r.id}'),
+                      onConfirmDelete: () async {
+                        _deleteRecord(context, ref, r);
+                        return false;
+                      },
+                      onDismissed: () {},
+                      child: _WeeklyRecordTile(
+                        record: r,
+                        onTap: () =>
+                            context.push('/plan/fitness/detail/${r.id}'),
+                      ),
+                    ),
+                  )
+                  .toList(),
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -269,6 +288,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
   }
 
   void _showWeeklyGoalSheet(BuildContext context) {
+    final colors = context.growthColors;
     int tempGoal = _weeklyGoal;
     showModalBottomSheet(
       context: context,
@@ -276,9 +296,11 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
           return Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            decoration: BoxDecoration(
+              color: colors.paper,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             child: Column(
@@ -288,17 +310,17 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
+                    color: colors.divider,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
+                Text(
                   '设置每周训练目标',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF5C3D2E),
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -312,7 +334,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                         }
                       },
                       icon: const Icon(Icons.remove_circle_outline, size: 32),
-                      color: AppColors.fitness,
+                      color: colors.fitness,
                     ),
                     const SizedBox(width: 24),
                     Text(
@@ -320,7 +342,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                       style: TextStyle(
                         fontSize: 48,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.fitness,
+                        color: colors.fitness,
                       ),
                     ),
                     const SizedBox(width: 4),
@@ -328,7 +350,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                       '次/周',
                       style: TextStyle(
                         fontSize: 16,
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                     const SizedBox(width: 24),
@@ -339,15 +361,12 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                         }
                       },
                       icon: const Icon(Icons.add_circle_outline, size: 32),
-                      color: AppColors.fitness,
+                      color: colors.fitness,
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text(
-                  '建议每周训练 3~5 次',
-                  style: AppTextStyles.caption,
-                ),
+                Text('建议每周训练 3~5 次', style: AppTextStyles.caption),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -357,8 +376,8 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                       Navigator.pop(ctx);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.fitness,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.fitness,
+                      foregroundColor: colors.textOnAccent,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -381,6 +400,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
     WidgetRef ref,
     FitnessRecord record,
   ) async {
+    final colors = context.growthColors;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -393,7 +413,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(foregroundColor: colors.danger),
             child: const Text('删除'),
           ),
         ],
@@ -409,15 +429,15 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
         ref.invalidate(recentFitnessRecordsProvider);
         ref.invalidate(todayFitnessMinutesProvider);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('已删除')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('已删除')));
         }
       } catch (e) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('删除失败: $e')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('删除失败，请重试')));
         }
       }
     }
@@ -440,26 +460,27 @@ class _WeekDayItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       children: [
         Text(
           dayName,
           style: TextStyle(
             fontSize: 12,
-            color: isToday ? AppColors.fitness : AppColors.textTertiary,
+            color: isToday ? colors.fitness : colors.textTertiary,
             fontWeight: isToday ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
         const SizedBox(height: 6),
         Container(
-          width: 36,
-          height: 36,
+          width: 40,
+          height: 40,
           decoration: BoxDecoration(
             color: isToday
-                ? AppColors.fitness
+                ? colors.fitness
                 : isPast
-                    ? AppColors.fitness.withValues(alpha: 0.1)
-                    : AppColors.surfaceVariant,
+                ? colors.fitness.withValues(alpha: 0.1)
+                : colors.surfaceVariant,
             shape: BoxShape.circle,
           ),
           child: Center(
@@ -469,10 +490,10 @@ class _WeekDayItem extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
                 color: isToday
-                    ? Colors.white
+                    ? colors.textOnAccent
                     : isPast
-                        ? AppColors.fitness
-                        : AppColors.textSecondary,
+                    ? colors.fitness
+                    : colors.textSecondary,
               ),
             ),
           ),
@@ -484,20 +505,19 @@ class _WeekDayItem extends StatelessWidget {
 
 /// 本周记录列表项
 class _WeeklyRecordTile extends StatelessWidget {
-  const _WeeklyRecordTile({
-    required this.record,
-    required this.onTap,
-  });
+  const _WeeklyRecordTile({required this.record, required this.onTap});
 
   final FitnessRecord record;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final dt = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
     final dayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     final dayName = dayNames[dt.weekday - 1];
-    final timeStr = '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
 
     return GrowthCard(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -508,10 +528,10 @@ class _WeeklyRecordTile extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: AppColors.softOrange,
+              color: colors.softOrange,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(Icons.fitness_center, color: AppColors.fitness),
+            child: Icon(Icons.fitness_center, color: colors.fitness),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
@@ -537,7 +557,7 @@ class _WeeklyRecordTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: AppColors.softOrange,
+              color: colors.softOrange,
               borderRadius: BorderRadius.circular(AppRadius.sm),
             ),
             child: Text(
@@ -545,7 +565,7 @@ class _WeeklyRecordTile extends StatelessWidget {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.fitness,
+                color: colors.fitness,
               ),
             ),
           ),

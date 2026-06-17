@@ -13,7 +13,6 @@ import 'package:growth_os/shared/providers/dashboard_provider.dart';
 import 'package:growth_os/shared/providers/fitness_provider.dart';
 import 'package:growth_os/shared/widgets/common/common_widgets.dart';
 
-/// 添加健身记录页面
 class AddFitnessRecordPage extends ConsumerStatefulWidget {
   const AddFitnessRecordPage({
     super.key,
@@ -31,37 +30,31 @@ class AddFitnessRecordPage extends ConsumerStatefulWidget {
 
 class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   late int _modeIndex;
-
-  // 运动类型
   ActivityType _selectedActivityType = ActivityType.strength;
 
-  // 运动类型专属字段
   BallType? _selectedBallType;
   YogaStyle? _selectedYogaStyle;
   SwimStroke? _selectedSwimStroke;
   OutdoorActivity? _selectedOutdoorActivity;
+
   final _distanceController = TextEditingController();
   final _customTitleController = TextEditingController();
-
-  // 简单模式字段
   final _bodyPartController = TextEditingController();
   final _durationController = TextEditingController();
   final _notesController = TextEditingController();
-
-  // 专业模式字段
   final _titleController = TextEditingController();
+  final _feelingController = TextEditingController();
+
   final DateTime _startTime = DateTime.now();
   DateTime _endTime = DateTime.now().add(const Duration(hours: 1));
-  int _intensity = 3;
-  int _fatigue = 3;
-  final _feelingController = TextEditingController();
   final List<_ExerciseItem> _exercises = [];
 
+  int _intensity = 3;
+  int _fatigue = 3;
   bool _saving = false;
   bool _advancedExpanded = false;
 
-  // 预设部位
-  final _presetBodyParts = ['胸', '背', '腿', '肩', '手臂', '核心', '全身'];
+  static const _presetBodyParts = ['胸', '背', '腿', '肩', '手臂', '核心', '全身'];
   static const _durationPresets = [15, 30, 45, 60, 90];
 
   @override
@@ -85,13 +78,13 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     _bodyPartController.removeListener(_handleFieldChanged);
     _customTitleController.removeListener(_handleFieldChanged);
     _feelingController.removeListener(_handleFieldChanged);
+    _distanceController.dispose();
+    _customTitleController.dispose();
     _bodyPartController.dispose();
     _durationController.dispose();
     _notesController.dispose();
     _titleController.dispose();
     _feelingController.dispose();
-    _distanceController.dispose();
-    _customTitleController.dispose();
     super.dispose();
   }
 
@@ -104,6 +97,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   int get _durationMinutes => int.tryParse(_durationController.text) ?? 0;
+
+  bool get _showRatings =>
+      _modeIndex == 1 || _selectedActivityType != ActivityType.strength;
 
   int get _estimatedExp {
     final expService = ref.read(expServiceProvider);
@@ -122,8 +118,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   String get _trainingSummary {
     final duration = _durationMinutes > 0 ? '$_durationMinutes 分钟' : '未填时长';
     final detail = _resolveBodyPart();
-    final safeDetail = detail.isEmpty ? '待补充' : detail;
-    return '${_selectedActivityType.label} · $duration · $safeDetail';
+    return '${_selectedActivityType.label} · $duration · ${detail.isEmpty ? '待补充' : detail}';
   }
 
   String get _durationSummary {
@@ -136,14 +131,19 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: const Color(0xFFFFFBF6),
+      backgroundColor: colors.background,
       appBar: AppBar(
-        title: Text('添加运动记录', style: AppTextStyles.pageTitle),
+        title: Text(
+          '添加运动记录',
+          style: AppTextStyles.pageTitle.copyWith(color: colors.textPrimary),
+        ),
         centerTitle: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
+        iconTheme: IconThemeData(color: colors.textPrimary),
       ),
       body: SafeArea(
         child: Column(
@@ -185,21 +185,22 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Widget _buildHeroCard() {
+    final colors = context.growthColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.xl),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.fitness.withValues(alpha: 0.92),
-            const Color(0xFFFFB36B),
+            colors.fitness.withValues(alpha: 0.92),
+            Color.lerp(colors.fitness, colors.warning, 0.42)!,
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
         boxShadow: AppShadows.colored(
-          AppColors.fitness,
+          colors.fitness,
           blurRadius: 26,
           offsetY: 12,
         ),
@@ -212,7 +213,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             child: Icon(
               _selectedActivityType.icon,
               size: 112,
-              color: Colors.white.withValues(alpha: 0.13),
+              color: colors.textOnAccent.withValues(alpha: 0.13),
             ),
           ),
           Column(
@@ -224,13 +225,13 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                   vertical: AppSpacing.xs,
                 ),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.2),
+                  color: colors.textOnAccent.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(AppRadius.full),
                 ),
                 child: Text(
                   _selectedActivityType.label,
                   style: AppTextStyles.caption.copyWith(
-                    color: Colors.white,
+                    color: colors.textOnAccent,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -239,7 +240,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               Text(
                 _durationSummary,
                 style: AppTextStyles.numberLarge.copyWith(
-                  color: Colors.white,
+                  color: colors.textOnAccent,
                   fontSize: 32,
                 ),
               ),
@@ -249,7 +250,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.body.copyWith(
-                  color: Colors.white.withValues(alpha: 0.9),
+                  color: colors.textOnAccent.withValues(alpha: 0.9),
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -283,25 +284,26 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Widget _buildHeroMetric({required IconData icon, required String label}) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: colors.textOnAccent.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+        border: Border.all(color: colors.textOnAccent.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: Colors.white, size: 16),
+          Icon(icon, color: colors.textOnAccent, size: 16),
           const SizedBox(width: AppSpacing.xs),
           Text(
             label,
             style: AppTextStyles.caption.copyWith(
-              color: Colors.white,
+              color: colors.textOnAccent,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -310,11 +312,10 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 运动类型选择卡片 ──
   Widget _buildActivityTypeCard() {
     return _buildFormCard(
       title: '运动类型',
-      subtitle: '先选类型，下面只显示相关字段',
+      subtitle: '先选择类型，下面只显示相关字段',
       icon: Icons.directions_run_rounded,
       child: SizedBox(
         height: 112,
@@ -324,8 +325,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
           separatorBuilder: (context, index) =>
               const SizedBox(width: AppSpacing.sm),
           itemBuilder: (context, index) {
-            final type = ActivityType.values[index];
-            return _buildActivityTypeTile(type);
+            return _buildActivityTypeTile(ActivityType.values[index]);
           },
         ),
       ),
@@ -333,6 +333,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Widget _buildActivityTypeTile(ActivityType type) {
+    final colors = context.growthColors;
     final isSelected = _selectedActivityType == type;
     return Semantics(
       button: true,
@@ -360,20 +361,16 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             vertical: AppSpacing.sm,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.fitness : AppColors.softOrange,
+            color: isSelected ? colors.fitness : colors.softOrange,
             borderRadius: BorderRadius.circular(AppRadius.xxl),
             border: Border.all(
               color: isSelected
-                  ? AppColors.fitness
-                  : AppColors.fitness.withValues(alpha: 0.12),
+                  ? colors.fitness
+                  : colors.fitness.withValues(alpha: 0.12),
               width: isSelected ? 1.4 : 1,
             ),
             boxShadow: isSelected
-                ? AppShadows.colored(
-                    AppColors.fitness,
-                    blurRadius: 16,
-                    offsetY: 7,
-                  )
+                ? AppShadows.colored(colors.fitness, blurRadius: 16, offsetY: 7)
                 : null,
           ),
           child: Column(
@@ -381,7 +378,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             children: [
               Icon(
                 type.icon,
-                color: isSelected ? Colors.white : AppColors.fitness,
+                color: isSelected ? colors.textOnAccent : colors.fitness,
                 size: 24,
               ),
               const SizedBox(height: 5),
@@ -390,7 +387,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTextStyles.cardTitle.copyWith(
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  color: isSelected ? colors.textOnAccent : colors.textPrimary,
                   fontSize: 14,
                   fontWeight: FontWeight.w800,
                 ),
@@ -400,7 +397,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 type.emoji,
                 style: TextStyle(
                   fontSize: 14,
-                  color: isSelected ? Colors.white : AppColors.textSecondary,
+                  color: isSelected
+                      ? colors.textOnAccent
+                      : colors.textSecondary,
                 ),
               ),
             ],
@@ -410,7 +409,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 运动类型专属详情卡片 ──
   Widget _buildActivityDetailCard() {
     return _buildFormCard(
       key: ValueKey(_selectedActivityType),
@@ -421,7 +419,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 根据运动类型显示不同字段 ──
   Widget _buildActivitySpecificFields() {
     switch (_selectedActivityType) {
       case ActivityType.strength:
@@ -443,8 +440,8 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     }
   }
 
-  // ── 力量训练字段 ──
   Widget _buildStrengthFields() {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -454,8 +451,8 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
           tabs: const ['简单模式', '专业模式'],
           selectedIndex: _modeIndex,
           height: 44,
-          backgroundColor: AppColors.softOrange,
-          selectedColor: Colors.white,
+          backgroundColor: colors.softOrange,
+          selectedColor: colors.textOnAccent,
           borderRadius: AppRadius.full,
           onChanged: (index) {
             HapticFeedback.selectionClick();
@@ -486,149 +483,105 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 跑步字段 ──
   Widget _buildRunningFields() {
+    return _buildDistanceField(title: '跑步距离', icon: Icons.directions_run);
+  }
+
+  Widget _buildCyclingFields() {
+    return _buildDistanceField(title: '骑行距离', icon: Icons.directions_bike);
+  }
+
+  Widget _buildDistanceField({required String title, required IconData icon}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('跑步距离'),
+        _buildSectionTitle(title),
         const SizedBox(height: AppSpacing.sm),
         _buildTextField(
           controller: _distanceController,
           hint: '例如：5.0',
-          icon: Icons.directions_run_rounded,
-          keyboardType: TextInputType.number,
+          icon: icon,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
           suffix: '公里',
         ),
       ],
     );
   }
 
-  // ── 球类字段 ──
   Widget _buildBallSportsFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('选择球类'),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: BallType.values.map((ball) {
-            final isSelected = _selectedBallType == ball;
-            return _buildChoicePill(
-              label: ball.label,
-              emoji: ball.emoji,
-              selected: isSelected,
-              onTap: () => setState(() => _selectedBallType = ball),
-            );
-          }).toList(),
-        ),
-      ],
+    return _buildEnumPills(
+      title: '选择球类',
+      children: BallType.values.map((ball) {
+        return _buildChoicePill(
+          label: ball.label,
+          emoji: ball.emoji,
+          selected: _selectedBallType == ball,
+          onTap: () => setState(() => _selectedBallType = ball),
+        );
+      }).toList(),
     );
   }
 
-  // ── 瑜伽字段 ──
   Widget _buildYogaFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('瑜伽流派'),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: YogaStyle.values.map((style) {
-            final isSelected = _selectedYogaStyle == style;
-            return _buildChoicePill(
-              label: style.label,
-              emoji: style.emoji,
-              selected: isSelected,
-              onTap: () => setState(() => _selectedYogaStyle = style),
-            );
-          }).toList(),
-        ),
-      ],
+    return _buildEnumPills(
+      title: '瑜伽流派',
+      children: YogaStyle.values.map((style) {
+        return _buildChoicePill(
+          label: style.label,
+          emoji: style.emoji,
+          selected: _selectedYogaStyle == style,
+          onTap: () => setState(() => _selectedYogaStyle = style),
+        );
+      }).toList(),
     );
   }
 
-  // ── 游泳字段 ──
   Widget _buildSwimmingFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('泳姿'),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: SwimStroke.values.map((stroke) {
-            final isSelected = _selectedSwimStroke == stroke;
-            return _buildChoicePill(
-              label: stroke.label,
-              emoji: stroke.emoji,
-              selected: isSelected,
-              onTap: () => setState(() => _selectedSwimStroke = stroke),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: AppSpacing.lg),
-        _buildSectionTitle('游泳距离 (可选)'),
-        const SizedBox(height: AppSpacing.sm),
-        _buildTextField(
-          controller: _distanceController,
-          hint: '例如：1.5',
-          icon: Icons.pool_rounded,
-          keyboardType: TextInputType.number,
-          suffix: '公里',
-        ),
-      ],
+    return _buildEnumPills(
+      title: '泳姿',
+      children: SwimStroke.values.map((stroke) {
+        return _buildChoicePill(
+          label: stroke.label,
+          emoji: stroke.emoji,
+          selected: _selectedSwimStroke == stroke,
+          onTap: () => setState(() => _selectedSwimStroke = stroke),
+        );
+      }).toList(),
     );
   }
 
-  // ── 骑行字段 ──
-  Widget _buildCyclingFields() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionTitle('骑行距离'),
-        const SizedBox(height: AppSpacing.sm),
-        _buildTextField(
-          controller: _distanceController,
-          hint: '例如：20.0',
-          icon: Icons.directions_bike_rounded,
-          keyboardType: TextInputType.number,
-          suffix: '公里',
-        ),
-      ],
-    );
-  }
-
-  // ── 户外字段 ──
   Widget _buildOutdoorFields() {
+    return _buildEnumPills(
+      title: '户外类型',
+      children: OutdoorActivity.values.map((activity) {
+        return _buildChoicePill(
+          label: activity.label,
+          emoji: activity.emoji,
+          selected: _selectedOutdoorActivity == activity,
+          onTap: () => setState(() => _selectedOutdoorActivity = activity),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildEnumPills({
+    required String title,
+    required List<Widget> children,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionTitle('活动类型'),
+        _buildSectionTitle(title),
         const SizedBox(height: AppSpacing.sm),
         Wrap(
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
-          children: OutdoorActivity.values.map((activity) {
-            final isSelected = _selectedOutdoorActivity == activity;
-            return _buildChoicePill(
-              label: activity.label,
-              emoji: activity.emoji,
-              selected: isSelected,
-              onTap: () => setState(() => _selectedOutdoorActivity = activity),
-            );
-          }).toList(),
+          children: children,
         ),
       ],
     );
   }
 
-  // ── 其他运动字段 ──
   Widget _buildOtherFields() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -637,14 +590,13 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         const SizedBox(height: AppSpacing.sm),
         _buildTextField(
           controller: _customTitleController,
-          hint: '例如：跳绳、拳击、滑板...',
+          hint: '例如：跳绳、搏击、滑板...',
           icon: Icons.star_rounded,
         ),
       ],
     );
   }
 
-  // ── 通用信息卡片 ──
   Widget _buildCommonInfoCard() {
     return _buildFormCard(
       title: '训练信息',
@@ -676,10 +628,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: _durationPresets.map((minutes) {
-        final selected = _durationMinutes == minutes;
         return _buildChoicePill(
           label: '$minutes 分钟',
-          selected: selected,
+          selected: _durationMinutes == minutes,
           onTap: () {
             _durationController.text = '$minutes';
             _endTime = _startTime.add(Duration(minutes: minutes));
@@ -690,15 +641,14 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Widget _buildAdvancedFields() {
-    final showRatings =
-        _modeIndex == 1 || _selectedActivityType != ActivityType.strength;
+    final colors = context.growthColors;
     return Theme(
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.softOrange.withValues(alpha: 0.55),
+          color: colors.softOrange.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: AppColors.fitness.withValues(alpha: 0.12)),
+          border: Border.all(color: colors.fitness.withValues(alpha: 0.12)),
         ),
         child: ExpansionTile(
           initiallyExpanded: _advancedExpanded,
@@ -716,31 +666,32 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          iconColor: AppColors.fitness,
-          collapsedIconColor: AppColors.textSecondary,
+          iconColor: colors.fitness,
+          collapsedIconColor: colors.textSecondary,
           title: Text(
             '进阶补充',
             style: AppTextStyles.cardTitle.copyWith(
+              color: colors.textPrimary,
               fontWeight: FontWeight.w800,
             ),
           ),
           subtitle: Text(
-            showRatings ? '强度、疲劳、感受与备注' : '训练感受与备注',
-            style: AppTextStyles.caption,
+            _showRatings ? '强度、疲劳、感受与备注' : '训练感受与备注',
+            style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
           ),
           children: [
-            if (showRatings) ...[
+            if (_showRatings) ...[
               _buildRatingBlock(
                 title: '训练强度',
                 value: _intensity,
-                color: AppColors.fitness,
+                color: colors.fitness,
                 onChanged: (value) => setState(() => _intensity = value),
               ),
               const SizedBox(height: AppSpacing.lg),
               _buildRatingBlock(
                 title: '疲劳程度',
                 value: _fatigue,
-                color: AppColors.warning,
+                color: colors.warning,
                 onChanged: (value) => setState(() => _fatigue = value),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -799,19 +750,22 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     required IconData icon,
     required Widget child,
   }) {
+    final colors = context.growthColors;
     return Container(
       key: key,
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: AppColors.fitness.withValues(alpha: 0.1)),
-        boxShadow: AppShadows.colored(
-          AppColors.fitness,
-          blurRadius: 18,
-          offsetY: 8,
-        ),
+        border: Border.all(color: colors.fitness.withValues(alpha: 0.1)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.22),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -823,10 +777,10 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppColors.softOrange,
+                  color: colors.softOrange,
                   borderRadius: BorderRadius.circular(AppRadius.mlg),
                 ),
-                child: Icon(icon, color: AppColors.fitness, size: 21),
+                child: Icon(icon, color: colors.fitness, size: 21),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -835,10 +789,18 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                   children: [
                     Text(
                       title,
-                      style: AppTextStyles.sectionTitle.copyWith(fontSize: 17),
+                      style: AppTextStyles.sectionTitle.copyWith(
+                        color: colors.textPrimary,
+                        fontSize: 17,
+                      ),
                     ),
                     const SizedBox(height: 2),
-                    Text(subtitle, style: AppTextStyles.caption),
+                    Text(
+                      subtitle,
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.textSecondary,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -857,6 +819,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     required VoidCallback onTap,
     String? emoji,
   }) {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
       selected: selected,
@@ -874,12 +837,12 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             vertical: AppSpacing.sm,
           ),
           decoration: BoxDecoration(
-            color: selected ? AppColors.fitness : AppColors.softOrange,
+            color: selected ? colors.fitness : colors.softOrange,
             borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
               color: selected
-                  ? AppColors.fitness
-                  : AppColors.fitness.withValues(alpha: 0.12),
+                  ? colors.fitness
+                  : colors.fitness.withValues(alpha: 0.12),
             ),
           ),
           child: Row(
@@ -892,7 +855,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               Text(
                 label,
                 style: AppTextStyles.body.copyWith(
-                  color: selected ? Colors.white : AppColors.textPrimary,
+                  color: selected ? colors.textOnAccent : colors.textPrimary,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
@@ -903,12 +866,14 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 构建区域标题 ──
   Widget _buildSectionTitle(String title) {
-    return Text(title, style: AppTextStyles.cardTitle);
+    final colors = context.growthColors;
+    return Text(
+      title,
+      style: AppTextStyles.cardTitle.copyWith(color: colors.textPrimary),
+    );
   }
 
-  // ── 构建输入框 ──
   Widget _buildTextField({
     required TextEditingController controller,
     required String hint,
@@ -918,6 +883,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     TextInputAction? textInputAction,
     String? suffix,
   }) {
+    final colors = context.growthColors;
     return TextField(
       controller: controller,
       textInputAction:
@@ -925,82 +891,77 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
           (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
       keyboardType: keyboardType,
       maxLines: maxLines,
-      style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+      style: AppTextStyles.body.copyWith(
+        color: colors.textPrimary,
+        fontWeight: FontWeight.w600,
+      ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: AppTextStyles.body.copyWith(color: AppColors.textHint),
-        prefixIcon: Icon(
-          icon,
-          color: AppColors.fitness.withValues(alpha: 0.72),
-        ),
+        hintStyle: AppTextStyles.body.copyWith(color: colors.textHint),
+        prefixIcon: Icon(icon, color: colors.fitness.withValues(alpha: 0.72)),
         suffixText: suffix,
         suffixStyle: AppTextStyles.caption.copyWith(
-          color: AppColors.textSecondary,
+          color: colors.textSecondary,
         ),
         filled: true,
-        fillColor: const Color(0xFFFFFBF6),
+        fillColor: colors.surface,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          borderSide: BorderSide(
-            color: AppColors.fitness.withValues(alpha: 0.12),
-          ),
+          borderSide: BorderSide(color: colors.fitness.withValues(alpha: 0.12)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          borderSide: BorderSide(
-            color: AppColors.fitness.withValues(alpha: 0.12),
-          ),
+          borderSide: BorderSide(color: colors.fitness.withValues(alpha: 0.12)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          borderSide: const BorderSide(color: AppColors.fitness, width: 1.3),
+          borderSide: BorderSide(color: colors.fitness, width: 1.3),
         ),
       ),
     );
   }
 
-  // ── 部位选择器 ──
   Widget _buildBodyPartSelector() {
     return Wrap(
       spacing: AppSpacing.sm,
       runSpacing: AppSpacing.sm,
       children: _presetBodyParts.map((part) {
-        final isSelected = _bodyPartController.text == part;
         return _buildChoicePill(
           label: part,
-          selected: isSelected,
+          selected: _bodyPartController.text == part,
           onTap: () => setState(() => _bodyPartController.text = part),
         );
       }).toList(),
     );
   }
 
-  // ── 动作列表 ──
   Widget _buildExerciseList() {
+    final colors = context.growthColors;
     if (_exercises.isEmpty) {
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.xl),
         decoration: BoxDecoration(
-          color: AppColors.softOrange.withValues(alpha: 0.6),
+          color: colors.softOrange.withValues(alpha: 0.6),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: AppColors.fitness.withValues(alpha: 0.12)),
+          border: Border.all(color: colors.fitness.withValues(alpha: 0.12)),
         ),
         child: Column(
           children: [
             Icon(
               Icons.fitness_center_rounded,
-              color: AppColors.fitness.withValues(alpha: 0.72),
+              color: colors.fitness.withValues(alpha: 0.72),
               size: 30,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
               '还没有动作明细',
               style: AppTextStyles.cardTitle.copyWith(
+                color: colors.textPrimary,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -1008,7 +969,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             Text(
               '添加动作后会自动计入专业记录',
               textAlign: TextAlign.center,
-              style: AppTextStyles.caption,
+              style: AppTextStyles.caption.copyWith(
+                color: colors.textSecondary,
+              ),
             ),
           ],
         ),
@@ -1017,21 +980,20 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
     return Column(
       children: _exercises.asMap().entries.map((entry) {
-        final index = entry.key;
-        final exercise = entry.value;
-        return _buildExerciseTile(index, exercise);
+        return _buildExerciseTile(entry.key, entry.value);
       }).toList(),
     );
   }
 
   Widget _buildExerciseTile(int index, _ExerciseItem exercise) {
+    final colors = context.growthColors;
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFFBF6),
+        color: colors.surface,
         borderRadius: BorderRadius.circular(AppRadius.xxl),
-        border: Border.all(color: AppColors.fitness.withValues(alpha: 0.12)),
+        border: Border.all(color: colors.fitness.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
@@ -1039,7 +1001,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: AppColors.softOrange,
+              color: colors.softOrange,
               borderRadius: BorderRadius.circular(AppRadius.mlg),
             ),
             child: Center(
@@ -1047,7 +1009,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 '${index + 1}',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.fitness,
+                  color: colors.fitness,
                 ),
               ),
             ),
@@ -1057,18 +1019,25 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(exercise.name, style: AppTextStyles.cardTitle),
+                Text(
+                  exercise.name,
+                  style: AppTextStyles.cardTitle.copyWith(
+                    color: colors.textPrimary,
+                  ),
+                ),
                 Text(
                   '${exercise.sets}组 × ${exercise.reps}次'
                   '${exercise.weight != null ? ' · ${exercise.weight}kg' : ''}'
                   '${exercise.restSeconds != null ? ' · 休息${exercise.restSeconds}秒' : ''}',
-                  style: AppTextStyles.caption,
+                  style: AppTextStyles.caption.copyWith(
+                    color: colors.textSecondary,
+                  ),
                 ),
               ],
             ),
           ),
           IconButton(
-            icon: Icon(Icons.close, size: 18, color: AppColors.textTertiary),
+            icon: Icon(Icons.close, size: 18, color: colors.textTertiary),
             tooltip: '删除动作',
             onPressed: () => setState(() => _exercises.removeAt(index)),
           ),
@@ -1077,8 +1046,8 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 添加动作按钮 ──
   Widget _buildAddExerciseButton() {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
       label: '添加训练动作',
@@ -1090,21 +1059,19 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         child: Container(
           height: 50,
           decoration: BoxDecoration(
-            color: AppColors.fitness.withValues(alpha: 0.1),
+            color: colors.fitness.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(
-              color: AppColors.fitness.withValues(alpha: 0.22),
-            ),
+            border: Border.all(color: colors.fitness.withValues(alpha: 0.22)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.add_rounded, color: AppColors.fitness),
+              Icon(Icons.add_rounded, color: colors.fitness),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 '添加动作明细',
                 style: AppTextStyles.cardTitle.copyWith(
-                  color: AppColors.fitness,
+                  color: colors.fitness,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1115,7 +1082,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 添加动作弹窗 ──
   void _showAddExerciseSheet() {
     final nameController = TextEditingController();
     final setsController = TextEditingController(text: '3');
@@ -1187,11 +1153,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               ],
             ),
             const SizedBox(height: AppSpacing.xl),
-            PrimaryButton(
-              text: '添加动作',
-              icon: Icons.add,
-              onTap: () {
-                if (nameController.text.isNotEmpty) {
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: () {
+                  if (nameController.text.trim().isEmpty) return;
                   setState(() {
                     _exercises.add(
                       _ExerciseItem(
@@ -1204,8 +1170,10 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                     );
                   });
                   Navigator.pop(ctx);
-                }
-              },
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('添加动作'),
+              ),
             ),
           ],
         ),
@@ -1220,24 +1188,38 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     IconData icon, [
     TextInputType? keyboardType,
   ]) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: AppTextStyles.caption),
+        Text(
+          label,
+          style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
+        ),
         const SizedBox(height: 4),
         TextField(
           controller: controller,
           textInputAction: TextInputAction.done,
           keyboardType: keyboardType,
+          style: TextStyle(color: colors.textPrimary),
           decoration: InputDecoration(
             hintText: hint,
-            prefixIcon: Icon(icon, color: AppColors.textTertiary, size: 18),
+            hintStyle: TextStyle(color: colors.textHint),
+            prefixIcon: Icon(icon, color: colors.textTertiary, size: 18),
             isDense: true,
             filled: true,
-            fillColor: AppColors.card,
+            fillColor: colors.surface,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: AppColors.border),
+              borderSide: BorderSide(color: colors.border),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: colors.border),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              borderSide: BorderSide(color: colors.fitness, width: 1.3),
             ),
           ),
         ),
@@ -1246,6 +1228,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Widget _buildFixedSaveBar() {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.fromLTRB(
         AppSpacing.lg,
@@ -1254,15 +1237,15 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         AppSpacing.lg,
       ),
       decoration: BoxDecoration(
-        color: AppColors.card.withValues(alpha: 0.96),
+        color: colors.card.withValues(alpha: 0.96),
         border: Border(
-          top: BorderSide(color: AppColors.border.withValues(alpha: 0.9)),
+          top: BorderSide(color: colors.border.withValues(alpha: 0.9)),
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
+            color: colors.shadow.withValues(alpha: 0.24),
             blurRadius: 22,
-            offset: Offset(0, -8),
+            offset: const Offset(0, -8),
           ),
         ],
       ),
@@ -1278,6 +1261,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.cardTitle.copyWith(
+                    color: colors.textPrimary,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1285,7 +1269,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 Text(
                   '预计 +$_estimatedExp EXP',
                   style: AppTextStyles.caption.copyWith(
-                    color: AppColors.fitness,
+                    color: colors.fitness,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1305,36 +1289,36 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 height: 52,
                 decoration: BoxDecoration(
                   color: _saving
-                      ? AppColors.fitness.withValues(alpha: 0.55)
-                      : AppColors.fitness,
+                      ? colors.fitness.withValues(alpha: 0.55)
+                      : colors.fitness,
                   borderRadius: BorderRadius.circular(AppRadius.full),
                   boxShadow: _saving
                       ? null
-                      : AppShadows.colored(AppColors.fitness),
+                      : AppShadows.colored(colors.fitness),
                 ),
                 child: Center(
                   child: _saving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2.2,
-                            color: Colors.white,
+                            color: colors.textOnAccent,
                           ),
                         )
                       : Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_rounded,
-                              color: Colors.white,
+                              color: colors.textOnAccent,
                               size: 20,
                             ),
                             const SizedBox(width: AppSpacing.xs),
                             Text(
                               '保存',
                               style: AppTextStyles.cardTitle.copyWith(
-                                color: Colors.white,
+                                color: colors.textOnAccent,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -1349,8 +1333,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     );
   }
 
-  // ── 保存记录 ──
-  // ── 获取运动类型对应的 bodyPart 值 ──
   String _resolveBodyPart() {
     switch (_selectedActivityType) {
       case ActivityType.strength:
@@ -1374,7 +1356,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     }
   }
 
-  // ── 获取标题 ──
   String? _resolveTitle() {
     if (_selectedActivityType == ActivityType.strength) {
       return _titleController.text.trim().isEmpty
@@ -1389,7 +1370,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Future<void> _save() async {
-    // 验证
     final bodyPart = _resolveBodyPart();
     if (_selectedActivityType == ActivityType.strength &&
         _modeIndex == 0 &&
@@ -1401,10 +1381,10 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     }
 
     final duration = int.tryParse(_durationController.text) ?? 0;
-    if (duration <= 0) {
+    if (duration <= 0 || duration > 1440) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('请输入有效的训练时长')));
+      ).showSnackBar(const SnackBar(content: Text('请输入有效的训练时长（1-1440分钟）')));
       return;
     }
 
@@ -1412,64 +1392,8 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
     try {
       final repo = ref.read(fitnessRepositoryProvider);
+      final db = ref.read(databaseProvider);
       final now = DateTime.now();
-
-      final recordId = await repo.insertFitnessRecord(
-        FitnessRecordsCompanion(
-          mode: Value(
-            _selectedActivityType == ActivityType.strength
-                ? (_modeIndex == 0 ? 'simple' : 'professional')
-                : 'simple',
-          ),
-          title: Value(_resolveTitle()),
-          bodyPart: Value(bodyPart),
-          activityType: Value(_selectedActivityType.name),
-          startTime: Value(_startTime.millisecondsSinceEpoch),
-          endTime: Value(_endTime.millisecondsSinceEpoch),
-          durationMinutes: Value(duration),
-          fatigueLevel: Value(
-            _selectedActivityType == ActivityType.strength
-                ? (_modeIndex == 1 ? _fatigue : null)
-                : _fatigue,
-          ),
-          intensityLevel: Value(
-            _selectedActivityType == ActivityType.strength
-                ? (_modeIndex == 1 ? _intensity : null)
-                : _intensity,
-          ),
-          feeling: Value(
-            _feelingController.text.trim().isEmpty
-                ? null
-                : _feelingController.text.trim(),
-          ),
-          note: Value(
-            _notesController.text.trim().isEmpty
-                ? null
-                : _notesController.text.trim(),
-          ),
-          createdAt: Value(now.millisecondsSinceEpoch),
-          updatedAt: Value(now.millisecondsSinceEpoch),
-        ),
-      );
-
-      // 插入动作列表（力量训练专业模式）
-      if (_selectedActivityType == ActivityType.strength && _modeIndex == 1) {
-        for (final exercise in _exercises) {
-          await repo.insertFitnessExercise(
-            FitnessExercisesCompanion(
-              fitnessRecordId: Value(recordId),
-              exerciseName: Value(exercise.name),
-              sets: Value(exercise.sets),
-              reps: Value(exercise.reps),
-              weight: Value(exercise.weight),
-              restSeconds: Value(exercise.restSeconds),
-              createdAt: Value(now.millisecondsSinceEpoch),
-            ),
-          );
-        }
-      }
-
-      // 计算经验值
       final expService = ref.read(expServiceProvider);
       final exp = expService.calculateFitnessExp(
         durationMinutes: duration,
@@ -1482,32 +1406,86 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         hasFeeling: _feelingController.text.trim().isNotEmpty,
       );
 
-      // 更新经验值
-      await repo.updateFitnessRecordExp(recordId, exp);
+      late final int recordId;
+      late final int oldTotal;
+      await db.transaction(() async {
+        recordId = await repo.insertFitnessRecord(
+          FitnessRecordsCompanion(
+            mode: Value(
+              _selectedActivityType == ActivityType.strength
+                  ? (_modeIndex == 0 ? 'simple' : 'professional')
+                  : 'simple',
+            ),
+            title: Value(_resolveTitle()),
+            bodyPart: Value(bodyPart),
+            activityType: Value(_selectedActivityType.name),
+            startTime: Value(_startTime.millisecondsSinceEpoch),
+            endTime: Value(_endTime.millisecondsSinceEpoch),
+            durationMinutes: Value(duration),
+            fatigueLevel: Value(
+              _selectedActivityType == ActivityType.strength
+                  ? (_modeIndex == 1 ? _fatigue : null)
+                  : _fatigue,
+            ),
+            intensityLevel: Value(
+              _selectedActivityType == ActivityType.strength
+                  ? (_modeIndex == 1 ? _intensity : null)
+                  : _intensity,
+            ),
+            feeling: Value(
+              _feelingController.text.trim().isEmpty
+                  ? null
+                  : _feelingController.text.trim(),
+            ),
+            note: Value(
+              _notesController.text.trim().isEmpty
+                  ? null
+                  : _notesController.text.trim(),
+            ),
+            createdAt: Value(now.millisecondsSinceEpoch),
+            updatedAt: Value(now.millisecondsSinceEpoch),
+          ),
+        );
 
-      // 插入经验日志
-      final expRepo = ref.read(expRepositoryProvider);
-      final oldTotal = await expRepo.getTotalExp();
+        if (_selectedActivityType == ActivityType.strength && _modeIndex == 1) {
+          for (final exercise in _exercises) {
+            await repo.insertFitnessExercise(
+              FitnessExercisesCompanion(
+                fitnessRecordId: Value(recordId),
+                exerciseName: Value(exercise.name),
+                sets: Value(exercise.sets),
+                reps: Value(exercise.reps),
+                weight: Value(exercise.weight),
+                restSeconds: Value(exercise.restSeconds),
+                createdAt: Value(now.millisecondsSinceEpoch),
+              ),
+            );
+          }
+        }
+
+        await repo.updateFitnessRecordExp(recordId, exp);
+
+        final expRepo = ref.read(expRepositoryProvider);
+        oldTotal = await expRepo.getTotalExp();
+        await expRepo.insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'fitness',
+            sourceId: recordId,
+            expValue: exp,
+            reason: '${_selectedActivityType.label}: $bodyPart ($duration分钟)',
+            createdAt: now.millisecondsSinceEpoch,
+          ),
+        );
+      });
+
       final oldLevel = expService.calculateLevel(oldTotal);
-      await expRepo.insertExpLog(
-        GrowthExpLogsCompanion.insert(
-          sourceType: 'fitness',
-          sourceId: recordId,
-          expValue: exp,
-          reason: '${_selectedActivityType.label}: $bodyPart ($duration分钟)',
-          createdAt: now.millisecondsSinceEpoch,
-        ),
-      );
-
-      final newTotal = oldTotal + exp;
-      final newLevel = expService.calculateLevel(newTotal);
+      final newLevel = expService.calculateLevel(oldTotal + exp);
       if (newLevel > oldLevel) {
         PetEventBus.instance.emit(
           PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
         );
       }
 
-      // 刷新数据
       ref.invalidate(recentFitnessRecordsProvider);
       ref.invalidate(todayFitnessMinutesProvider);
       ref.invalidate(weeklyFitnessCountProvider);
@@ -1517,11 +1495,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       ref.invalidate(fitnessChartDataProvider(365));
 
       if (mounted) {
-        // 发送宠物事件
-        final eventId = 'fitness_${DateTime.now().millisecondsSinceEpoch}';
         PetEventBus.instance.emit(
           PetEvent.moduleCompleted(
-            eventId: eventId,
+            eventId: 'fitness_${DateTime.now().millisecondsSinceEpoch}',
             type: PetEventType.fitnessCompleted,
             module: 'fitness',
           ),
@@ -1532,11 +1508,11 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         ).showSnackBar(SnackBar(content: Text('已保存，获得 $exp EXP')));
         context.pop();
       }
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('保存失败: $e')));
+        ).showSnackBar(const SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -1544,7 +1520,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 }
 
-// ── 动作数据模型 ──
 class _ExerciseItem {
   _ExerciseItem({
     required this.name,

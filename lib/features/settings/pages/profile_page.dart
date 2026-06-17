@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
@@ -93,59 +94,62 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   }
 
   Future<void> _showNicknameEditor() async {
+    final colors = context.growthColors;
     final controller = TextEditingController(text: _nicknameController.text);
-
-    final result = await showModalBottomSheet<String>(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
-        child: buildEditSheet(
-          ctx,
-          title: '修改昵称',
-          icon: Icons.person_rounded,
-          iconColor: const Color(0xFF5D68F2),
-          child: TextField(
-            controller: controller,
-            textInputAction: TextInputAction.done,
-            autofocus: true,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF5C3D2E),
-            ),
-            decoration: InputDecoration(
-              hintText: '输入昵称',
-              hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: Color(0xFFE8C9A0)),
+    try {
+      final result = await showModalBottomSheet<String>(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (ctx) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          ),
+          child: buildEditSheet(
+            ctx,
+            title: '修改昵称',
+            icon: Icons.person_rounded,
+            iconColor: colors.primary,
+            child: TextField(
+              controller: controller,
+              textInputAction: TextInputAction.done,
+              maxLength: 20,
+              autofocus: true,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: colors.textPrimary,
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: Color(0xFFD4A574),
-                  width: 2,
+              decoration: InputDecoration(
+                hintText: '输入昵称',
+                counterText: '',
+                hintStyle: TextStyle(color: colors.textHint),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.border),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: colors.primary, width: 2),
                 ),
               ),
+              onSubmitted: (v) => Navigator.pop(context, v),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    if (result != null && result.isNotEmpty) {
-      setState(() => _nicknameController.text = result);
-      await _saveField('nickname', result);
+      if (result != null && result.isNotEmpty) {
+        setState(() => _nicknameController.text = result);
+        await _saveField('nickname', result);
+      }
+    } finally {
+      controller.dispose();
     }
   }
 
   Future<void> _showGenderPicker() async {
-    final result = await showGenderPickerSheet(
-      context,
-      currentGender: _gender,
-    );
+    final result = await showGenderPickerSheet(context, currentGender: _gender);
     if (result != null) {
       setState(() => _gender = result);
       await _saveField('gender', result);
@@ -201,16 +205,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   Future<void> _saveBodyMetric({double? weight, double? bodyFat}) async {
     final db = ref.read(databaseProvider);
     final now = DateTime.now();
-    final recordDate = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final recordDate =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    await db.into(db.bodyMetrics).insert(
-      BodyMetricsCompanion.insert(
-        recordDate: recordDate,
-        weight: Value(weight),
-        bodyFat: Value(bodyFat),
-        createdAt: now.millisecondsSinceEpoch,
-      ),
-    );
+    await db
+        .into(db.bodyMetrics)
+        .insert(
+          BodyMetricsCompanion.insert(
+            recordDate: recordDate,
+            weight: Value(weight),
+            bodyFat: Value(bodyFat),
+            createdAt: now.millisecondsSinceEpoch,
+          ),
+        );
 
     HapticFeedback.lightImpact();
     if (mounted) {
@@ -229,6 +236,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
       currentHeight: _heightController.text,
     );
     if (result != null && result.isNotEmpty) {
+      final height = double.tryParse(result);
+      if (height == null || height < 50 || height > 250) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('请输入有效的身高（50-250cm）')));
+        }
+        return;
+      }
       setState(() => _heightController.text = result);
       await _saveField('height', result);
     }
@@ -240,16 +256,17 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   Widget build(BuildContext context) {
     final latestWeight = ref.watch(latestBodyMetricProvider);
     final dashboard = ref.watch(dashboardProvider);
+    final colors = context.growthColors;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF5E1),
+      backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '个人资料',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5C3D2E),
+            color: colors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -257,7 +274,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: const Color(0xFF5C3D2E),
+          color: colors.textPrimary,
           onPressed: () => context.pop(),
         ),
       ),
@@ -309,14 +326,16 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   }
 
   Widget _buildSectionTitle(String title) {
+    final colors = context.growthColors;
+
     return Align(
       alignment: Alignment.centerLeft,
       child: Text(
         title,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF5C3D2E),
+          color: colors.textPrimary,
         ),
       ),
     );

@@ -52,10 +52,10 @@ void showSleepRecordDetailSheet(
         children: [
           Text(
             '${record.qualityLevel}/5',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: context.growthColors.textPrimary,
             ),
           ),
           const SizedBox(width: 8),
@@ -76,10 +76,10 @@ void showSleepRecordDetailSheet(
       label: '醒后精力',
       child: Text(
         '${record.energyLevel}/5',
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: AppColors.textPrimary,
+          color: context.growthColors.textPrimary,
         ),
       ),
     ),
@@ -94,7 +94,10 @@ void showSleepRecordDetailSheet(
         label: '梦境',
         child: Text(
           record.dreamNote!,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(
+            fontSize: 14,
+            color: context.growthColors.textPrimary,
+          ),
         ),
       ),
     );
@@ -105,11 +108,14 @@ void showSleepRecordDetailSheet(
       _DetailInfoCard(
         backgroundColor: const Color(0xFFF5F5F5),
         icon: Icons.note_outlined,
-        iconColor: AppColors.textTertiary,
+        iconColor: context.growthColors.textTertiary,
         label: '备注',
         child: Text(
           record.note!,
-          style: const TextStyle(fontSize: 14, color: AppColors.textPrimary),
+          style: TextStyle(
+            fontSize: 14,
+            color: context.growthColors.textPrimary,
+          ),
         ),
       ),
     );
@@ -172,9 +178,9 @@ class _DetailInfoCard extends StatelessWidget {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
-                    color: AppColors.textTertiary,
+                    color: context.growthColors.textTertiary,
                   ),
                 ),
                 const SizedBox(height: 4),

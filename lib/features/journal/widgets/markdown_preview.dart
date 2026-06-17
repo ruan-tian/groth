@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:markdown/markdown.dart' as md;
 
+import '../../../app/design/design.dart';
 import 'journal_safe_image.dart';
 
 /// 日记 Markdown 预览组件
@@ -35,81 +36,80 @@ class _JournalMarkdownPreviewState extends State<JournalMarkdownPreview> {
     // 每次 build 重置计数器
     _checkboxIndex = 0;
 
+    final colors = context.growthColors;
+
     return MarkdownBody(
       data: widget.markdown,
       selectable: true,
       extensionSet: md.ExtensionSet.gitHubFlavored,
       styleSheet: MarkdownStyleSheet(
         // Headings
-        h1: const TextStyle(
+        h1: TextStyle(
           fontSize: 24,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1F2329),
+          color: colors.textPrimary,
           height: 1.4,
         ),
-        h2: const TextStyle(
+        h2: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1F2329),
+          color: colors.textPrimary,
           height: 1.4,
         ),
-        h3: const TextStyle(
+        h3: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w600,
-          color: Color(0xFF1F2329),
+          color: colors.textPrimary,
           height: 1.4,
         ),
         // Body
-        p: const TextStyle(fontSize: 16, height: 1.6, color: Color(0xFF1F2329)),
+        p: TextStyle(fontSize: 16, height: 1.6, color: colors.textPrimary),
         // Bold
-        strong: const TextStyle(
+        strong: TextStyle(
           fontWeight: FontWeight.w700,
-          color: Color(0xFF1F2329),
+          color: colors.textPrimary,
         ),
         // Italic
-        em: const TextStyle(
-          fontStyle: FontStyle.italic,
-          color: Color(0xFF1F2329),
-        ),
+        em: TextStyle(fontStyle: FontStyle.italic, color: colors.textPrimary),
         // Strikethrough
         del: TextStyle(
           decoration: TextDecoration.lineThrough,
-          color: Colors.grey.shade500,
+          color: colors.textTertiary,
         ),
         // Blockquote
-        blockquote: const TextStyle(
+        blockquote: TextStyle(
           fontSize: 15,
           fontStyle: FontStyle.italic,
-          color: Color(0xFF6B7280),
+          color: colors.textSecondary,
         ),
         blockquoteDecoration: BoxDecoration(
           border: Border(
             left: BorderSide(
-              color: const Color(0xFF9B8FE8).withValues(alpha: 0.5),
+              color: colors.journal.withValues(alpha: 0.5),
               width: 3,
             ),
           ),
-          color: const Color(0xFFF0EFFF).withValues(alpha: 0.3),
+          color: colors.softPink.withValues(alpha: 0.6),
         ),
         blockquotePadding: const EdgeInsets.only(left: 12, top: 8, bottom: 8),
         // Inline code
-        code: const TextStyle(
+        code: TextStyle(
           fontFamily: 'monospace',
           fontSize: 14,
-          backgroundColor: Color(0xFFF3F4F6),
-          color: Color(0xFF1F2329),
+          backgroundColor: colors.surfaceVariant,
+          color: colors.textPrimary,
         ),
         // Code block
         codeblockDecoration: BoxDecoration(
-          color: const Color(0xFFF3F4F6),
+          color: colors.surfaceVariant,
           borderRadius: BorderRadius.circular(8),
         ),
         codeblockPadding: const EdgeInsets.all(12),
         // Lists
-        listBullet: const TextStyle(color: Color(0xFF6B7280)),
+        listBullet: TextStyle(color: colors.textSecondary),
         // Horizontal rule
-        horizontalRuleDecoration: const BoxDecoration(
-          border: Border(top: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
+        horizontalRuleDecoration: BoxDecoration(
+          border: Border(top: BorderSide(color: colors.divider, width: 1)),
         ),
       ),
       builders: {'mark': _HighlightBuilder(), 'img': _LocalImageBuilder()},
@@ -122,6 +122,8 @@ class _JournalMarkdownPreviewState extends State<JournalMarkdownPreview> {
   /// 可交互的复选框：点击后切换对应行的 `[ ]` / `[x]`。
   Widget _buildInteractiveCheckbox(bool isChecked) {
     final index = _checkboxIndex++;
+    final colors = context.growthColors;
+
     return GestureDetector(
       onTap: () => _toggleTaskAtIndex(index),
       child: Padding(
@@ -131,7 +133,7 @@ class _JournalMarkdownPreviewState extends State<JournalMarkdownPreview> {
               ? Icons.check_box_rounded
               : Icons.check_box_outline_blank_rounded,
           size: 20,
-          color: isChecked ? const Color(0xFF9B8FE8) : const Color(0xFFC4C7D6),
+          color: isChecked ? colors.journal : colors.textHint,
         ),
       ),
     );
@@ -140,6 +142,8 @@ class _JournalMarkdownPreviewState extends State<JournalMarkdownPreview> {
   /// 静态复选框（不可点击）。
   Widget _buildStaticCheckbox(bool isChecked) {
     _checkboxIndex++;
+    final colors = context.growthColors;
+
     return Padding(
       padding: const EdgeInsets.only(right: 4),
       child: Icon(
@@ -147,7 +151,7 @@ class _JournalMarkdownPreviewState extends State<JournalMarkdownPreview> {
             ? Icons.check_box_rounded
             : Icons.check_box_outline_blank_rounded,
         size: 20,
-        color: isChecked ? const Color(0xFF9B8FE8) : const Color(0xFFC4C7D6),
+        color: isChecked ? colors.journal : colors.textHint,
       ),
     );
   }

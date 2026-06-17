@@ -9,13 +9,14 @@ class WeatherRepository {
   /// 插入或更新今日天气
   Future<void> upsertWeather(DailyWeatherTableCompanion weather) async {
     final dateStr = weather.date.value;
-    final existing = await (_db.select(_db.dailyWeatherTable)
-          ..where((t) => t.date.equals(dateStr)))
-        .getSingleOrNull();
+    final existing = await (_db.select(
+      _db.dailyWeatherTable,
+    )..where((t) => t.date.equals(dateStr))).getSingleOrNull();
 
     if (existing != null) {
-      await (_db.update(_db.dailyWeatherTable)..where((t) => t.date.equals(dateStr)))
-          .write(weather);
+      await (_db.update(
+        _db.dailyWeatherTable,
+      )..where((t) => t.date.equals(dateStr))).write(weather);
     } else {
       await _db.into(_db.dailyWeatherTable).insert(weather);
     }

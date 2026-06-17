@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../../../../app/design/design.dart';
 import 'weather_card_data.dart';
 
 class WeatherParticleLayer extends StatefulWidget {
@@ -62,6 +63,7 @@ class _WeatherParticleLayerState extends State<WeatherParticleLayer>
             type: widget.type,
             progress: 0,
             accentColor: widget.accentColor,
+            particleColor: context.growthColors.textOnAccent,
           ),
           size: Size.infinite,
         ),
@@ -77,6 +79,7 @@ class _WeatherParticleLayerState extends State<WeatherParticleLayer>
               type: widget.type,
               progress: _controller.value,
               accentColor: widget.accentColor,
+              particleColor: context.growthColors.textOnAccent,
             ),
             size: Size.infinite,
           );
@@ -91,11 +94,13 @@ class _ParticlePainter extends CustomPainter {
     required this.type,
     required this.progress,
     required this.accentColor,
+    required this.particleColor,
   });
 
   final WeatherParticleType type;
   final double progress;
   final Color accentColor;
+  final Color particleColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -137,7 +142,7 @@ class _ParticlePainter extends CustomPainter {
       final x = baseX + math.sin(progress * math.pi * 2 + i * 0.7) * 5;
       final y = baseY + math.cos(progress * math.pi * 1.5 + i) * 4;
       final alpha = 0.2 + 0.5 * math.sin(progress * math.pi * 3 + i).abs();
-      paint.color = Colors.white.withValues(alpha: alpha);
+      paint.color = particleColor.withValues(alpha: alpha);
       final r = 1.5 + _unit(i, 44) * 2.5;
       _drawDiamondStar(canvas, Offset(x, y), r, paint);
     }
@@ -146,7 +151,7 @@ class _ParticlePainter extends CustomPainter {
   // ── Cloud ──
 
   void _paintCloud(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.5);
+    final paint = Paint()..color = particleColor.withValues(alpha: 0.5);
     for (var i = 0; i < 5; i++) {
       final y = size.height * (0.08 + i * 0.16);
       final offset = (progress + _unit(i, 17) * 0.35) % 1.0;
@@ -178,7 +183,7 @@ class _ParticlePainter extends CustomPainter {
 
   void _paintRain(Canvas canvas, Size size, int count, double alpha) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: alpha)
+      ..color = particleColor.withValues(alpha: alpha)
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
     for (var i = 0; i < count; i++) {
@@ -208,7 +213,7 @@ class _ParticlePainter extends CustomPainter {
       // Bolt line
       if (flashPhase < 0.02) {
         final boltPaint = Paint()
-          ..color = Colors.white.withValues(alpha: 0.6)
+          ..color = particleColor.withValues(alpha: 0.6)
           ..strokeWidth = 3
           ..strokeCap = StrokeCap.round
           ..style = PaintingStyle.stroke;
@@ -227,7 +232,7 @@ class _ParticlePainter extends CustomPainter {
   // ── Snow ──
 
   void _paintSnow(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.white.withValues(alpha: 0.7);
+    final paint = Paint()..color = particleColor.withValues(alpha: 0.7);
     for (var i = 0; i < 23; i++) {
       final baseX = _unit(i, 55) * size.width;
       final y = ((progress + _unit(i, 56) * 0.07) % 1.0) * size.height;
@@ -244,7 +249,7 @@ class _ParticlePainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round
-      ..color = Colors.white.withValues(alpha: 0.4);
+      ..color = particleColor.withValues(alpha: 0.4);
     for (var i = 0; i < 6; i++) {
       final y = size.height * (0.12 + i * 0.14);
       final off = (progress + _unit(i, 29) * 0.3) % 1.0;
@@ -308,7 +313,7 @@ class _ParticlePainter extends CustomPainter {
       final x = (i * 57 + _unit(i, 37) * 22) % size.width;
       final y = (i * 39 + _unit(i, 38) * 16) % (size.height * 0.52);
       final alpha = 0.2 + 0.4 * math.sin(progress * math.pi * 2 + i).abs();
-      paint.color = Colors.white.withValues(alpha: alpha);
+      paint.color = particleColor.withValues(alpha: alpha);
       _drawDiamondStar(canvas, Offset(x, y), 1.0 + _unit(i, 39) * 1.8, paint);
     }
   }
@@ -349,6 +354,7 @@ class _ParticlePainter extends CustomPainter {
   bool shouldRepaint(covariant _ParticlePainter oldDelegate) {
     return oldDelegate.type != type ||
         oldDelegate.progress != progress ||
-        oldDelegate.accentColor != accentColor;
+        oldDelegate.accentColor != accentColor ||
+        oldDelegate.particleColor != particleColor;
   }
 }

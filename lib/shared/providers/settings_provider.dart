@@ -134,8 +134,8 @@ final dailyGoalsInitProvider = FutureProvider<void>((ref) async {
       if (goals.isNotEmpty) {
         ref.read(dailyGoalsProvider.notifier).state = goals;
       }
-    } catch (_) {
-      // 解析失败则使用默认值
+    } catch (e) {
+      debugPrint('解析每日目标失败: $e');
     }
   }
 });
@@ -191,8 +191,8 @@ final todayWaterIntakeInitProvider = FutureProvider<void>((ref) async {
         (k, v) => MapEntry(k, v as int),
       );
       ref.read(dailyWaterIntakeProvider.notifier).state = map;
-    } catch (_) {
-      // 解析失败则使用空值
+    } catch (e) {
+      debugPrint('解析饮水量记录失败: $e');
     }
   }
 });
@@ -233,6 +233,40 @@ final weeklyFitnessGoalInitProvider = FutureProvider<void>((ref) async {
     final goal = int.tryParse(value);
     if (goal != null && goal > 0) {
       ref.read(weeklyFitnessGoalProvider.notifier).state = goal;
+    }
+  }
+});
+
+// =============================================================================
+// 长期目标 Provider
+// =============================================================================
+
+/// 目标体重（kg）
+final targetWeightProvider = StateProvider<double>((ref) => 65);
+
+/// 从数据库初始化目标体重
+final targetWeightInitProvider = FutureProvider<void>((ref) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final value = await repo.getSetting('target_weight');
+  if (value != null) {
+    final weight = double.tryParse(value);
+    if (weight != null && weight > 0) {
+      ref.read(targetWeightProvider.notifier).state = weight;
+    }
+  }
+});
+
+/// 累计学习目标（小时）
+final totalStudyHoursProvider = StateProvider<int>((ref) => 1000);
+
+/// 从数据库初始化累计学习目标
+final totalStudyHoursInitProvider = FutureProvider<void>((ref) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final value = await repo.getSetting('total_study_hours');
+  if (value != null) {
+    final hours = int.tryParse(value);
+    if (hours != null && hours > 0) {
+      ref.read(totalStudyHoursProvider.notifier).state = hours;
     }
   }
 });
@@ -374,13 +408,14 @@ const availableDashboardCards = <DashboardCardConfig>[
 DashboardCardConfig? getCardConfigById(String id) {
   try {
     return availableDashboardCards.firstWhere((c) => c.id == id);
-  } catch (_) {
+  } catch (e) {
+    debugPrint('获取卡片配置失败: $e');
     return null;
   }
 }
 
 /// 默认首页卡片 ID 列表
-const defaultDashboardCardIds = ['study', 'fitness', 'diet', 'sleep'];
+const defaultDashboardCardIds = ['study', 'focus'];
 
 /// 首页卡片 ID 列表 StateProvider
 final dashboardCardIdsProvider = StateProvider<List<String>>((ref) {
@@ -397,8 +432,9 @@ final dashboardCardIdsInitProvider = FutureProvider<void>((ref) async {
       if (list.isNotEmpty) {
         ref.read(dashboardCardIdsProvider.notifier).state = list;
       }
-    } catch (_) {
+    } catch (e) {
       // 解析失败则使用默认值
+      debugPrint('解析首页卡片配置失败: $e');
     }
   }
 });
@@ -514,15 +550,15 @@ final journalUploadInitProvider = FutureProvider<void>((ref) async {
 });
 
 /// 番茄钟学习模式（默认高中生）
-final focusStudyModeProvider =
-    StateProvider<StudyMode>((ref) => StudyMode.highSchool);
+final focusStudyModeProvider = StateProvider<StudyMode>(
+  (ref) => StudyMode.highSchool,
+);
 
 /// 从数据库初始化番茄钟学习模式
 final focusStudyModeInitProvider = FutureProvider<void>((ref) async {
   final repo = ref.watch(settingRepositoryProvider);
   final value = await repo.getSetting('focus_study_mode');
   if (value != null) {
-    ref.read(focusStudyModeProvider.notifier).state =
-        StudyMode.fromName(value);
+    ref.read(focusStudyModeProvider.notifier).state = StudyMode.fromName(value);
   }
 });

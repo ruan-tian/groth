@@ -9,7 +9,10 @@ class DateGroupedList<T> extends StatelessWidget {
     required this.items,
     required this.dateExtractor,
     required this.itemBuilder,
-    this.groupPadding = const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+    this.groupPadding = const EdgeInsets.symmetric(
+      vertical: 8.0,
+      horizontal: 16.0,
+    ),
     this.itemPadding = const EdgeInsets.symmetric(horizontal: 16.0),
   });
 
@@ -43,8 +46,7 @@ class DateGroupedList<T> extends StatelessWidget {
     }
 
     // 按日期排序（最新在前）
-    final sortedDates = grouped.keys.toList()
-      ..sort((a, b) => b.compareTo(a));
+    final sortedDates = grouped.keys.toList()..sort((a, b) => b.compareTo(a));
 
     return ListView.builder(
       shrinkWrap: true,
@@ -69,25 +71,25 @@ class DateGroupedList<T> extends StatelessWidget {
             children: [
               Text(
                 _formatDate(date),
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Text(
                 '${groupItems.length} 条记录',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),
         ),
         // 该组的所有项目
-        ...groupItems.map((item) => Padding(
-              padding: itemPadding,
-              child: itemBuilder(context, item),
-            )),
+        ...groupItems.map(
+          (item) =>
+              Padding(padding: itemPadding, child: itemBuilder(context, item)),
+        ),
         // 组间分隔线
         if (date != _today && date != _yesterday)
           const Divider(height: 1, indent: 16, endIndent: 16),

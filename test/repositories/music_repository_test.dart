@@ -83,4 +83,57 @@ void main() {
     expect(tracks.first.id, older);
     expect(tracks.map((track) => track.id), contains(newer));
   });
+
+  test('creates playlists and stores track membership', () async {
+    final trackId = await repo.insertTrack(_track(title: 'Playlist Song'));
+    final playlistId = await repo.createPlaylist(
+      name: 'Night Mix',
+      coverAsset: MusicAssets.playlistCustom01,
+    );
+
+    await repo.addTrackToPlaylist(playlistId: playlistId, trackId: trackId);
+    await repo.addTrackToPlaylist(playlistId: playlistId, trackId: trackId);
+
+    final playlists = await repo.getPlaylists();
+    final memberships = await repo.getPlaylistTracks();
+
+    expect(playlists.single.name, 'Night Mix');
+    expect(memberships, hasLength(1));
+    expect(memberships.single.playlistId, playlistId);
+    expect(memberships.single.trackId, trackId);
+  });
+
+  test('setTrackPlaylists replaces previous playlist membership', () async {
+    final trackId = await repo.insertTrack(_track(title: 'Move Me'));
+    final first = await repo.createPlaylist(
+      name: 'First',
+      coverAsset: MusicAssets.playlistCustom01,
+    );
+    final second = await repo.createPlaylist(
+      name: 'Second',
+      coverAsset: MusicAssets.playlistCustom02,
+    );
+
+    await repo.setTrackPlaylists(trackId: trackId, playlistIds: [first]);
+    await repo.setTrackPlaylists(trackId: trackId, playlistIds: [second]);
+
+    final memberships = await repo.getPlaylistTracks();
+
+    expect(memberships, hasLength(1));
+    expect(memberships.single.playlistId, second);
+  });
+
+  test('updates and clears manual scene override', () async {
+    final trackId = await repo.insertTrack(_track(title: 'Manual Scene'));
+
+    await repo.updateSceneOverride(trackId, 'sleep');
+    final sleepTrack = await repo.getTrackById(trackId);
+
+    expect(sleepTrack!.sceneOverride, 'sleep');
+
+    await repo.updateSceneOverride(trackId, null);
+    final clearedTrack = await repo.getTrackById(trackId);
+
+    expect(clearedTrack!.sceneOverride, null);
+  });
 }

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart'
     hide
@@ -28,7 +29,6 @@ import '../widgets/timer_display.dart';
 part '../widgets/focus_session_widgets.dart';
 
 const _sessionMint = Color(0xFF9DEBD8);
-const _sessionMintDark = Color(0xFF34BAA5);
 const _sessionCream = Color(0xFFF7E5C6);
 const _sessionInk = Color(0xFF113541);
 
@@ -89,7 +89,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    unawaited(_stopSessionAudioForDispose());
+    _stopSessionAudioForDispose();
     super.dispose();
   }
 
@@ -154,10 +154,10 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     ref.read(focusAudioStateProvider.notifier).stopNoise();
   }
 
-  Future<void> _stopSessionAudioForDispose() async {
-    await _audioNotifier.stopNoise();
+  void _stopSessionAudioForDispose() {
+    unawaited(_audioNotifier.stopNoise());
     if (!_musicWasPlayingOnEnter && _focusStartedMusic) {
-      await ref.read(musicPlayerProvider.notifier).pause();
+      unawaited(ref.read(musicPlayerProvider.notifier).pause());
     }
   }
 
@@ -177,9 +177,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     _initAudio();
   }
 
-  void _cancelSession() {
+  Future<void> _cancelSession() async {
     _stopSessionAudio();
-    _saveFocusRound(completed: false);
+    await _saveFocusRound(completed: false);
     ref.read(focusCycleProvider.notifier).cancel();
     if (mounted) context.pop();
   }
@@ -198,14 +198,16 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
 
       // 发送即时通知
       // ignore: unawaited_futures
-      ref.read(reminderNotificationServiceProvider).showImmediate(
-        id: 5205,
-        title: '专注时间结束',
-        body: cycleState.isLastRound
-            ? '所有轮次完成！休息一下吧～'
-            : '第${cycleState.currentRound}轮完成！休息一下吧～',
-        payload: 'focus_complete',
-      );
+      ref
+          .read(reminderNotificationServiceProvider)
+          .showImmediate(
+            id: 5205,
+            title: '专注时间结束',
+            body: cycleState.isLastRound
+                ? '所有轮次完成！休息一下吧～'
+                : '第${cycleState.currentRound}轮完成！休息一下吧～',
+            payload: 'focus_complete',
+          );
 
       _saveFocusRound(completed: true);
 
@@ -250,114 +252,119 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     if (_saved) return;
     _saved = true;
 
-    final cycleState = ref.read(focusCycleProvider);
-    final saveKey =
-        '${cycleState.sessionGroupId ?? 'local'}:${cycleState.currentRound}:$completed';
-    if (_savedRoundKeys.contains(saveKey)) {
-      _saved = false;
-      return;
-    }
-    final focusRepo = ref.read(focusRepositoryProvider);
-    final now = DateTime.now().millisecondsSinceEpoch;
-    final phaseStartMs = cycleState.phaseStartAt?.millisecondsSinceEpoch ?? now;
-    final actualDuration = completed
-        ? widget.durationMinutes
-        : ((cycleState.focusSeconds - cycleState.remainingSeconds) / 60).ceil();
-    final expService = ref.read(expServiceProvider);
-    final expValue = expService.calculateFocusExp(
-      durationMinutes: widget.durationMinutes,
-      completed: completed,
-    );
-    final expReason = completed
-        ? '完成${focusTypeLabel(cycleState.type)}专注 '
-              '第${cycleState.currentRound}轮 ${widget.durationMinutes}分钟'
-        : null;
-    int? oldLevel;
-    int? newLevel;
-    if (completed) {
-      final expRepo = ref.read(expRepositoryProvider);
-      final oldTotal = await expRepo.getTotalExp();
-      oldLevel = expService.calculateLevel(oldTotal);
-      newLevel = expService.calculateLevel(oldTotal + expValue);
-    }
-
-    final session = FocusSessionsCompanion(
-      type: drift.Value(cycleState.type),
-      title: drift.Value(
-        cycleState.title.isEmpty
-            ? '${focusTypeLabel(cycleState.type)}专注'
-            : cycleState.title,
-      ),
-      startTime: drift.Value(phaseStartMs),
-      endTime: drift.Value(now),
-      durationMinutes: drift.Value(actualDuration),
-      completed: drift.Value(completed),
-      soundType: drift.Value(cycleState.soundType),
-      roundIndex: drift.Value(cycleState.currentRound),
-      sessionGroupId: drift.Value(cycleState.sessionGroupId),
-      createdAt: drift.Value(now),
-    );
-
-    if (cycleState.sessionGroupId != null) {
-      final existingSession = await focusRepo.getFocusSessionByGroupRound(
-        groupId: cycleState.sessionGroupId!,
-        roundIndex: cycleState.currentRound,
-        completed: completed,
-      );
-      if (existingSession != null) {
-        _savedRoundKeys.add(saveKey);
-        _saved = false;
+    try {
+      final cycleState = ref.read(focusCycleProvider);
+      final saveKey =
+          '${cycleState.sessionGroupId ?? 'local'}:${cycleState.currentRound}:$completed';
+      if (_savedRoundKeys.contains(saveKey)) {
         return;
       }
-    }
-
-    final subject = cycleState.subject.isNotEmpty ? cycleState.subject : null;
-    final studyTitle = cycleState.title.isNotEmpty
-        ? cycleState.title
-        : '${focusTypeLabel(cycleState.type)}专注';
-    final studyRecord = StudyRecordsCompanion(
-      mode: const drift.Value('simple'),
-      title: drift.Value(studyTitle),
-      subject: drift.Value(subject),
-      startTime: drift.Value(phaseStartMs),
-      endTime: drift.Value(now),
-      durationMinutes: drift.Value(actualDuration),
-      focusLevel: drift.Value(completed ? 4 : 2),
-      note: drift.Value(
-        completed
-            ? '专注完成 · ${focusTypeLabel(cycleState.type)}模式 · 第${cycleState.currentRound}轮'
-            : '中途打断 · 实际专注 $actualDuration 分钟',
-      ),
-      expGained: drift.Value(expValue),
-      createdAt: drift.Value(now),
-      updatedAt: drift.Value(now),
-    );
-
-    final result = await focusRepo.saveFocusRound(
-      session: session,
-      studyRecord: studyRecord,
-      expValue: completed ? expValue : null,
-      expReason: expReason,
-      createdAt: now,
-    );
-    if (result.inserted &&
-        completed &&
-        oldLevel != null &&
-        newLevel != null &&
-        newLevel > oldLevel) {
-      PetEventBus.instance.emit(
-        PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
+      final focusRepo = ref.read(focusRepositoryProvider);
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final phaseStartMs =
+          cycleState.phaseStartAt?.millisecondsSinceEpoch ?? now;
+      final actualDuration = completed
+          ? widget.durationMinutes
+          : ((cycleState.focusSeconds - cycleState.remainingSeconds) / 60)
+                .ceil();
+      final expService = ref.read(expServiceProvider);
+      final expValue = expService.calculateFocusExp(
+        durationMinutes: widget.durationMinutes,
+        completed: completed,
       );
+      final expReason = completed
+          ? '完成${focusTypeLabel(cycleState.type)}专注 '
+                '第${cycleState.currentRound}轮 ${widget.durationMinutes}分钟'
+          : null;
+      int? oldLevel;
+      int? newLevel;
+      if (completed) {
+        final expRepo = ref.read(expRepositoryProvider);
+        final oldTotal = await expRepo.getTotalExp();
+        oldLevel = expService.calculateLevel(oldTotal);
+        newLevel = expService.calculateLevel(oldTotal + expValue);
+      }
+
+      final session = FocusSessionsCompanion(
+        type: drift.Value(cycleState.type),
+        title: drift.Value(
+          cycleState.title.isEmpty
+              ? '${focusTypeLabel(cycleState.type)}专注'
+              : cycleState.title,
+        ),
+        startTime: drift.Value(phaseStartMs),
+        endTime: drift.Value(now),
+        durationMinutes: drift.Value(actualDuration),
+        completed: drift.Value(completed),
+        soundType: drift.Value(cycleState.soundType),
+        roundIndex: drift.Value(cycleState.currentRound),
+        sessionGroupId: drift.Value(cycleState.sessionGroupId),
+        createdAt: drift.Value(now),
+      );
+
+      if (cycleState.sessionGroupId != null) {
+        final existingSession = await focusRepo.getFocusSessionByGroupRound(
+          groupId: cycleState.sessionGroupId!,
+          roundIndex: cycleState.currentRound,
+          completed: completed,
+        );
+        if (existingSession != null) {
+          _savedRoundKeys.add(saveKey);
+          return;
+        }
+      }
+
+      final subject = cycleState.subject.isNotEmpty ? cycleState.subject : null;
+      final studyTitle = cycleState.title.isNotEmpty
+          ? cycleState.title
+          : '${focusTypeLabel(cycleState.type)}专注';
+      final studyRecord = StudyRecordsCompanion(
+        mode: const drift.Value('simple'),
+        title: drift.Value(studyTitle),
+        subject: drift.Value(subject),
+        startTime: drift.Value(phaseStartMs),
+        endTime: drift.Value(now),
+        durationMinutes: drift.Value(actualDuration),
+        focusLevel: drift.Value(completed ? 4 : 2),
+        note: drift.Value(
+          completed
+              ? '专注完成 · ${focusTypeLabel(cycleState.type)}模式 · 第${cycleState.currentRound}轮'
+              : '中途打断 · 实际专注 $actualDuration 分钟',
+        ),
+        expGained: drift.Value(expValue),
+        createdAt: drift.Value(now),
+        updatedAt: drift.Value(now),
+      );
+
+      final result = await focusRepo.saveFocusRound(
+        session: session,
+        studyRecord: studyRecord,
+        expValue: completed ? expValue : null,
+        expReason: expReason,
+        createdAt: now,
+      );
+      if (result.inserted &&
+          completed &&
+          oldLevel != null &&
+          newLevel != null &&
+          newLevel > oldLevel) {
+        PetEventBus.instance.emit(
+          PetEvent.levelUp(oldLevel: oldLevel, newLevel: newLevel),
+        );
+      }
+
+      ref.invalidate(todayFocusMinutesProvider);
+      ref.invalidate(recentFocusSessionsProvider);
+      ref.invalidate(todayStudyMinutesProvider);
+      ref.invalidate(recentStudyRecordsProvider);
+      ref.invalidate(dashboardProvider);
+
+      _savedRoundKeys.add(saveKey);
+    } catch (e) {
+      debugPrint('保存专注记录失败: $e');
+    } finally {
+      _saved = false;
     }
-
-    ref.invalidate(todayFocusMinutesProvider);
-    ref.invalidate(recentFocusSessionsProvider);
-    ref.invalidate(todayStudyMinutesProvider);
-    ref.invalidate(recentStudyRecordsProvider);
-    ref.invalidate(dashboardProvider);
-
-    _savedRoundKeys.add(saveKey);
-    // _saved 保持 true，防止重复保存。新会话开始时才重置。
   }
 
   void _showCancelDialog() {
@@ -378,7 +385,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
         onPrimary: () => Navigator.of(ctx).pop(),
         onSecondary: () {
           Navigator.of(ctx).pop();
-          _cancelSession();
+          unawaited(_cancelSession());
         },
       ),
     );
@@ -434,6 +441,13 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
 
   @override
   Widget build(BuildContext context) {
+    // 使用 select 精细化 watch，避免每秒 remainingSeconds 变化触发全量 rebuild
+    final colors = context.growthColors;
+    final isRunning = ref.watch(focusCycleProvider.select((s) => s.isRunning));
+    final phase = ref.watch(focusCycleProvider.select((s) => s.phase));
+    final remainingSeconds = ref.watch(
+      focusCycleProvider.select((s) => s.remainingSeconds),
+    );
     final cycleState = ref.watch(focusCycleProvider);
 
     ref.listen<FocusCycleState>(focusCycleProvider, (prev, next) {
@@ -443,17 +457,15 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     });
 
     final isCycleDone =
-        !cycleState.isRunning &&
-        cycleState.phase == FocusPhase.longBreak &&
-        cycleState.remainingSeconds <= 0;
+        !isRunning && phase == FocusPhase.longBreak && remainingSeconds <= 0;
 
     return PopScope(
-      canPop: !cycleState.isRunning,
+      canPop: !isRunning,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && cycleState.isRunning) _showCancelDialog();
+        if (!didPop && isRunning) _showCancelDialog();
       },
       child: Scaffold(
-        backgroundColor: _sessionInk,
+        backgroundColor: colors.background,
         body: LayoutBuilder(
           builder: (context, constraints) {
             final isLandscape = constraints.maxWidth >= constraints.maxHeight;
@@ -479,7 +491,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                 ),
                 Positioned.fill(
                   child: Container(
-                    color: const Color(0xFF061C29).withValues(alpha: 0.28),
+                    color: colors.background.withValues(alpha: 0.28),
                   ),
                 ),
                 if (isCompactLandscape)

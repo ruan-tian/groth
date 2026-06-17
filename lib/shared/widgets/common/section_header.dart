@@ -26,7 +26,7 @@ class SectionHeader extends StatelessWidget {
             width: 4,
             height: 18,
             decoration: BoxDecoration(
-              color: AppColors.accent,
+              color: context.growthColors.accent,
               borderRadius: BorderRadius.circular(999),
             ),
           ),

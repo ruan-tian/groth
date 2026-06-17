@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/repository_providers.dart' show sleepRepositoryProvider, expRepositoryProvider;
-import '../../../shared/providers/service_providers.dart' show expServiceProvider;
+import '../../../shared/providers/repository_providers.dart'
+    show sleepRepositoryProvider, expRepositoryProvider;
+import '../../../shared/providers/service_providers.dart'
+    show expServiceProvider;
 import '../../../shared/providers/database_provider.dart' show databaseProvider;
 import '../../../shared/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/growth_time_picker.dart';
@@ -18,8 +20,7 @@ class AddSleepRecordPage extends ConsumerStatefulWidget {
   const AddSleepRecordPage({super.key});
 
   @override
-  ConsumerState<AddSleepRecordPage> createState() =>
-      _AddSleepRecordPageState();
+  ConsumerState<AddSleepRecordPage> createState() => _AddSleepRecordPageState();
 }
 
 class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
@@ -62,8 +63,8 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
       initialTime: isBed
           ? _bedTime
           : isSleep
-              ? _sleepTime
-              : _wakeTime,
+          ? _sleepTime
+          : _wakeTime,
     );
 
     if (picked != null) {
@@ -161,26 +162,28 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
         ref.invalidate(lastNightSleepRecordProvider);
         ref.invalidate(weeklyAvgSleepDurationProvider);
         ref.invalidate(weeklyAvgSleepQualityProvider);
-        ref.invalidate(recentSleepRecordsProvider);
+        ref.invalidate(recentSleepRecordsProvider(5));
 
         // 发送宠物事件
         final eventId = 'sleep_${DateTime.now().millisecondsSinceEpoch}';
-        PetEventBus.instance.emit(PetEvent.moduleCompleted(
-          eventId: eventId,
-          type: PetEventType.sleepCompleted,
-          module: 'sleep',
-        ));
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('睡眠记录已保存')),
+        PetEventBus.instance.emit(
+          PetEvent.moduleCompleted(
+            eventId: eventId,
+            type: PetEventType.sleepCompleted,
+            module: 'sleep',
+          ),
         );
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('睡眠记录已保存')));
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) {
@@ -197,10 +200,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
     final minutes = duration % 60;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('记录睡眠'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('记录睡眠'), centerTitle: true),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -208,19 +208,22 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
           children: [
             // 睡眠时长预览
             Card(
-              color: AppColors.softPurple,
+              color: context.growthColors.softPurple,
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.md),
                 child: Column(
                   children: [
-                    Icon(Icons.bedtime,
-                        color: AppColors.sleep, size: 48),
+                    Icon(
+                      Icons.bedtime,
+                      color: context.growthColors.sleep,
+                      size: 48,
+                    ),
                     const SizedBox(height: AppSpacing.sm),
                     Text(
                       '${hours}h ${minutes}m',
                       style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: AppColors.sleep,
+                        color: context.growthColors.sleep,
                       ),
                     ),
                     const Text('预计睡眠时长'),
@@ -260,10 +263,9 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                   icon: Icon(
                     index < _qualityLevel ? Icons.star : Icons.star_border,
                     size: 36,
-                    color: AppColors.primary,
+                    color: context.growthColors.primary,
                   ),
-                  onPressed: () =>
-                      setState(() => _qualityLevel = index + 1),
+                  onPressed: () => setState(() => _qualityLevel = index + 1),
                 );
               }),
             ),
@@ -278,8 +280,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
               max: 60,
               divisions: 12,
               label: '$_fallAsleepMinutes 分钟',
-              onChanged: (v) =>
-                  setState(() => _fallAsleepMinutes = v.toInt()),
+              onChanged: (v) => setState(() => _fallAsleepMinutes = v.toInt()),
             ),
             const SizedBox(height: AppSpacing.lg),
 
@@ -295,10 +296,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                       ? () => setState(() => _wakeCount--)
                       : null,
                 ),
-                Text(
-                  '$_wakeCount 次',
-                  style: theme.textTheme.titleLarge,
-                ),
+                Text('$_wakeCount 次', style: theme.textTheme.titleLarge),
                 IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: _wakeCount < 10
@@ -321,10 +319,9 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
                         ? Icons.battery_full
                         : Icons.battery_1_bar,
                     size: 32,
-                    color: AppColors.primary,
+                    color: context.growthColors.primary,
                   ),
-                  onPressed: () =>
-                      setState(() => _energyLevel = index + 1),
+                  onPressed: () => setState(() => _energyLevel = index + 1),
                 );
               }),
             ),
@@ -362,12 +359,12 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
             FilledButton.icon(
               onPressed: _isSaving ? null : _save,
               icon: _isSaving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: context.growthColors.textOnAccent,
                       ),
                     )
                   : const Icon(Icons.save),
@@ -398,10 +395,7 @@ class _TimePickerRow extends StatelessWidget {
       trailing: TextButton.icon(
         onPressed: onTap,
         icon: const Icon(Icons.access_time),
-        label: Text(
-          time,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        label: Text(time, style: Theme.of(context).textTheme.titleMedium),
       ),
     );
   }

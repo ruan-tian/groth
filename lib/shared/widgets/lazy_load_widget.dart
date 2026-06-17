@@ -32,7 +32,7 @@ class LazyLoadWidget extends StatefulWidget {
 
   /// Called when [builder] throws. If `null`, a default error UI is shown.
   final Widget Function(BuildContext context, Object error, VoidCallback retry)?
-      errorBuilder;
+  errorBuilder;
 
   /// Minimum delay before the [builder] runs.
   ///
@@ -183,16 +183,9 @@ class _DefaultErrorWidget extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.error_outline,
-              size: 48,
-              color: theme.colorScheme.error,
-            ),
+            Icon(Icons.error_outline, size: 48, color: theme.colorScheme.error),
             const SizedBox(height: 12),
-            Text(
-              '加载失败',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text('加载失败', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             TextButton.icon(
               onPressed: onRetry,
@@ -291,7 +284,11 @@ class _SlidingGradientTransform extends GradientTransform {
 
   @override
   Matrix4? transform(Rect bounds, {TextDirection? textDirection}) {
-    return Matrix4.translationValues(bounds.width * (slidePercent * 2 - 1), 0, 0);
+    return Matrix4.translationValues(
+      bounds.width * (slidePercent * 2 - 1),
+      0,
+      0,
+    );
   }
 }
 

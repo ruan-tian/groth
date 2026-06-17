@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
 import '../../shared/providers/focus_provider.dart';
 import '../../shared/providers/settings_provider.dart';
@@ -10,14 +11,10 @@ import 'utils/focus_assets.dart';
 import 'utils/focus_options.dart';
 import 'widgets/sound_selector.dart';
 import 'widgets/study_mode_sheet.dart';
+import '../../shared/widgets/common/error_retry_widget.dart';
 
 part 'widgets/focus_setup_helpers.dart';
 part 'widgets/focus_setup_widgets.dart';
-
-const _focusMint = Color(0xFF4CBDAE);
-const _focusMintDark = Color(0xFF188C83);
-const _focusInk = Color(0xFF2D3333);
-const _focusLine = Color(0xFFE8DDD1);
 
 class FocusPage extends ConsumerStatefulWidget {
   const FocusPage({super.key});
@@ -41,16 +38,17 @@ class _FocusPageState extends ConsumerState<FocusPage> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     ref.watch(focusStudyModeInitProvider);
     final setup = ref.watch(focusSetupProvider);
     final todayMinutes = ref.watch(todayFocusMinutesProvider);
     final recentSessions = ref.watch(recentFocusSessionsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFCF6),
+      backgroundColor: colors.background,
       body: SafeArea(
         child: RefreshIndicator(
-          color: _focusMint,
+          color: colors.focus,
           onRefresh: () async {
             ref.invalidate(todayFocusMinutesProvider);
             ref.invalidate(recentFocusSessionsProvider);

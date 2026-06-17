@@ -17,4 +17,7 @@ export 'section_header.dart';
 export 'record_detail_sheet.dart';
 export 'segmented_tabs.dart';
 export 'empty_state_widget.dart';
+export 'error_retry_widget.dart';
 export 'stats_summary_card.dart';
+export 'skeleton_loader.dart';
+export 'celebration_overlay.dart';

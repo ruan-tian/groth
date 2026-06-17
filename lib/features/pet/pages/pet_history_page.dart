@@ -51,6 +51,7 @@ class PetHistoryPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final dashboardAsync = ref.watch(dashboardProvider);
     final profileAsync = ref.watch(petProfileProvider);
     final historyAsync = ref.watch(_petHistoryDataProvider);
@@ -60,7 +61,7 @@ class PetHistoryPage extends ConsumerWidget {
     final level = dashboard?.currentLevel ?? 1;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFF7EF),
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: const Text('成长档案'),
         centerTitle: true,
@@ -72,7 +73,7 @@ class PetHistoryPage extends ConsumerWidget {
         ),
       ),
       body: RefreshIndicator(
-        color: const Color(0xFFE89B68),
+        color: colors.accent,
         onRefresh: () async {
           ref.invalidate(dashboardProvider);
           ref.invalidate(_petHistoryDataProvider);
@@ -116,6 +117,7 @@ class _ArchiveHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final totalExp = dashboard?.totalExp ?? 0;
     return _PaperCard(
       child: Stack(
@@ -138,28 +140,28 @@ class _ArchiveHero extends StatelessWidget {
                   children: [
                     Text(
                       '$name 的成长档案',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 21,
                         fontWeight: FontWeight.w800,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 7),
                     Text(
                       'Lv.$level · ${petTitleForLevel(level)} · $totalExp EXP',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w700,
-                        color: Color(0xFFE08B55),
+                        color: colors.accent,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       '这里展示的是你的个人成长经验，宠物等级从这套系统自然派生。',
                       style: TextStyle(
                         fontSize: 12,
                         height: 1.45,
-                        color: AppColors.textSecondary,
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
@@ -180,6 +182,7 @@ class _ContributionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final maxExp = math.max(1, history.sourceExp.values.fold<int>(0, math.max));
     return _PaperCard(
       child: Column(
@@ -195,41 +198,41 @@ class _ContributionCard extends StatelessWidget {
             label: '学习',
             exp: history.sourceExp['study'] ?? 0,
             maxExp: maxExp,
-            color: AppColors.study,
+            color: colors.study,
           ),
           _SourceBar(
             label: '健身',
             exp: history.sourceExp['fitness'] ?? 0,
             maxExp: maxExp,
-            color: AppColors.fitness,
+            color: colors.fitness,
           ),
           _SourceBar(
             label: '日记',
             exp: history.sourceExp['journal'] ?? 0,
             maxExp: maxExp,
-            color: const Color(0xFFE49772),
+            color: colors.journal,
           ),
           _SourceBar(
             label: '专注',
             exp: history.sourceExp['focus'] ?? 0,
             maxExp: maxExp,
-            color: const Color(0xFF7AA6A1),
+            color: colors.focus,
           ),
           const SizedBox(height: 8),
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.local_fire_department_rounded,
-                color: Color(0xFFE08B55),
+                color: colors.accent,
                 size: 18,
               ),
               const SizedBox(width: 7),
               Text(
                 '连续活跃 ${history.consecutiveDays} 天',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ],
@@ -325,6 +328,7 @@ class _SourceBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final value = math.min(1.0, exp / maxExp);
     return Padding(
       padding: const EdgeInsets.only(bottom: 13),
@@ -334,19 +338,19 @@ class _SourceBar extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               const Spacer(),
               Text(
                 '$exp EXP',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -382,11 +386,14 @@ class _MilestoneRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: reached ? const Color(0xFFFFF2E7) : const Color(0xFFF8F4F0),
+        color: reached
+            ? colors.softOrange.withValues(alpha: 0.72)
+            : colors.surfaceVariant.withValues(alpha: 0.56),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -402,7 +409,7 @@ class _MilestoneRow extends StatelessWidget {
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
-                color: reached ? AppColors.textPrimary : AppColors.textTertiary,
+                color: reached ? colors.textPrimary : colors.textTertiary,
               ),
             ),
           ),
@@ -411,7 +418,7 @@ class _MilestoneRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w800,
-              color: reached ? const Color(0xFFE08B55) : AppColors.textTertiary,
+              color: reached ? colors.accent : colors.textTertiary,
             ),
           ),
         ],
@@ -427,6 +434,7 @@ class _LogRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final source = switch (log.sourceType) {
       'study' => '学习',
       'fitness' => '健身',
@@ -438,7 +446,7 @@ class _LogRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F2),
+        color: colors.surfaceVariant.withValues(alpha: 0.56),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -451,29 +459,26 @@ class _LogRow extends StatelessWidget {
               children: [
                 Text(
                   source,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w800,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
                   _formatDate(log.createdAt),
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
+                  style: TextStyle(fontSize: 12, color: colors.textSecondary),
                 ),
               ],
             ),
           ),
           Text(
             '+${log.expValue}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w900,
-              color: Color(0xFFE08B55),
+              color: colors.accent,
             ),
           ),
         ],
@@ -500,6 +505,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         _ImageBadge(asset: asset),
@@ -510,19 +516,19 @@ class _Header extends StatelessWidget {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               const SizedBox(height: 3),
               Text(
                 subtitle,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   height: 1.35,
-                  color: AppColors.textSecondary,
+                  color: colors.textSecondary,
                 ),
               ),
             ],
@@ -541,6 +547,7 @@ class _EmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _PaperCard(
       child: Column(
         children: [
@@ -548,20 +555,20 @@ class _EmptyCard extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
           const SizedBox(height: 6),
           Text(
             subtitle,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               height: 1.45,
-              color: AppColors.textSecondary,
+              color: colors.textSecondary,
             ),
           ),
         ],
@@ -575,11 +582,12 @@ class _LoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _PaperCard(
+    final colors = context.growthColors;
+    return _PaperCard(
       child: Center(
         child: Padding(
-          padding: EdgeInsets.all(20),
-          child: CircularProgressIndicator(color: Color(0xFFE89B68)),
+          padding: const EdgeInsets.all(20),
+          child: CircularProgressIndicator(color: colors.accent),
         ),
       ),
     );
@@ -593,14 +601,15 @@ class _PaperCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.94),
+        color: colors.card.withValues(alpha: 0.94),
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.78)),
+        border: Border.all(color: colors.border.withValues(alpha: 0.72)),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFB97A52).withValues(alpha: 0.10),
+            color: colors.shadow.withValues(alpha: 0.10),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),

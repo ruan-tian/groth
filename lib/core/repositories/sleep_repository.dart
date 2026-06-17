@@ -1,6 +1,9 @@
+import 'dart:math';
+
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import '../utils/date_utils.dart';
 
 /// 睡眠记录仓库
 ///
@@ -37,7 +40,7 @@ class SleepRepository {
   ///
   /// 如果同一天有多条记录，返回最新的一条。
   Future<SleepRecord?> getSleepRecordByDate(DateTime date) {
-    final dateStr = _formatDate(date);
+    final dateStr = GrowthDateUtils.formatDateKey(date);
     return (_db.select(_db.sleepRecords)
           ..where((t) => t.sleepDate.equals(dateStr))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
@@ -58,8 +61,8 @@ class SleepRepository {
     DateTime start,
     DateTime end,
   ) {
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(end);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(end);
     return (_db.select(_db.sleepRecords)
           ..where(
             (t) =>
@@ -72,8 +75,9 @@ class SleepRepository {
 
   /// 根据 ID 获取单条睡眠记录。
   Future<SleepRecord?> getSleepRecordById(int id) {
-    return (_db.select(_db.sleepRecords)..where((t) => t.id.equals(id)))
-        .getSingleOrNull();
+    return (_db.select(
+      _db.sleepRecords,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
   }
 
   // ---------------------------------------------------------------------------
@@ -84,16 +88,17 @@ class SleepRepository {
   Future<double?> getAvgSleepDuration(int days) async {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: days - 1));
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(now);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(now);
 
-    final result = await (_db.selectOnly(_db.sleepRecords)
-          ..addColumns([_db.sleepRecords.durationMinutes.avg()])
-          ..where(
-            _db.sleepRecords.sleepDate.isBiggerOrEqualValue(startStr) &
-                _db.sleepRecords.sleepDate.isSmallerOrEqualValue(endStr),
-          ))
-        .getSingle();
+    final result =
+        await (_db.selectOnly(_db.sleepRecords)
+              ..addColumns([_db.sleepRecords.durationMinutes.avg()])
+              ..where(
+                _db.sleepRecords.sleepDate.isBiggerOrEqualValue(startStr) &
+                    _db.sleepRecords.sleepDate.isSmallerOrEqualValue(endStr),
+              ))
+            .getSingle();
     return result.read(_db.sleepRecords.durationMinutes.avg());
   }
 
@@ -101,16 +106,17 @@ class SleepRepository {
   Future<double?> getAvgSleepQuality(int days) async {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: days - 1));
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(now);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(now);
 
-    final result = await (_db.selectOnly(_db.sleepRecords)
-          ..addColumns([_db.sleepRecords.qualityLevel.avg()])
-          ..where(
-            _db.sleepRecords.sleepDate.isBiggerOrEqualValue(startStr) &
-                _db.sleepRecords.sleepDate.isSmallerOrEqualValue(endStr),
-          ))
-        .getSingle();
+    final result =
+        await (_db.selectOnly(_db.sleepRecords)
+              ..addColumns([_db.sleepRecords.qualityLevel.avg()])
+              ..where(
+                _db.sleepRecords.sleepDate.isBiggerOrEqualValue(startStr) &
+                    _db.sleepRecords.sleepDate.isSmallerOrEqualValue(endStr),
+              ))
+            .getSingle();
     return result.read(_db.sleepRecords.qualityLevel.avg());
   }
 
@@ -119,20 +125,8 @@ class SleepRepository {
     final records = await getRecentSleepRecords(limit: days);
     if (records.isEmpty) return null;
 
-    int totalMinutes = 0;
-    for (final record in records) {
-      final parts = record.bedTime.split(':');
-      if (parts.length == 2) {
-        final hour = int.tryParse(parts[0]) ?? 0;
-        final minute = int.tryParse(parts[1]) ?? 0;
-        totalMinutes += hour * 60 + minute;
-      }
-    }
-
-    final avgMinutes = totalMinutes ~/ records.length;
-    final hour = avgMinutes ~/ 60;
-    final minute = avgMinutes % 60;
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    final times = records.map((r) => r.bedTime).toList();
+    return _circularMean(times);
   }
 
   /// 获取最近 [days] 天的平均起床时间（返回 HH:mm 格式）。
@@ -140,20 +134,34 @@ class SleepRepository {
     final records = await getRecentSleepRecords(limit: days);
     if (records.isEmpty) return null;
 
-    int totalMinutes = 0;
-    for (final record in records) {
-      final parts = record.wakeTime.split(':');
-      if (parts.length == 2) {
-        final hour = int.tryParse(parts[0]) ?? 0;
-        final minute = int.tryParse(parts[1]) ?? 0;
-        totalMinutes += hour * 60 + minute;
-      }
+    final times = records.map((r) => r.wakeTime).toList();
+    return _circularMean(times);
+  }
+
+  /// 使用圆形均值算法计算平均时间（正确处理跨午夜时间）。
+  String _circularMean(List<String> times) {
+    if (times.isEmpty) return '--:--';
+
+    double sinSum = 0;
+    double cosSum = 0;
+
+    for (final time in times) {
+      final parts = time.split(':');
+      final hour = int.tryParse(parts[0]) ?? 0;
+      final minute = int.tryParse(parts[1]) ?? 0;
+      final minutes = hour * 60 + minute;
+      final radians = minutes * 2 * pi / (24 * 60);
+      sinSum += sin(radians);
+      cosSum += cos(radians);
     }
 
-    final avgMinutes = totalMinutes ~/ records.length;
-    final hour = avgMinutes ~/ 60;
-    final minute = avgMinutes % 60;
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+    final avgRadians = atan2(sinSum, cosSum);
+    var avgMinutes = (avgRadians * 24 * 60 / (2 * pi)).round();
+    if (avgMinutes < 0) avgMinutes += 24 * 60;
+
+    final h = avgMinutes ~/ 60;
+    final m = avgMinutes % 60;
+    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}';
   }
 
   /// 获取最近 [days] 天的每日睡眠时长。
@@ -162,23 +170,21 @@ class SleepRepository {
   Future<List<Map<String, dynamic>>> getDailySleepDuration(int days) async {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: days - 1));
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(now);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(now);
 
-    final records = await (_db.select(_db.sleepRecords)
-          ..where(
-            (t) =>
-                t.sleepDate.isBiggerOrEqualValue(startStr) &
-                t.sleepDate.isSmallerOrEqualValue(endStr),
-          )
-          ..orderBy([(t) => OrderingTerm.asc(t.sleepDate)]))
-        .get();
+    final records =
+        await (_db.select(_db.sleepRecords)
+              ..where(
+                (t) =>
+                    t.sleepDate.isBiggerOrEqualValue(startStr) &
+                    t.sleepDate.isSmallerOrEqualValue(endStr),
+              )
+              ..orderBy([(t) => OrderingTerm.asc(t.sleepDate)]))
+            .get();
 
     return records
-        .map((r) => {
-              'date': r.sleepDate,
-              'duration': r.durationMinutes,
-            })
+        .map((r) => {'date': r.sleepDate, 'duration': r.durationMinutes})
         .toList();
   }
 
@@ -188,23 +194,21 @@ class SleepRepository {
   Future<List<Map<String, dynamic>>> getDailySleepQuality(int days) async {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: days - 1));
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(now);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(now);
 
-    final records = await (_db.select(_db.sleepRecords)
-          ..where(
-            (t) =>
-                t.sleepDate.isBiggerOrEqualValue(startStr) &
-                t.sleepDate.isSmallerOrEqualValue(endStr),
-          )
-          ..orderBy([(t) => OrderingTerm.asc(t.sleepDate)]))
-        .get();
+    final records =
+        await (_db.select(_db.sleepRecords)
+              ..where(
+                (t) =>
+                    t.sleepDate.isBiggerOrEqualValue(startStr) &
+                    t.sleepDate.isSmallerOrEqualValue(endStr),
+              )
+              ..orderBy([(t) => OrderingTerm.asc(t.sleepDate)]))
+            .get();
 
     return records
-        .map((r) => {
-              'date': r.sleepDate,
-              'quality': r.qualityLevel,
-            })
+        .map((r) => {'date': r.sleepDate, 'quality': r.qualityLevel})
         .toList();
   }
 
@@ -212,13 +216,5 @@ class SleepRepository {
   Future<SleepRecord?> getLastNightSleepRecord() {
     final yesterday = DateTime.now().subtract(const Duration(days: 1));
     return getSleepRecordByDate(yesterday);
-  }
-
-  // ---------------------------------------------------------------------------
-  // 内部工具
-  // ---------------------------------------------------------------------------
-
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

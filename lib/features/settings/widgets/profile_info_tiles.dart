@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/settings_provider.dart';
 
@@ -27,10 +28,10 @@ class ProfileBasicInfoGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+          color: context.growthColors.border.withValues(alpha: 0.3),
         ),
       ),
       child: Column(
@@ -42,7 +43,7 @@ class ProfileBasicInfoGroup extends StatelessWidget {
             value: gender == 'male' ? '男' : '女',
             onTap: onGenderTap,
           ),
-          _divider(),
+          _divider(context),
           ProfileInfoTile(
             icon: Icons.cake_outlined,
             iconColor: const Color(0xFFFF8A3D),
@@ -50,7 +51,7 @@ class ProfileBasicInfoGroup extends StatelessWidget {
             value: '${birthday.year}年${birthday.month}月${birthday.day}日',
             onTap: onBirthdayTap,
           ),
-          _divider(),
+          _divider(context),
           ProfileInfoTile(
             icon: Icons.height,
             iconColor: const Color(0xFF35C976),
@@ -83,10 +84,10 @@ class ProfileBodyDataGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+          color: context.growthColors.border.withValues(alpha: 0.3),
         ),
       ),
       child: latestWeight.when(
@@ -102,7 +103,7 @@ class ProfileBodyDataGroup extends StatelessWidget {
               subtitle: '点击编辑',
               onTap: onWeightTap,
             ),
-            _divider(),
+            _divider(context),
             ProfileInfoTile(
               icon: Icons.water_drop_outlined,
               iconColor: const Color(0xFFFF8A3D),
@@ -113,7 +114,7 @@ class ProfileBodyDataGroup extends StatelessWidget {
               subtitle: '点击编辑',
               onTap: onBodyFatTap,
             ),
-            _divider(),
+            _divider(context),
             ProfileInfoTile(
               icon: Icons.analytics_outlined,
               iconColor: const Color(0xFF7058F5),
@@ -202,18 +203,18 @@ class ProfileInfoTile extends StatelessWidget {
                   children: [
                     Text(
                       label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF5C3D2E),
+                        color: context.growthColors.textPrimary,
                       ),
                     ),
                     if (subtitle != null)
                       Text(
                         subtitle!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
-                          color: Color(0xFFB0A09A),
+                          color: context.growthColors.textTertiary,
                         ),
                       ),
                   ],
@@ -225,18 +226,18 @@ class ProfileInfoTile extends StatelessWidget {
                 child: Text(
                   value,
                   key: ValueKey(value),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF8B6F5E),
+                    color: context.growthColors.textSecondary,
                   ),
                 ),
               ),
               if (onTap != null) ...[
                 const SizedBox(width: 4),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
-                  color: Color(0xFFB0A09A),
+                  color: context.growthColors.textTertiary,
                 ),
               ],
             ],
@@ -247,10 +248,10 @@ class ProfileInfoTile extends StatelessWidget {
   }
 }
 
-Widget _divider() {
+Widget _divider(BuildContext context) {
   return Divider(
     height: 1,
     indent: 64,
-    color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
+    color: context.growthColors.border.withValues(alpha: 0.3),
   );
 }

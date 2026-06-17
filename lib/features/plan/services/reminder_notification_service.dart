@@ -26,6 +26,14 @@ class ReminderNotificationService {
   bool _initialized = false;
   Future<bool>? _initFuture;
 
+  static const _darwinNotificationDetails = DarwinNotificationDetails(
+    presentAlert: true,
+    presentBadge: true,
+    presentSound: true,
+    presentBanner: true,
+    presentList: true,
+  );
+
   /// Callback invoked when user taps a notification.
   NotificationTapCallback? onTap;
 
@@ -50,9 +58,13 @@ class ReminderNotificationService {
         final offsetHours = DateTime.now().timeZoneOffset.inHours;
         final tzName = _findTimezoneByOffset(offsetHours);
         tz.setLocalLocation(tz.getLocation(tzName));
-        debugPrint('[NotificationService] Timezone: $tzName (UTC+$offsetHours)');
+        debugPrint(
+          '[NotificationService] Timezone: $tzName (UTC+$offsetHours)',
+        );
       } catch (e) {
-        debugPrint('[NotificationService] Timezone detection failed, using UTC: $e');
+        debugPrint(
+          '[NotificationService] Timezone detection failed, using UTC: $e',
+        );
         tz.setLocalLocation(tz.UTC);
       }
 
@@ -74,6 +86,33 @@ class ReminderNotificationService {
             _onBackgroundNotificationResponse,
       );
       _initialized = true;
+
+      // 显式创建通知渠道（确保 Android 8+ 渠道存在）
+      if (Platform.isAndroid) {
+        final androidImpl = _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        if (androidImpl != null) {
+          await androidImpl.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'growth_os_reminders',
+              'Growth OS Reminders',
+              description: '定时提醒通知',
+              importance: Importance.high,
+            ),
+          );
+          await androidImpl.createNotificationChannel(
+            const AndroidNotificationChannel(
+              'growth_os_instant',
+              'Growth OS Instant',
+              description: '即时通知（任务完成等）',
+              importance: Importance.high,
+            ),
+          );
+        }
+      }
+
       debugPrint('[NotificationService] Initialized successfully');
       return true;
     } catch (e) {
@@ -84,27 +123,60 @@ class ReminderNotificationService {
   }
 
   void _onNotificationResponse(NotificationResponse response) {
-    debugPrint('[NotificationService] Notification tapped: ${response.payload}');
+    debugPrint(
+      '[NotificationService] Notification tapped: ${response.payload}',
+    );
     onTap?.call(response.payload);
   }
 
+  @pragma('vm:entry-point')
   static void _onBackgroundNotificationResponse(NotificationResponse response) {
-    debugPrint('[NotificationService] Background notification tapped: ${response.payload}');
+    debugPrint(
+      '[NotificationService] Background notification tapped: ${response.payload}',
+    );
   }
 
   /// Request notification permissions (Android 13+, iOS, macOS).
-  Future<bool> requestPermissions() async {
+  ///
+  /// Exact alarm permission is best-effort. Scheduled reminders fall back to
+  /// inexact alarms when Android does not grant exact alarm access.
+  Future<bool> requestPermissions({bool requestExactAlarm = false}) async {
     final ready = await initialize();
     if (!ready) return false;
     var granted = true;
     try {
       if (Platform.isAndroid) {
-        final androidGranted = await _plugin
+        final androidImpl = _plugin
             .resolvePlatformSpecificImplementation<
               AndroidFlutterLocalNotificationsPlugin
-            >()
-            ?.requestNotificationsPermission();
-        if (androidGranted != null) granted = granted && androidGranted;
+            >();
+        if (androidImpl != null) {
+          final notifGranted = await androidImpl
+              .requestNotificationsPermission();
+          if (notifGranted != null) granted = granted && notifGranted;
+
+          // 精确闹钟权限（Android 12+ 需要用户授权）
+          if (granted && requestExactAlarm) {
+            final canScheduleExact = await androidImpl
+                .canScheduleExactNotifications();
+            debugPrint(
+              '[NotificationService] Can schedule exact: $canScheduleExact',
+            );
+            if (canScheduleExact == false) {
+              final exactGranted = await androidImpl
+                  .requestExactAlarmsPermission();
+              debugPrint(
+                '[NotificationService] Exact alarm permission: $exactGranted',
+              );
+              if (exactGranted == false) {
+                debugPrint(
+                  '[NotificationService] Exact alarm denied; '
+                  'scheduled reminders will use inexact alarms',
+                );
+              }
+            }
+          }
+        }
       }
 
       if (Platform.isIOS) {
@@ -133,7 +205,49 @@ class ReminderNotificationService {
     return granted;
   }
 
+  Future<bool> areNotificationsEnabled() async {
+    final ready = await initialize();
+    if (!ready) return false;
+    try {
+      if (Platform.isAndroid) {
+        final androidImpl = _plugin
+            .resolvePlatformSpecificImplementation<
+              AndroidFlutterLocalNotificationsPlugin
+            >();
+        return await androidImpl?.areNotificationsEnabled() ?? true;
+      }
+    } catch (e) {
+      debugPrint('[NotificationService] Notification status check failed: $e');
+    }
+    return true;
+  }
+
+  Future<bool> _canScheduleExactNotifications() async {
+    if (!Platform.isAndroid) return true;
+    try {
+      final androidImpl = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      return await androidImpl?.canScheduleExactNotifications() ?? true;
+    } catch (e) {
+      debugPrint('[NotificationService] Exact alarm status check failed: $e');
+      return false;
+    }
+  }
+
+  Future<AndroidScheduleMode> _androidScheduleMode() async {
+    if (!Platform.isAndroid) return AndroidScheduleMode.exactAllowWhileIdle;
+    final canScheduleExact = await _canScheduleExactNotifications();
+    if (canScheduleExact) return AndroidScheduleMode.exactAllowWhileIdle;
+    debugPrint('[NotificationService] Falling back to inexactAllowWhileIdle');
+    return AndroidScheduleMode.inexactAllowWhileIdle;
+  }
+
   /// Schedule a one-shot reminder at [scheduledAt].
+  ///
+  /// Uses exact scheduling when allowed. On Android 12+/14+ devices without
+  /// exact alarm access, falls back to an inexact allow-while-idle alarm.
   Future<bool> scheduleReminder({
     required int id,
     required DateTime scheduledAt,
@@ -144,8 +258,22 @@ class ReminderNotificationService {
     final ready = await initialize();
     if (!ready) return false;
     try {
+      final notificationsGranted = await requestPermissions(
+        requestExactAlarm: true,
+      );
+      if (!notificationsGranted) {
+        debugPrint(
+          '[NotificationService] Schedule skipped; notifications denied',
+        );
+        return false;
+      }
+
+      final androidScheduleMode = await _androidScheduleMode();
       final tzDateTime = tz.TZDateTime.from(scheduledAt, tz.local);
-      debugPrint('[NotificationService] Scheduling #$id at $tzDateTime (local: ${tz.local})');
+      debugPrint(
+        '[NotificationService] Scheduling #$id at $tzDateTime '
+        '(local: ${tz.local}, androidMode: $androidScheduleMode)',
+      );
 
       await _plugin.zonedSchedule(
         id,
@@ -161,12 +289,12 @@ class ReminderNotificationService {
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
           ),
-          iOS: const DarwinNotificationDetails(),
-          macOS: const DarwinNotificationDetails(),
+          iOS: _darwinNotificationDetails,
+          macOS: _darwinNotificationDetails,
         ),
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
-        androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+        androidScheduleMode: androidScheduleMode,
         payload: payload,
       );
       debugPrint('[NotificationService] Scheduled #$id successfully');
@@ -187,6 +315,17 @@ class ReminderNotificationService {
     final ready = await initialize();
     if (!ready) return false;
     try {
+      final notificationsGranted = await requestPermissions(
+        requestExactAlarm: false,
+      );
+      if (!notificationsGranted) {
+        debugPrint(
+          '[NotificationService] Immediate notification skipped; '
+          'notifications denied',
+        );
+        return false;
+      }
+
       await _plugin.show(
         id,
         title,
@@ -200,8 +339,8 @@ class ReminderNotificationService {
             priority: Priority.high,
             icon: '@mipmap/ic_launcher',
           ),
-          iOS: const DarwinNotificationDetails(),
-          macOS: const DarwinNotificationDetails(),
+          iOS: _darwinNotificationDetails,
+          macOS: _darwinNotificationDetails,
         ),
         payload: payload,
       );

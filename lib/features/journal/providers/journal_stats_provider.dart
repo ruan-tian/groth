@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 
@@ -17,7 +18,7 @@ final journalStreakProvider = FutureProvider<int>((ref) async {
   var streak = 0;
   for (var i = 0; i < 90; i++) {
     final date = now.subtract(Duration(days: i));
-    final dateStr = _formatDate(date);
+    final dateStr = GrowthDateUtils.formatDateKey(date);
     if (!dates.contains(dateStr)) break;
     streak++;
   }
@@ -71,10 +72,3 @@ final journalHeatmapProvider = FutureProvider.family<Map<DateTime, int>, int>((
   }
   return data;
 });
-
-String _formatDate(DateTime date) {
-  final y = date.year.toString().padLeft(4, '0');
-  final m = date.month.toString().padLeft(2, '0');
-  final d = date.day.toString().padLeft(2, '0');
-  return '$y-$m-$d';
-}

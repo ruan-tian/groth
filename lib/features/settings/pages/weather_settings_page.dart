@@ -9,6 +9,7 @@ import '../../../core/database/app_database.dart';
 import '../../../shared/providers/weather_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../widgets/weather_settings_widgets.dart';
+import '../../../shared/widgets/common/error_retry_widget.dart';
 
 // ── Data Assets ─────────────────────────────────────────────────────────────
 
@@ -92,6 +93,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final weatherAsync = ref.watch(todayWeatherProvider);
     final extraAsync = ref.watch(weatherExtraAutoProvider);
     final extra = ref.watch(weatherExtraProvider) ?? extraAsync.valueOrNull;
@@ -108,11 +110,11 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
     final activeProvider = activeConfig?.provider ?? 'open_meteo';
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       appBar: AppBar(
         title: const Text('天气设置', style: AppTextStyles.pageTitle),
         centerTitle: false,
-        backgroundColor: AppColors.background,
+        backgroundColor: colors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
         actions: [
@@ -124,13 +126,11 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                 turns: _refreshAnimController,
                 child: Icon(
                   Icons.refresh_rounded,
-                  color: _isRefreshing
-                      ? AppColors.textTertiary
-                      : AppColors.primary,
+                  color: _isRefreshing ? colors.textTertiary : colors.primary,
                 ),
               ),
               style: IconButton.styleFrom(
-                backgroundColor: AppColors.softPurple,
+                backgroundColor: colors.softPurple,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(AppRadius.sm),
                 ),
@@ -198,7 +198,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
           const SizedBox(height: AppSpacing.md),
           WeatherApiCard(
             icon: Icons.cloud_rounded,
-            iconColor: AppColors.primary,
+            iconColor: colors.primary,
             name: '和风天气',
             description: '国内最稳定，免费 1000 次/天',
             isRecommended: true,
@@ -217,7 +217,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
           const SizedBox(height: AppSpacing.md),
           WeatherApiCard(
             icon: Icons.public_rounded,
-            iconColor: const Color(0xFF36CFC9),
+            iconColor: colors.focus,
             name: 'Open-Meteo',
             description: '免费无需 Key，国外服务（备选）',
             isRecommended: false,
@@ -259,6 +259,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
   // ─────────────────────────────────────────────────────────────────────────
 
   void _showCitySearchSheet() {
+    final colors = context.growthColors;
     final searchController = TextEditingController();
     final searchResults = ValueNotifier<List<Map<String, dynamic>>>([]);
     final isSearching = ValueNotifier<bool>(false);
@@ -276,9 +277,9 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
             maxChildSize: 0.95,
             builder: (context, scrollController) {
               return Container(
-                decoration: const BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.vertical(
+                decoration: BoxDecoration(
+                  color: colors.card,
+                  borderRadius: const BorderRadius.vertical(
                     top: Radius.circular(AppRadius.xl),
                   ),
                 ),
@@ -290,7 +291,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                       width: 40,
                       height: 4,
                       decoration: BoxDecoration(
-                        color: AppColors.textHint,
+                        color: colors.textHint,
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -311,7 +312,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                             onPressed: () => Navigator.pop(context),
                             icon: Icon(
                               Icons.close_rounded,
-                              color: AppColors.textTertiary,
+                              color: colors.textTertiary,
                             ),
                           ),
                         ],
@@ -329,10 +330,10 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                         autofocus: true,
                         decoration: InputDecoration(
                           hintText: '输入城市名称...',
-                          hintStyle: TextStyle(color: AppColors.textHint),
+                          hintStyle: TextStyle(color: colors.textHint),
                           prefixIcon: Icon(
                             Icons.search_rounded,
-                            color: AppColors.textTertiary,
+                            color: colors.textTertiary,
                           ),
                           suffixIcon: ValueListenableBuilder<TextEditingValue>(
                             valueListenable: searchController,
@@ -348,13 +349,13 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                                 icon: Icon(
                                   Icons.close_rounded,
                                   size: 18,
-                                  color: AppColors.textTertiary,
+                                  color: colors.textTertiary,
                                 ),
                               );
                             },
                           ),
                           filled: true,
-                          fillColor: AppColors.surfaceVariant,
+                          fillColor: colors.surfaceVariant,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(AppRadius.sm),
                             borderSide: BorderSide.none,
@@ -433,7 +434,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                                               Icon(
                                                 Icons.search_rounded,
                                                 size: 48,
-                                                color: AppColors.textHint,
+                                                color: colors.textHint,
                                               ),
                                               const SizedBox(
                                                 height: AppSpacing.md,
@@ -442,7 +443,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                                                 '输入城市名称搜索',
                                                 style: TextStyle(
                                                   fontSize: 15,
-                                                  color: AppColors.textTertiary,
+                                                  color: colors.textTertiary,
                                                 ),
                                               ),
                                             ],
@@ -461,7 +462,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                                           return ListTile(
                                             leading: Icon(
                                               Icons.history_rounded,
-                                              color: AppColors.textTertiary,
+                                              color: colors.textTertiary,
                                               size: 20,
                                             ),
                                             title: Text(
@@ -499,7 +500,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
                                     loading: () => const Center(
                                       child: CircularProgressIndicator(),
                                     ),
-                                    error: (_, _) => const SizedBox.shrink(),
+                                    error: (_, _) => const ErrorRetryWidget(),
                                   );
                             },
                           );
@@ -600,7 +601,10 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('已切换到 $name'), backgroundColor: AppColors.success),
+      SnackBar(
+        content: Text('已切换到 $name'),
+        backgroundColor: context.growthColors.success,
+      ),
     );
   }
 
@@ -623,7 +627,9 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(
+              foregroundColor: context.growthColors.danger,
+            ),
             child: const Text('清空'),
           ),
         ],
@@ -686,7 +692,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('已切换到 $label'),
-          backgroundColor: AppColors.success,
+          backgroundColor: context.growthColors.success,
         ),
       );
     }
@@ -700,9 +706,9 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
     final key = _qweatherKeyController.text.trim();
     if (key.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text('请输入 API Key'),
-          backgroundColor: AppColors.warning,
+          backgroundColor: context.growthColors.warning,
         ),
       );
       return;
@@ -726,9 +732,9 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('API Key 已保存，已切换到和风天气'),
-            backgroundColor: AppColors.success,
+            backgroundColor: context.growthColors.success,
           ),
         );
       }
@@ -736,8 +742,8 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('保存失败: $e'),
-            backgroundColor: AppColors.danger,
+            content: Text('保存失败，请重试'),
+            backgroundColor: context.growthColors.danger,
           ),
         );
       }
@@ -770,7 +776,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('已定位到: $city'),
-              backgroundColor: AppColors.success,
+              backgroundColor: context.growthColors.success,
             ),
           );
         }
@@ -779,7 +785,7 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('定位失败，请允许位置权限或手动搜索城市'),
-              backgroundColor: AppColors.warning,
+              backgroundColor: context.growthColors.warning,
             ),
           );
         }
@@ -788,8 +794,8 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('定位出错: $e'),
-            backgroundColor: AppColors.danger,
+            content: Text('定位出错，请重试'),
+            backgroundColor: context.growthColors.danger,
           ),
         );
       }
@@ -819,9 +825,9 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text('天气已更新'),
-            backgroundColor: AppColors.success,
+            backgroundColor: context.growthColors.success,
           ),
         );
       }
@@ -831,7 +837,10 @@ class _WeatherSettingsPageState extends ConsumerState<WeatherSettingsPage>
             ? '天气数据获取失败，请检查网络或 API 配置'
             : '更新失败';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMsg), backgroundColor: AppColors.danger),
+          SnackBar(
+            content: Text(errorMsg),
+            backgroundColor: context.growthColors.danger,
+          ),
         );
       }
     } finally {

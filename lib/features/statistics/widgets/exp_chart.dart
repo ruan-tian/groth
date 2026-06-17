@@ -29,6 +29,7 @@ class ExpChart extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final colors = context.growthColors;
 
     // ── 空状态 ──
     if (values.isEmpty) {
@@ -99,7 +100,7 @@ class ExpChart extends StatelessWidget {
                       return Text(
                         formatExp(value.toInt()),
                         style: TextStyle(
-                          fontSize: 10,
+                          fontSize: 11,
                           color: colorScheme.onSurfaceVariant,
                         ),
                       );
@@ -120,7 +121,7 @@ class ExpChart extends StatelessWidget {
                         child: Text(
                           labels[index],
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: 11,
                             color: colorScheme.onSurfaceVariant,
                           ),
                         ),
@@ -168,11 +169,11 @@ class ExpChart extends StatelessWidget {
                         topLeft: Radius.circular(4),
                         topRight: Radius.circular(4),
                       ),
-                      color: AppColors.primary,
+                      color: colors.primary,
                       backDrawRodData: BackgroundBarChartRodData(
                         show: true,
                         toY: maxY,
-                        color: AppColors.softPurple,
+                        color: colors.softPurple,
                       ),
                     ),
                   ],

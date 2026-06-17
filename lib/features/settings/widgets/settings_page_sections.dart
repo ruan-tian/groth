@@ -3,7 +3,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/widgets/common/error_retry_widget.dart';
+import '../../../features/fitness/utils/fitness_timer_assets.dart';
 
 class SettingsProfileCard extends StatelessWidget {
   const SettingsProfileCard({
@@ -27,18 +30,19 @@ class SettingsProfileCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
+        gradient: LinearGradient(
+          colors: [colors.primaryLight, colors.primary],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [Color(0xFF5C3D2E), Color(0xFF8B6F5E), Color(0xFFD4A574)],
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF5C3D2E).withValues(alpha: 0.3),
+            color: colors.primary.withValues(alpha: 0.18),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -50,75 +54,79 @@ class SettingsProfileCard extends StatelessWidget {
             button: true,
             label: '查看个人资料',
             child: GestureDetector(
-            onTap: onProfileTap,
-            child: Row(
-              children: [
-                _SettingsAvatar(avatarPath: avatarPath),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        nickname,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
+              onTap: onProfileTap,
+              child: Row(
+                children: [
+                  _SettingsAvatar(avatarPath: avatarPath),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          nickname,
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w600,
+                            color: colors.textOnAccent,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         dashboard.when(
                           data: (data) => Semantics(
                             button: true,
                             label: '查看等级详情',
                             child: GestureDetector(
-                            onTap: () => onLevelTap(data),
-                            child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Text(
-                                  'Lv.${data.currentLevel} · ${levelNameFor(data.currentLevel)}',
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
+                              onTap: () => onLevelTap(data),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.textOnAccent.withValues(
+                                    alpha: 0.18,
                                   ),
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
-                                const SizedBox(width: 4),
-                                Icon(
-                                  Icons.info_outline_rounded,
-                                  size: 14,
-                                  color: Colors.white.withValues(alpha: 0.7),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      'Lv.${data.currentLevel} · ${levelNameFor(data.currentLevel)}',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: colors.textOnAccent,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      Icons.info_outline_rounded,
+                                      size: 14,
+                                      color: colors.textOnAccent.withValues(
+                                        alpha: 0.76,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ],
+                              ),
                             ),
                           ),
+                          loading: () => const SizedBox.shrink(),
+                          error: (_, _) => const ErrorRetryWidget(),
                         ),
-                        ),
-                        loading: () => const SizedBox.shrink(),
-                        error: (_, _) => const SizedBox.shrink(),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 16,
-                  color: Colors.white.withValues(alpha: 0.6),
-                ),
-              ],
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 16,
+                    color: colors.textOnAccent.withValues(alpha: 0.72),
+                  ),
+                ],
+              ),
             ),
-          ),
           ),
           const SizedBox(height: 20),
           dashboard.when(
@@ -134,14 +142,14 @@ class SettingsProfileCard extends StatelessWidget {
                         'EXP ${data.totalExp}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: colors.textOnAccent.withValues(alpha: 0.76),
                         ),
                       ),
                       Text(
                         '$nextLevelExp EXP',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.white.withValues(alpha: 0.7),
+                          color: colors.textOnAccent.withValues(alpha: 0.76),
                         ),
                       ),
                     ],
@@ -152,9 +160,11 @@ class SettingsProfileCard extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress.clamp(0.0, 1.0),
                       minHeight: 6,
-                      backgroundColor: Colors.white.withValues(alpha: 0.2),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        Colors.white,
+                      backgroundColor: colors.textOnAccent.withValues(
+                        alpha: 0.18,
+                      ),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        colors.textOnAccent,
                       ),
                     ),
                   ),
@@ -162,7 +172,7 @@ class SettingsProfileCard extends StatelessWidget {
               );
             },
             loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
+            error: (_, _) => const ErrorRetryWidget(),
           ),
         ],
       ),
@@ -188,6 +198,7 @@ class SettingsQuickActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -204,7 +215,7 @@ class SettingsQuickActions extends StatelessWidget {
                   loading: () => '检查中',
                   error: (_, _) => '未连接',
                 ),
-                color: const Color(0xFF5D68F2),
+                color: colors.primary,
                 onTap: onAiConfigTap,
               ),
             ),
@@ -218,7 +229,7 @@ class SettingsQuickActions extends StatelessWidget {
                   loading: () => '检查中',
                   error: (_, _) => '未备份',
                 ),
-                color: const Color(0xFF35C976),
+                color: colors.success,
                 onTap: onBackupTap,
               ),
             ),
@@ -228,7 +239,7 @@ class SettingsQuickActions extends StatelessWidget {
                 icon: Icons.analytics_outlined,
                 label: 'AI 分析',
                 status: '报告',
-                color: const Color(0xFFFF8A3D),
+                color: colors.fitness,
                 onTap: onAiAnalysisTap,
               ),
             ),
@@ -246,12 +257,13 @@ class SettingsSectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF5C3D2E),
+        color: colors.textPrimary,
       ),
     );
   }
@@ -289,19 +301,18 @@ class SettingsGroup extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
           SettingsTile(
             icon: Icons.brightness_6_outlined,
-            iconColor: const Color(0xFF5D68F2),
+            iconColor: colors.primary,
             title: '主题模式',
             subtitle: themeModeLabel,
             onTap: onThemeTap,
@@ -309,7 +320,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.flag_outlined,
-            iconColor: const Color(0xFFFF8A3D),
+            iconColor: colors.fitness,
             title: '今日目标',
             subtitle: '学习/健身/饮食/睡眠',
             onTap: onGoalsTap,
@@ -317,7 +328,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.person_outline_rounded,
-            iconColor: const Color(0xFF8B6F5E),
+            iconColor: colors.textSecondary,
             title: '个人资料',
             subtitle: '昵称、头像、身高',
             onTap: onProfileTap,
@@ -325,7 +336,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.auto_awesome_rounded,
-            iconColor: const Color(0xFF5D68F2),
+            iconColor: colors.primary,
             title: 'AI 自动分析',
             subtitle: autoAiAnalysisEnabled ? '已开启' : '已关闭',
             onTap: onAiAnalysisTap,
@@ -333,7 +344,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.book_rounded,
-            iconColor: const Color(0xFFE8A0BF),
+            iconColor: colors.journal,
             title: '日记上传分析',
             subtitle: autoAiAnalysisEnabled
                 ? (journalUploadEnabled ? '已开启' : '已关闭')
@@ -343,7 +354,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.menu_book_rounded,
-            iconColor: const Color(0xFFE889B5),
+            iconColor: colors.journal,
             title: '甜甜自动写日记',
             subtitle: petDiaryAutoEnabled ? '已开启，仅发送摘要' : '已关闭',
             onTap: onPetDiaryAutoTap,
@@ -351,7 +362,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.restore_outlined,
-            iconColor: const Color(0xFF35C976),
+            iconColor: colors.success,
             title: '数据恢复',
             subtitle: '从本地文件恢复数据',
             onTap: onRestoreTap,
@@ -359,7 +370,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.wb_sunny_outlined,
-            iconColor: const Color(0xFFFFB13D),
+            iconColor: colors.warning,
             title: '天气设置',
             subtitle: '查看天气、刷新数据',
             onTap: onWeatherTap,
@@ -377,17 +388,16 @@ class SettingsAboutSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: colors.border),
       ),
       child: SettingsTile(
         icon: Icons.info_outline_rounded,
-        iconColor: const Color(0xFF8B6F5E),
+        iconColor: colors.textSecondary,
         title: '关于 Growth OS',
         subtitle: '版本 0.1.0',
         onTap: onTap,
@@ -414,6 +424,7 @@ class SettingsTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -438,18 +449,18 @@ class SettingsTile extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFF5C3D2E),
+                        color: colors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: Color(0xFFB0A09A),
+                        color: colors.textSecondary,
                       ),
                     ),
                   ],
@@ -458,7 +469,7 @@ class SettingsTile extends StatelessWidget {
               Icon(
                 Icons.chevron_right_rounded,
                 size: 20,
-                color: const Color(0xFFB0A09A).withValues(alpha: 0.6),
+                color: colors.textTertiary,
               ),
             ],
           ),
@@ -475,16 +486,17 @@ class _SettingsAvatar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final path = avatarPath;
 
     return Container(
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
+        color: colors.textOnAccent.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.3),
+          color: colors.textOnAccent.withValues(alpha: 0.3),
           width: 2,
         ),
       ),
@@ -494,12 +506,22 @@ class _SettingsAvatar extends StatelessWidget {
               child: Image.file(
                 File(path),
                 fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const Center(
-                  child: Text('🐱', style: TextStyle(fontSize: 40)),
+                errorBuilder: (_, _, _) => ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Image.asset(
+                    FitnessTimerAssets.catAvatarDefault,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
             )
-          : const Center(child: Text('🐱', style: TextStyle(fontSize: 40))),
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Image.asset(
+                FitnessTimerAssets.catAvatarDefault,
+                fit: BoxFit.cover,
+              ),
+            ),
     );
   }
 }
@@ -521,67 +543,66 @@ class _QuickActionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Semantics(
       button: true,
       label: '$label，$status',
       child: GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.08),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              label,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF5C3D2E),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.border),
+            boxShadow: [
+              BoxShadow(
                 color: color.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
-              child: Text(
-                status,
+            ],
+          ),
+          child: Column(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                label,
                 style: TextStyle(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textPrimary,
                 ),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  status,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: color,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
     );
   }
 }
@@ -591,10 +612,7 @@ class _SettingsDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      indent: 64,
-      color: const Color(0xFFE8C9A0).withValues(alpha: 0.3),
-    );
+    final colors = context.growthColors;
+    return Divider(height: 1, indent: 64, color: colors.divider);
   }
 }

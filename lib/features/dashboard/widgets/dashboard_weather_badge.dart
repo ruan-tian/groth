@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../app/design/app_colors.dart';
+import '../../../app/design/design.dart';
 import '../../../core/services/weather_service.dart';
 import '../../../shared/providers/weather_provider.dart';
 import 'weather_pet/weather_pet_sheet.dart';
@@ -20,7 +20,7 @@ class DashboardWeatherBadge extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.78),
+          color: context.growthColors.card.withValues(alpha: 0.78),
           borderRadius: BorderRadius.circular(22),
           border: Border.all(color: const Color(0xFFF0E7DB)),
           boxShadow: [
@@ -43,14 +43,18 @@ class DashboardWeatherBadge extends ConsumerWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.86),
+                    color: context.growthColors.card.withValues(alpha: 0.86),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: AppColors.warning.withValues(alpha: 0.3),
+                      color: context.growthColors.warning.withValues(
+                        alpha: 0.3,
+                      ),
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppColors.warning.withValues(alpha: 0.08),
+                        color: context.growthColors.warning.withValues(
+                          alpha: 0.08,
+                        ),
                         blurRadius: 12,
                         offset: const Offset(0, 6),
                       ),
@@ -62,7 +66,7 @@ class DashboardWeatherBadge extends ConsumerWidget {
                       Icon(
                         Icons.wb_sunny_outlined,
                         size: 18,
-                        color: AppColors.warning,
+                        color: context.growthColors.warning,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -70,7 +74,7 @@ class DashboardWeatherBadge extends ConsumerWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
-                          color: AppColors.warning,
+                          color: context.growthColors.warning,
                         ),
                       ),
                     ],

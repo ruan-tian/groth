@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
@@ -55,9 +56,9 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
         _hipController.text.trim().isEmpty &&
         _armController.text.trim().isEmpty &&
         _thighController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('请至少填写一项数据')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请至少填写一项数据')));
       return;
     }
 
@@ -100,18 +101,18 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
       if (mounted) {
         HapticFeedback.lightImpact();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('身体数据已保存'),
-            backgroundColor: Color(0xFF35C976),
+          SnackBar(
+            content: const Text('身体数据已保存'),
+            backgroundColor: context.growthColors.success,
           ),
         );
         context.pop();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('保存失败: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('保存失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -121,14 +122,14 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF5E1),
+      backgroundColor: context.growthColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '记录身体数据',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5C3D2E),
+            color: context.growthColors.textPrimary,
           ),
         ),
         centerTitle: true,
@@ -136,7 +137,7 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: const Color(0xFF5C3D2E),
+          color: context.growthColors.textPrimary,
           onPressed: () => context.pop(),
         ),
       ),
@@ -243,10 +244,10 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
   Widget _buildSectionTitle(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF8B6F5E),
+        color: context.growthColors.textSecondary,
       ),
     );
   }
@@ -259,10 +260,10 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
+          color: context.growthColors.border.withValues(alpha: 0.5),
         ),
       ),
       child: TextField(
@@ -274,18 +275,21 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
         ],
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: const TextStyle(
+          labelStyle: TextStyle(
             fontSize: 13,
-            color: Color(0xFFB0A09A),
+            color: context.growthColors.textHint,
           ),
           suffixText: unit,
-          suffixStyle: const TextStyle(
+          suffixStyle: TextStyle(
             fontSize: 12,
-            color: Color(0xFFB0A09A),
+            color: context.growthColors.textHint,
           ),
-          prefixIcon: Icon(icon, size: 18, color: const Color(0xFFD4A574)),
+          prefixIcon: Icon(icon, size: 18, color: context.growthColors.accent),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 14,
+          ),
           isDense: true,
         ),
       ),
@@ -295,10 +299,10 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
   Widget _buildNoteField() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.growthColors.card,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
+          color: context.growthColors.border.withValues(alpha: 0.5),
         ),
       ),
       child: TextField(
@@ -307,13 +311,20 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
         maxLines: 3,
         decoration: InputDecoration(
           hintText: '记录今天的感受...',
-          hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
-          prefixIcon: const Padding(
-            padding: EdgeInsets.only(bottom: 48),
-            child: Icon(Icons.note_outlined, size: 18, color: Color(0xFFD4A574)),
+          hintStyle: TextStyle(color: context.growthColors.textHint),
+          prefixIcon: Padding(
+            padding: const EdgeInsets.only(bottom: 48),
+            child: Icon(
+              Icons.note_outlined,
+              size: 18,
+              color: context.growthColors.accent,
+            ),
           ),
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
@@ -327,18 +338,21 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
         decoration: BoxDecoration(
           gradient: _saving
               ? null
-              : const LinearGradient(
-                  colors: [Color(0xFFD4A574), Color(0xFFE8C9A0)],
+              : LinearGradient(
+                  colors: [
+                    context.growthColors.accent,
+                    context.growthColors.border,
+                  ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-          color: _saving ? const Color(0xFFE8C9A0) : null,
+          color: _saving ? context.growthColors.border : null,
           borderRadius: BorderRadius.circular(12),
           boxShadow: _saving
               ? null
               : [
                   BoxShadow(
-                    color: const Color(0xFFD4A574).withValues(alpha: 0.3),
+                    color: context.growthColors.accent.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -346,20 +360,20 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
         ),
         child: Center(
           child: _saving
-              ? const SizedBox(
+              ? SizedBox(
                   width: 20,
                   height: 20,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: Colors.white,
+                    color: context.growthColors.textOnAccent,
                   ),
                 )
-              : const Text(
+              : Text(
                   '保存身体数据',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                    color: context.growthColors.textOnAccent,
                   ),
                 ),
         ),

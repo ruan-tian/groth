@@ -27,7 +27,7 @@ class _PaperEditorSurface extends StatelessWidget {
     return Container(
       margin: EdgeInsets.fromLTRB(horizontalMargin, 0, horizontalMargin, 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.62),
+        color: context.growthColors.card.withValues(alpha: 0.62),
         borderRadius: BorderRadius.circular(26),
         border: Border.all(color: JournalColors.pinkBorder),
         boxShadow: [
@@ -82,7 +82,9 @@ class _PaperEditorSurface extends StatelessWidget {
                           vertical: 12,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.72),
+                          color: context.growthColors.card.withValues(
+                            alpha: 0.72,
+                          ),
                           borderRadius: BorderRadius.circular(999),
                           border: Border.all(color: JournalColors.pinkBorder),
                         ),

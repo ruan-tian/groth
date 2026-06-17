@@ -65,10 +65,12 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SingleChildScrollView(
         padding: EdgeInsets.fromLTRB(
@@ -87,7 +89,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE0E0E0),
+                  color: colors.divider,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -113,28 +115,30 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final colors = context.growthColors;
+
     return Row(
       children: [
         Container(
           width: 36,
           height: 36,
           decoration: BoxDecoration(
-            color: const Color(0xFFEAF0FF),
+            color: colors.primary.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             _isEditing ? Icons.edit_rounded : Icons.add_task_rounded,
-            color: const Color(0xFF5D68F2),
+            color: colors.primary,
             size: 20,
           ),
         ),
         const SizedBox(width: 12),
         Text(
           _isEditing ? '编辑任务' : '添加任务',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF5C3D2E),
+            color: colors.textPrimary,
           ),
         ),
         const Spacer(),
@@ -142,20 +146,20 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
           button: true,
           label: '关闭对话框',
           child: GestureDetector(
-          onTap: () => Navigator.pop(context),
-          child: Container(
-            width: 32,
-            height: 32,
-            decoration: const BoxDecoration(
-              color: Color(0xFFF5F5F5),
-              shape: BoxShape.circle,
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: colors.surfaceVariant,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.close_rounded,
+                size: 18,
+                color: colors.textSecondary,
+              ),
             ),
-            child: const Icon(
-              Icons.close_rounded,
-              size: 18,
-              color: Color(0xFF8B6F5E),
-            ),
-          ),
           ),
         ),
       ],
@@ -185,15 +189,17 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   }
 
   Widget _buildPriorityPicker() {
+    final colors = context.growthColors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '优先级',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF8B6F5E),
+            color: colors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
@@ -206,50 +212,50 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                 label: '选择${p.label}优先级',
                 selected: isSelected,
                 child: GestureDetector(
-                onTap: () {
-                  setState(() => _priority = p);
-                  HapticFeedback.lightImpact();
-                },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  margin: EdgeInsets.only(
-                    right: p != TaskPriority.high ? 8 : 0,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? p.color.withValues(alpha: 0.15)
-                        : Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: isSelected ? p.color : const Color(0xFFE8E8E8),
-                      width: isSelected ? 1.5 : 1,
+                  onTap: () {
+                    setState(() => _priority = p);
+                    HapticFeedback.lightImpact();
+                  },
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    margin: EdgeInsets.only(
+                      right: p != TaskPriority.high ? 8 : 0,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? p.color.withValues(alpha: 0.15)
+                          : colors.surfaceVariant,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: isSelected ? p.color : colors.border,
+                        width: isSelected ? 1.5 : 1,
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: p.color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          p.label,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected
+                                ? FontWeight.w600
+                                : FontWeight.w400,
+                            color: isSelected ? p.color : colors.textSecondary,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: p.color,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        p.label,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: isSelected
-                              ? FontWeight.w600
-                              : FontWeight.w400,
-                          color: isSelected ? p.color : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
                 ),
               ),
             );
@@ -260,6 +266,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   }
 
   Widget _buildDatePicker(BuildContext context) {
+    final colors = context.growthColors;
+
     const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
     final dateStr =
         '${_selectedDate.month}月${_selectedDate.day}日 ${weekdays[_selectedDate.weekday - 1]}';
@@ -271,12 +279,12 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '日期',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF8B6F5E),
+            color: colors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
@@ -284,69 +292,68 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
           button: true,
           label: '选择日期',
           child: GestureDetector(
-          onTap: () async {
-            final picked = await showGrowthDatePicker(
-              context: context,
-              initialDate: _selectedDate,
-              firstDate: DateTime.now().subtract(const Duration(days: 7)),
-              lastDate: DateTime.now().add(const Duration(days: 30)),
-            );
-            if (picked != null) setState(() => _selectedDate = picked);
-          },
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
+            onTap: () async {
+              final picked = await showGrowthDatePicker(
+                context: context,
+                initialDate: _selectedDate,
+                firstDate: DateTime.now().subtract(const Duration(days: 7)),
+                lastDate: DateTime.now().add(const Duration(days: 30)),
+              );
+              if (picked != null) setState(() => _selectedDate = picked);
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: colors.surfaceVariant,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: colors.border),
               ),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.calendar_today_rounded,
-                  size: 18,
-                  color: Color(0xFFD4A574),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  isToday ? '今天 · $dateStr' : dateStr,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: Color(0xFF5C3D2E),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 18,
+                    color: colors.primary,
                   ),
-                ),
-                const Spacer(),
-                if (!isToday)
-                  Semantics(
-                    button: true,
-                    label: '回到今天',
-                    child: GestureDetector(
-                    onTap: () => setState(() => _selectedDate = DateTime.now()),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFFF1DF),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      child: const Text(
-                        '回到今天',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Color(0xFF88681A),
+                  const SizedBox(width: 12),
+                  Text(
+                    isToday ? '今天 · $dateStr' : dateStr,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (!isToday)
+                    Semantics(
+                      button: true,
+                      label: '回到今天',
+                      child: GestureDetector(
+                        onTap: () =>
+                            setState(() => _selectedDate = DateTime.now()),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colors.primary.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '回到今天',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: colors.primary,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
-          ),
           ),
         ),
       ],
@@ -354,15 +361,17 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   }
 
   Widget _buildTimePickers(BuildContext context) {
+    final colors = context.growthColors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           '时间',
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF8B6F5E),
+            color: colors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
@@ -380,11 +389,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
             ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Container(
-                width: 20,
-                height: 1,
-                color: const Color(0xFFE8C9A0),
-              ),
+              child: Container(width: 20, height: 1, color: colors.divider),
             ),
             Expanded(
               child: _buildTimePicker(
@@ -408,63 +413,58 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     required TimeOfDay time,
     required ValueChanged<TimeOfDay> onTimeSelected,
   }) {
+    final colors = context.growthColors;
+
     return Semantics(
       button: true,
       label: '选择$label时间',
       child: GestureDetector(
-      onTap: () async {
-        final picked = await showGrowthTimePicker(
-          context: context,
-          initialTime: time,
-        );
-        if (picked != null) onTimeSelected(picked);
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
+        onTap: () async {
+          final picked = await showGrowthTimePicker(
+            context: context,
+            initialTime: time,
+          );
+          if (picked != null) onTimeSelected(picked);
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          decoration: BoxDecoration(
+            color: colors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.access_time_rounded, size: 16, color: colors.primary),
+              const SizedBox(width: 8),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(fontSize: 10, color: colors.textTertiary),
+                  ),
+                  Text(
+                    '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.access_time_rounded,
-              size: 16,
-              color: Color(0xFFD4A574),
-            ),
-            const SizedBox(width: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 10,
-                    color: Color(0xFFB0A09A),
-                  ),
-                ),
-                Text(
-                  '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF5C3D2E),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
       ),
     );
   }
 
   Widget _buildActions(BuildContext context) {
+    final colors = context.growthColors;
+
     return Row(
       children: [
         Expanded(
@@ -472,12 +472,12 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              side: const BorderSide(color: Color(0xFFE8C9A0)),
+              side: BorderSide(color: colors.border),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('取消', style: TextStyle(color: Color(0xFF8B6F5E))),
+            child: Text('取消', style: TextStyle(color: colors.textSecondary)),
           ),
         ),
         const SizedBox(width: 12),
@@ -486,12 +486,12 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
           child: FilledButton.icon(
             onPressed: _saving ? null : _save,
             icon: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: Colors.white,
+                      color: colors.textOnAccent,
                     ),
                   )
                 : Icon(
@@ -501,7 +501,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
             label: Text(_saving ? '保存中...' : (_isEditing ? '保存修改' : '添加任务')),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
-              backgroundColor: const Color(0xFFD4A574),
+              backgroundColor: colors.primary,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -513,6 +513,8 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
   }
 
   Future<void> _save() async {
+    final colors = context.growthColors;
+
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -584,7 +586,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
                   ? '任务已更新'
                   : '任务已添加到 ${_selectedDate.month}/${_selectedDate.day}',
             ),
-            backgroundColor: const Color(0xFF35C976),
+            backgroundColor: colors.success,
           ),
         );
       }
@@ -592,7 +594,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text('操作失败: $e')));
+        ).showSnackBar(const SnackBar(content: Text('操作失败，请重试')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -621,45 +623,42 @@ class _InputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w500,
-            color: Color(0xFF8B6F5E),
+            color: colors.textSecondary,
           ),
         ),
         const SizedBox(height: 8),
         TextField(
           controller: controller,
-          textInputAction: textInputAction ?? (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
+          textInputAction:
+              textInputAction ??
+              (maxLines > 1 ? TextInputAction.newline : TextInputAction.next),
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(color: Color(0xFFC9CDD4)),
-            prefixIcon: Icon(icon, size: 18, color: const Color(0xFFD4A574)),
+            hintStyle: TextStyle(color: colors.textHint),
+            prefixIcon: Icon(icon, size: 18, color: colors.primary),
             filled: true,
-            fillColor: Colors.white,
+            fillColor: colors.surfaceVariant,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-              ),
+              borderSide: BorderSide(color: colors.border),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(
-                color: const Color(0xFFE8C9A0).withValues(alpha: 0.5),
-              ),
+              borderSide: BorderSide(color: colors.border),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: const BorderSide(
-                color: Color(0xFFD4A574),
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: colors.primary, width: 1.5),
             ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,

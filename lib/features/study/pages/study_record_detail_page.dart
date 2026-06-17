@@ -6,9 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/utils/chart_scale_utils.dart';
-import '../../../shared/providers/database_provider.dart';
-import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/study_provider.dart';
+import '../../../shared/providers/dashboard_provider.dart';
 
 part '../widgets/study_record_detail_widgets.dart';
 part '../widgets/study_record_detail_chart.dart';
@@ -26,7 +25,7 @@ class StudyRecordDetailPage extends ConsumerWidget {
     final recordAsync = ref.watch(_studyRecordByIdProvider(recordId));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.growthColors.background,
       body: recordAsync.when(
         data: (record) => _DetailBody(record: record),
         loading: () => Center(
@@ -35,7 +34,7 @@ class StudyRecordDetailPage extends ConsumerWidget {
             height: 32,
             child: CircularProgressIndicator(
               strokeWidth: 3,
-              color: AppColors.study,
+              color: context.growthColors.study,
             ),
           ),
         ),
@@ -47,13 +46,13 @@ class StudyRecordDetailPage extends ConsumerWidget {
                 width: 72,
                 height: 72,
                 decoration: BoxDecoration(
-                  color: AppColors.danger.withValues(alpha: 0.08),
+                  color: context.growthColors.danger.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.error_outline_rounded,
                   size: 36,
-                  color: AppColors.danger.withValues(alpha: 0.6),
+                  color: context.growthColors.danger.withValues(alpha: 0.6),
                 ),
               ),
               const SizedBox(height: AppSpacing.lg),

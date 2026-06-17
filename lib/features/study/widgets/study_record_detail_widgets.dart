@@ -7,6 +7,7 @@ class _DetailBody extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final isProfessional = record.mode == 'professional';
     final startDt = DateTime.fromMillisecondsSinceEpoch(record.startTime);
     final endDt = DateTime.fromMillisecondsSinceEpoch(record.endTime);
@@ -36,6 +37,7 @@ class _DetailBody extends ConsumerWidget {
 
                 // ── 时间信息 ──
                 _buildSection(
+                  context: context,
                   icon: Icons.schedule_rounded,
                   title: '时间信息',
                   child: Column(
@@ -77,13 +79,14 @@ class _DetailBody extends ConsumerWidget {
                 if (record.gain != null && record.gain!.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.lg),
                   _buildSection(
+                    context: context,
                     icon: Icons.lightbulb_outline_rounded,
                     title: '收获',
                     child: Text(
                       record.gain!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                         height: 1.6,
                       ),
                     ),
@@ -94,13 +97,14 @@ class _DetailBody extends ConsumerWidget {
                 if (record.problem != null && record.problem!.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.lg),
                   _buildSection(
+                    context: context,
                     icon: Icons.help_outline_rounded,
                     title: '遗留问题',
                     child: Text(
                       record.problem!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                         height: 1.6,
                       ),
                     ),
@@ -111,13 +115,14 @@ class _DetailBody extends ConsumerWidget {
                 if (record.note != null && record.note!.isNotEmpty) ...[
                   const SizedBox(height: AppSpacing.lg),
                   _buildSection(
+                    context: context,
                     icon: Icons.notes_rounded,
                     title: '备注',
                     child: Text(
                       record.note!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textPrimary,
+                        color: colors.textPrimary,
                         height: 1.6,
                       ),
                     ),
@@ -126,7 +131,7 @@ class _DetailBody extends ConsumerWidget {
 
                 // ── 学习趋势 ──
                 const SizedBox(height: AppSpacing.xl),
-                _buildSectionTitle('学习趋势'),
+                _buildSectionTitle(context, '学习趋势'),
                 const SizedBox(height: AppSpacing.md),
                 _StudyTrendChart(record: record),
                 const SizedBox(height: AppSpacing.xl),
@@ -143,6 +148,7 @@ class _DetailBody extends ConsumerWidget {
   // ---------------------------------------------------------------------------
 
   Widget _buildHeader(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
     final isProfessional = record.mode == 'professional';
 
     return Container(
@@ -154,7 +160,7 @@ class _DetailBody extends ConsumerWidget {
       ),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [AppColors.study, AppColors.study.withValues(alpha: 0.78)],
+          colors: [colors.study, colors.study.withValues(alpha: 0.78)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -174,29 +180,48 @@ class _DetailBody extends ConsumerWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: colors.textOnAccent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white,
+                    color: colors.textOnAccent,
                     size: 18,
                   ),
                 ),
               ),
               const Spacer(),
               GestureDetector(
+                onTap: () => context.push(
+                  '/plan/study/knowledge/add?sourceStudyId=${record.id}',
+                ),
+                child: Container(
+                  width: 40,
+                  height: 40,
+                  margin: const EdgeInsets.only(right: AppSpacing.sm),
+                  decoration: BoxDecoration(
+                    color: colors.textOnAccent.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.add_card_rounded,
+                    color: colors.textOnAccent,
+                    size: 18,
+                  ),
+                ),
+              ),
+              GestureDetector(
                 onTap: () => _confirmDelete(context, ref),
                 child: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: colors.textOnAccent.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     Icons.delete_outline_rounded,
-                    color: Colors.white,
+                    color: colors.textOnAccent,
                     size: 18,
                   ),
                 ),
@@ -210,10 +235,14 @@ class _DetailBody extends ConsumerWidget {
             width: 68,
             height: 68,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.18),
+              color: colors.textOnAccent.withValues(alpha: 0.18),
               borderRadius: BorderRadius.circular(20),
             ),
-            child: Icon(Icons.menu_book_rounded, color: Colors.white, size: 32),
+            child: Icon(
+              Icons.menu_book_rounded,
+              color: colors.textOnAccent,
+              size: 32,
+            ),
           ),
           const SizedBox(height: 16),
 
@@ -223,10 +252,10 @@ class _DetailBody extends ConsumerWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: Colors.white,
+              color: colors.textOnAccent,
               height: 1.3,
             ),
           ),
@@ -259,6 +288,7 @@ class _DetailBody extends ConsumerWidget {
   // ---------------------------------------------------------------------------
 
   Widget _buildInfoGrid(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       children: [
         Row(
@@ -268,7 +298,7 @@ class _DetailBody extends ConsumerWidget {
                 icon: Icons.timer_outlined,
                 label: '时长',
                 value: '${record.durationMinutes}分钟',
-                color: AppColors.study,
+                color: colors.study,
               ),
             ),
             const SizedBox(width: 12),
@@ -277,7 +307,7 @@ class _DetailBody extends ConsumerWidget {
                 icon: Icons.book_outlined,
                 label: '科目',
                 value: record.subject ?? '--',
-                color: AppColors.study,
+                color: colors.study,
               ),
             ),
           ],
@@ -292,7 +322,7 @@ class _DetailBody extends ConsumerWidget {
                 value: record.difficultyLevel != null
                     ? '${record.difficultyLevel}/5'
                     : '--',
-                color: AppColors.study,
+                color: colors.study,
               ),
             ),
             const SizedBox(width: 12),
@@ -303,7 +333,7 @@ class _DetailBody extends ConsumerWidget {
                 value: record.masteryLevel != null
                     ? '${record.masteryLevel}/5'
                     : '--',
-                color: AppColors.study,
+                color: colors.study,
               ),
             ),
           ],
@@ -318,6 +348,7 @@ class _DetailBody extends ConsumerWidget {
 
   Widget _buildProfessionalSection(BuildContext context) {
     return _buildSection(
+      context: context,
       icon: Icons.school_rounded,
       title: '专业信息',
       child: Column(
@@ -347,23 +378,22 @@ class _DetailBody extends ConsumerWidget {
   // ---------------------------------------------------------------------------
 
   Widget _buildSection({
+    required BuildContext context,
     required IconData icon,
     required String title,
     required Widget child,
   }) {
+    final colors = context.growthColors;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(
-          color: AppColors.study.withValues(alpha: 0.06),
-          width: 1,
-        ),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
-            color: AppColors.study.withValues(alpha: 0.03),
+            color: colors.shadow.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, 3),
           ),
@@ -378,18 +408,18 @@ class _DetailBody extends ConsumerWidget {
                 width: 28,
                 height: 28,
                 decoration: BoxDecoration(
-                  color: AppColors.study.withValues(alpha: 0.08),
+                  color: colors.study.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(icon, size: 15, color: AppColors.study),
+                child: Icon(icon, size: 15, color: colors.study),
               ),
               const SizedBox(width: 10),
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ],
@@ -405,24 +435,25 @@ class _DetailBody extends ConsumerWidget {
   // 区块标题（无卡片容器）
   // ---------------------------------------------------------------------------
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Container(
           width: 4,
           height: 18,
           decoration: BoxDecoration(
-            color: AppColors.study,
+            color: colors.study,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            color: colors.textPrimary,
           ),
         ),
       ],
@@ -439,6 +470,7 @@ class _DetailBody extends ConsumerWidget {
   }
 
   Future<void> _confirmDelete(BuildContext context, WidgetRef ref) async {
+    final colors = context.growthColors;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -451,12 +483,12 @@ class _DetailBody extends ConsumerWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: AppColors.danger.withValues(alpha: 0.08),
+                color: colors.danger.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 Icons.delete_outline_rounded,
-                color: AppColors.danger,
+                color: colors.danger,
                 size: 20,
               ),
             ),
@@ -466,10 +498,10 @@ class _DetailBody extends ConsumerWidget {
         ),
         content: Text(
           '确定要删除学习记录「${record.title}」吗？\n此操作不可撤销。',
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 14,
             height: 1.5,
-            color: AppColors.textSecondary,
+            color: colors.textSecondary,
           ),
         ),
         actions: [
@@ -479,7 +511,7 @@ class _DetailBody extends ConsumerWidget {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(foregroundColor: colors.danger),
             child: const Text('删除'),
           ),
         ],
@@ -491,11 +523,17 @@ class _DetailBody extends ConsumerWidget {
         final repo = ref.read(studyRepositoryProvider);
         await repo.deleteStudyRecord(record.id);
 
+        // 刷新Provider
+        ref.invalidate(recentStudyRecordsProvider);
+        ref.invalidate(todayStudyRecordsProvider);
+        ref.invalidate(todayStudyMinutesProvider);
+        ref.invalidate(dashboardProvider);
+
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('已删除'),
-              backgroundColor: AppColors.textPrimary,
+              backgroundColor: colors.textPrimary,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -508,8 +546,8 @@ class _DetailBody extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('删除失败: $e'),
-              backgroundColor: AppColors.danger,
+              content: Text('删除失败，请重试'),
+              backgroundColor: colors.danger,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(AppRadius.sm),
@@ -534,23 +572,24 @@ class _HeaderBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.18),
+        color: colors.textOnAccent.withValues(alpha: 0.18),
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: Colors.white),
+          Icon(icon, size: 14, color: colors.textOnAccent),
           const SizedBox(width: 5),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.white,
+              color: colors.textOnAccent,
             ),
           ),
         ],
@@ -578,15 +617,16 @@ class _InfoTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.md),
-        border: Border.all(color: color.withValues(alpha: 0.06), width: 1),
+        border: Border.all(color: colors.border, width: 1),
         boxShadow: [
           BoxShadow(
-            color: color.withValues(alpha: 0.03),
+            color: colors.shadow.withValues(alpha: 0.08),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -609,17 +649,17 @@ class _InfoTile extends StatelessWidget {
             value,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
               height: 1.1,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            style: TextStyle(fontSize: 12, color: colors.textSecondary),
           ),
         ],
       ),
@@ -644,13 +684,14 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
-        Icon(icon, size: 15, color: AppColors.textTertiary),
+        Icon(icon, size: 15, color: colors.textTertiary),
         const SizedBox(width: 8),
         Text(
           label,
-          style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          style: TextStyle(fontSize: 13, color: colors.textSecondary),
         ),
         const Spacer(),
         Flexible(
@@ -659,10 +700,10 @@ class _InfoRow extends StatelessWidget {
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             textAlign: TextAlign.end,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: AppColors.textPrimary,
+              color: colors.textPrimary,
             ),
           ),
         ),

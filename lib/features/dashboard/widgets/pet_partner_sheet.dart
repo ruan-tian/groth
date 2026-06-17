@@ -12,6 +12,7 @@ import '../../../core/domain/pet/pet_ai_result.dart';
 import '../../pet/utils/pet_data_collector.dart';
 import '../../pet/widgets/pet_ai_data_preview_sheet.dart';
 import '../../pet/pages/pet_ai_analysis_page.dart';
+import '../../../shared/widgets/common/error_retry_widget.dart';
 
 /// 宠物伙伴详情底部弹窗
 ///
@@ -43,12 +44,12 @@ class PetPartnerSheet extends ConsumerWidget {
 
     return Container(
       height: screenHeight * 0.8,
-      decoration: const BoxDecoration(
-        color: AppColors.card,
+      decoration: BoxDecoration(
+        color: context.growthColors.card,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
-            color: Color(0x146B5CEA),
+            color: context.growthColors.shadow.withValues(alpha: 0.08),
             blurRadius: 12,
             offset: Offset(0, -2),
           ),
@@ -57,12 +58,12 @@ class PetPartnerSheet extends ConsumerWidget {
       child: Column(
         children: [
           // 顶部拖拽指示器
-          _buildDragHandle(),
+          _buildDragHandle(context),
 
           // 头部：猫咪头像 + 等级 + 亲密度条
           _buildHeader(context, petProfile, petState, dashboardData),
 
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+          Divider(height: 1, color: context.growthColors.divider),
 
           // 内容区域
           Expanded(
@@ -72,17 +73,17 @@ class PetPartnerSheet extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // 今日心情显示
-                  _buildMoodSection(petState),
+                  _buildMoodSection(context, petState),
 
                   const SizedBox(height: 16),
 
                   // AI小语文本框
-                  _buildAiMessageSection(petState),
+                  _buildAiMessageSection(context, petState),
 
                   const SizedBox(height: 16),
 
                   // 本周成长亮点数据
-                  _buildWeeklyHighlights(dashboardData),
+                  _buildWeeklyHighlights(context, dashboardData),
                 ],
               ),
             ),
@@ -96,13 +97,13 @@ class PetPartnerSheet extends ConsumerWidget {
   }
 
   /// 顶部拖拽指示器
-  Widget _buildDragHandle() {
+  Widget _buildDragHandle(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(top: 12),
       width: 40,
       height: 4,
       decoration: BoxDecoration(
-        color: AppColors.textHint.withValues(alpha: 0.4),
+        color: context.growthColors.textHint.withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -137,22 +138,22 @@ class PetPartnerSheet extends ConsumerWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.textPrimary,
+                        color: context.growthColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Lv.$level ${getPetLevelName(level)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
-                        color: AppColors.textSecondary,
+                        color: context.growthColors.textSecondary,
                       ),
                     ),
                     const SizedBox(height: 8),
-                    _buildIntimacyBar(level),
+                    _buildIntimacyBar(context, level),
                   ],
                 ),
               ),
@@ -171,10 +172,10 @@ class PetPartnerSheet extends ConsumerWidget {
         width: 72,
         height: 72,
         decoration: BoxDecoration(
-          color: AppColors.primaryLight.withValues(alpha: 0.3),
+          color: context.growthColors.primaryLight.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppColors.primary.withValues(alpha: 0.3),
+            color: context.growthColors.primary.withValues(alpha: 0.3),
             width: 2,
           ),
         ),
@@ -198,7 +199,7 @@ class PetPartnerSheet extends ConsumerWidget {
   }
 
   /// 亲密度条
-  Widget _buildIntimacyBar(int level) {
+  Widget _buildIntimacyBar(BuildContext context, int level) {
     final intimacy = (level * 10).clamp(0, 100);
     final progress = intimacy / 100;
 
@@ -208,16 +209,19 @@ class PetPartnerSheet extends ConsumerWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
+            Text(
               '亲密度',
-              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+              style: TextStyle(
+                fontSize: 12,
+                color: context.growthColors.textSecondary,
+              ),
             ),
             Text(
               '$intimacy%',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.primary,
+                color: context.growthColors.primary,
               ),
             ),
           ],
@@ -228,8 +232,12 @@ class PetPartnerSheet extends ConsumerWidget {
           child: LinearProgressIndicator(
             value: progress,
             minHeight: 6,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-            valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            backgroundColor: context.growthColors.primary.withValues(
+              alpha: 0.15,
+            ),
+            valueColor: AlwaysStoppedAnimation<Color>(
+              context.growthColors.primary,
+            ),
           ),
         ),
       ],
@@ -237,10 +245,13 @@ class PetPartnerSheet extends ConsumerWidget {
   }
 
   /// 今日心情显示
-  Widget _buildMoodSection(AsyncValue<PetState?> stateAsync) {
+  Widget _buildMoodSection(
+    BuildContext context,
+    AsyncValue<PetState?> stateAsync,
+  ) {
     return stateAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, e) => const SizedBox.shrink(),
+      error: (_, e) => const ErrorRetryWidget(),
       data: (state) {
         final stateType = _getPetStateType(state?.currentState ?? 'idle');
         final moodEmoji = _getMoodEmoji(stateType);
@@ -249,7 +260,7 @@ class PetPartnerSheet extends ConsumerWidget {
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.background,
+            color: context.growthColors.background,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Row(
@@ -260,20 +271,20 @@ class PetPartnerSheet extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       '今日心情',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
+                        color: context.growthColors.textPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       moodText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.textSecondary,
+                        color: context.growthColors.textSecondary,
                       ),
                     ),
                   ],
@@ -287,10 +298,13 @@ class PetPartnerSheet extends ConsumerWidget {
   }
 
   /// AI小语文本框（浅灰色背景）
-  Widget _buildAiMessageSection(AsyncValue<PetState?> stateAsync) {
+  Widget _buildAiMessageSection(
+    BuildContext context,
+    AsyncValue<PetState?> stateAsync,
+  ) {
     return stateAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, e) => const SizedBox.shrink(),
+      error: (_, e) => const ErrorRetryWidget(),
       data: (state) {
         final stateType = _getPetStateType(state?.currentState ?? 'idle');
         final message = getPetMessage(stateType);
@@ -299,7 +313,7 @@ class PetPartnerSheet extends ConsumerWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
+            color: context.growthColors.surfaceVariant,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -309,12 +323,12 @@ class PetPartnerSheet extends ConsumerWidget {
                 children: [
                   const Text('💬', style: TextStyle(fontSize: 16)),
                   const SizedBox(width: 8),
-                  const Text(
+                  Text(
                     '甜甜说',
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      color: context.growthColors.textPrimary,
                     ),
                   ),
                 ],
@@ -322,9 +336,9 @@ class PetPartnerSheet extends ConsumerWidget {
               const SizedBox(height: 8),
               Text(
                 message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: context.growthColors.textSecondary,
                   height: 1.5,
                 ),
               ),
@@ -336,22 +350,25 @@ class PetPartnerSheet extends ConsumerWidget {
   }
 
   /// 本周成长亮点数据
-  Widget _buildWeeklyHighlights(AsyncValue<DashboardData?> dashboardAsync) {
+  Widget _buildWeeklyHighlights(
+    BuildContext context,
+    AsyncValue<DashboardData?> dashboardAsync,
+  ) {
     return dashboardAsync.when(
       loading: () => const SizedBox.shrink(),
-      error: (_, e) => const SizedBox.shrink(),
+      error: (_, e) => const ErrorRetryWidget(),
       data: (dashboard) {
         if (dashboard == null) return const SizedBox.shrink();
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               '本周成长亮点',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textPrimary,
+                color: context.growthColors.textPrimary,
               ),
             ),
             const SizedBox(height: 12),
@@ -359,8 +376,9 @@ class PetPartnerSheet extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _buildHighlightCard(
+                    context,
                     icon: Icons.menu_book_rounded,
-                    color: AppColors.study,
+                    color: context.growthColors.study,
                     label: '学习时长',
                     value: '${dashboard.todayStudyMinutes}分钟',
                   ),
@@ -368,8 +386,9 @@ class PetPartnerSheet extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildHighlightCard(
+                    context,
                     icon: Icons.fitness_center_rounded,
-                    color: AppColors.fitness,
+                    color: context.growthColors.fitness,
                     label: '健身时长',
                     value: '${dashboard.todayFitnessMinutes}分钟',
                   ),
@@ -381,8 +400,9 @@ class PetPartnerSheet extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _buildHighlightCard(
+                    context,
                     icon: Icons.edit_note_rounded,
-                    color: AppColors.diet,
+                    color: context.growthColors.diet,
                     label: '日记篇数',
                     value: '${dashboard.todayJournalCount}篇',
                   ),
@@ -390,8 +410,9 @@ class PetPartnerSheet extends ConsumerWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildHighlightCard(
+                    context,
                     icon: Icons.star_rounded,
-                    color: AppColors.primary,
+                    color: context.growthColors.primary,
                     label: '总经验值',
                     value: '${dashboard.totalExp} EXP',
                   ),
@@ -405,7 +426,8 @@ class PetPartnerSheet extends ConsumerWidget {
   }
 
   /// 亮点数据卡片
-  Widget _buildHighlightCard({
+  Widget _buildHighlightCard(
+    BuildContext context, {
     required IconData icon,
     required Color color,
     required String label,
@@ -424,9 +446,9 @@ class PetPartnerSheet extends ConsumerWidget {
           const SizedBox(height: 8),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
-              color: AppColors.textSecondary,
+              color: context.growthColors.textSecondary,
             ),
           ),
           const SizedBox(height: 4),
@@ -450,12 +472,12 @@ class PetPartnerSheet extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             '快速分析',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+              color: context.growthColors.textPrimary,
             ),
           ),
           const SizedBox(height: 12),
@@ -467,7 +489,7 @@ class PetPartnerSheet extends ConsumerWidget {
                   ref,
                   PetAIAnalysisType.study,
                   '学习分析',
-                  AppColors.study,
+                  context.growthColors.study,
                 ),
               ),
               const SizedBox(width: 8),
@@ -477,7 +499,7 @@ class PetPartnerSheet extends ConsumerWidget {
                   ref,
                   PetAIAnalysisType.fitness,
                   '健身分析',
-                  AppColors.fitness,
+                  context.growthColors.fitness,
                 ),
               ),
             ],
@@ -491,7 +513,7 @@ class PetPartnerSheet extends ConsumerWidget {
                   ref,
                   PetAIAnalysisType.diet,
                   '饮食分析',
-                  AppColors.diet,
+                  context.growthColors.diet,
                 ),
               ),
               const SizedBox(width: 8),
@@ -501,7 +523,7 @@ class PetPartnerSheet extends ConsumerWidget {
                   ref,
                   PetAIAnalysisType.sleep,
                   '睡眠分析',
-                  const Color(0xFF7058F5),
+                  context.growthColors.sleep,
                 ),
               ),
             ],
@@ -577,7 +599,10 @@ class PetPartnerSheet extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('数据收集失败: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('数据收集失败，请重试'),
+            backgroundColor: context.growthColors.danger,
+          ),
         );
       }
       return;

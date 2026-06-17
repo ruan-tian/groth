@@ -53,8 +53,7 @@ class PetDisplayIntent {
   final Map<String, dynamic>? payload;
 
   /// 是否已过期
-  bool get isExpired =>
-      expiresAt != null && DateTime.now().isAfter(expiresAt!);
+  bool get isExpired => expiresAt != null && DateTime.now().isAfter(expiresAt!);
 
   /// 获取当前应显示的消息（每 5 分钟轮换）
   String get displayMessage {

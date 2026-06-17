@@ -11,6 +11,7 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return SizedBox(
       height: compact ? 44 : 54,
       child: Row(
@@ -18,13 +19,13 @@ class _TopBar extends StatelessWidget {
           IconButton(
             onPressed: () => context.pop(),
             icon: const Icon(Icons.arrow_back_ios_new_rounded),
-            color: _focusInk,
+            color: colors.textPrimary,
           ),
           const Spacer(),
           Text(
             '番茄钟',
             style: TextStyle(
-              color: _focusInk,
+              color: colors.textPrimary,
               fontSize: compact ? 28 : 22,
               fontWeight: FontWeight.w900,
             ),
@@ -33,7 +34,7 @@ class _TopBar extends StatelessWidget {
           IconButton(
             onPressed: () {},
             icon: const Icon(Icons.history_rounded),
-            color: _focusMintDark,
+            color: colors.focus,
           ),
         ],
       ),
@@ -50,24 +51,25 @@ class _LandscapeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             Text(
               '番茄钟',
               style: TextStyle(
-                color: _focusInk,
+                color: colors.textPrimary,
                 fontSize: 34,
                 fontWeight: FontWeight.w900,
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
               '自律一点点，进步看得见',
               style: TextStyle(
-                color: Color(0xFF9A948D),
+                color: colors.textSecondary,
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
               ),
@@ -90,6 +92,7 @@ class _FocusRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final items = [
       (FocusAssets.iconPomodoro, '番茄钟', true),
       (FocusAssets.catReading, '专注', false),
@@ -101,9 +104,9 @@ class _FocusRail extends StatelessWidget {
       width: 110,
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.74),
+        color: colors.card.withValues(alpha: 0.86),
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: _focusLine),
+        border: Border.all(color: colors.border),
       ),
       child: Column(
         children: [
@@ -134,13 +137,16 @@ class _RailItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       width: 74,
       padding: const EdgeInsets.symmetric(vertical: 10),
       decoration: BoxDecoration(
-        color: selected ? const Color(0xFFE8FAF5) : Colors.transparent,
+        color: selected
+            ? colors.focus.withValues(alpha: 0.12)
+            : Colors.transparent,
         borderRadius: BorderRadius.circular(18),
-        border: selected ? Border.all(color: _focusMint) : null,
+        border: selected ? Border.all(color: colors.focus) : null,
       ),
       child: Column(
         children: [
@@ -149,7 +155,7 @@ class _RailItem extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: selected ? _focusMintDark : const Color(0xFF646B6A),
+              color: selected ? colors.focus : colors.textSecondary,
               fontSize: 12,
               fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
             ),
@@ -172,6 +178,7 @@ class _TodayFocusCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       height: compact ? 190 : 176,
       padding: EdgeInsets.fromLTRB(
@@ -182,14 +189,14 @@ class _TodayFocusCard extends StatelessWidget {
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFD8EEE8)),
+        border: Border.all(color: colors.border),
         image: const DecorationImage(
           image: AssetImage(FocusAssets.bgOverview),
           fit: BoxFit.cover,
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF3BAE9D).withValues(alpha: 0.08),
+            color: colors.shadow.withValues(alpha: 0.08),
             blurRadius: 24,
             offset: const Offset(0, 10),
           ),
@@ -202,17 +209,13 @@ class _TodayFocusCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
-                  children: const [
-                    Icon(
-                      Icons.schedule_rounded,
-                      color: _focusMintDark,
-                      size: 22,
-                    ),
-                    SizedBox(width: 8),
+                  children: [
+                    Icon(Icons.schedule_rounded, color: colors.focus, size: 22),
+                    const SizedBox(width: 8),
                     Text(
                       '今日累计专注时长',
                       style: TextStyle(
-                        color: Color(0xFF797A76),
+                        color: colors.textSecondary,
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                       ),
@@ -230,10 +233,10 @@ class _TodayFocusCard extends StatelessWidget {
                   error: (_, _) => const Text('--'),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   '继续保持，专注的你真棒！',
                   style: TextStyle(
-                    color: Color(0xFF9B948D),
+                    color: colors.textTertiary,
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
                   ),
@@ -260,6 +263,7 @@ class _BigMinutes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final hours = minutes ~/ 60;
     final mins = minutes % 60;
     return FittedBox(
@@ -270,19 +274,19 @@ class _BigMinutes extends StatelessWidget {
         children: [
           Text(
             '$hours',
-            style: const TextStyle(
-              color: _focusMintDark,
+            style: TextStyle(
+              color: colors.focus,
               fontSize: 54,
               fontWeight: FontWeight.w900,
               height: 0.95,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 6, left: 4, right: 10),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6, left: 4, right: 10),
             child: Text(
               '小时',
               style: TextStyle(
-                color: _focusMintDark,
+                color: colors.focus,
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
               ),
@@ -290,19 +294,19 @@ class _BigMinutes extends StatelessWidget {
           ),
           Text(
             '$mins',
-            style: const TextStyle(
-              color: _focusMintDark,
+            style: TextStyle(
+              color: colors.focus,
               fontSize: 54,
               fontWeight: FontWeight.w900,
               height: 0.95,
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(bottom: 6, left: 4),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6, left: 4),
             child: Text(
               '分',
               style: TextStyle(
-                color: _focusMintDark,
+                color: colors.focus,
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
               ),
@@ -325,15 +329,16 @@ class _PaperPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(22),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.84),
+        color: colors.card.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: _focusLine),
+        border: Border.all(color: colors.border),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF6E5A3E).withValues(alpha: 0.07),
+            color: colors.shadow.withValues(alpha: 0.08),
             blurRadius: 26,
             offset: const Offset(0, 14),
           ),
@@ -356,14 +361,15 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       children: [
-        Icon(icon, color: _focusMintDark, size: 22),
+        Icon(icon, color: colors.focus, size: 22),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
-            color: _focusInk,
+          style: TextStyle(
+            color: colors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.w800,
           ),

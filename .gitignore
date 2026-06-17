@@ -1,4 +1,4 @@
-# Flutter/Dart
+﻿# Flutter/Dart
 .dart_tool/
 .packages
 build/
@@ -46,3 +46,9 @@ linux/flutter/ephemeral/
 __pycache__/
 .DS_Store
 Thumbs.db
+
+# Android signing (sensitive - do not commit)
+android/key.properties
+android/app/release-keystore.jks
+android/app/*.jks
+android/app/*.keystore

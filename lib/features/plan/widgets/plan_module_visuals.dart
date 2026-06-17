@@ -147,7 +147,7 @@ class _PlanModuleVisualHeaderState
                           begin: Alignment.centerLeft,
                           end: Alignment.centerRight,
                           colors: [
-                            Colors.white,
+                            context.growthColors.card,
                             _parseColor(definition.softColorHex),
                           ],
                         ),
@@ -288,12 +288,12 @@ class _FloatingPetImageState extends State<_FloatingPetImage>
               width: widget.size * 0.98,
               height: widget.size * 0.98,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.96),
+                color: context.growthColors.card.withValues(alpha: 0.96),
                 borderRadius: BorderRadius.circular(widget.size * 0.30),
-                border: Border.all(color: Colors.white, width: 2),
+                border: Border.all(color: context.growthColors.card, width: 2),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.90),
+                    color: context.growthColors.card.withValues(alpha: 0.90),
                     blurRadius: 16,
                     spreadRadius: 4,
                   ),
@@ -310,8 +310,8 @@ class _FloatingPetImageState extends State<_FloatingPetImage>
               child: Transform.scale(
                 scale: 1.08,
                 child: ColorFiltered(
-                  colorFilter: const ColorFilter.mode(
-                    Colors.white,
+                  colorFilter: ColorFilter.mode(
+                    context.growthColors.textOnAccent,
                     BlendMode.srcIn,
                   ),
                   child: _PetAssetImage(
@@ -392,9 +392,9 @@ class _PetSpeechBubble extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 272),
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.93),
+            color: context.growthColors.card.withValues(alpha: 0.93),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: Colors.white),
+            border: Border.all(color: context.growthColors.card),
             boxShadow: [
               BoxShadow(
                 color: color.withValues(alpha: 0.10),
@@ -448,12 +448,12 @@ class _PetSpeechBubble extends StatelessWidget {
                   key: ValueKey(message),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     height: 1.35,
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0,
-                    color: AppColors.textSecondary,
+                    color: context.growthColors.textSecondary,
                   ),
                 ),
               ),
@@ -465,7 +465,9 @@ class _PetSpeechBubble extends StatelessWidget {
           top: 48,
           child: CustomPaint(
             size: const Size(9, 14),
-            painter: _BubbleTailPainter(),
+            painter: _BubbleTailPainter(
+              bubbleColor: context.growthColors.card.withValues(alpha: 0.93),
+            ),
           ),
         ),
       ],
@@ -474,10 +476,13 @@ class _PetSpeechBubble extends StatelessWidget {
 }
 
 class _BubbleTailPainter extends CustomPainter {
+  final Color bubbleColor;
+  _BubbleTailPainter({required this.bubbleColor});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.white.withValues(alpha: 0.93)
+      ..color = bubbleColor
       ..style = PaintingStyle.fill;
     final path = Path()
       ..moveTo(size.width, 0)
@@ -538,7 +543,7 @@ class PlanModuleActionImageCard extends StatelessWidget {
 
               return DecoratedBox(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.growthColors.card,
                   borderRadius: BorderRadius.circular(28),
                   border: Border.all(color: color.withValues(alpha: 0.18)),
                   boxShadow: [
@@ -555,11 +560,11 @@ class PlanModuleActionImageCard extends StatelessWidget {
                     fit: StackFit.expand,
                     children: [
                       Image.asset(
-                        PlanModuleAssets.premiumV2HeroScene(module),
+                        PlanModuleAssets.premiumHeroScene(module),
                         fit: BoxFit.cover,
                         alignment: Alignment.bottomCenter,
                         errorBuilder: (_, _, _) => Image.asset(
-                          PlanModuleAssets.premiumHeroScene(module),
+                          PlanModuleAssets.premiumV2HeroScene(module),
                           fit: BoxFit.cover,
                           alignment: Alignment.bottomCenter,
                           errorBuilder: (_, _, _) => DecoratedBox(
@@ -569,7 +574,7 @@ class PlanModuleActionImageCard extends StatelessWidget {
                                 end: Alignment.centerRight,
                                 colors: [
                                   color.withValues(alpha: 0.12),
-                                  Colors.white,
+                                  context.growthColors.card,
                                 ],
                               ),
                             ),
@@ -583,8 +588,8 @@ class PlanModuleActionImageCard extends StatelessWidget {
                             begin: Alignment.centerLeft,
                             end: Alignment.centerRight,
                             colors: [
-                              Colors.white.withValues(alpha: 0.82),
-                              Colors.white.withValues(alpha: 0.55),
+                              context.growthColors.card.withValues(alpha: 0.82),
+                              context.growthColors.card.withValues(alpha: 0.55),
                               Colors.transparent,
                             ],
                             stops: const [0, 0.45, 1],
@@ -598,7 +603,7 @@ class PlanModuleActionImageCard extends StatelessWidget {
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
                             colors: [
-                              Colors.white.withValues(alpha: 0.25),
+                              context.growthColors.card.withValues(alpha: 0.25),
                               Colors.transparent,
                             ],
                             stops: const [0, 0.5],
@@ -681,11 +686,11 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         height: 1.12,
                         fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
+                        color: context.growthColors.textPrimary,
                         letterSpacing: 0,
                       ),
                     ),
@@ -694,11 +699,11 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
                       subtitle,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         height: 1.2,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                        color: context.growthColors.textSecondary,
                         letterSpacing: 0,
                       ),
                     ),
@@ -725,19 +730,19 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.add_rounded,
-                      color: Colors.white,
+                      color: context.growthColors.textOnAccent,
                       size: 19,
                     ),
                     const SizedBox(width: 5),
                     Text(
                       buttonLabel,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         height: 1,
                         fontWeight: FontWeight.w800,
-                        color: Colors.white,
+                        color: context.growthColors.textOnAccent,
                         letterSpacing: 0,
                       ),
                     ),
@@ -798,11 +803,11 @@ class PlanModuleWeeklyCard extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         height: 1.1,
                         fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
+                        color: context.growthColors.textPrimary,
                         letterSpacing: 0,
                       ),
                     ),
@@ -818,9 +823,9 @@ class PlanModuleWeeklyCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
-                    color: AppColors.textTertiary,
+                    color: context.growthColors.textTertiary,
                     size: 24,
                   ),
                 ],
@@ -853,7 +858,9 @@ class PlanModuleWeeklyCard extends StatelessWidget {
                           fontWeight: completed
                               ? FontWeight.w900
                               : FontWeight.w700,
-                          color: completed ? color : AppColors.textSecondary,
+                          color: completed
+                              ? color
+                              : context.growthColors.textSecondary,
                           letterSpacing: 0,
                         ),
                       ),
@@ -896,7 +903,7 @@ class _SoftIconTile extends StatelessWidget {
 
 BoxDecoration _premiumCardDecoration(Color color) {
   return BoxDecoration(
-    color: Colors.white.withValues(alpha: 0.96),
+    color: AppColors.card.withValues(alpha: 0.96),
     borderRadius: BorderRadius.circular(26),
     border: Border.all(color: color.withValues(alpha: 0.13)),
     boxShadow: [
@@ -937,7 +944,7 @@ class _ActionCardCopy extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: const Color(0xFF5B3525),
+            color: context.growthColors.textPrimary,
             fontSize: compact ? 20 : 24,
             height: 1.12,
             fontWeight: FontWeight.w900,
@@ -950,7 +957,7 @@ class _ActionCardCopy extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
-            color: const Color(0xFF7B5A49),
+            color: context.growthColors.textSecondary,
             fontSize: compact ? 12 : 13,
             height: 1.35,
             fontWeight: FontWeight.w600,
@@ -964,9 +971,9 @@ class _ActionCardCopy extends StatelessWidget {
             vertical: compact ? 11 : 13,
           ),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.94),
+            color: context.growthColors.card.withValues(alpha: 0.94),
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: Colors.white),
+            border: Border.all(color: context.growthColors.card),
             boxShadow: [
               BoxShadow(
                 color: color.withValues(alpha: 0.16),

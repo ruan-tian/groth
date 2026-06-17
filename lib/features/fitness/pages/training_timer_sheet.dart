@@ -107,9 +107,9 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: context.growthColors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
       child: Column(
@@ -120,7 +120,7 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: const Color(0xFFE0E0E0),
+              color: context.growthColors.divider,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -129,10 +129,10 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
           // 标题
           Text(
             _isRunning ? '训练中...' : '选择训练部位',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF5C3D2E),
+              color: context.growthColors.textPrimary,
             ),
           ),
           const SizedBox(height: 20),
@@ -162,7 +162,9 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
             duration: const Duration(milliseconds: 200),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: isSelected ? part.color.withValues(alpha: 0.15) : const Color(0xFFF5F5F5),
+              color: isSelected
+                  ? part.color.withValues(alpha: 0.15)
+                  : context.growthColors.surfaceVariant,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isSelected ? part.color : Colors.transparent,
@@ -179,7 +181,9 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? part.color : const Color(0xFF5C3D2E),
+                    color: isSelected
+                        ? part.color
+                        : context.growthColors.textPrimary,
                   ),
                 ),
               ],
@@ -227,7 +231,7 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
         Container(
           padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 48),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F8F8),
+            color: context.growthColors.surfaceVariant,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Column(
@@ -267,12 +271,12 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
               icon: const Icon(Icons.refresh, size: 18),
               label: const Text('重置'),
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
+                foregroundColor: context.growthColors.textSecondary,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                side: BorderSide(color: AppColors.border),
+                side: BorderSide(color: context.growthColors.border),
               ),
             ),
           ),
@@ -285,8 +289,8 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
               icon: const Icon(Icons.stop_rounded, size: 18),
               label: const Text('结束训练'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.fitness,
-                foregroundColor: Colors.white,
+                backgroundColor: context.growthColors.fitness,
+                foregroundColor: context.growthColors.textOnAccent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -306,12 +310,12 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
           child: OutlinedButton(
             onPressed: () => Navigator.pop(context),
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.textSecondary,
+              foregroundColor: context.growthColors.textSecondary,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
-              side: BorderSide(color: AppColors.border),
+              side: BorderSide(color: context.growthColors.border),
             ),
             child: const Text('取消'),
           ),
@@ -325,9 +329,11 @@ class _TrainingTimerSheetState extends ConsumerState<TrainingTimerSheet> {
             icon: const Icon(Icons.play_arrow_rounded, size: 18),
             label: const Text('开始计时'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.fitness,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: AppColors.fitness.withValues(alpha: 0.4),
+              backgroundColor: context.growthColors.fitness,
+              foregroundColor: context.growthColors.textOnAccent,
+              disabledBackgroundColor: context.growthColors.fitness.withValues(
+                alpha: 0.4,
+              ),
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

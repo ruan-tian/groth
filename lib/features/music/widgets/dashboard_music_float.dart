@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
@@ -9,6 +10,8 @@ import '../../../shared/widgets/common/common_widgets.dart';
 import '../models/music_player_state.dart';
 import '../providers/music_player_provider.dart';
 import '../utils/music_assets.dart';
+import '../utils/music_scene.dart';
+import 'music_import_destination_sheet.dart';
 
 part 'music_float_card.dart';
 part 'music_library_sheet.dart';
@@ -40,80 +43,63 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
     });
 
     final state = ref.watch(musicPlayerProvider);
-    final motionOff = MediaQuery.disableAnimationsOf(context);
-
     return Positioned.fill(
-      child: PopScope(
-        canPop: !state.isExpanded,
-        onPopInvokedWithResult: (didPop, _) {
-          if (!didPop && state.isExpanded) {
-            ref.read(musicPlayerProvider.notifier).collapse();
-          }
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final motionOff = MediaQuery.disableAnimationsOf(context);
+          final layout = _MusicFloatLayout.from(
+            context: context,
+            constraints: constraints,
+            state: state,
+            dragOffset: _dragOffset,
+          );
+          return Stack(
+            children: [
+              AnimatedPositioned(
+                duration: motionOff || _dragOffset != null
+                    ? Duration.zero
+                    : AppMotion.slow,
+                curve: AppMotion.standard,
+                left: layout.left,
+                top: layout.top,
+                width: layout.width,
+                height: layout.height,
+                child: GestureDetector(
+                  onTap: () => _openPlayerSheet(context),
+                  onPanStart: (_) => setState(() {
+                    _dragOffset = Offset(layout.left, layout.top);
+                  }),
+                  onPanUpdate: (details) => setState(() {
+                    final current =
+                        _dragOffset ?? Offset(layout.left, layout.top);
+                    _dragOffset = layout.clamp(current + details.delta);
+                  }),
+                  onPanEnd: (_) => _finishDrag(layout),
+                  child: _MusicFloatCard(state: state),
+                ),
+              ),
+            ],
+          );
         },
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final layout = _MusicFloatLayout.from(
-              context: context,
-              constraints: constraints,
-              state: state,
-              dragOffset: _dragOffset,
-            );
-            return Stack(
-              children: [
-                IgnorePointer(
-                  ignoring: !state.isExpanded,
-                  child: AnimatedOpacity(
-                    duration: motionOff ? Duration.zero : AppMotion.normal,
-                    opacity: state.isExpanded ? 1 : 0,
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () =>
-                          ref.read(musicPlayerProvider.notifier).collapse(),
-                      child: Container(
-                        color: Colors.black.withValues(alpha: 0.04),
-                      ),
-                    ),
-                  ),
-                ),
-                AnimatedPositioned(
-                  duration: motionOff || _dragOffset != null
-                      ? Duration.zero
-                      : AppMotion.slow,
-                  curve: AppMotion.standard,
-                  left: layout.left,
-                  top: layout.top,
-                  width: layout.width,
-                  height: layout.height,
-                  child: GestureDetector(
-                    onTap: state.isExpanded
-                        ? null
-                        : () => ref
-                              .read(musicPlayerProvider.notifier)
-                              .toggleExpanded(),
-                    onPanStart: state.isExpanded
-                        ? null
-                        : (_) => setState(() {
-                            _dragOffset = Offset(layout.left, layout.top);
-                          }),
-                    onPanUpdate: state.isExpanded
-                        ? null
-                        : (details) => setState(() {
-                            final current =
-                                _dragOffset ?? Offset(layout.left, layout.top);
-                            _dragOffset = layout.clamp(current + details.delta);
-                          }),
-                    onPanEnd: state.isExpanded
-                        ? null
-                        : (_) => _finishDrag(layout),
-                    child: _MusicFloatCard(state: state),
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
       ),
     );
+  }
+
+  Future<void> _openPlayerSheet(BuildContext context) async {
+    final controller = ref.read(musicPlayerProvider.notifier);
+    if (ref.read(musicPlayerProvider).isExpanded) return;
+
+    controller.toggleExpanded();
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: context.growthColors.shadow.withValues(alpha: 0.18),
+      builder: (_) => const _MusicPlayerSheet(),
+    );
+    if (!mounted) return;
+    controller.collapse();
   }
 
   void _finishDrag(_MusicFloatLayout layout) {
@@ -161,12 +147,10 @@ class _MusicFloatLayout {
     final media = MediaQuery.of(context);
     final screenWidth = constraints.maxWidth;
     final screenHeight = constraints.maxHeight;
-    final expandedWidth = math.min(screenWidth - 24, 360.0);
-    final collapsedWidth = 92.0;
-    final width = state.isExpanded ? expandedWidth : collapsedWidth;
-    final height = state.isExpanded ? 418.0 : 132.0;
-    const margin = 12.0;
-    final bottomReserve = state.isExpanded ? 16.0 : 92.0;
+    const width = 66.0;
+    const height = 150.0;
+    const margin = 6.0;
+    const bottomReserve = 106.0;
     final minX = margin;
     final maxX = math.max(margin, screenWidth - width - margin);
     final minY = media.padding.top + 8;

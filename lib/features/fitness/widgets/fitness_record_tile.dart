@@ -72,10 +72,7 @@ class FitnessRecordTile extends StatelessWidget {
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
           color: theme.colorScheme.error,
-          child: Icon(
-            Icons.delete,
-            color: theme.colorScheme.onError,
-          ),
+          child: Icon(Icons.delete, color: theme.colorScheme.onError),
         ),
         confirmDismiss: (_) async {
           onDelete!();
@@ -93,8 +90,7 @@ class FitnessRecordTile extends StatelessWidget {
 
     parts.add(record.bodyPart);
 
-    final dateTime =
-        DateTime.fromMillisecondsSinceEpoch(record.createdAt);
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
     final dateStr =
         '${dateTime.month.toString().padLeft(2, '0')}-'
         '${dateTime.day.toString().padLeft(2, '0')} '

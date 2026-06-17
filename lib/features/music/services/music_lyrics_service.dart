@@ -23,7 +23,7 @@ class MusicLyricsService {
     } catch (error) {
       return MusicLyricsView(
         sourcePath: lyricsPath,
-        errorMessage: '歌词读取失败：$error',
+        errorMessage: '歌词读取失败，请重试',
       );
     }
   }

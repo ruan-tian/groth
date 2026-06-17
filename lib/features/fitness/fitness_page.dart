@@ -1,12 +1,15 @@
-import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:go_router/go_router.dart';
 import 'dart:convert';
 
+import 'package:fl_chart/fl_chart.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
 import '../../app/design/design.dart';
+import '../../core/constants/fitness_constants.dart';
 import '../../core/database/app_database.dart';
 import '../../core/utils/chart_scale_utils.dart';
+import '../../core/utils/date_utils.dart';
 import '../../shared/providers/dashboard_provider.dart'
     hide fitnessRepositoryProvider, settingRepositoryProvider;
 import '../../shared/providers/fitness_provider.dart';
@@ -19,7 +22,6 @@ import '../plan/widgets/plan_module_visuals.dart';
 
 part 'widgets/fitness_page_widgets.dart';
 
-/// 健身首页
 class FitnessPage extends ConsumerStatefulWidget {
   const FitnessPage({super.key, this.isEmbedded = false, this.capsuleNav});
 
@@ -31,49 +33,57 @@ class FitnessPage extends ConsumerStatefulWidget {
 }
 
 class _FitnessPageState extends ConsumerState<FitnessPage> {
-  int _selectedRange = 30; // 7=week, 30=month, 365=year
+  int _selectedRange = 30;
   bool _isRecordsExpanded = false;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final todayMinutes = ref.watch(todayFitnessMinutesProvider);
     final weeklyCount = ref.watch(weeklyFitnessCountProvider);
     final recentRecords = ref.watch(recentFitnessRecordsProvider);
     final dailyGoals = ref.watch(dailyGoalsProvider);
 
     final fitnessGoal = dailyGoals.firstWhere(
-      (g) => g.name == '健身',
-      orElse: () => DailyGoal(name: '健身', target: 45, unit: '分钟'),
+      (goal) => goal.name == '健身',
+      orElse: () => const DailyGoal(name: '健身', target: 45, unit: '分钟'),
     );
     final weeklyGoal = ref.watch(weeklyFitnessGoalProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.paper,
+      backgroundColor: colors.background,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
-              title: Text('健身', style: AppTextStyles.pageTitle),
+              title: Text(
+                '健身',
+                style: AppTextStyles.pageTitle.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
               centerTitle: false,
-              backgroundColor: AppColors.paper,
+              backgroundColor: colors.background,
               actions: [
                 IconButton(
                   tooltip: '身体数据',
                   onPressed: () =>
                       context.push('/plan/fitness/body-metric/detail'),
-                  icon: const Icon(Icons.monitor_weight_outlined),
+                  icon: Icon(
+                    Icons.monitor_weight_outlined,
+                    color: colors.textPrimary,
+                  ),
                 ),
               ],
             ),
       body: ModulePageSurface(
-        color: AppColors.fitness,
+        color: colors.fitness,
         child: RefreshIndicator(
+          color: colors.fitness,
           onRefresh: () async {
             ref.invalidate(todayFitnessMinutesProvider);
             ref.invalidate(weeklyFitnessCountProvider);
             ref.invalidate(recentFitnessRecordsProvider);
-            ref.invalidate(fitnessChartDataProvider(7));
-            ref.invalidate(fitnessChartDataProvider(30));
-            ref.invalidate(fitnessChartDataProvider(365));
+            ref.invalidate(fitnessChartDataProvider(_selectedRange));
           },
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppSpacing.lg),
@@ -81,41 +91,25 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.capsuleNav != null) widget.capsuleNav!,
-
-                // ── 1. 提示条 ──
                 PlanModuleVisualHeader(
                   module: PlanModuleType.fitness,
-                  color: AppColors.fitness,
+                  color: colors.fitness,
                 ),
                 const SizedBox(height: AppSpacing.md),
                 PlanModuleActionImageCard(
                   module: PlanModuleType.fitness,
-                  color: AppColors.fitness,
+                  color: colors.fitness,
                   onTap: () => context.push('/plan/fitness/timer'),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-
-                // ── 2. 今日训练（合并计时器）──
                 _buildTodayTrainingCard(todayMinutes, fitnessGoal),
                 const SizedBox(height: AppSpacing.lg),
-
-                // ── 3. 记练训练入口 ──
                 _buildRecordTrainingEntry(context),
                 const SizedBox(height: AppSpacing.lg),
-
-                // ── 4. 本周训练 ──
                 _buildWeeklyTrainingCard(weeklyCount, weeklyGoal),
                 const SizedBox(height: AppSpacing.lg),
-
-                // ── 5. 今日进度 ──
-                _buildTodayProgress(todayMinutes, fitnessGoal),
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── 6. 体重曲线 ──
                 _buildWeightCurveCard(),
                 const SizedBox(height: AppSpacing.lg),
-
-                // ── 7. 最近记录 ──
                 recentRecords.when(
                   data: (records) {
                     if (records.isEmpty) {
@@ -128,40 +122,41 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                       title: '最近训练',
                       action: '查看全部',
                       onActionTap: () => context.push('/plan/fitness/records'),
-                      color: AppColors.fitness,
+                      color: colors.fitness,
                       recordCount: records.length,
                       maxVisible: 5,
                       isExpanded: _isRecordsExpanded,
                       onToggleExpand: () => setState(
                         () => _isRecordsExpanded = !_isRecordsExpanded,
                       ),
-                      children: records.take(displayCount).map((r) {
-                        final dt = DateTime.fromMillisecondsSinceEpoch(
-                          r.createdAt,
+                      children: records.take(displayCount).map((record) {
+                        final createdAt = DateTime.fromMillisecondsSinceEpoch(
+                          record.createdAt,
                         );
                         final dateStr =
-                            '${dt.month.toString().padLeft(2, '0')}/${dt.day.toString().padLeft(2, '0')} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+                            '${createdAt.month.toString().padLeft(2, '0')}/${createdAt.day.toString().padLeft(2, '0')} ${createdAt.hour.toString().padLeft(2, '0')}:${createdAt.minute.toString().padLeft(2, '0')}';
                         return SwipeDeleteTile(
-                          key: ValueKey('fitness_${r.id}'),
+                          key: ValueKey('fitness_${record.id}'),
                           onConfirmDelete: () async {
-                            _deleteRecord(context, ref, r);
+                            _deleteRecord(context, ref, record);
                             return false;
                           },
                           onDismissed: () {},
                           child: RecentRecordTile(
                             icon: Icons.fitness_center,
-                            iconColor: Colors.white,
-                            iconBackgroundColor: AppColors.fitness,
-                            title: r.title ?? r.bodyPart,
+                            iconColor: colors.textOnAccent,
+                            iconBackgroundColor: colors.fitness,
+                            title: record.title ?? record.bodyPart,
                             subtitle:
-                                '${r.bodyPart} · ${r.durationMinutes}分钟 · $dateStr',
-                            primaryBadge: '+${r.expGained} EXP',
-                            primaryBadgeColor: AppColors.fitness,
-                            secondaryBadge: r.mode == 'professional'
+                                '${record.bodyPart} · ${record.durationMinutes}分钟 · $dateStr',
+                            primaryBadge: '+${record.expGained} EXP',
+                            primaryBadgeColor: colors.fitness,
+                            secondaryBadge: record.mode == 'professional'
                                 ? '专业'
                                 : '简单',
-                            secondaryBadgeColor: AppColors.textSecondary,
-                            onTap: () => _showFitnessRecordDetail(context, r),
+                            secondaryBadgeColor: colors.textSecondary,
+                            onTap: () =>
+                                _showFitnessRecordDetail(context, record),
                           ),
                         );
                       }).toList(),
@@ -170,19 +165,26 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                   loading: () => Container(
                     padding: const EdgeInsets.all(AppSpacing.xl),
                     decoration: BoxDecoration(
-                      color: AppColors.card,
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                    ),
-                    child: const Center(child: CircularProgressIndicator()),
-                  ),
-                  error: (e, _) => Container(
-                    padding: const EdgeInsets.all(AppSpacing.xl),
-                    decoration: BoxDecoration(
-                      color: AppColors.card,
+                      color: colors.card,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                     ),
                     child: Center(
-                      child: Text('加载失败: $e', style: AppTextStyles.caption),
+                      child: CircularProgressIndicator(color: colors.fitness),
+                    ),
+                  ),
+                  error: (error, _) => Container(
+                    padding: const EdgeInsets.all(AppSpacing.xl),
+                    decoration: BoxDecoration(
+                      color: colors.card,
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '加载训练记录失败: $error',
+                        style: AppTextStyles.caption.copyWith(
+                          color: colors.textSecondary,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -193,31 +195,30 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddRecordMenu(context),
-        backgroundColor: AppColors.fitness,
-        child: const Icon(Icons.add, color: Colors.white),
+        backgroundColor: colors.fitness,
+        child: Icon(Icons.add, color: colors.textOnAccent),
       ),
     );
   }
-
-  // ─── 今日训练卡片（合并计时器）────────────────────────────────────────────
 
   Widget _buildTodayTrainingCard(
     AsyncValue<int> todayMinutes,
     DailyGoal fitnessGoal,
   ) {
+    final colors = context.growthColors;
     return todayMinutes.when(
       data: (minutes) {
         final progress = fitnessGoal.target > 0
             ? (minutes / fitnessGoal.target).clamp(0.0, 1.0)
             : 0.0;
-        final calories = (minutes * 7.5).toInt();
+        final calories = FitnessConstants.estimateCalories(minutes);
         final hasData = minutes > 0;
         return ModuleHeroCard(
           icon: Icons.fitness_center_rounded,
           title: hasData ? '今日训练' : '开始今日训练',
           primaryValue: hasData ? '$minutes分钟' : '--',
           primaryLabel: hasData ? '今日已训练' : '还没有训练记录',
-          color: AppColors.fitness,
+          color: colors.fitness,
           progress: hasData ? progress : null,
           targetLabel: hasData ? '目标 ${fitnessGoal.target}分钟' : null,
           metrics: hasData
@@ -245,21 +246,20 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
       loading: () => Container(
         height: 200,
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
-          border: Border.all(color: AppColors.border),
+          border: Border.all(color: colors.border),
         ),
-        child: const Center(child: CircularProgressIndicator()),
+        child: Center(child: CircularProgressIndicator(color: colors.fitness)),
       ),
-      error: (_, _) => const SizedBox.shrink(),
+      error: (_, _) => const ErrorRetryWidget(),
     );
   }
 
-  // ─── 记录训练入口 ────────────────────────────────────────────────────────
-
   Widget _buildRecordTrainingEntry(BuildContext context) {
+    final colors = context.growthColors;
     return PlanModuleRecordEntryCard(
-      color: AppColors.fitness,
+      color: colors.fitness,
       icon: Icons.edit_note_rounded,
       title: '记录训练',
       subtitle: '手动添加训练记录',
@@ -268,11 +268,10 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     );
   }
 
-  // ─── 本周训练卡片 ────────────────────────────────────────────────────────
-
   Widget _buildWeeklyTrainingCard(AsyncValue<int> weeklyCount, int weeklyGoal) {
+    final colors = context.growthColors;
     return PlanModuleWeeklyCard(
-      color: AppColors.fitness,
+      color: colors.fitness,
       icon: Icons.calendar_month_rounded,
       title: '本周训练',
       count: weeklyCount.whenOrNull(data: (count) => count),
@@ -283,9 +282,8 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     );
   }
 
-  // ─── 周目标编辑弹窗 ──────────────────────────────────────────────────────
-
   void _showWeeklyGoalEditSheet(int currentGoal) {
+    final colors = context.growthColors;
     GoalEditSheet.show(
       context: context,
       title: '设置每周训练目标',
@@ -295,7 +293,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
       max: 14,
       step: 1,
       suggestion: '建议每周训练 3~5 次',
-      color: AppColors.fitness,
+      color: colors.fitness,
       onSave: (value) async {
         ref.read(weeklyFitnessGoalProvider.notifier).state = value;
         final repo = ref.read(settingRepositoryProvider);
@@ -304,183 +302,98 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     );
   }
 
-  // ─── 训练目标细节 ────────────────────────────────────────────────────────
-
-  Widget _buildTodayProgress(
-    AsyncValue<int> todayMinutes,
-    DailyGoal fitnessGoal,
-  ) {
-    return Semantics(
-      button: true,
-      label: '训练目标进度，点击编辑目标',
-      child: GestureDetector(
-        onTap: () => _showGoalEditSheet(context, fitnessGoal),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.98),
-                AppColors.fitness.withValues(alpha: 0.045),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xxxl),
-            border: Border.all(
-              color: AppColors.fitness.withValues(alpha: 0.14),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.fitness.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      color: AppColors.softOrange,
-                      borderRadius: BorderRadius.circular(AppRadius.smd),
-                    ),
-                    child: Icon(
-                      Icons.trending_up,
-                      size: 15,
-                      color: AppColors.fitness,
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Text('训练目标', style: AppTextStyles.cardTitle),
-                  const Spacer(),
-                  Icon(
-                    Icons.edit_outlined,
-                    color: AppColors.textTertiary,
-                    size: 18,
-                  ),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.md),
-              todayMinutes.when(
-                data: (minutes) {
-                  final progress = fitnessGoal.target > 0
-                      ? (minutes / fitnessGoal.target).clamp(0.0, 1.0)
-                      : 0.0;
-                  return Column(
-                    children: [
-                      _ProgressBar(
-                        label: '训练时长',
-                        current: minutes,
-                        target: fitnessGoal.target,
-                        color: AppColors.fitness,
-                        progress: progress,
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      _ProgressBar(
-                        label: '消耗卡路里',
-                        current: (minutes * 7.5).toInt(),
-                        target: (fitnessGoal.target * 7.5).toInt(),
-                        color: AppColors.warning,
-                        progress: progress,
-                      ),
-                    ],
-                  );
-                },
-                loading: () => const LinearProgressIndicator(value: 0),
-                error: (_, _) => const SizedBox.shrink(),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  // ─── 健身趋势图表（锻炼时间 + 消耗 + 体重）──────────────────────────────
-
   Widget _buildWeightCurveCard() {
+    final colors = context.growthColors;
     final chartData = ref.watch(fitnessChartDataProvider(_selectedRange));
 
-    return Semantics(
-      button: true,
-      label: '健身趋势，查看详情',
-      child: GestureDetector(
-        onTap: () => context.push('/plan/fitness/body-metric/detail'),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Colors.white.withValues(alpha: 0.98),
-                AppColors.fitness.withValues(alpha: 0.04),
-              ],
-            ),
-            borderRadius: BorderRadius.circular(AppRadius.xxxl),
-            border: Border.all(
-              color: AppColors.fitness.withValues(alpha: 0.14),
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.fitness.withValues(alpha: 0.08),
-                blurRadius: 24,
-                offset: const Offset(0, 10),
-              ),
-            ],
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.paper.withValues(alpha: 0.98),
+            colors.fitness.withValues(alpha: 0.04),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        border: Border.all(color: colors.fitness.withValues(alpha: 0.14)),
+        boxShadow: [
+          BoxShadow(
+            color: colors.shadow.withValues(alpha: 0.22),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ── 标题行（可点击跳转详情）──
+            Semantics(
+              button: true,
+              label: '查看身体数据趋势详情',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => context.push('/plan/fitness/body-metric/detail'),
+                child: Row(
                   children: [
                     Container(
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: AppColors.softOrange,
+                        color: colors.softOrange,
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.show_chart_rounded,
                         size: 15,
-                        color: AppColors.fitness,
+                        color: colors.fitness,
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Text('健身趋势', style: AppTextStyles.cardTitle),
+                    Text(
+                      '健身趋势',
+                      style: AppTextStyles.cardTitle.copyWith(
+                        color: colors.textPrimary,
+                      ),
+                    ),
                     const Spacer(),
                     Icon(
                       Icons.chevron_right,
-                      color: AppColors.textTertiary,
+                      color: colors.textTertiary,
                       size: 20,
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
-                // ── 时间范围选择器 ──
-                _buildRangeSelector(),
-                const SizedBox(height: 12),
-                // ── 图例 ──
-                Wrap(
-                  alignment: WrapAlignment.center,
-                  spacing: 12,
-                  runSpacing: 6,
-                  children: [
-                    _buildChartLegend(AppColors.fitness, '锻炼(分钟)'),
-                    _buildChartLegend(AppColors.warning, '消耗(kcal)'),
-                    _buildChartLegend(AppColors.textTertiary, '体重(kg)'),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                chartData.when(
+              ),
+            ),
+            const SizedBox(height: 12),
+            // ── 范围选择器（独立，不被外层吞掉点击）──
+            _buildRangeSelector(),
+            const SizedBox(height: 12),
+            // ── 图例 ──
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 12,
+              runSpacing: 6,
+              children: [
+                _buildChartLegend(colors.fitness, '锻炼(分钟)'),
+                _buildChartLegend(colors.warning, '消耗(kcal)'),
+                _buildChartLegend(colors.textTertiary, '体重(kg)'),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // ── 图表（可点击跳转详情）──
+            Semantics(
+              button: true,
+              label: '查看身体数据趋势详情',
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () => context.push('/plan/fitness/body-metric/detail'),
+                child: chartData.when(
                   data: (data) {
                     if (data.isEmpty) {
                       return _buildWeightEmptyState();
@@ -492,21 +405,24 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                       ),
                     );
                   },
-                  loading: () => const SizedBox(
+                  loading: () => SizedBox(
                     height: 180,
-                    child: Center(child: CircularProgressIndicator()),
+                    child: Center(
+                      child: CircularProgressIndicator(color: colors.fitness),
+                    ),
                   ),
                   error: (_, _) => _buildWeightEmptyState(),
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
   }
 
   Widget _buildChartLegend(Color color, String label) {
+    final colors = context.growthColors;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -519,15 +435,13 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
           ),
         ),
         const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(fontSize: 11, color: AppColors.textTertiary),
-        ),
+        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
       ],
     );
   }
 
   Widget _buildRangeSelector() {
+    final colors = context.growthColors;
     const ranges = [
       {'label': '周', 'days': 7},
       {'label': '月', 'days': 30},
@@ -535,38 +449,42 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     ];
 
     return Container(
-      height: 32,
+      height: 44,
       decoration: BoxDecoration(
-        color: AppColors.softOrange.withValues(alpha: 0.5),
+        color: colors.softOrange.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(8),
       ),
       padding: const EdgeInsets.all(2),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: ranges.map((r) {
-          final isSelected = _selectedRange == r['days'];
+        children: ranges.map((range) {
+          final isSelected = _selectedRange == range['days'];
+          final label = range['label'] as String;
           return Semantics(
             button: true,
-            label: '显示${r['label']}数据',
+            label: '切换到$label趋势',
             selected: isSelected,
             child: GestureDetector(
-              onTap: () => setState(() => _selectedRange = r['days'] as int),
+              onTap: () =>
+                  setState(() => _selectedRange = range['days'] as int),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 4,
+                  vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.fitness : Colors.transparent,
+                  color: isSelected ? colors.fitness : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  r['label'] as String,
+                  label,
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected ? Colors.white : AppColors.textSecondary,
+                    color: isSelected
+                        ? colors.textOnAccent
+                        : colors.textSecondary,
                   ),
                 ),
               ),
@@ -578,12 +496,13 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
   }
 
   Widget _buildWeightEmptyState() {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.border),
+        border: Border.all(color: colors.border),
       ),
       child: Center(
         child: Column(
@@ -591,12 +510,20 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
             Icon(
               Icons.show_chart_rounded,
               size: 40,
-              color: AppColors.textTertiary.withValues(alpha: 0.4),
+              color: colors.textTertiary.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 12),
-            Text('体重数据积累中', style: AppTextStyles.caption),
+            Text(
+              '体重数据积累中',
+              style: AppTextStyles.caption.copyWith(
+                color: colors.textSecondary,
+              ),
+            ),
             const SizedBox(height: 4),
-            Text('记录至少2次体重后显示趋势', style: AppTextStyles.caption),
+            Text(
+              '记录至少 2 次体重后显示趋势',
+              style: AppTextStyles.caption.copyWith(color: colors.textTertiary),
+            ),
           ],
         ),
       ),
@@ -604,17 +531,17 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
   }
 
   Widget _buildEmptyState() {
+    final colors = context.growthColors;
     return EmptyStateWidget(
       icon: Icons.fitness_center,
       title: '还没有训练记录',
-      subtitle: '开始你的第一次训练吧！',
-      accentColor: AppColors.fitness,
+      subtitle: '开始你的第一次训练吧',
+      accentColor: colors.fitness,
     );
   }
 
-  // ─── 目标编辑弹窗 ────────────────────────────────────────────────────────
-
   void _showGoalEditSheet(BuildContext context, DailyGoal currentGoal) {
+    final colors = context.growthColors;
     int tempGoal = currentGoal.target;
     showModalBottomSheet(
       context: context,
@@ -622,9 +549,11 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSheetState) {
           return Container(
-            decoration: const BoxDecoration(
-              color: AppColors.card,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            decoration: BoxDecoration(
+              color: colors.card,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
+              ),
             ),
             padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
             child: Column(
@@ -634,17 +563,17 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE0E0E0),
+                    color: colors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(height: 20),
-                const Text(
-                  '设置每日健身目标',
+                Text(
+                  '设置今日训练目标',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1F2329),
+                    color: colors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -656,7 +585,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                         if (tempGoal > 5) setSheetState(() => tempGoal -= 5);
                       },
                       icon: const Icon(Icons.remove_circle_outline, size: 32),
-                      color: AppColors.fitness,
+                      color: colors.fitness,
                     ),
                     const SizedBox(width: 24),
                     Column(
@@ -666,14 +595,14 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                           style: TextStyle(
                             fontSize: 48,
                             fontWeight: FontWeight.w700,
-                            color: AppColors.fitness,
+                            color: colors.fitness,
                           ),
                         ),
                         Text(
                           '分钟/天',
                           style: TextStyle(
                             fontSize: 14,
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                       ],
@@ -684,12 +613,17 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                         if (tempGoal < 180) setSheetState(() => tempGoal += 5);
                       },
                       icon: const Icon(Icons.add_circle_outline, size: 32),
-                      color: AppColors.fitness,
+                      color: colors.fitness,
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('建议每天运动 30~60 分钟', style: AppTextStyles.caption),
+                Text(
+                  '建议日常训练 30~60 分钟',
+                  style: AppTextStyles.caption.copyWith(
+                    color: colors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
@@ -699,8 +633,8 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                       Navigator.pop(ctx);
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.fitness,
-                      foregroundColor: Colors.white,
+                      backgroundColor: colors.fitness,
+                      foregroundColor: colors.textOnAccent,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -720,28 +654,31 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
 
   Future<void> _saveDailyGoal(int minutes) async {
     final goals = ref.read(dailyGoalsProvider);
-    final newGoals = goals.map((g) {
-      if (g.name == '健身') {
+    var found = false;
+    final newGoals = goals.map((goal) {
+      if (goal.name == '健身') {
+        found = true;
         return DailyGoal(name: '健身', target: minutes, unit: '分钟');
       }
-      return g;
+      return goal;
     }).toList();
+    if (!found) {
+      newGoals.add(DailyGoal(name: '健身', target: minutes, unit: '分钟'));
+    }
 
     ref.read(dailyGoalsProvider.notifier).state = newGoals;
 
     final repo = ref.read(settingRepositoryProvider);
-    final jsonStr = newGoals.map((g) => g.toJson()).toList();
+    final jsonStr = newGoals.map((goal) => goal.toJson()).toList();
     await repo.setSetting('daily_goals', jsonEncode(jsonStr));
   }
-
-  // ─── 添加记录菜单 ────────────────────────────────────────────────────────
 
   void _showAddRecordMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       builder: (context) => BottomSheetContainer(
-        title: '选择记录模式',
+        title: '添加训练记录',
         child: Column(
           children: [
             _ModeOption(
@@ -777,13 +714,10 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     );
   }
 
-  // ─── 健身记录详情弹窗 ──────────────────────────────────────────────────
-
   void _showFitnessRecordDetail(BuildContext context, FitnessRecord record) {
-    final dt = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
-    final weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-    final dateStr =
-        '${dt.year}年${dt.month}月${dt.day}日 ${weekdays[dt.weekday - 1]}';
+    final colors = context.growthColors;
+    final createdAt = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
+    final dateStr = GrowthDateUtils.formatDateChineseFull(createdAt);
 
     final detailItems = <DetailItem>[
       DetailItem(
@@ -815,7 +749,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
             width: double.infinity,
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.fitness.withValues(alpha: 0.06),
+              color: colors.fitness.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -823,18 +757,14 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
               children: [
                 Row(
                   children: [
-                    Icon(
-                      Icons.notes_rounded,
-                      size: 16,
-                      color: AppColors.fitness,
-                    ),
+                    Icon(Icons.notes_rounded, size: 16, color: colors.fitness),
                     const SizedBox(width: 6),
                     Text(
                       '备注',
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.fitness,
+                        color: colors.fitness,
                       ),
                     ),
                   ],
@@ -842,9 +772,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 const SizedBox(height: 8),
                 Text(
                   record.note!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textPrimary,
+                    color: colors.textPrimary,
                     height: 1.5,
                   ),
                 ),
@@ -862,32 +792,35 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         primaryMetricLabel: '训练时长',
         primaryMetricValue: '${record.durationMinutes} 分钟',
         detailItems: detailItems,
-        accentColor: AppColors.fitness,
+        accentColor: colors.fitness,
         extraCards: noteCard,
       ),
     );
   }
-
-  // ─── 删除记录 ────────────────────────────────────────────────────────────
 
   Future<void> _deleteRecord(
     BuildContext context,
     WidgetRef ref,
     FitnessRecord record,
   ) async {
+    final colors = context.growthColors;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('删除确认'),
-        content: Text('确定要删除「${record.title ?? record.bodyPart}」吗？'),
+        backgroundColor: colors.paper,
+        title: Text('删除确认', style: TextStyle(color: colors.textPrimary)),
+        content: Text(
+          '确定要删除「${record.title ?? record.bodyPart}」吗？',
+          style: TextStyle(color: colors.textSecondary),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('取消'),
+            child: Text('取消', style: TextStyle(color: colors.textSecondary)),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+            style: TextButton.styleFrom(foregroundColor: colors.danger),
             child: const Text('删除'),
           ),
         ],
@@ -902,16 +835,19 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         ref.invalidate(todayFitnessMinutesProvider);
         ref.invalidate(weeklyFitnessCountProvider);
         ref.invalidate(dashboardProvider);
+        ref.invalidate(fitnessChartDataProvider(7));
+        ref.invalidate(fitnessChartDataProvider(30));
+        ref.invalidate(fitnessChartDataProvider(365));
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(const SnackBar(content: Text('已删除')));
         }
-      } catch (e) {
+      } catch (_) {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('删除失败: $e')));
+          ).showSnackBar(const SnackBar(content: Text('删除失败，请重试')));
         }
       }
     }

@@ -14,11 +14,7 @@ import '../repositories/weather_search_history_repository.dart';
 
 /// 天气服务 - 支持多厂商 API、IP 定位、城市搜索
 class WeatherService {
-  WeatherService(
-    this._weatherRepo,
-    this._apiConfigRepo,
-    this._historyRepo,
-  );
+  WeatherService(this._weatherRepo, this._apiConfigRepo, this._historyRepo);
   final WeatherRepository _weatherRepo;
   final ApiConfigRepository _apiConfigRepo;
   final WeatherSearchHistoryRepository _historyRepo;
@@ -28,7 +24,9 @@ class WeatherService {
   /// 获取今日天气（从缓存）
   Future<DailyWeather?> getTodayWeather() async {
     final result = await _weatherRepo.getTodayWeather();
-    debugPrint('getTodayWeather: ${result != null ? "found (city=${result.city}, temp=${result.temperature})" : "null"}');
+    debugPrint(
+      'getTodayWeather: ${result != null ? "found (city=${result.city}, temp=${result.temperature})" : "null"}',
+    );
     return result;
   }
 
@@ -36,10 +34,7 @@ class WeatherService {
   Future<Map<String, double>?> getLastStoredLocation() async {
     final lastWeather = await _weatherRepo.getTodayWeather();
     if (lastWeather?.latitude != null && lastWeather?.longitude != null) {
-      return {
-        'lat': lastWeather!.latitude!,
-        'lon': lastWeather.longitude!,
-      };
+      return {'lat': lastWeather!.latitude!, 'lon': lastWeather.longitude!};
     }
     return null;
   }
@@ -60,11 +55,7 @@ class WeatherService {
   }
 
   /// 保存用户选择的城市
-  Future<void> saveSelectedCity(
-    String cityName,
-    double lat,
-    double lon,
-  ) async {
+  Future<void> saveSelectedCity(String cityName, double lat, double lon) async {
     final now = DateTime.now();
     final dateStr =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
@@ -138,9 +129,7 @@ class WeatherService {
   }
 
   /// 搜索并返回城市列表（使用当前激活的天气 API Key）
-  Future<List<Map<String, dynamic>>> searchAndSaveCity(
-    String cityName,
-  ) async {
+  Future<List<Map<String, dynamic>>> searchAndSaveCity(String cityName) async {
     final config = await _apiConfigRepo.getActiveWeatherConfig();
     if (config?.apiKey == null) return [];
     return searchCity(cityName, config!.apiKey!);
@@ -234,7 +223,9 @@ class WeatherService {
         weatherData = result['weather'] as Map<String, dynamic>?;
         airData = result['air'] as Map<String, dynamic>?;
         indicesData = result['indices'] as List<dynamic>?;
-        debugPrint('和风天气返回: weather=${weatherData != null}, air=${airData != null}, indices=${indicesData != null}');
+        debugPrint(
+          '和风天气返回: weather=${weatherData != null}, air=${airData != null}, indices=${indicesData != null}',
+        );
         // 用和风返回的城市名覆盖（如果之前没有）
         cityName ??= result['city'] as String?;
         lat = result['lat'] as double?;
@@ -338,7 +329,9 @@ class WeatherService {
   Future<List<Map<String, dynamic>>> _loadCities() async {
     if (_citiesLoaded) return _allCities;
     try {
-      final json = await rootBundle.loadString('assets/data/chinese_cities.json');
+      final json = await rootBundle.loadString(
+        'assets/data/chinese_cities.json',
+      );
       _allCities = (jsonDecode(json) as List).cast<Map<String, dynamic>>();
       _citiesLoaded = true;
     } catch (_) {
@@ -358,7 +351,8 @@ class WeatherService {
     for (final city in cities) {
       final clat = city['lat'] as num;
       final clon = city['lon'] as num;
-      final d = (lat - clat.toDouble()) * (lat - clat.toDouble()) +
+      final d =
+          (lat - clat.toDouble()) * (lat - clat.toDouble()) +
           (lon - clon.toDouble()) * (lon - clon.toDouble());
       if (d < minDist) {
         minDist = d;
@@ -408,11 +402,7 @@ class WeatherService {
       ).timeout(const Duration(seconds: 12));
 
       final city = await _reverseGeocode(pos.latitude, pos.longitude);
-      return {
-        'lat': pos.latitude,
-        'lon': pos.longitude,
-        'city': city ?? '未知',
-      };
+      return {'lat': pos.latitude, 'lon': pos.longitude, 'city': city ?? '未知'};
     } on TimeoutException {
       debugPrint('GPS 定位超时');
       return null;
@@ -462,7 +452,9 @@ class WeatherService {
       lon ??= 116.4074;
       final location = '$lon,$lat';
       final headers = {'X-QW-Api-Key': apiKey};
-      final baseUrl = host.endsWith('/') ? host.substring(0, host.length - 1) : host;
+      final baseUrl = host.endsWith('/')
+          ? host.substring(0, host.length - 1)
+          : host;
 
       // 1. 通过坐标获取城市名（本地库反查，不依赖 GeoAPI）
       final cityName = (await _reverseGeocode(lat, lon)) ?? '未知';
@@ -473,13 +465,17 @@ class WeatherService {
       );
       final weatherResp = await http.get(weatherUrl, headers: headers);
       if (weatherResp.statusCode != 200) {
-        debugPrint('QWeather 天气查询失败: HTTP ${weatherResp.statusCode}, body=${weatherResp.body}');
+        debugPrint(
+          'QWeather 天气查询失败: HTTP ${weatherResp.statusCode}, body=${weatherResp.body}',
+        );
         return null;
       }
 
       final weatherBody = jsonDecode(weatherResp.body) as Map<String, dynamic>;
       if (weatherBody['code'] != '200') {
-        debugPrint('QWeather 天气查询返回错误: code=${weatherBody['code']}, body=${weatherResp.body}');
+        debugPrint(
+          'QWeather 天气查询返回错误: code=${weatherBody['code']}, body=${weatherResp.body}',
+        );
         return null;
       }
 
@@ -488,9 +484,7 @@ class WeatherService {
       // 3. 获取空气质量
       Map<String, dynamic>? airData;
       try {
-        final airUrl = Uri.parse(
-          '$baseUrl/airquality/v1/current/$lat/$lon',
-        );
+        final airUrl = Uri.parse('$baseUrl/airquality/v1/current/$lat/$lon');
         final airResp = await http.get(airUrl, headers: headers);
         if (airResp.statusCode == 200) {
           final airResult = jsonDecode(airResp.body) as Map<String, dynamic>;
@@ -501,7 +495,11 @@ class WeatherService {
             final aqi = (first['aqiDisplay'] ?? first['aqi'])?.toString();
             final primary = first['primaryPollutant'] as String?;
             if (category != null && aqi != null) {
-              airData = {'category': category, 'aqi': aqi, 'primary': primary ?? ''};
+              airData = {
+                'category': category,
+                'aqi': aqi,
+                'primary': primary ?? '',
+              };
             }
           } else {
             debugPrint('QWeather 空气质量无 indexes 数据');
@@ -521,14 +519,18 @@ class WeatherService {
         );
         final indicesResp = await http.get(indicesUrl, headers: headers);
         if (indicesResp.statusCode == 200) {
-          final indicesResult = jsonDecode(indicesResp.body) as Map<String, dynamic>;
-          if (indicesResult['code'] == '200' && indicesResult['daily'] != null) {
+          final indicesResult =
+              jsonDecode(indicesResp.body) as Map<String, dynamic>;
+          if (indicesResult['code'] == '200' &&
+              indicesResult['daily'] != null) {
             indicesData = (indicesResult['daily'] as List)
-                .map((item) => {
-                      'name': item['name'],
-                      'category': item['category'],
-                      'text': item['text'],
-                    })
+                .map(
+                  (item) => {
+                    'name': item['name'],
+                    'category': item['category'],
+                    'text': item['text'],
+                  },
+                )
                 .toList();
           } else {
             debugPrint('QWeather 指数返回错误: code=${indicesResult['code']}');
@@ -586,9 +588,7 @@ class WeatherService {
       return {
         'weather': {
           'temp': (current['temperature_2m'] as num).round(),
-          'text': _getWeatherTypeFromCode(
-            current['weather_code'].toString(),
-          ),
+          'text': _getWeatherTypeFromCode(current['weather_code'].toString()),
           'code': current['weather_code'].toString(),
           'humidity': (current['relative_humidity_2m'] as num).round(),
           'windDir': _getWindDirection(

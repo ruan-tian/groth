@@ -17,6 +17,9 @@ class ImportedMusicFile {
 }
 
 class MusicImportService {
+  MusicImportService({Future<Directory> Function()? musicDirectoryProvider})
+    : _musicDirectoryProvider = musicDirectoryProvider;
+
   static const supportedExtensions = <String>[
     'mp3',
     'm4a',
@@ -26,6 +29,8 @@ class MusicImportService {
     'ogg',
   ];
 
+  final Future<Directory> Function()? _musicDirectoryProvider;
+
   Future<List<ImportedMusicFile>> pickAndCopyTracks() async {
     final result = await FilePicker.platform.pickFiles(
       allowMultiple: true,
@@ -34,12 +39,46 @@ class MusicImportService {
     );
     if (result == null) return const [];
 
+    return copyTracksFromPaths(result.files.map((file) => file.path));
+  }
+
+  Future<List<ImportedMusicFile>> pickAndCopyDirectory() async {
+    final directoryPath = await FilePicker.platform.getDirectoryPath(
+      dialogTitle: '选择音乐文件夹',
+    );
+    if (directoryPath == null) return const [];
+
+    return scanAndCopyDirectory(directoryPath);
+  }
+
+  Future<List<ImportedMusicFile>> scanAndCopyDirectory(
+    String directoryPath,
+  ) async {
+    final directory = Directory(directoryPath);
+    if (!await directory.exists()) return const [];
+
+    final sourcePaths = <String>[];
+    await for (final entity in directory.list(
+      recursive: true,
+      followLinks: false,
+    )) {
+      if (entity is! File) continue;
+      if (!_isSupportedAudioPath(entity.path)) continue;
+      sourcePaths.add(entity.path);
+    }
+    sourcePaths.sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    return copyTracksFromPaths(sourcePaths);
+  }
+
+  Future<List<ImportedMusicFile>> copyTracksFromPaths(
+    Iterable<String?> sourcePaths,
+  ) async {
     final targetDir = await _musicDirectory();
     final imported = <ImportedMusicFile>[];
     var index = 0;
-    for (final file in result.files) {
-      final sourcePath = file.path;
+    for (final sourcePath in sourcePaths) {
       if (sourcePath == null) continue;
+      if (!_isSupportedAudioPath(sourcePath)) continue;
 
       final source = File(sourcePath);
       if (!await source.exists()) continue;
@@ -65,6 +104,14 @@ class MusicImportService {
   }
 
   Future<Directory> _musicDirectory() async {
+    final customDirectory = await _musicDirectoryProvider?.call();
+    if (customDirectory != null) {
+      if (!await customDirectory.exists()) {
+        await customDirectory.create(recursive: true);
+      }
+      return customDirectory;
+    }
+
     final supportDir = await getApplicationSupportDirectory();
     final dir = Directory(p.join(supportDir.path, 'music'));
     if (!await dir.exists()) {
@@ -81,6 +128,11 @@ class MusicImportService {
   String _safeFileName(String input) {
     final cleaned = input.replaceAll(RegExp(r'[^a-zA-Z0-9._-]+'), '_');
     return cleaned.isEmpty ? 'track' : cleaned;
+  }
+
+  bool _isSupportedAudioPath(String path) {
+    final extension = p.extension(path).replaceFirst('.', '').toLowerCase();
+    return supportedExtensions.contains(extension);
   }
 
   Future<String?> pickAndCopyLrcForTrack(String audioFilePath) async {
@@ -106,12 +158,18 @@ class MusicImportService {
 
   Future<void> _copySidecarLyrics(String sourcePath, String targetPath) async {
     final sourceLyrics = File(
-      p.join(p.dirname(sourcePath), '${p.basenameWithoutExtension(sourcePath)}.lrc'),
+      p.join(
+        p.dirname(sourcePath),
+        '${p.basenameWithoutExtension(sourcePath)}.lrc',
+      ),
     );
     if (!await sourceLyrics.exists()) return;
 
     final targetLyrics = File(
-      p.join(p.dirname(targetPath), '${p.basenameWithoutExtension(targetPath)}.lrc'),
+      p.join(
+        p.dirname(targetPath),
+        '${p.basenameWithoutExtension(targetPath)}.lrc',
+      ),
     );
     await sourceLyrics.copy(targetLyrics.path);
   }

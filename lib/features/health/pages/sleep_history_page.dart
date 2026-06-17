@@ -6,13 +6,8 @@ import '../../../core/database/app_database.dart';
 import '../../../shared/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 
-/// 睡眠记录排序方式
 enum SleepSortOption { newest, oldest, highestQuality }
 
-/// 睡眠历史记录页面
-///
-/// Premium lavender-themed page with gradient stats summary,
-/// grouped records with consistent card styling, and a shared RecordDetailSheet.
 class SleepHistoryPage extends ConsumerStatefulWidget {
   const SleepHistoryPage({super.key});
 
@@ -22,7 +17,7 @@ class SleepHistoryPage extends ConsumerStatefulWidget {
 
 class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController;
   String _selectedPeriod = 'week';
   SleepSortOption _sortOption = SleepSortOption.newest;
 
@@ -31,19 +26,15 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      setState(() {
-        switch (_tabController.index) {
-          case 0:
-            _selectedPeriod = 'week';
-            break;
-          case 1:
-            _selectedPeriod = 'month';
-            break;
-          case 2:
-            _selectedPeriod = 'all';
-            break;
-        }
-      });
+      if (!_tabController.indexIsChanging) {
+        setState(() {
+          _selectedPeriod = switch (_tabController.index) {
+            0 => 'week',
+            1 => 'month',
+            _ => 'all',
+          };
+        });
+      }
     });
   }
 
@@ -55,51 +46,58 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final records = ref.watch(recentSleepRecordsProvider(30));
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: colors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           '睡眠历史',
           style: TextStyle(
             fontSize: 18,
-            fontWeight: FontWeight.w600,
-            color: AppColors.textPrimary,
+            fontWeight: FontWeight.w700,
+            color: colors.textPrimary,
           ),
         ),
         centerTitle: true,
-        backgroundColor: AppColors.background,
+        backgroundColor: colors.background,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: AppColors.textPrimary,
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            size: 20,
+            color: colors.textPrimary,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           PopupMenuButton<SleepSortOption>(
-            icon: const Icon(Icons.sort, color: AppColors.textSecondary),
+            icon: Icon(Icons.sort_rounded, color: colors.textSecondary),
+            color: colors.card,
+            surfaceTintColor: colors.card,
             onSelected: (option) => setState(() => _sortOption = option),
             itemBuilder: (context) => [
-              _buildSortItem(SleepSortOption.newest, '最新优先'),
-              _buildSortItem(SleepSortOption.oldest, '最早优先'),
-              _buildSortItem(SleepSortOption.highestQuality, '质量最高'),
+              _buildSortItem(context, SleepSortOption.newest, '最新优先'),
+              _buildSortItem(context, SleepSortOption.oldest, '最早优先'),
+              _buildSortItem(context, SleepSortOption.highestQuality, '质量最高'),
             ],
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.lavender,
-          unselectedLabelColor: AppColors.textSecondary,
-          indicatorColor: AppColors.lavender,
+          labelColor: colors.sleep,
+          unselectedLabelColor: colors.textSecondary,
+          indicatorColor: colors.sleep,
           indicatorWeight: 2.5,
           labelStyle: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
           ),
           unselectedLabelStyle: const TextStyle(
             fontSize: 14,
-            fontWeight: FontWeight.w400,
+            fontWeight: FontWeight.w500,
           ),
           tabs: const [
             Tab(text: '最近7天'),
@@ -111,48 +109,42 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
       body: records.when(
         data: (allRecords) {
           final filteredRecords = _filterRecords(allRecords);
-
           if (filteredRecords.isEmpty) {
-            return _buildEmptyState();
+            return _buildEmptyState(context);
           }
-
-          return _buildRecordList(filteredRecords);
+          return _buildRecordList(context, filteredRecords);
         },
-        loading: () => const Center(
-          child: CircularProgressIndicator(color: AppColors.lavender),
+        loading: () =>
+            Center(child: CircularProgressIndicator(color: colors.sleep)),
+        error: (e, _) => Center(
+          child: Text('加载失败：$e', style: TextStyle(color: colors.textSecondary)),
         ),
-        error: (e, _) => Center(child: Text('加载失败: $e')),
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Sort menu
-  // ---------------------------------------------------------------------------
-
   PopupMenuItem<SleepSortOption> _buildSortItem(
+    BuildContext context,
     SleepSortOption option,
     String text,
   ) {
+    final colors = context.growthColors;
     return PopupMenuItem(
       value: option,
       child: Row(
         children: [
-          Text(text, style: const TextStyle(fontSize: 14)),
+          Text(text, style: TextStyle(fontSize: 14, color: colors.textPrimary)),
           if (_sortOption == option) ...[
             const Spacer(),
-            Icon(Icons.check, size: 16, color: AppColors.lavender),
+            Icon(Icons.check_rounded, size: 16, color: colors.sleep),
           ],
         ],
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Stats summary card (gradient lavender)
-  // ---------------------------------------------------------------------------
-
-  Widget _buildStatsSummary(List<SleepRecord> records) {
+  Widget _buildStatsSummary(BuildContext context, List<SleepRecord> records) {
+    final colors = context.growthColors;
     final count = records.length;
     final avgDuration = count > 0
         ? records.map((r) => r.durationMinutes).reduce((a, b) => a + b) / count
@@ -163,7 +155,6 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
 
     final hours = (avgDuration ~/ 60).toStringAsFixed(0);
     final mins = (avgDuration % 60).round().toString().padLeft(2, '0');
-    final qualityStr = avgQuality.toStringAsFixed(1);
 
     return Container(
       margin: const EdgeInsets.fromLTRB(
@@ -177,15 +168,15 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
         vertical: AppSpacing.xl,
       ),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [AppColors.lavender, AppColors.lavenderDark],
+        gradient: LinearGradient(
+          colors: [colors.sleep, colors.primaryDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(AppRadius.lg),
         boxShadow: [
           BoxShadow(
-            color: AppColors.lavender.withValues(alpha: 0.3),
+            color: colors.shadow.withValues(alpha: 0.24),
             blurRadius: 16,
             offset: const Offset(0, 8),
           ),
@@ -199,7 +190,11 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
             label: '平均时长',
             value: '${hours}h${mins}m',
           ),
-          _StatItem(icon: Icons.star_rounded, label: '平均质量', value: qualityStr),
+          _StatItem(
+            icon: Icons.star_rounded,
+            label: '平均质量',
+            value: avgQuality.toStringAsFixed(1),
+          ),
           _StatItem(
             icon: Icons.calendar_today_rounded,
             label: '总记录',
@@ -210,16 +205,11 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Record list (grouped by date)
-  // ---------------------------------------------------------------------------
-
-  Widget _buildRecordList(List<SleepRecord> records) {
+  Widget _buildRecordList(BuildContext context, List<SleepRecord> records) {
     final sorted = _sortRecords(records);
-
     final groups = groupRecordsByDate(
       sorted,
-      (r) => DateTime.parse(r.sleepDate),
+      (record) => DateTime.parse(record.sleepDate),
     );
 
     final items = <_ListItem>[];
@@ -232,11 +222,8 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
 
     return Column(
       children: [
-        // ── Stats summary ──
         const SizedBox(height: AppSpacing.lg),
-        _buildStatsSummary(records),
-
-        // ── Record list ──
+        _buildStatsSummary(context, records),
         Expanded(
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
@@ -258,23 +245,19 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Filtering & sorting
-  // ---------------------------------------------------------------------------
-
   List<SleepRecord> _filterRecords(List<SleepRecord> records) {
     final now = DateTime.now();
     switch (_selectedPeriod) {
       case 'week':
         final weekAgo = now.subtract(const Duration(days: 7));
-        return records.where((r) {
-          final date = DateTime.parse(r.sleepDate);
+        return records.where((record) {
+          final date = DateTime.parse(record.sleepDate);
           return date.isAfter(weekAgo);
         }).toList();
       case 'month':
         final monthAgo = now.subtract(const Duration(days: 30));
-        return records.where((r) {
-          final date = DateTime.parse(r.sleepDate);
+        return records.where((record) {
+          final date = DateTime.parse(record.sleepDate);
           return date.isAfter(monthAgo);
         }).toList();
       default:
@@ -287,22 +270,16 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
     switch (_sortOption) {
       case SleepSortOption.newest:
         sorted.sort((a, b) => b.sleepDate.compareTo(a.sleepDate));
-        break;
       case SleepSortOption.oldest:
         sorted.sort((a, b) => a.sleepDate.compareTo(b.sleepDate));
-        break;
       case SleepSortOption.highestQuality:
         sorted.sort((a, b) => b.qualityLevel.compareTo(a.qualityLevel));
-        break;
     }
     return sorted;
   }
 
-  // ---------------------------------------------------------------------------
-  // Empty state
-  // ---------------------------------------------------------------------------
-
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(BuildContext context) {
+    final colors = context.growthColors;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(AppSpacing.xxl),
@@ -310,37 +287,25 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
           icon: Icons.nightlight_round,
           title: '暂无睡眠记录',
           subtitle: '记录你的睡眠数据，\n追踪每日睡眠质量',
-          accentColor: AppColors.lavender,
+          accentColor: colors.sleep,
         ),
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Detail bottom sheet (uses shared RecordDetailSheet)
-  // ---------------------------------------------------------------------------
-
   void _showRecordDetail(BuildContext context, SleepRecord record) {
+    final colors = context.growthColors;
     final date = DateTime.parse(record.sleepDate);
-    final weekday = [
-      '周一',
-      '周二',
-      '周三',
-      '周四',
-      '周五',
-      '周六',
-      '周日',
-    ][date.weekday - 1];
+    final weekday = _weekdayLabel(date);
     final dateStr = '${date.year}年${date.month}月${date.day}日 $weekday';
-
     final hours = record.durationMinutes ~/ 60;
     final mins = record.durationMinutes % 60;
 
     RecordDetailSheet.show(
       context: context,
       title: dateStr,
-      accentColor: AppColors.lavender,
-      accentColorLight: AppColors.softLavender,
+      accentColor: colors.sleep,
+      accentColorLight: colors.softPurple,
       primaryMetricLabel: '睡眠时长',
       primaryMetricValue: '${hours}h ${mins}m',
       primaryMetricIcon: Icons.nightlight_round,
@@ -368,68 +333,132 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
       ],
       extraCards: Column(
         children: [
-          _buildQualityCard(record),
+          _buildQualityCard(context, record),
           const SizedBox(height: AppSpacing.md),
-          _buildEnergyCard(record),
+          _buildEnergyCard(context, record),
           if (record.dreamNote?.isNotEmpty == true) ...[
             const SizedBox(height: AppSpacing.md),
-            _buildDreamCard(record),
+            _buildDreamCard(context, record),
           ],
           if (record.note?.isNotEmpty == true) ...[
             const SizedBox(height: AppSpacing.md),
-            _buildNoteCard(record),
+            _buildNoteCard(context, record),
           ],
         ],
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Detail extra cards (shown inside RecordDetailSheet)
-  // ---------------------------------------------------------------------------
+  Widget _buildQualityCard(BuildContext context, SleepRecord record) {
+    final colors = context.growthColors;
+    final qualityColor = _qualityColor(colors, record.qualityLevel);
+    return _DetailInfoCard(
+      backgroundColor: colors.softGold,
+      icon: Icons.star_rounded,
+      iconColor: qualityColor,
+      label: '睡眠质量',
+      value: '${record.qualityLevel}/5',
+      trailing: _qualityLabel(record.qualityLevel),
+      trailingColor: qualityColor,
+    );
+  }
 
-  Widget _buildQualityCard(SleepRecord record) {
+  Widget _buildEnergyCard(BuildContext context, SleepRecord record) {
+    final colors = context.growthColors;
+    return _DetailInfoCard(
+      backgroundColor: colors.softGreen,
+      icon: Icons.battery_charging_full_rounded,
+      iconColor: colors.success,
+      label: '醒后精力',
+      value: '${record.energyLevel}/5',
+    );
+  }
+
+  Widget _buildDreamCard(BuildContext context, SleepRecord record) {
+    final colors = context.growthColors;
+    return _TextDetailCard(
+      backgroundColor: colors.softPurple,
+      icon: Icons.auto_awesome_rounded,
+      iconColor: colors.sleep,
+      label: '梦境',
+      value: record.dreamNote!,
+    );
+  }
+
+  Widget _buildNoteCard(BuildContext context, SleepRecord record) {
+    final colors = context.growthColors;
+    return _TextDetailCard(
+      backgroundColor: colors.surfaceVariant,
+      icon: Icons.note_outlined,
+      iconColor: colors.textSecondary,
+      label: '备注',
+      value: record.note!,
+    );
+  }
+}
+
+class _DetailInfoCard extends StatelessWidget {
+  const _DetailInfoCard({
+    required this.backgroundColor,
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+    this.trailing,
+    this.trailingColor,
+  });
+
+  final Color backgroundColor;
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+  final String? trailing;
+  final Color? trailingColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8F0),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(AppRadius.sm),
       ),
       child: Row(
         children: [
-          const Icon(Icons.star_rounded, color: Color(0xFFFFB347), size: 24),
+          Icon(icon, color: iconColor, size: 24),
           const SizedBox(width: AppSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  '睡眠质量',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
                 ),
                 const SizedBox(height: AppSpacing.xs),
                 Row(
                   children: [
                     Text(
-                      '${record.qualityLevel}/5',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Text(
-                      _qualityLabel(record.qualityLevel),
+                      value,
                       style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: _qualityColor(record.qualityLevel),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                        color: colors.textPrimary,
                       ),
                     ),
+                    if (trailing != null) ...[
+                      const SizedBox(width: AppSpacing.sm),
+                      Text(
+                        trailing!,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: trailingColor ?? iconColor,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -439,163 +468,58 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
       ),
     );
   }
-
-  Widget _buildEnergyCard(SleepRecord record) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.softGreen,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.battery_charging_full_rounded,
-            color: AppColors.success,
-            size: 24,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '醒后精力',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  '${record.energyLevel}/5',
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDreamCard(SleepRecord record) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.softLavender,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.auto_awesome, color: AppColors.lavender, size: 20),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '梦境',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  record.dreamNote!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoteCard(SleepRecord record) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(
-            Icons.note_outlined,
-            color: AppColors.textSecondary,
-            size: 20,
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '备注',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  record.note!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
-
-  String _qualityLabel(int quality) {
-    switch (quality) {
-      case 1:
-        return '很差';
-      case 2:
-        return '较差';
-      case 3:
-        return '一般';
-      case 4:
-        return '良好';
-      case 5:
-        return '优秀';
-      default:
-        return '一般';
-    }
-  }
-
-  Color _qualityColor(int quality) {
-    if (quality >= 4) return AppColors.success;
-    if (quality >= 3) return AppColors.warning;
-    return AppColors.danger;
-  }
 }
 
-// =============================================================================
-// Stat item widget (used in the gradient stats summary)
-// =============================================================================
+class _TextDetailCard extends StatelessWidget {
+  const _TextDetailCard({
+    required this.backgroundColor,
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+
+  final Color backgroundColor;
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Container(
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(AppRadius.sm),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                Text(
+                  value,
+                  style: TextStyle(fontSize: 14, color: colors.textPrimary),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
 class _StatItem extends StatelessWidget {
   const _StatItem({
@@ -610,17 +534,22 @@ class _StatItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, color: Colors.white.withValues(alpha: 0.85), size: 22),
+        Icon(
+          icon,
+          color: colors.textOnAccent.withValues(alpha: 0.86),
+          size: 22,
+        ),
         const SizedBox(height: AppSpacing.sm),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 22,
-            fontWeight: FontWeight.w700,
-            color: Colors.white,
+            fontWeight: FontWeight.w800,
+            color: colors.textOnAccent,
           ),
         ),
         const SizedBox(height: AppSpacing.xs),
@@ -628,17 +557,14 @@ class _StatItem extends StatelessWidget {
           label,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.white.withValues(alpha: 0.75),
+            fontWeight: FontWeight.w600,
+            color: colors.textOnAccent.withValues(alpha: 0.76),
           ),
         ),
       ],
     );
   }
 }
-
-// =============================================================================
-// Sleep record card (premium lavender styling)
-// =============================================================================
 
 class _SleepRecordCard extends StatelessWidget {
   const _SleepRecordCard({required this.record, required this.onTap});
@@ -648,23 +574,15 @@ class _SleepRecordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     final date = DateTime.parse(record.sleepDate);
-    final weekday = [
-      '周一',
-      '周二',
-      '周三',
-      '周四',
-      '周五',
-      '周六',
-      '周日',
-    ][date.weekday - 1];
-    final dateStr = '${date.month}月${date.day}日 $weekday';
-
+    final dateStr = '${date.month}月${date.day}日 ${_weekdayLabel(date)}';
     final hours = record.durationMinutes ~/ 60;
     final mins = record.durationMinutes % 60;
     final durationText = hours > 0
         ? '${hours}h${mins > 0 ? '${mins}m' : ''}'
         : '${mins}m';
+    final qualityColor = _qualityColor(colors, record.qualityLevel);
 
     return GestureDetector(
       onTap: onTap,
@@ -672,63 +590,55 @@ class _SleepRecordCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: AppSpacing.md),
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: AppColors.card,
+          color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: AppColors.lavender.withValues(alpha: 0.12)),
+          border: Border.all(color: colors.border),
         ),
         child: Row(
           children: [
-            // ── Leading icon ──
             Container(
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppColors.lavender.withValues(alpha: 0.10),
+                color: colors.softPurple.withValues(alpha: 0.74),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.nightlight_round,
-                color: AppColors.lavender,
+                color: colors.sleep,
                 size: 24,
               ),
             ),
             const SizedBox(width: AppSpacing.lg),
-
-            // ── Center content ──
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     dateStr,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     '${record.sleepTime} - ${record.wakeTime}',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
+                    style: TextStyle(fontSize: 13, color: colors.textSecondary),
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
                     durationText,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.lavender,
+                      fontWeight: FontWeight.w600,
+                      color: colors.sleep,
                     ),
                   ),
                 ],
               ),
             ),
-
-            // ── Quality badge ──
             Column(
               children: [
                 Container(
@@ -737,26 +647,20 @@ class _SleepRecordCard extends StatelessWidget {
                     vertical: AppSpacing.xs,
                   ),
                   decoration: BoxDecoration(
-                    color: _qualityColor(
-                      record.qualityLevel,
-                    ).withValues(alpha: 0.10),
+                    color: qualityColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(AppRadius.sm),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(
-                        Icons.star_rounded,
-                        size: 14,
-                        color: _qualityColor(record.qualityLevel),
-                      ),
+                      Icon(Icons.star_rounded, size: 14, color: qualityColor),
                       const SizedBox(width: 2),
                       Text(
                         '${record.qualityLevel}',
                         style: TextStyle(
                           fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: _qualityColor(record.qualityLevel),
+                          fontWeight: FontWeight.w700,
+                          color: qualityColor,
                         ),
                       ),
                     ],
@@ -767,7 +671,8 @@ class _SleepRecordCard extends StatelessWidget {
                   _qualityLabel(record.qualityLevel),
                   style: TextStyle(
                     fontSize: 11,
-                    color: _qualityColor(record.qualityLevel),
+                    fontWeight: FontWeight.w600,
+                    color: qualityColor,
                   ),
                 ),
               ],
@@ -777,34 +682,7 @@ class _SleepRecordCard extends StatelessWidget {
       ),
     );
   }
-
-  String _qualityLabel(int quality) {
-    switch (quality) {
-      case 1:
-        return '很差';
-      case 2:
-        return '较差';
-      case 3:
-        return '一般';
-      case 4:
-        return '良好';
-      case 5:
-        return '优秀';
-      default:
-        return '一般';
-    }
-  }
-
-  Color _qualityColor(int quality) {
-    if (quality >= 4) return AppColors.success;
-    if (quality >= 3) return AppColors.warning;
-    return AppColors.danger;
-  }
 }
-
-// =============================================================================
-// List item model (header or record)
-// =============================================================================
 
 class _ListItem {
   _ListItem.header(this.headerLabel) : record = null, isHeader = true;
@@ -813,4 +691,25 @@ class _ListItem {
   final String? headerLabel;
   final SleepRecord? record;
   final bool isHeader;
+}
+
+String _weekdayLabel(DateTime date) {
+  return const ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][date.weekday - 1];
+}
+
+String _qualityLabel(int quality) {
+  return switch (quality) {
+    1 => '很差',
+    2 => '较差',
+    3 => '一般',
+    4 => '良好',
+    5 => '优秀',
+    _ => '一般',
+  };
+}
+
+Color _qualityColor(AppThemeColors colors, int quality) {
+  if (quality >= 4) return colors.success;
+  if (quality >= 3) return colors.warning;
+  return colors.danger;
 }
