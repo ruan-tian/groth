@@ -139,9 +139,6 @@ class AppDatabase extends _$AppDatabase {
         if (from < 17) {
           await m.createTable(musicTracks);
         }
-        if (from < 18) {
-          await _createPerformanceIndexes();
-        }
         if (from < 19) {
           // 为健身记录表添加运动类型列
           await m.addColumn(fitnessRecords, fitnessRecords.activityType);
@@ -149,43 +146,35 @@ class AppDatabase extends _$AppDatabase {
         if (from < 20) {
           await m.createTable(journalFolders);
           await m.addColumn(dailyJournals, dailyJournals.folderId);
-          await _createPerformanceIndexes();
         }
         if (from < 21) {
           await m.createTable(musicPlaylists);
           await m.createTable(musicPlaylistTracks);
-          await _createPerformanceIndexes();
         }
         if (from < 22) {
           await m.addColumn(musicTracks, musicTracks.sceneOverride);
-          await _createPerformanceIndexes();
         }
         if (from < 23) {
           await m.createTable(knowledgeCards);
           await m.createTable(knowledgeReviewLogs);
-          await _createPerformanceIndexes();
         }
         if (from < 24) {
           await m.addColumn(knowledgeCards, knowledgeCards.goalKey);
           await m.addColumn(knowledgeCards, knowledgeCards.goalName);
           await m.addColumn(knowledgeCards, knowledgeCards.moduleKey);
           await m.addColumn(knowledgeCards, knowledgeCards.moduleName);
-          await _createPerformanceIndexes();
         }
         if (from < 25) {
           await m.createTable(knowledgeCustomTemplates);
           await m.createTable(knowledgeCustomTemplateModules);
-          await _createPerformanceIndexes();
         }
         if (from < 27) {
           await m.createTable(aiChatMessages);
-          await _createPerformanceIndexes();
         }
         if (from < 26) {
           await m.createTable(knowledgeSources);
           await m.createTable(knowledgeChunks);
           await m.createTable(knowledgeCardSourceLinks);
-          await _createPerformanceIndexes();
         }
       },
     );

@@ -11,6 +11,7 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/service_providers.dart';
+import '../settings_page.dart' show lastBackupTimeProvider;
 
 // =============================================================================
 // Backup Records Provider
@@ -79,6 +80,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final filePath = await backupService.saveBackupToFile();
 
       ref.invalidate(backupRecordsProvider);
+      ref.invalidate(lastBackupTimeProvider);
       await _loadBackupOverview();
 
       if (mounted) {

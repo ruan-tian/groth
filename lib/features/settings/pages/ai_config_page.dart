@@ -9,6 +9,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/services/encryption_service.dart';
 import '../../../shared/providers/repository_providers.dart';
+import '../settings_page.dart' show aiConnectionStatusProvider;
 
 /// AI 服务提供商模型
 class AIProvider {
@@ -317,6 +318,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
       }
 
       if (mounted) {
+        ref.invalidate(aiConnectionStatusProvider);
         HapticFeedback.lightImpact();
         _showSnackBar('AI 配置已保存');
         context.pop();

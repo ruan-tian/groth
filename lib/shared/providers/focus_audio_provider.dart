@@ -77,6 +77,17 @@ class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
     state = state.copyWith(volume: volume);
   }
 
+  /// Re-sync UI state with actual player state.
+  /// Call when app resumes from background to avoid UI/audio mismatch.
+  Future<void> resyncState() async {
+    try {
+      final service = _ref.read(focusAudioServiceProvider);
+      if (state.isPlaying != service.isNoisePlaying) {
+        state = state.copyWith(isPlaying: service.isNoisePlaying);
+      }
+    } catch (_) {}
+  }
+
   Future<void> playBell(String bellType) async {
     final service = _ref.read(focusAudioServiceProvider);
     await service.playBell(bellType);

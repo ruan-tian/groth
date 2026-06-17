@@ -11,6 +11,7 @@ import '../../../shared/providers/service_providers.dart'
     show expServiceProvider;
 import '../../../shared/providers/database_provider.dart' show databaseProvider;
 import '../../../shared/providers/sleep_provider.dart';
+import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/widgets/common/growth_time_picker.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';

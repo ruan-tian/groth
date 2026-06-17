@@ -253,7 +253,13 @@ class AiService {
       }
 
       String buffer = '';
-      await for (final chunk in response.stream.transform(utf8.decoder)) {
+      await for (final chunk in response.stream.transform(utf8.decoder).timeout(
+        const Duration(seconds: 120),
+        onTimeout: (sink) {
+          sink.addError(AiServiceException('AI 流式响应超时（120秒未收到数据）'));
+          sink.close();
+        },
+      )) {
         buffer += chunk;
 
         while (buffer.contains('\n')) {
@@ -925,7 +931,13 @@ class AiService {
       }
 
       String buffer = '';
-      await for (final chunk in response.stream.transform(utf8.decoder)) {
+      await for (final chunk in response.stream.transform(utf8.decoder).timeout(
+        const Duration(seconds: 120),
+        onTimeout: (sink) {
+          sink.addError(AiServiceException('AI 流式响应超时（120秒未收到数据）'));
+          sink.close();
+        },
+      )) {
         buffer += chunk;
 
         while (buffer.contains('\n')) {
