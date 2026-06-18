@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/repositories/ai_config_repository.dart';
 import '../../core/repositories/ai_chat_repository.dart';
