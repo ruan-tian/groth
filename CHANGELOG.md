@@ -2,6 +2,12 @@
 
 ## 2026-06-18
 
+### Code Quality
+
+- **Replaced print() with debugPrint()**: Changed 1 remaining print() statement in app_database.dart to debugPrint()
+  - Prevents production console output while keeping debug visibility
+  - Added flutter/foundation.dart import for debugPrint
+
 ### Encoding
 
 - **Unified file encoding**: Fixed 54 .dart files to use UTF-8 without BOM + LF line endings
