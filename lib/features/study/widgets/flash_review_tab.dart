@@ -1,4 +1,4 @@
-﻿import 'dart:math';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,7 +13,7 @@ import '../utils/knowledge_card_assets.dart';
 import '../widgets/flash_review_widgets.dart';
 import '../widgets/knowledge_ai_qa_sheet.dart';
 
-/// ��ϰ Tab ���� �û� 90% ʱ��������
+/// 复习 Tab —— 用户 90% 时间在这里
 class FlashReviewTab extends ConsumerStatefulWidget {
   const FlashReviewTab({super.key});
 
@@ -75,7 +75,7 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          // ���� ���ո�ϰ���� ����
+          // ── 今日复习主卡 ──
           todayProgress.when(
             data: (progress) => stats.when(
               data: (s) => recommended.when(
@@ -108,13 +108,13 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // ���� Ŀ��ɸѡ����ѡչ��������
+          // ── 目标筛选（可选展开）──
           summaries.when(
             data: (items) => GestureDetector(
               onTap: () => setState(() => _showGoalFilter = !_showGoalFilter),
               child: Row(
                 children: [
-                  Text('��Ŀ��ɸѡ', style: AppTextStyles.caption.copyWith(color: colors.textTertiary)),
+                  Text('按目标筛选', style: AppTextStyles.caption.copyWith(color: colors.textTertiary)),
                   Icon(_showGoalFilter ? Icons.expand_less : Icons.expand_more, size: 16, color: colors.textTertiary),
                 ],
               ),
@@ -135,7 +135,7 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
           ],
           const SizedBox(height: AppSpacing.md),
 
-          // ���� ���ն���Ԥ�� ����
+          // ── 今日队列预览 ──
           duePreview.when(
             data: (items) => TodayQueuePreview(cards: items),
             loading: () => const CardSkeleton(height: 100),
@@ -164,8 +164,8 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
     if (_queue.isEmpty) {
       return EmptyStateWidget(
         icon: Icons.style_outlined,
-        title: 'û�п�Ƭ',
-        subtitle: '�����֪ʶ���ٿ�ʼ��ϰ��',
+        title: '没有卡片',
+        subtitle: '先添加知识卡再开始复习。',
         accentColor: context.growthColors.study,
       );
     }
@@ -210,7 +210,7 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
               child: TextButton.icon(
                 onPressed: () => _showAiQa(card),
                 icon: Icon(Icons.auto_awesome_rounded, size: 16, color: colors.study),
-                label: Text('�� AI', style: TextStyle(color: colors.study, fontSize: 13, fontWeight: FontWeight.w600)),
+                label: Text('问 AI', style: TextStyle(color: colors.study, fontSize: 13, fontWeight: FontWeight.w600)),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md), side: BorderSide(color: colors.study.withValues(alpha: 0.3))),
@@ -220,13 +220,13 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
           ] else
             Center(child: FlipButton(onTap: () => setState(() => _showAnswer = true))),
           const SizedBox(height: AppSpacing.sm),
-          Center(child: Text(_showAnswer ? '�� 1-4 ���� �� �ո񷭻�' : '���ո񷭿���', style: TextStyle(fontSize: 11, color: colors.textTertiary))),
+          Center(child: Text(_showAnswer ? '按 1-4 评价 · 空格翻回' : '按空格翻开答案', style: TextStyle(fontSize: 11, color: colors.textTertiary))),
           const SizedBox(height: AppSpacing.lg),
           Center(
             child: TextButton.icon(
               onPressed: () => setState(() => _inReviewMode = false),
               icon: Icon(Icons.arrow_back_rounded, size: 16, color: colors.textTertiary),
-              label: Text('�����б�', style: TextStyle(color: colors.textTertiary, fontSize: 13)),
+              label: Text('返回列表', style: TextStyle(color: colors.textTertiary, fontSize: 13)),
             ),
           ),
           const SizedBox(height: AppSpacing.xxl),
@@ -238,7 +238,6 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
   // ---------------------------------------------------------------------------
   // Actions
   // ---------------------------------------------------------------------------
-
 
   Future<void> _startReview(List<KnowledgeCard> allCards, {required bool dueOnly}) async {
     setState(() => _loading = true);
@@ -338,7 +337,7 @@ class _GoalFilterChips extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _FilterChip(label: 'ȫ��', selected: selectedGoal == null, onTap: () => onSelected(null), color: colors.study),
+          _FilterChip(label: '全部', selected: selectedGoal == null, onTap: () => onSelected(null), color: colors.study),
           const SizedBox(width: AppSpacing.sm),
           for (final goal in KnowledgeCardAssets.goalTemplates)
             Padding(

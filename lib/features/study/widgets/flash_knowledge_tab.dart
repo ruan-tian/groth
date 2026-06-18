@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,7 +12,7 @@ import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../widgets/flash_review_widgets.dart';
 
-/// ֪ʶ Tab ���� ��Ƭ����
+/// 知识 Tab —— 卡片管理
 class FlashKnowledgeTab extends ConsumerStatefulWidget {
   const FlashKnowledgeTab({super.key});
 
@@ -60,11 +60,11 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
         child: ListView(
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
-            // ���� ������ ����
+            // ── 搜索栏 ──
             TextField(
               onChanged: _onSearchChanged,
               decoration: InputDecoration(
-                hintText: '����֪ʶ��...',
+                hintText: '搜索知识卡...',
                 prefixIcon: Icon(Icons.search_rounded, color: colors.textTertiary),
                 filled: true, fillColor: colors.surface,
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.lg), borderSide: BorderSide.none),
@@ -72,7 +72,7 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
             ),
             const SizedBox(height: AppSpacing.md),
 
-            // ���� ������� ����
+            // ── 资料入口 ──
             sources.when(
               data: (items) => InkWell(
                 onTap: () => context.push('/plan/study/knowledge/sources'),
@@ -83,7 +83,7 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
                     children: [
                       Icon(Icons.library_books_outlined, size: 16, color: colors.study),
                       const SizedBox(width: AppSpacing.sm),
-                      Text('�������Ͽ� �� ${items.length} ������', style: AppTextStyles.caption.copyWith(color: colors.study, fontWeight: FontWeight.w600)),
+                      Text('本地资料库 · ${items.length} 份资料', style: AppTextStyles.caption.copyWith(color: colors.study, fontWeight: FontWeight.w600)),
                       const Spacer(),
                       Icon(Icons.chevron_right_rounded, size: 16, color: colors.textTertiary),
                     ],
@@ -95,11 +95,11 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
             ),
             const SizedBox(height: AppSpacing.sm),
 
-            // ���� ״̬���� Chips ����
+            // ── 状态过滤 Chips ──
             _buildStatusFilterChips(colors),
             const SizedBox(height: AppSpacing.md),
 
-            // ���� ��Ƭ�б� ����
+            // ── 卡片列表 ──
             _statusFilter == 'archived'
                 ? archivedCards.when(
                     data: (items) => _buildCardList(items, colors, isArchived: true),
@@ -130,15 +130,15 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _statusChip('ȫ��', 'all', colors),
+          _statusChip('全部', 'all', colors),
           const SizedBox(width: AppSpacing.sm),
-          _statusChip('����ϰ', 'due', colors),
+          _statusChip('待复习', 'due', colors),
           const SizedBox(width: AppSpacing.sm),
-          _statusChip('����', 'weak', colors),
+          _statusChip('薄弱', 'weak', colors),
           const SizedBox(width: AppSpacing.sm),
-          _statusChip('������', 'mastered', colors),
+          _statusChip('已掌握', 'mastered', colors),
           const SizedBox(width: AppSpacing.sm),
-          _statusChip('�ѹ鵵', 'archived', colors),
+          _statusChip('已归档', 'archived', colors),
         ],
       ),
     );
@@ -192,8 +192,8 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
     if (cards.isEmpty) {
       return EmptyStateWidget(
         icon: isArchived ? Icons.inventory_2_outlined : Icons.style_outlined,
-        title: isArchived ? 'û�й鵵��Ƭ' : '��û��֪ʶ��',
-        subtitle: isArchived ? '�鵵�Ŀ�Ƭ�����������' : '�ӵ������Ͽ�ʼ��AI ���Զ�����֪ʶ����',
+        title: isArchived ? '没有归档卡片' : '还没有知识卡',
+        subtitle: isArchived ? '归档的卡片会出现在这里' : '从导入资料开始，AI 会自动生成知识卡。',
         accentColor: colors.study,
       );
     }
@@ -201,7 +201,7 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('�� ${cards.length} ��', style: AppTextStyles.caption.copyWith(color: colors.textSecondary)),
+        Text('共 ${cards.length} 张', style: AppTextStyles.caption.copyWith(color: colors.textSecondary)),
         const SizedBox(height: AppSpacing.sm),
         ListView.builder(
           shrinkWrap: true,
@@ -225,7 +225,7 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
             child: Center(
               child: TextButton(
                 onPressed: () => setState(() => _pageLimit += 30),
-                child: Text('���ظ���', style: TextStyle(color: colors.study)),
+                child: Text('加载更多', style: TextStyle(color: colors.study)),
               ),
             ),
           ),
@@ -245,12 +245,12 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
           children: [
             ListTile(
               leading: Icon(Icons.edit_outlined, color: colors.study),
-              title: const Text('�༭'),
+              title: const Text('编辑'),
               onTap: () { Navigator.pop(ctx); context.push('/plan/study/knowledge/edit/${card.id}'); },
             ),
             ListTile(
               leading: Icon(isArchived ? Icons.restore_rounded : Icons.archive_outlined, color: colors.warning),
-              title: Text(isArchived ? '�ָ�' : '�鵵'),
+              title: Text(isArchived ? '恢复' : '归档'),
               onTap: () { Navigator.pop(ctx); isArchived ? _restoreCard(card) : _archiveCard(card); },
             ),
           ],
@@ -273,16 +273,16 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
             Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: AppSpacing.md), decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(2)))),
             Text(card.title, style: AppTextStyles.cardTitle.copyWith(color: colors.textPrimary)),
             const SizedBox(height: AppSpacing.md),
-            Text('����', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
+            Text('问题', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: AppSpacing.xs),
             Text(card.question, style: AppTextStyles.body.copyWith(color: colors.textPrimary)),
             const SizedBox(height: AppSpacing.md),
-            Text('��', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
+            Text('答案', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: AppSpacing.xs),
             Text(card.answer, style: AppTextStyles.body.copyWith(color: colors.textPrimary)),
             if (card.explanation != null && card.explanation!.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.md),
-              Text('����', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
+              Text('解释', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
               const SizedBox(height: AppSpacing.xs),
               Text(card.explanation!, style: AppTextStyles.body.copyWith(color: colors.textPrimary)),
             ],
@@ -298,11 +298,11 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
       builder: (ctx) => AlertDialog(
         backgroundColor: context.growthColors.card,
         surfaceTintColor: context.growthColors.card,
-        title: const Text('�鵵֪ʶ��'),
-        content: Text('ȷ��Ҫ�鵵��${card.title}����'),
+        title: const Text('归档知识卡'),
+        content: Text('确定要归档「${card.title}」吗？'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('ȡ��')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: context.growthColors.danger), child: const Text('�鵵')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: context.growthColors.danger), child: const Text('归档')),
         ],
       ),
     );
@@ -311,7 +311,7 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(archivedKnowledgeCardsProvider);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('֪ʶ���ѹ鵵')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('知识卡已归档')));
   }
 
   Future<void> _restoreCard(KnowledgeCard card) async {
@@ -319,6 +319,6 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(archivedKnowledgeCardsProvider);
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('֪ʶ���ѻָ�')));
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('知识卡已恢复')));
   }
 }
