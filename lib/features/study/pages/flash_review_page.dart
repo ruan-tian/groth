@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -89,6 +89,13 @@ class _FlashReviewPageState extends ConsumerState<FlashReviewPage>
                 case _MoreAction.onboarding:
                   context.push('/plan/study/knowledge/onboarding');
                   break;
+                case _MoreAction.reviewAll:
+                  // Navigate to review with all cards
+                  context.push('/plan/study/knowledge/review');
+                  break;
+                case _MoreAction.sources:
+                  context.push('/plan/study/knowledge/sources');
+                  break;
               }
             },
             itemBuilder: (context) => const [
@@ -119,6 +126,26 @@ class _FlashReviewPageState extends ConsumerState<FlashReviewPage>
                     Icon(Icons.help_outline_rounded, size: 20),
                     SizedBox(width: 10),
                     Text('使用引导'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: _MoreAction.reviewAll,
+                child: Row(
+                  children: [
+                    Icon(Icons.play_arrow_rounded, size: 20),
+                    SizedBox(width: 10),
+                    Text('全部复习'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: _MoreAction.sources,
+                child: Row(
+                  children: [
+                    Icon(Icons.library_books_outlined, size: 20),
+                    SizedBox(width: 10),
+                    Text('本地资料库'),
                   ],
                 ),
               ),
@@ -153,4 +180,4 @@ class _FlashReviewPageState extends ConsumerState<FlashReviewPage>
   }
 }
 
-enum _MoreAction { export, archive, onboarding }
+enum _MoreAction { export, archive, onboarding, reviewAll, sources }

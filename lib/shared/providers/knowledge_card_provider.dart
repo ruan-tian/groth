@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
 import '../../core/repositories/knowledge_card_repository.dart';
@@ -350,6 +350,15 @@ final todayReviewProgressProvider = FutureProvider<TodayReviewProgress>((ref) as
     c.lastReviewedAt != null && c.lastReviewedAt! >= startOfDay,
   ).length;
   return TodayReviewProgress(reviewed: reviewedToday, total: dueCards);
+});
+
+/// 今日待复习卡片预览（前 3 张，按 dueAt 排序）
+final dueCardsPreviewProvider = FutureProvider<List<KnowledgeCard>>((ref) async {
+  final cards = await ref.watch(knowledgeCardsProvider.future);
+  final nowMs = DateTime.now().millisecondsSinceEpoch;
+  final due = cards.where((c) => !c.archived && c.dueAt <= nowMs).toList()
+    ..sort((a, b) => a.dueAt.compareTo(b.dueAt));
+  return due.take(3).toList();
 });
 
 /// AI 推荐复习卡 Provider

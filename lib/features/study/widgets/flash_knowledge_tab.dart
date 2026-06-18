@@ -1,3 +1,5 @@
+﻿import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,9 +10,9 @@ import '../../../shared/providers/knowledge_card_provider.dart';
 import '../../../shared/providers/knowledge_source_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
-import '../utils/knowledge_card_assets.dart';
+import '../widgets/flash_review_widgets.dart';
 
-/// 知识 Tab —— 原材料仓库，弱化
+/// ֪ʶ Tab ���� ��Ƭ����
 class FlashKnowledgeTab extends ConsumerStatefulWidget {
   const FlashKnowledgeTab({super.key});
 
@@ -19,93 +21,133 @@ class FlashKnowledgeTab extends ConsumerStatefulWidget {
 }
 
 class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
-  String _query = '';
-  String? _selectedGoalFilter;
-  bool _showArchived = false;
+  String _debounceQuery = '';
+  Timer? _debounceTimer;
+  String _statusFilter = 'all';
+  int _pageLimit = 30;
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      setState(() {
+        _debounceQuery = value;
+        _pageLimit = 30;
+      });
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     final cards = ref.watch(knowledgeCardsProvider);
     final archivedCards = ref.watch(archivedKnowledgeCardsProvider);
-    final sources = ref.watch(knowledgeSourcesWithProgressProvider);
+    final sources = ref.watch(knowledgeSourcesProvider);
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(knowledgeCardsProvider);
-        ref.invalidate(archivedKnowledgeCardsProvider);
-        ref.invalidate(knowledgeSourcesWithProgressProvider);
-      },
-      child: ListView(
-        padding: const EdgeInsets.all(AppSpacing.lg),
-        children: [
-          // ── 搜索栏 ──
-          TextField(
-            onChanged: (value) => setState(() => _query = value),
-            decoration: InputDecoration(
-              hintText: '搜索知识卡...',
-              prefixIcon: Icon(Icons.search_rounded, color: colors.textTertiary),
-              filled: true, fillColor: colors.surface,
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.lg), borderSide: BorderSide.none),
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(knowledgeCardsProvider);
+          ref.invalidate(archivedKnowledgeCardsProvider);
+          ref.invalidate(knowledgeSourcesProvider);
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          children: [
+            // ���� ������ ����
+            TextField(
+              onChanged: _onSearchChanged,
+              decoration: InputDecoration(
+                hintText: '����֪ʶ��...',
+                prefixIcon: Icon(Icons.search_rounded, color: colors.textTertiary),
+                filled: true, fillColor: colors.surface,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.lg), borderSide: BorderSide.none),
+              ),
             ),
-          ),
-          const SizedBox(height: AppSpacing.md),
+            const SizedBox(height: AppSpacing.md),
 
-          // ── 分类过滤 Chips ──
-          _buildFilterChips(colors),
-          const SizedBox(height: AppSpacing.md),
-
-          // ── 卡片列表 ──
-          _showArchived
-              ? archivedCards.when(
-                  data: (items) => _buildCardList(items, colors, isArchived: true),
-                  loading: () => const CardSkeleton(height: 220),
-                  error: (_, _) => const ErrorRetryWidget(),
-                )
-              : cards.when(
-                  data: (items) => _buildCardList(_filterCards(items), colors),
-                  loading: () => const CardSkeleton(height: 220),
-                  error: (_, _) => const ErrorRetryWidget(),
+            // ���� ������� ����
+            sources.when(
+              data: (items) => InkWell(
+                onTap: () => context.push('/plan/study/knowledge/sources'),
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
+                  child: Row(
+                    children: [
+                      Icon(Icons.library_books_outlined, size: 16, color: colors.study),
+                      const SizedBox(width: AppSpacing.sm),
+                      Text('�������Ͽ� �� ${items.length} ������', style: AppTextStyles.caption.copyWith(color: colors.study, fontWeight: FontWeight.w600)),
+                      const Spacer(),
+                      Icon(Icons.chevron_right_rounded, size: 16, color: colors.textTertiary),
+                    ],
+                  ),
                 ),
-          const SizedBox(height: AppSpacing.md),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+            ),
+            const SizedBox(height: AppSpacing.sm),
 
-          // ── 折叠区：原始资料 ──
-          _buildSourcesSection(colors, sources),
-          const SizedBox(height: AppSpacing.md),
+            // ���� ״̬���� Chips ����
+            _buildStatusFilterChips(colors),
+            const SizedBox(height: AppSpacing.md),
 
-          // ── 底部操作栏 ──
-          _buildBottomActions(colors),
-          const SizedBox(height: AppSpacing.xxl),
-        ],
+            // ���� ��Ƭ�б� ����
+            _statusFilter == 'archived'
+                ? archivedCards.when(
+                    data: (items) => _buildCardList(items, colors, isArchived: true),
+                    loading: () => const CardSkeleton(height: 220),
+                    error: (_, _) => const ErrorRetryWidget(),
+                  )
+                : cards.when(
+                    data: (items) => _buildCardList(_filterCards(items), colors),
+                    loading: () => const CardSkeleton(height: 220),
+                    error: (_, _) => const ErrorRetryWidget(),
+                  ),
+            const SizedBox(height: AppSpacing.xxl),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/plan/study/knowledge/add'),
+        backgroundColor: colors.study,
+        foregroundColor: colors.textOnAccent,
+        child: const Icon(Icons.add_card_rounded),
       ),
     );
   }
 
-  Widget _buildFilterChips(AppThemeColors colors) {
+  Widget _buildStatusFilterChips(AppThemeColors colors) {
     return SizedBox(
       height: 40,
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _chip('全部', null, colors),
+          _statusChip('ȫ��', 'all', colors),
           const SizedBox(width: AppSpacing.sm),
-          for (final goal in KnowledgeCardAssets.goalTemplates) ...[
-            _chip(goal.name, goal.key, colors),
-            const SizedBox(width: AppSpacing.sm),
-          ],
-          _chip('归档箱', '__archived__', colors),
+          _statusChip('����ϰ', 'due', colors),
+          const SizedBox(width: AppSpacing.sm),
+          _statusChip('����', 'weak', colors),
+          const SizedBox(width: AppSpacing.sm),
+          _statusChip('������', 'mastered', colors),
+          const SizedBox(width: AppSpacing.sm),
+          _statusChip('�ѹ鵵', 'archived', colors),
         ],
       ),
     );
   }
 
-  Widget _chip(String label, String? key, AppThemeColors colors) {
-    final selected = key == '__archived__' ? _showArchived : _selectedGoalFilter == key && !_showArchived;
+  Widget _statusChip(String label, String key, AppThemeColors colors) {
+    final selected = _statusFilter == key;
     return GestureDetector(
-      onTap: () => setState(() {
-        if (key == '__archived__') { _showArchived = true; _selectedGoalFilter = null; }
-        else { _showArchived = false; _selectedGoalFilter = key; }
-      }),
+      onTap: () => setState(() { _statusFilter = key; _pageLimit = 30; }),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
         decoration: BoxDecoration(
@@ -119,155 +161,102 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
   }
 
   List<KnowledgeCard> _filterCards(List<KnowledgeCard> cards) {
-    var filtered = cards;
-    if (_selectedGoalFilter != null) filtered = filtered.where((c) => c.goalKey == _selectedGoalFilter).toList();
-    if (_query.isNotEmpty) {
-      final q = _query.toLowerCase();
-      filtered = filtered.where((c) => c.title.toLowerCase().contains(q) || c.question.toLowerCase().contains(q) || c.answer.toLowerCase().contains(q)).toList();
+    final nowMs = DateTime.now().millisecondsSinceEpoch;
+    var filtered = cards.where((c) => !c.archived).toList();
+
+    switch (_statusFilter) {
+      case 'due':
+        filtered = filtered.where((c) => c.dueAt <= nowMs).toList();
+        break;
+      case 'weak':
+        filtered = filtered.where(isWeakKnowledgeCard).toList();
+        break;
+      case 'mastered':
+        filtered = filtered.where(isMasteredKnowledgeCard).toList();
+        break;
     }
-    return filtered;
+
+    if (_debounceQuery.isNotEmpty) {
+      final q = _debounceQuery.toLowerCase();
+      filtered = filtered.where((c) =>
+        c.title.toLowerCase().contains(q) ||
+        c.question.toLowerCase().contains(q) ||
+        c.answer.toLowerCase().contains(q)
+      ).toList();
+    }
+
+    return filtered.take(_pageLimit).toList();
   }
 
   Widget _buildCardList(List<KnowledgeCard> cards, AppThemeColors colors, {bool isArchived = false}) {
     if (cards.isEmpty) {
       return EmptyStateWidget(
         icon: isArchived ? Icons.inventory_2_outlined : Icons.style_outlined,
-        title: isArchived ? '没有归档卡片' : '还没有知识卡',
-        subtitle: isArchived ? '归档的卡片会出现在这里' : '从导入资料开始，AI 会自动生成知识卡。',
+        title: isArchived ? 'û�й鵵��Ƭ' : '��û��֪ʶ��',
+        subtitle: isArchived ? '�鵵�Ŀ�Ƭ�����������' : '�ӵ������Ͽ�ʼ��AI ���Զ�����֪ʶ����',
         accentColor: colors.study,
       );
     }
 
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(children: [Text('共 ${cards.length} 张', style: AppTextStyles.caption.copyWith(color: colors.textSecondary))]),
+        Text('�� ${cards.length} ��', style: AppTextStyles.caption.copyWith(color: colors.textSecondary)),
         const SizedBox(height: AppSpacing.sm),
-        for (final card in cards)
+        ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: cards.length,
+          itemBuilder: (context, index) {
+            final card = cards[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: KnowledgeCardSlimTile(
+                card: card,
+                onTap: () => _showPreview(card),
+                onLongPress: () => _showCardActions(card, isArchived),
+              ),
+            );
+          },
+        ),
+        if (cards.length >= _pageLimit)
           Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: _KnowledgeCardTile(
-              card: card,
-              isArchived: isArchived,
-              onEdit: isArchived ? null : () => context.push('/plan/study/knowledge/edit/${card.id}'),
-              onArchive: isArchived ? () => _restoreCard(card) : () => _archiveCard(card),
-              onPreview: () => _showPreview(card),
+            padding: const EdgeInsets.only(top: AppSpacing.md),
+            child: Center(
+              child: TextButton(
+                onPressed: () => setState(() => _pageLimit += 30),
+                child: Text('���ظ���', style: TextStyle(color: colors.study)),
+              ),
             ),
           ),
       ],
     );
   }
 
-  Widget _buildSourcesSection(AppThemeColors colors, AsyncValue<List<KnowledgeSourceWithProgress>> sources) {
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
-        border: Border.all(color: colors.border),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: AppSpacing.lg),
-          childrenPadding: const EdgeInsets.fromLTRB(AppSpacing.lg, 0, AppSpacing.lg, AppSpacing.lg),
-          leading: Icon(Icons.library_books_rounded, color: colors.study),
-          title: Text('原始资料', style: AppTextStyles.cardTitle.copyWith(color: colors.textPrimary)),
-          subtitle: sources.when(
-            data: (items) => Text('${items.length} 份资料', style: AppTextStyles.caption),
-            loading: () => const Text('加载中...'),
-            error: (_, _) => const Text('加载失败'),
-          ),
+  void _showCardActions(KnowledgeCard card, bool isArchived) {
+    final colors = context.growthColors;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: colors.card,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(AppRadius.xl))),
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            sources.when(
-              data: (items) {
-                if (items.isEmpty) return Padding(padding: const EdgeInsets.symmetric(vertical: AppSpacing.lg), child: Text('还没有导入资料', style: TextStyle(color: colors.textSecondary)));
-                return Column(
-                  children: [
-                    for (final item in items)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: Icon(Icons.article_outlined, color: colors.study, size: 20),
-                        title: Text(item.source.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        subtitle: Text('${item.progress.convertedChunkCount}/${item.progress.chunkCount} 片段已转卡', style: AppTextStyles.caption),
-                        trailing: Icon(Icons.chevron_right_rounded, color: colors.textTertiary),
-                        onTap: () => context.push('/plan/study/knowledge/sources/${item.source.id}'),
-                      ),
-                  ],
-                );
-              },
-              loading: () => const Padding(padding: EdgeInsets.all(AppSpacing.lg), child: Center(child: CircularProgressIndicator())),
-              error: (_, _) => const ErrorRetryWidget(),
+            ListTile(
+              leading: Icon(Icons.edit_outlined, color: colors.study),
+              title: const Text('�༭'),
+              onTap: () { Navigator.pop(ctx); context.push('/plan/study/knowledge/edit/${card.id}'); },
             ),
-            const SizedBox(height: AppSpacing.sm),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => context.push('/plan/study/knowledge/sources'),
-                icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                label: const Text('查看全部资料'),
-              ),
+            ListTile(
+              leading: Icon(isArchived ? Icons.restore_rounded : Icons.archive_outlined, color: colors.warning),
+              title: Text(isArchived ? '�ָ�' : '�鵵'),
+              onTap: () { Navigator.pop(ctx); isArchived ? _restoreCard(card) : _archiveCard(card); },
             ),
           ],
         ),
       ),
     );
-  }
-
-  Widget _buildBottomActions(AppThemeColors colors) {
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('快捷操作', style: AppTextStyles.sectionTitle.copyWith(color: colors.textPrimary)),
-          const SizedBox(height: AppSpacing.md),
-          Wrap(
-            spacing: AppSpacing.sm,
-            runSpacing: AppSpacing.sm,
-            children: [
-              _ActionChip(icon: Icons.add_card_rounded, label: '手动添加', onTap: () => context.push('/plan/study/knowledge/add'), color: colors.study),
-              _ActionChip(icon: Icons.upload_file_rounded, label: '批量导入', onTap: () => context.push('/plan/study/knowledge/import'), color: colors.study),
-              _ActionChip(icon: Icons.file_download_outlined, label: '导出', onTap: () => context.push('/plan/study/knowledge/export'), color: colors.study),
-              _ActionChip(icon: Icons.dashboard_customize_rounded, label: '自定义模板', onTap: () => context.push('/plan/study/knowledge/templates'), color: colors.study),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _archiveCard(KnowledgeCard card) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.growthColors.card,
-        surfaceTintColor: context.growthColors.card,
-        title: const Text('归档知识卡'),
-        content: Text('确定要归档「${card.title}」吗？'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: context.growthColors.danger), child: const Text('归档')),
-        ],
-      ),
-    );
-    if (confirmed != true) return;
-    await ref.read(knowledgeCardRepositoryProvider).archiveCard(card.id);
-    ref.invalidate(knowledgeCardsProvider);
-    ref.invalidate(archivedKnowledgeCardsProvider);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('知识卡已归档')));
-  }
-
-  Future<void> _restoreCard(KnowledgeCard card) async {
-    await ref.read(knowledgeCardRepositoryProvider).restoreCard(card.id);
-    ref.invalidate(knowledgeCardsProvider);
-    ref.invalidate(archivedKnowledgeCardsProvider);
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('知识卡已恢复')));
   }
 
   void _showPreview(KnowledgeCard card) {
@@ -284,16 +273,16 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
             Center(child: Container(width: 40, height: 4, margin: const EdgeInsets.only(bottom: AppSpacing.md), decoration: BoxDecoration(color: colors.border, borderRadius: BorderRadius.circular(2)))),
             Text(card.title, style: AppTextStyles.cardTitle.copyWith(color: colors.textPrimary)),
             const SizedBox(height: AppSpacing.md),
-            Text('问题', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
+            Text('����', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: AppSpacing.xs),
             Text(card.question, style: AppTextStyles.body.copyWith(color: colors.textPrimary)),
             const SizedBox(height: AppSpacing.md),
-            Text('答案', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
+            Text('��', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
             const SizedBox(height: AppSpacing.xs),
             Text(card.answer, style: AppTextStyles.body.copyWith(color: colors.textPrimary)),
             if (card.explanation != null && card.explanation!.isNotEmpty) ...[
               const SizedBox(height: AppSpacing.md),
-              Text('解释', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
+              Text('����', style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600)),
               const SizedBox(height: AppSpacing.xs),
               Text(card.explanation!, style: AppTextStyles.body.copyWith(color: colors.textPrimary)),
             ],
@@ -302,140 +291,34 @@ class _FlashKnowledgeTabState extends ConsumerState<FlashKnowledgeTab> {
       ),
     );
   }
-}
 
-// =============================================================================
-// Knowledge Card Tile
-// =============================================================================
-
-class _KnowledgeCardTile extends StatelessWidget {
-  const _KnowledgeCardTile({required this.card, required this.isArchived, required this.onEdit, required this.onArchive, required this.onPreview});
-  final KnowledgeCard card; final bool isArchived; final VoidCallback? onEdit; final VoidCallback? onArchive; final VoidCallback onPreview;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.growthColors;
-    final nowMs = DateTime.now().millisecondsSinceEpoch;
-    final isDue = card.dueAt <= nowMs;
-    final statusColor = isMasteredKnowledgeCard(card) ? colors.success : isWeakKnowledgeCard(card) ? colors.warning : colors.study;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: colors.border),
-        boxShadow: [BoxShadow(color: colors.shadow.withValues(alpha: 0.05), blurRadius: 12, offset: const Offset(0, 6))],
-      ),
-      child: InkWell(
-        onTap: onPreview,
-        borderRadius: BorderRadius.circular(AppRadius.xl),
-        child: Padding(
-          padding: const EdgeInsets.all(AppSpacing.md),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(card.title, style: AppTextStyles.body.copyWith(color: colors.textPrimary, fontWeight: FontWeight.w700)),
-              const SizedBox(height: AppSpacing.xs),
-              Text(card.question, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: colors.textSecondary, height: 1.4)),
-              const SizedBox(height: AppSpacing.sm),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: LinearProgressIndicator(value: card.masteryLevel / 5, minHeight: 4, backgroundColor: colors.border, valueColor: AlwaysStoppedAnimation(statusColor)),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Wrap(
-                spacing: AppSpacing.sm, runSpacing: AppSpacing.xs,
-                children: [
-                  _MetaPill(icon: isDue ? Icons.schedule_rounded : Icons.event_available_rounded, label: isDue ? '待复习' : '未到期', tint: isDue ? colors.warning : colors.success),
-                  _MetaPill(icon: Icons.psychology_rounded, label: card.reviewCount == 0 ? '未复习' : '掌握 ${card.masteryLevel}/5', tint: statusColor),
-                  _MetaPill(icon: Icons.replay_rounded, label: '复习 ${card.reviewCount} 次', tint: colors.textTertiary),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Row(
-                children: [
-                  if (onEdit != null) _InlineAction(icon: Icons.edit_outlined, label: '编辑', onTap: onEdit!),
-                  const SizedBox(width: AppSpacing.sm),
-                  _InlineAction(icon: isArchived ? Icons.restore_rounded : Icons.archive_outlined, label: isArchived ? '恢复' : '归档', onTap: onArchive),
-                ],
-              ),
-            ],
-          ),
-        ),
+  Future<void> _archiveCard(KnowledgeCard card) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.growthColors.card,
+        surfaceTintColor: context.growthColors.card,
+        title: const Text('�鵵֪ʶ��'),
+        content: Text('ȷ��Ҫ�鵵��${card.title}����'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('ȡ��')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), style: TextButton.styleFrom(foregroundColor: context.growthColors.danger), child: const Text('�鵵')),
+        ],
       ),
     );
+    if (confirmed != true) return;
+    await ref.read(knowledgeCardRepositoryProvider).archiveCard(card.id);
+    ref.invalidate(knowledgeCardsProvider);
+    ref.invalidate(archivedKnowledgeCardsProvider);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('֪ʶ���ѹ鵵')));
   }
-}
 
-class _MetaPill extends StatelessWidget {
-  const _MetaPill({required this.icon, required this.label, this.tint});
-  final IconData icon; final String label; final Color? tint;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.growthColors;
-    final chipTint = tint ?? colors.study;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 4),
-      decoration: BoxDecoration(
-        color: chipTint.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(99),
-        border: Border.all(color: chipTint.withValues(alpha: 0.15)),
-      ),
-      child: Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 13, color: chipTint),
-        const SizedBox(width: 4),
-        Text(label, style: AppTextStyles.caption.copyWith(color: colors.textSecondary, fontWeight: FontWeight.w600, fontSize: 12)),
-      ]),
-    );
-  }
-}
-
-class _InlineAction extends StatelessWidget {
-  const _InlineAction({required this.icon, required this.label, required this.onTap});
-  final IconData icon; final String label; final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.growthColors;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(99),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: 6),
-        decoration: BoxDecoration(color: colors.surface, borderRadius: BorderRadius.circular(99), border: Border.all(color: colors.border)),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 14, color: colors.study),
-          const SizedBox(width: 6),
-          Text(label, style: AppTextStyles.caption.copyWith(color: colors.textPrimary, fontWeight: FontWeight.w700)),
-        ]),
-      ),
-    );
-  }
-}
-
-class _ActionChip extends StatelessWidget {
-  const _ActionChip({required this.icon, required this.label, required this.onTap, required this.color});
-  final IconData icon; final String label; final VoidCallback onTap; final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(AppRadius.md),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.sm),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
-        ),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 6),
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w700, fontSize: 13)),
-        ]),
-      ),
-    );
+  Future<void> _restoreCard(KnowledgeCard card) async {
+    await ref.read(knowledgeCardRepositoryProvider).restoreCard(card.id);
+    ref.invalidate(knowledgeCardsProvider);
+    ref.invalidate(archivedKnowledgeCardsProvider);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('֪ʶ���ѻָ�')));
   }
 }

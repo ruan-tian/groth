@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
@@ -94,7 +94,7 @@ JSON 格式：
       (sum, result) => sum + result.chunk.tokenEstimate,
     );
     final buffer = StringBuffer()
-      ..writeln('请基于下面 ${selected.length} 个资料片段生成 3-8 张知识卡片草稿。')
+      ..writeln('请基于下面 ${selected.length} 个资料片段生成 ${_cardCountRange(selected.length)} 张知识卡片草稿。')
       ..writeln(
         '生成主题：${topicText == null || topicText.isEmpty ? '围绕片段共同主题' : topicText}',
       )
@@ -295,15 +295,31 @@ JSON 格式：
   }
 
   List<KnowledgeChunkSearchResult> _selectedResults(
-    List<KnowledgeChunkSearchResult> results,
-  ) {
+    List<KnowledgeChunkSearchResult> results, {
+    int maxChunks = 50,
+    int maxInputTokens = 15000,
+  }) {
     final seenChunks = <int>{};
     final selected = <KnowledgeChunkSearchResult>[];
+    var totalTokens = 0;
     for (final result in results) {
-      if (seenChunks.add(result.chunk.id)) selected.add(result);
-      if (selected.length >= 5) break;
+      if (!seenChunks.add(result.chunk.id)) continue;
+      if (selected.length >= maxChunks) break;
+      if (totalTokens + result.chunk.tokenEstimate > maxInputTokens &&
+          selected.isNotEmpty) {
+        break;
+      }
+      selected.add(result);
+      totalTokens += result.chunk.tokenEstimate;
     }
     return selected;
+  }
+
+  static String _cardCountRange(int chunkCount) {
+    if (chunkCount <= 1) return '1-5';
+    if (chunkCount <= 5) return '3-8';
+    if (chunkCount <= 12) return '5-15';
+    return '8-25';
   }
 
   String? _nullable(String? value) {
@@ -567,7 +583,7 @@ class KnowledgeCardAiParser {
         .map(_parseCard)
         .where((draft) => draft != null)
         .cast<KnowledgeCardAiDraft>()
-        .take(8)
+        .take(25)
         .toList(growable: false);
   }
 

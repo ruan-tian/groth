@@ -1,9 +1,8 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
@@ -14,7 +13,7 @@ import '../utils/knowledge_card_assets.dart';
 import '../widgets/flash_review_widgets.dart';
 import '../widgets/knowledge_ai_qa_sheet.dart';
 
-/// 复习 Tab —— 用户 90% 时间在这里
+/// ��ϰ Tab ���� �û� 90% ʱ��������
 class FlashReviewTab extends ConsumerStatefulWidget {
   const FlashReviewTab({super.key});
 
@@ -33,6 +32,7 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
   List<KnowledgeCard> _queue = [];
   final List<ReviewSessionResult> _sessionResults = [];
   String? _selectedGoalFilter;
+  bool _showGoalFilter = false;
 
   @override
   Widget build(BuildContext context) {
@@ -56,10 +56,11 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
   // ---------------------------------------------------------------------------
 
   Widget _buildListMode() {
+    final colors = context.growthColors;
     final stats = ref.watch(knowledgeReviewStatsProvider);
     final todayProgress = ref.watch(todayReviewProgressProvider);
     final recommended = ref.watch(aiRecommendedCardsProvider);
-    final cards = ref.watch(knowledgeCardsProvider);
+    final duePreview = ref.watch(dueCardsPreviewProvider);
     final summaries = ref.watch(filteredKnowledgeGoalSummariesProvider);
 
     return RefreshIndicator(
@@ -69,85 +70,75 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
         ref.invalidate(todayReviewProgressProvider);
         ref.invalidate(aiRecommendedCardsProvider);
         ref.invalidate(knowledgeGoalSummariesProvider);
+        ref.invalidate(dueCardsPreviewProvider);
       },
       child: ListView(
         padding: const EdgeInsets.all(AppSpacing.lg),
         children: [
-          // ── 今日状态 ──
+          // ���� ���ո�ϰ���� ����
           todayProgress.when(
             data: (progress) => stats.when(
-              data: (s) => TodayReviewCard(
-                dueCount: progress.total,
-                reviewedToday: progress.reviewed,
-                averageMastery: s.averageMastery,
+              data: (s) => recommended.when(
+                data: (recItems) => TodayHeroCard(
+                  dueCount: progress.total,
+                  weakCount: recItems.where(isWeakKnowledgeCard).length,
+                  reviewedToday: progress.reviewed,
+                  totalDue: progress.total + progress.reviewed,
+                  averageMastery: s.averageMastery,
+                  stats: s,
+                  onStartReview: () {
+                    final allCards = ref.read(knowledgeCardsProvider).valueOrNull ?? [];
+                    final due = allCards.where((c) => c.dueAt <= DateTime.now().millisecondsSinceEpoch).toList();
+                    _startReview(due, dueOnly: true);
+                  },
+                  onStartWeak: () {
+                    final allCards = ref.read(knowledgeCardsProvider).valueOrNull ?? [];
+                    final weak = allCards.where(isWeakKnowledgeCard).toList();
+                    _startReview(weak, dueOnly: false);
+                  },
+                ),
+                loading: () => const CardSkeleton(height: 200),
+                error: (_, _) => const SizedBox.shrink(),
               ),
-              loading: () => const CardSkeleton(height: 120),
+              loading: () => const CardSkeleton(height: 200),
               error: (_, _) => const SizedBox.shrink(),
             ),
-            loading: () => const CardSkeleton(height: 120),
+            loading: () => const CardSkeleton(height: 200),
             error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(height: AppSpacing.md),
 
-          // ── AI 推荐 ──
-          recommended.when(
-            data: (items) => AiRecommendSection(
-              cards: items,
-              onCardTap: (card) => _startSingleCardReview(card),
-            ),
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // ── 目标过滤 Chips ──
+          // ���� Ŀ��ɸѡ����ѡչ��������
           summaries.when(
-            data: (items) => _GoalFilterChips(
-              selectedGoal: _selectedGoalFilter,
-              onSelected: (key) => setState(() => _selectedGoalFilter = key),
-            ),
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // ── 快捷操作按钮 ──
-          cards.when(
-            data: (allCards) {
-              final filtered = _filterCards(allCards);
-              final due = filtered.where((c) => c.dueAt <= DateTime.now().millisecondsSinceEpoch).toList();
-              return _QuickReviewActions(
-                dueCount: due.length,
-                totalCount: filtered.length,
-                onReviewDue: due.isEmpty ? null : () => _startReview(filtered, dueOnly: true),
-                onReviewAll: filtered.isEmpty ? null : () => _startReview(filtered, dueOnly: false),
-                onWeakReview: () => context.push('/plan/study/knowledge/review?weak=1'),
-              );
-            },
-            loading: () => const CardSkeleton(height: 100),
-            error: (_, _) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: AppSpacing.md),
-
-          // ── 学习状态卡 ──
-          stats.when(
-            data: (s) => Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
-              decoration: BoxDecoration(
-                color: context.growthColors.card.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(AppRadius.xxl),
-                border: Border.all(color: context.growthColors.border),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            data: (items) => GestureDetector(
+              onTap: () => setState(() => _showGoalFilter = !_showGoalFilter),
+              child: Row(
                 children: [
-                  Text('掌握分布', style: AppTextStyles.sectionTitle.copyWith(color: context.growthColors.textPrimary)),
-                  const SizedBox(height: AppSpacing.md),
-                  MasteryProgressBar(stats: s),
+                  Text('��Ŀ��ɸѡ', style: AppTextStyles.caption.copyWith(color: colors.textTertiary)),
+                  Icon(_showGoalFilter ? Icons.expand_less : Icons.expand_more, size: 16, color: colors.textTertiary),
                 ],
               ),
             ),
-            loading: () => const CardSkeleton(height: 120),
+            loading: () => const SizedBox.shrink(),
+            error: (_, _) => const SizedBox.shrink(),
+          ),
+          if (_showGoalFilter) ...[
+            const SizedBox(height: AppSpacing.sm),
+            summaries.when(
+              data: (items) => _GoalFilterChips(
+                selectedGoal: _selectedGoalFilter,
+                onSelected: (key) => setState(() => _selectedGoalFilter = key),
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+            ),
+          ],
+          const SizedBox(height: AppSpacing.md),
+
+          // ���� ���ն���Ԥ�� ����
+          duePreview.when(
+            data: (items) => TodayQueuePreview(cards: items),
+            loading: () => const CardSkeleton(height: 100),
             error: (_, _) => const SizedBox.shrink(),
           ),
           const SizedBox(height: AppSpacing.xxl),
@@ -173,8 +164,8 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
     if (_queue.isEmpty) {
       return EmptyStateWidget(
         icon: Icons.style_outlined,
-        title: '没有卡片',
-        subtitle: '先添加知识卡再开始复习。',
+        title: 'û�п�Ƭ',
+        subtitle: '�����֪ʶ���ٿ�ʼ��ϰ��',
         accentColor: context.growthColors.study,
       );
     }
@@ -219,7 +210,7 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
               child: TextButton.icon(
                 onPressed: () => _showAiQa(card),
                 icon: Icon(Icons.auto_awesome_rounded, size: 16, color: colors.study),
-                label: Text('问 AI', style: TextStyle(color: colors.study, fontSize: 13, fontWeight: FontWeight.w600)),
+                label: Text('�� AI', style: TextStyle(color: colors.study, fontSize: 13, fontWeight: FontWeight.w600)),
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.md), side: BorderSide(color: colors.study.withValues(alpha: 0.3))),
@@ -229,13 +220,13 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
           ] else
             Center(child: FlipButton(onTap: () => setState(() => _showAnswer = true))),
           const SizedBox(height: AppSpacing.sm),
-          Center(child: Text(_showAnswer ? '按 1-4 评价 · 空格翻回' : '按空格翻开答案', style: TextStyle(fontSize: 11, color: colors.textTertiary))),
+          Center(child: Text(_showAnswer ? '�� 1-4 ���� �� �ո񷭻�' : '���ո񷭿���', style: TextStyle(fontSize: 11, color: colors.textTertiary))),
           const SizedBox(height: AppSpacing.lg),
           Center(
             child: TextButton.icon(
               onPressed: () => setState(() => _inReviewMode = false),
               icon: Icon(Icons.arrow_back_rounded, size: 16, color: colors.textTertiary),
-              label: Text('返回列表', style: TextStyle(color: colors.textTertiary, fontSize: 13)),
+              label: Text('�����б�', style: TextStyle(color: colors.textTertiary, fontSize: 13)),
             ),
           ),
           const SizedBox(height: AppSpacing.xxl),
@@ -248,24 +239,6 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
   // Actions
   // ---------------------------------------------------------------------------
 
-  List<KnowledgeCard> _filterCards(List<KnowledgeCard> cards) {
-    if (_selectedGoalFilter == null) return cards;
-    return cards.where((c) => c.goalKey == _selectedGoalFilter).toList();
-  }
-
-  void _startSingleCardReview(KnowledgeCard card) {
-    setState(() {
-      _inReviewMode = true;
-      _queue = [card];
-      _index = 0;
-      _showAnswer = false;
-      _complete = false;
-      _loading = false;
-      _sessionResults.clear();
-      _currentStreak = 0;
-      _bestStreak = 0;
-    });
-  }
 
   Future<void> _startReview(List<KnowledgeCard> allCards, {required bool dueOnly}) async {
     setState(() => _loading = true);
@@ -303,6 +276,7 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
     ref.invalidate(todayReviewProgressProvider);
     ref.invalidate(aiRecommendedCardsProvider);
     ref.invalidate(knowledgeReviewStatsProvider);
+    ref.invalidate(dueCardsPreviewProvider);
 
     if (!mounted) return;
     if (_index >= _queue.length - 1) {
@@ -364,7 +338,7 @@ class _GoalFilterChips extends StatelessWidget {
       child: ListView(
         scrollDirection: Axis.horizontal,
         children: [
-          _FilterChip(label: '全部', selected: selectedGoal == null, onTap: () => onSelected(null), color: colors.study),
+          _FilterChip(label: 'ȫ��', selected: selectedGoal == null, onTap: () => onSelected(null), color: colors.study),
           const SizedBox(width: AppSpacing.sm),
           for (final goal in KnowledgeCardAssets.goalTemplates)
             Padding(
@@ -394,76 +368,6 @@ class _FilterChip extends StatelessWidget {
           border: Border.all(color: selected ? color : colors.border),
         ),
         child: Text(label, style: AppTextStyles.caption.copyWith(color: selected ? Colors.white : colors.textPrimary)),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Quick Review Actions
-// =============================================================================
-
-class _QuickReviewActions extends StatelessWidget {
-  const _QuickReviewActions({required this.dueCount, required this.totalCount, required this.onReviewDue, required this.onReviewAll, required this.onWeakReview});
-  final int dueCount; final int totalCount; final VoidCallback? onReviewDue; final VoidCallback? onReviewAll; final VoidCallback onWeakReview;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.94),
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
-        border: Border.all(color: colors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('快速复习', style: AppTextStyles.sectionTitle.copyWith(color: colors.textPrimary)),
-          const SizedBox(height: AppSpacing.md),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: onReviewDue,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colors.study, foregroundColor: colors.textOnAccent, elevation: 0,
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mlg)),
-                  ),
-                  icon: const Icon(Icons.style_rounded, size: 18),
-                  label: Text('到期复习 $dueCount'),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: onReviewAll,
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(48),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mlg)),
-                  ),
-                  icon: const Icon(Icons.play_arrow_rounded, size: 18),
-                  label: Text('全部复习 $totalCount'),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: onWeakReview,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(44),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.mlg)),
-              ),
-              icon: Icon(Icons.local_fire_department_rounded, size: 18, color: colors.warning),
-              label: Text('薄弱复习', style: TextStyle(color: colors.warning)),
-            ),
-          ),
-        ],
       ),
     );
   }
