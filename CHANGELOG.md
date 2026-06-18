@@ -2,6 +2,15 @@
 
 ## 2026-06-18
 
+### Bug Fixes
+
+- **Database Lock Fix**: Moved `_createPerformanceIndexes()` from `beforeOpen` to background execution
+  - Root cause: 43 `CREATE INDEX` statements blocked database initialization while other providers accessed the database concurrently
+  - Solution: Index creation now runs after first frame via `addPostFrameCallback`
+  - Added `ensureIndexesReady()` method with `Completer` pattern for thread safety
+  - Added `databaseReadyProvider` for critical pages to wait if needed
+  - This prevents "database is locked" errors on app startup
+
 ### Performance Optimizations
 
 - **StatisticsService**: Parallelized 9 sequential DB queries using `Future.wait()` - reduces weekly/monthly stats load from ~9 sequential queries to 1 parallel batch
