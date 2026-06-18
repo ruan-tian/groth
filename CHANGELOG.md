@@ -2,6 +2,13 @@
 
 ## 2026-06-18
 
+### Encoding
+
+- **Unified file encoding**: Fixed 54 .dart files to use UTF-8 without BOM + LF line endings
+  - Removed UTF-8 BOM from 6 files (router.dart, flash_review_page.dart, etc.)
+  - Converted CRLF to LF line endings in 54 files
+  - All files now use standard Dart/Flutter encoding format
+
 ### Bug Fixes
 
 - **Database Lock Fix**: Moved `_createPerformanceIndexes()` from `beforeOpen` to background execution
