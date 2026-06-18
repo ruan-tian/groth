@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
@@ -255,7 +256,7 @@ class AppDatabase extends _$AppDatabase {
       _indexCompleter!.complete();
     } catch (e) {
       // ��������ʧ�ܲ�Ӱ����Ĺ���
-      print('Index creation failed (non-fatal): $e');
+      debugPrint('Index creation failed (non-fatal): $e');
       _indexCompleter!.completeError(e);
     }
   }
