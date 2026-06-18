@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
 import 'package:path_provider/path_provider.dart';
@@ -69,52 +70,52 @@ class AppDatabase extends _$AppDatabase {
     return MigrationStrategy(
       beforeOpen: (details) async {
         await customStatement('PRAGMA foreign_keys = ON');
-        await _createPerformanceIndexes();
+// Index creation moved to background - see ensureIndexesReady()
       },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
-          // 添加每日任务表
+          // 添加每日任务�?
           await m.createTable(dailyTasks);
-          // 添加任务模板表
+          // 添加任务模板�?
           await m.createTable(taskTemplates);
         }
         if (from < 3) {
-          // 添加饮食记录表
+          // 添加饮食记录�?
           await m.createTable(dietRecords);
-          // 添加睡眠记录表
+          // 添加睡眠记录�?
           await m.createTable(sleepRecords);
         }
         if (from < 4) {
-          // 添加宠物表
+          // 添加宠物�?
           await m.createTable(petProfiles);
           await m.createTable(petStates);
         }
         if (from < 5) {
-          // 添加日记附件表
+          // 添加日记附件�?
           await m.createTable(journalAssets);
-          // 为日记表添加 Markdown 支持列
+          // 为日记表添加 Markdown 支持�?
           await m.addColumn(dailyJournals, dailyJournals.markdownContent);
           await m.addColumn(dailyJournals, dailyJournals.plainText);
         }
         if (from < 6) {
-          // 添加富文本编辑器支持列
+          // 添加富文本编辑器支持�?
           await m.addColumn(dailyJournals, dailyJournals.contentType);
           await m.addColumn(dailyJournals, dailyJournals.quillDeltaJson);
         }
         if (from < 7) {
-          // 添加宠物消息表
+          // 添加宠物消息�?
           await m.createTable(petMessages);
         }
         if (from < 9) {
-          // 添加天气记录表
+          // 添加天气记录�?
           await m.createTable(dailyWeatherTable);
         }
         if (from < 10) {
-          // 添加 API 配置表
+          // 添加 API 配置�?
           await m.createTable(apiConfigs);
         }
         if (from < 11) {
-          // 添加天气城市搜索历史表
+          // 添加天气城市搜索历史�?
           await m.createTable(weatherSearchHistoryTable);
         }
         if (from < 13) {
@@ -140,7 +141,7 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(musicTracks);
         }
         if (from < 19) {
-          // 为健身记录表添加运动类型列
+          // 为健身记录表添加运动类型�?
           await m.addColumn(fitnessRecords, fitnessRecords.activityType);
         }
         if (from < 20) {
@@ -232,6 +233,30 @@ class AppDatabase extends _$AppDatabase {
 
     for (final statement in statements) {
       await customStatement(statement);
+    }
+  }
+  // Background index creation support
+  bool _indexesReady = false;
+  Completer<void>? _indexCompleter;
+
+  /// ��̨�������������������ݿ��
+  Future<void> ensureIndexesReady() async {
+    if (_indexesReady) return;
+    
+    // ������ڴ������ȴ����
+    if (_indexCompleter != null) {
+      return _indexCompleter!.future;
+    }
+    
+    _indexCompleter = Completer<void>();
+    try {
+      await _createPerformanceIndexes();
+      _indexesReady = true;
+      _indexCompleter!.complete();
+    } catch (e) {
+      // ��������ʧ�ܲ�Ӱ����Ĺ���
+      print('Index creation failed (non-fatal): $e');
+      _indexCompleter!.completeError(e);
     }
   }
 }

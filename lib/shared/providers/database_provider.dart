@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
@@ -8,6 +9,12 @@ import '../../core/database/app_database.dart';
 /// 读取时自动打开数据库连接，应用退出时由框架负责关闭。
 final appDatabaseProvider = Provider<AppDatabase>((ref) {
   final database = AppDatabase();
+  
+  // 后台创建索引，不阻塞初始化
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    database.ensureIndexesReady();
+  });
+  
   ref.onDispose(() => database.close());
   return database;
 });
@@ -16,3 +23,10 @@ final appDatabaseProvider = Provider<AppDatabase>((ref) {
 ///
 /// 新代码应优先使用 [appDatabaseProvider]。
 final databaseProvider = appDatabaseProvider;
+
+/// 数据库是否完全就绪（索引创建完成）
+final databaseReadyProvider = FutureProvider<bool>((ref) async {
+  final db = ref.watch(appDatabaseProvider);
+  await db.ensureIndexesReady();
+  return true;
+});
