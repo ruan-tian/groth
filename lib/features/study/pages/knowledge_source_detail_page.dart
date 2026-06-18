@@ -198,7 +198,6 @@ class _KnowledgeSourceDetailPageState
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(knowledgeGoalSummariesProvider);
     ref.invalidate(knowledgeDeckSummariesProvider);
-    ref.invalidate(dueKnowledgeCardsCountProvider);
     _refreshSource(sourceId);
   }
 

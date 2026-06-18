@@ -19,10 +19,6 @@ final archivedKnowledgeCardsProvider = FutureProvider<List<KnowledgeCard>>((
   return repo.getArchivedCards();
 });
 
-final dueKnowledgeCardsCountProvider = FutureProvider<int>((ref) {
-  final repo = ref.watch(knowledgeCardRepositoryProvider);
-  return repo.getDueCount();
-});
 
 final knowledgeReviewStatsProvider = FutureProvider<KnowledgeCardReviewStats>((
   ref,

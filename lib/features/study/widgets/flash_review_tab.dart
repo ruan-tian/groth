@@ -271,7 +271,6 @@ class _FlashReviewTabState extends ConsumerState<FlashReviewTab> {
 
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(knowledgeGoalSummariesProvider);
-    ref.invalidate(dueKnowledgeCardsCountProvider);
     ref.invalidate(todayReviewProgressProvider);
     ref.invalidate(aiRecommendedCardsProvider);
     ref.invalidate(knowledgeReviewStatsProvider);

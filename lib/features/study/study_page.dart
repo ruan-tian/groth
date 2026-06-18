@@ -119,8 +119,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
             ref.invalidate(knowledgeCardsProvider);
             ref.invalidate(knowledgeGoalSummariesProvider);
             ref.invalidate(knowledgeDeckSummariesProvider);
-            ref.invalidate(dueKnowledgeCardsCountProvider);
-            ref.invalidate(
+                    ref.invalidate(
               subjectDistributionByRangeProvider(_subjectDistDays),
             );
           },

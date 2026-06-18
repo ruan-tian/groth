@@ -39,16 +39,16 @@ final knowledgeBaseOverviewProvider = FutureProvider<KnowledgeBaseOverview>((
   final cards = await ref.watch(knowledgeCardsProvider.future);
   final sourceRepo = ref.watch(knowledgeSourceRepositoryProvider);
   final links = await sourceRepo.getAllCardSourceLinks();
-  final sourceIds = sources.map((source) => source.id).toSet();
+  final sourceIdSet = sources.map((source) => source.id).toSet();
   final activeLinks = links
-      .where((link) => sourceIds.contains(link.sourceId))
+      .where((link) => sourceIdSet.contains(link.sourceId))
       .toList(growable: false);
   final linkedCardIds = activeLinks.map((link) => link.cardId).toSet();
   final linkedChunkIds = activeLinks.map((link) => link.chunkId).toSet();
-  final chunkLists = await Future.wait(
-    sources.map((source) => sourceRepo.getChunksForSource(source.id)),
-  );
-  final chunkCount = chunkLists.fold<int>(
+  // Batch fetch all chunks in 1 query instead of N
+  final sourceIds = sources.map((s) => s.id).toList();
+  final chunksBySource = await sourceRepo.getChunksForSources(sourceIds);
+  final chunkCount = chunksBySource.values.fold<int>(
     0,
     (sum, chunks) => sum + chunks.length,
   );

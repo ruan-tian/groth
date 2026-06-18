@@ -131,8 +131,7 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
             ref.invalidate(knowledgeDeckSummariesProvider);
             ref.invalidate(knowledgeCustomTemplatesProvider);
             ref.invalidate(knowledgeBaseOverviewProvider);
-            ref.invalidate(dueKnowledgeCardsCountProvider);
-          },
+                  },
           child: ListView(
             padding: const EdgeInsets.all(AppSpacing.lg),
             children: [
@@ -295,7 +294,6 @@ class _KnowledgeCardsPageState extends ConsumerState<KnowledgeCardsPage> {
     ref.invalidate(knowledgeBaseOverviewProvider);
     ref.invalidate(knowledgeGoalSummariesProvider);
     ref.invalidate(knowledgeDeckSummariesProvider);
-    ref.invalidate(dueKnowledgeCardsCountProvider);
   }
 
   void _showCardPreview(KnowledgeCard card) {

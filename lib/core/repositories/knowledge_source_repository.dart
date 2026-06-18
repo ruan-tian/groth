@@ -335,6 +335,38 @@ class KnowledgeSourceRepository {
         .get();
   }
 
+
+  /// Get chunks for multiple sources in a single query (batch optimization).
+  /// Returns a map of sourceId -> list of chunks.
+  Future<Map<int, List<KnowledgeChunk>>> getChunksForSources(List<int> sourceIds) async {
+    if (sourceIds.isEmpty) return {};
+    final chunks = await (_db.select(_db.knowledgeChunks)
+          ..where((t) => t.sourceId.isIn(sourceIds))
+          ..orderBy([(t) => OrderingTerm.asc(t.chunkIndex)]))
+        .get();
+    final result = <int, List<KnowledgeChunk>>{};
+    for (final chunk in chunks) {
+      result.putIfAbsent(chunk.sourceId, () => []).add(chunk);
+    }
+    return result;
+  }
+
+  /// Get card references for multiple sources in a single query (batch optimization).
+  /// Returns a map of sourceId -> list of references.
+  Future<Map<int, List<KnowledgeCardSourceLink>>> getCardReferencesForSources(
+    List<int> sourceIds,
+  ) async {
+    if (sourceIds.isEmpty) return {};
+    final links = await (_db.select(_db.knowledgeCardSourceLinks)
+          ..where((t) => t.sourceId.isIn(sourceIds)))
+        .get();
+    final result = <int, List<KnowledgeCardSourceLink>>{};
+    for (final link in links) {
+      result.putIfAbsent(link.sourceId, () => []).add(link);
+    }
+    return result;
+  }
+
   Future<List<KnowledgeCardSourceLink>> getAllCardSourceLinks() {
     return _db.select(_db.knowledgeCardSourceLinks).get();
   }

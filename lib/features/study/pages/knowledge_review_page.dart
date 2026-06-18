@@ -322,7 +322,6 @@ class _KnowledgeReviewPageState extends ConsumerState<KnowledgeReviewPage> {
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(knowledgeGoalSummariesProvider);
     ref.invalidate(knowledgeDeckSummariesProvider);
-    ref.invalidate(dueKnowledgeCardsCountProvider);
 
     if (!mounted) return;
     if (_index >= _queue.length - 1) {

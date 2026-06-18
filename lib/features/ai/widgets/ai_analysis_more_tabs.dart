@@ -988,7 +988,6 @@ class AiAnalysisResultCard extends ConsumerWidget {
 
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(knowledgeReviewStatsProvider);
-    ref.invalidate(dueKnowledgeCardsCountProvider);
 
     ScaffoldMessenger.of(
       context,

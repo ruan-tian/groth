@@ -947,8 +947,7 @@ class _ChunkResultTile extends ConsumerWidget {
       ref.invalidate(knowledgeCardsProvider);
       ref.invalidate(knowledgeGoalSummariesProvider);
       ref.invalidate(knowledgeDeckSummariesProvider);
-      ref.invalidate(dueKnowledgeCardsCountProvider);
-      ref.invalidate(knowledgeBaseOverviewProvider);
+        ref.invalidate(knowledgeBaseOverviewProvider);
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -1100,8 +1099,7 @@ class _MultiChunkGenerateButton extends ConsumerWidget {
       ref.invalidate(knowledgeCardsProvider);
       ref.invalidate(knowledgeGoalSummariesProvider);
       ref.invalidate(knowledgeDeckSummariesProvider);
-      ref.invalidate(dueKnowledgeCardsCountProvider);
-      ref.invalidate(knowledgeBaseOverviewProvider);
+        ref.invalidate(knowledgeBaseOverviewProvider);
 
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -2351,7 +2349,6 @@ Future<void> _showSourceBatchGenerationFlow({
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(knowledgeGoalSummariesProvider);
     ref.invalidate(knowledgeDeckSummariesProvider);
-    ref.invalidate(dueKnowledgeCardsCountProvider);
     ref.invalidate(knowledgeBaseOverviewProvider);
     ref.invalidate(knowledgeSourcesWithProgressProvider);
     final affectedSourceIds =

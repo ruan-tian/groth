@@ -70,7 +70,6 @@ class KnowledgeArchivePage extends ConsumerWidget {
     ref.invalidate(knowledgeCardsProvider);
     ref.invalidate(knowledgeGoalSummariesProvider);
     ref.invalidate(knowledgeDeckSummariesProvider);
-    ref.invalidate(dueKnowledgeCardsCountProvider);
 
     if (!context.mounted) return;
     ScaffoldMessenger.of(

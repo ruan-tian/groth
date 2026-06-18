@@ -608,8 +608,7 @@ class _AddKnowledgeCardPageState extends ConsumerState<AddKnowledgeCardPage> {
       ref.invalidate(knowledgeCardsProvider);
       ref.invalidate(knowledgeGoalSummariesProvider);
       ref.invalidate(knowledgeDeckSummariesProvider);
-      ref.invalidate(dueKnowledgeCardsCountProvider);
-      if (!mounted) return;
+        if (!mounted) return;
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(editingCard == null ? '知识卡已添加' : '知识卡已更新')),

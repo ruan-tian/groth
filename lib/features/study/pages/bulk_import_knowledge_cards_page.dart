@@ -193,8 +193,7 @@ class _BulkImportKnowledgeCardsPageState
       ref.invalidate(knowledgeCardsProvider);
       ref.invalidate(knowledgeGoalSummariesProvider);
       ref.invalidate(knowledgeDeckSummariesProvider);
-      ref.invalidate(dueKnowledgeCardsCountProvider);
-
+  
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       context.go(_goalDetailPath(scope));

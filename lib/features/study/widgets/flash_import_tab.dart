@@ -430,8 +430,7 @@ class _FlashImportTabState extends ConsumerState<FlashImportTab> {
       ref.invalidate(knowledgeCardsProvider);
       ref.invalidate(knowledgeReviewStatsProvider);
       ref.invalidate(knowledgeGoalSummariesProvider);
-      ref.invalidate(dueKnowledgeCardsCountProvider);
-      ref.invalidate(todayReviewProgressProvider);
+        ref.invalidate(todayReviewProgressProvider);
       ref.invalidate(aiRecommendedCardsProvider);
       ref.invalidate(dueCardsPreviewProvider);
       ref.invalidate(knowledgeSourcesWithProgressProvider);
