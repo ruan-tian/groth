@@ -603,12 +603,12 @@ class _DietPageState extends ConsumerState<DietPage> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: colors.softBlue.withValues(alpha: 0.14),
+                  color: colors.primary.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   Icons.water_drop_rounded,
-                  color: colors.softBlue,
+                  color: colors.primary,
                   size: 20,
                 ),
               ),
@@ -649,19 +649,19 @@ class _DietPageState extends ConsumerState<DietPage> {
                     ),
                     decoration: BoxDecoration(
                       color: Color.alphaBlend(
-                        colors.softBlue.withValues(alpha: 0.10),
+                        colors.primary.withValues(alpha: 0.10),
                         colors.card,
                       ),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: colors.softBlue.withValues(alpha: 0.22),
+                        color: colors.primary.withValues(alpha: 0.22),
                       ),
                     ),
                     child: Text(
                       '\u76ee\u6807 ${waterGoal}ml',
                       style: TextStyle(
                         fontSize: 11,
-                        color: colors.softBlue,
+                        color: colors.primary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -677,10 +677,10 @@ class _DietPageState extends ConsumerState<DietPage> {
               value: progress,
               minHeight: 12,
               backgroundColor: Color.alphaBlend(
-                colors.softBlue.withValues(alpha: 0.14),
+                colors.primary.withValues(alpha: 0.14),
                 colors.card,
               ),
-              valueColor: AlwaysStoppedAnimation<Color>(colors.softBlue),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
             ),
           ),
           const SizedBox(height: 8),
@@ -692,7 +692,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: colors.softBlue,
+                  color: colors.primary,
                 ),
               ),
               Text(
@@ -730,9 +730,9 @@ class _DietPageState extends ConsumerState<DietPage> {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: colors.softBlue.withValues(alpha: 0.14),
+            color: colors.primary.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: colors.softBlue.withValues(alpha: 0.24)),
+            border: Border.all(color: colors.primary.withValues(alpha: 0.24)),
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -740,14 +740,14 @@ class _DietPageState extends ConsumerState<DietPage> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add_rounded, size: 14, color: colors.softBlue),
+                Icon(Icons.add_rounded, size: 14, color: colors.primary),
                 const SizedBox(width: 4),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: colors.softBlue,
+                    color: colors.primary,
                   ),
                 ),
               ],

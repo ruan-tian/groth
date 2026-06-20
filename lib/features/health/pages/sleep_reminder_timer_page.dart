@@ -27,6 +27,14 @@ class SleepReminderTimerPage extends ConsumerStatefulWidget {
 class _SleepReminderTimerPageState
     extends ConsumerState<SleepReminderTimerPage> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _syncReminder();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final plan = ref.watch(sleepPlanProvider);
 

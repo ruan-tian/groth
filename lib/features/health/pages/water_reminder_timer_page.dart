@@ -94,6 +94,19 @@ class _WaterReminderTimerPageState
     final planController = ref.read(waterPlanProvider.notifier);
     await planController.recordDrink();
     final plan = ref.read(waterPlanProvider);
+
+    // 如果达标，取消今天剩余提醒
+    if (plan.currentWaterMl >= plan.goalMl && plan.goalMl > 0) {
+      final scheduler = ref.read(healthReminderSchedulerProvider);
+      await scheduler.cancelWaterRemindersForToday();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('今日饮水目标已达成！')),
+        );
+      }
+      return; // 不再调度新提醒
+    }
+
     if (plan.reminderEnabled) {
       await _scheduleNextReminder(plan);
     }

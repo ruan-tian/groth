@@ -197,4 +197,6 @@ void invalidateKnowledgeV3(WidgetRef ref, {int? spaceId}) {
     ref.invalidate(knowledgeSpaceStatsV3Provider(spaceId));
     ref.invalidate(tiantianQaSessionsProvider(spaceId));
   }
+  ref.invalidate(knowledgeReviewQueueV3Provider);
+  ref.invalidate(knowledgeSearchV3Provider);
 }

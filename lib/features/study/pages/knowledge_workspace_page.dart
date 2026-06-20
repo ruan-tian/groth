@@ -4219,11 +4219,22 @@ void _showCardDetail(
                     message: '这张知识卡会从当前空间移除，复习记录保留在本地日志中。',
                   );
                   if (!confirmed) return;
-                  await ref
-                      .read(knowledgeV3RepositoryProvider)
-                      .archiveCard(card.id);
-                  invalidateKnowledgeV3(ref, spaceId: card.spaceId);
-                  if (context.mounted) Navigator.of(context).pop();
+                  try {
+                    await ref.read(knowledgeV3RepositoryProvider).archiveCard(card.id);
+                    if (context.mounted) {
+                      invalidateKnowledgeV3(ref, spaceId: card.spaceId);
+                      Navigator.of(context).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('已删除')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('删除失败: $e')),
+                      );
+                    }
+                  }
                 },
                 style: OutlinedButton.styleFrom(
                   minimumSize: const Size.fromHeight(48),

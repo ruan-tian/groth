@@ -109,6 +109,12 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
         if (!state.isPlaying && state.currentTrack != null) {
           _focusStartedMusic = true;
           await ref.read(musicPlayerProvider.notifier).togglePlayPause();
+        } else if (state.currentTrack == null) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('请先在音乐页面导入本地音乐')),
+            );
+          }
         }
       });
       return;

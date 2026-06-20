@@ -62,7 +62,7 @@ class HealthReminderScheduler {
       await scheduleWaterRemindersWithStatus(requestPermissions: false);
     }
 
-    final sleepEnabled = await _readBool(_sleepEnabledKey, fallback: true);
+    final sleepEnabled = await _readBool(_sleepEnabledKey, fallback: false);
     if (sleepEnabled) {
       await scheduleSleepReminderWithStatus(requestPermissions: false);
     }
@@ -154,6 +154,17 @@ class HealthReminderScheduler {
     await _notificationService.cancel(waterLegacyNotificationId);
     for (var index = 0; index < maxWaterNotifications; index++) {
       await _notificationService.cancel(waterNotificationBaseId + index);
+    }
+  }
+
+  /// 取消今天剩余的喝水提醒（达标后调用）
+  Future<void> cancelWaterRemindersForToday() async {
+    final pending = await _notificationService.pendingNotificationRequests();
+    for (final p in pending) {
+      if (p.id >= waterNotificationBaseId &&
+          p.id < waterNotificationBaseId + maxWaterNotifications) {
+        await _notificationService.cancel(p.id);
+      }
     }
   }
 
