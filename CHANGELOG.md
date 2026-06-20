@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-06-20 审计安全修复
+
+### P0 修复
+- **TF-IDF 搜索索引修复**: 修复 bigram 空字符串 bug（`knowledge_tfidf_index.dart:226`）和 tokenize 返回 Set 导致 TF 恒为 1 的问题（`knowledge_tfidf_index.dart:159`）。中文搜索现在能正确生成 bigram 并计算词频。
+- **断链路由修复**: 修复 Dashboard 知识库摘要卡点击白屏问题（`dashboard_knowledge_summary.dart:30`），路由从 `/study/knowledge-sources` 改为 `/plan/study/knowledge/sources`。
+- **加密服务安全修复**: v2 解密失败时不再返回密文当明文（`encryption_service.dart:159`），改为空串。
+
+### P1 修复
+- **经验值删除回滚**: 新增 `deleteExpLogsForSource` 方法，删除学习/健身/日记/饮食/睡眠/专注记录时同步清理 `GrowthExpLogs`，等级不再虚高。涉及 6 个 repository。
+- **等级公式注释修正**: 注释从 `/100` 改为 `/5`，与代码和测试一致（`exp_service.dart:136`）。
+- **sleep_goal key 统一**: 设置页 key 从 `daily_sleep_goal` 改为 `sleep_goal_hours`（`settings_page.dart:535`）。
+- **音乐列表循环修复**: `loopAll` 模式播完最后一首现在正确循环到第一首（`music_player_provider.dart:649`）。
+- **番茄钟状态恢复**: `restoreFromPersistence()` 现在在 Provider 创建时自动调用（`focus_provider.dart:261`），App 被杀后可恢复进度。
+- **空 catch 块日志化**: 4 处 `catch (_) {}` 改为 `catch (e) { debugPrint(...); }`（focus_provider、knowledge_card_provider）。
+
+### P2 修复
+- **饮水数据安全**: JSON 解析失败时不再清空全部历史数据，改为跳过本次写入（`water_plan_provider.dart:248`）。
+- **V3 表索引**: 为 6 张 V3 知识表添加 5 个复合索引，提升查询性能（`app_database.dart`）。
+- **ensureTables 优化**: `_ensureTables()` 现在只执行一次，不再每次方法调用都跑 DDL（`knowledge_v3_repository.dart`）。
+- **音乐 stop 修复**: `MusicPlayerService.stop()` 现在调用 `_player.stop()` 而非 `_player.pause()`（`music_player_service.dart:37`）。
+
 ## 2026-06-19
 
 ### Refactor
