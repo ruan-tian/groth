@@ -63,6 +63,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   bool _musicWasPlayingOnEnter = false;
   bool _focusStartedMusic = false;
   late FocusAudioStateNotifier _audioNotifier;
+  String? _currentSoundType;
 
   @override
   void initState() {
@@ -82,8 +83,8 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
             subject: widget.subject,
             soundType: widget.soundType,
           );
+      _initAudio();
     });
-    _initAudio();
   }
 
   @override
@@ -101,31 +102,26 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   }
 
   void _initAudio() {
+    if (!mounted) return;
     final soundType = ref.read(focusCycleProvider).soundType;
+    _currentSoundType = soundType;
     if (soundType == 'music') {
-      Future.microtask(() async {
-        if (!mounted) return;
-        final state = ref.read(musicPlayerProvider);
-        if (!state.isPlaying && state.currentTrack != null) {
-          _focusStartedMusic = true;
-          await ref.read(musicPlayerProvider.notifier).togglePlayPause();
-        } else if (state.currentTrack == null) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('请先在音乐页面导入本地音乐')),
-            );
-          }
+      final musicState = ref.read(musicPlayerProvider);
+      if (!musicState.isPlaying && musicState.currentTrack != null) {
+        _focusStartedMusic = true;
+        ref.read(musicPlayerProvider.notifier).togglePlayPause();
+      } else if (musicState.currentTrack == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('请先在音乐页面导入本地音乐')),
+          );
         }
-      });
+      }
       return;
     }
     if (soundType != null && soundType.isNotEmpty && soundType != 'none') {
-      Future.microtask(() {
-        if (mounted) {
-          ref.read(musicPlayerProvider.notifier).pause();
-          ref.read(focusAudioStateProvider.notifier).startNoise(soundType);
-        }
-      });
+      ref.read(musicPlayerProvider.notifier).pause();
+      ref.read(focusAudioStateProvider.notifier).startNoise(soundType);
     }
   }
 
@@ -161,9 +157,12 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   }
 
   void _stopSessionAudioForDispose() {
-    unawaited(_audioNotifier.stopNoise());
-    if (!_musicWasPlayingOnEnter && _focusStartedMusic) {
-      unawaited(ref.read(musicPlayerProvider.notifier).pause());
+    if (_currentSoundType == 'music') {
+      if (!_musicWasPlayingOnEnter && _focusStartedMusic) {
+        unawaited(ref.read(musicPlayerProvider.notifier).pause());
+      }
+    } else {
+      unawaited(_audioNotifier.stopNoise());
     }
   }
 
