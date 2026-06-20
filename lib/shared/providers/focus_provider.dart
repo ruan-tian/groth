@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -259,7 +260,9 @@ const Object _focusCycleUnset = Object();
 
 class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
   FocusCycleNotifier(this._notificationService)
-    : super(const FocusCycleState());
+    : super(const FocusCycleState()) {
+    Future.microtask(() => restoreFromPersistence());
+  }
   Timer? _tickTimer;
   static const _persistKey = 'focus_cycle_state';
   static const _notificationId = 5205;
@@ -509,7 +512,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_persistKey, jsonEncode(state.toJson()));
-    } catch (_) {}
+    } catch (e) { debugPrint('focus persist failed: $e'); }
   }
 
   /// 清除持久化状态
@@ -517,7 +520,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_persistKey);
-    } catch (_) {}
+    } catch (e) { debugPrint('focus persist failed: $e'); }
   }
 
   /// 从持久化恢复状态（App 启动时调用）

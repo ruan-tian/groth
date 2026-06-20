@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import 'exp_repository.dart';
 
 /// 健身记录仓库
 ///
@@ -31,6 +32,7 @@ class FitnessRepository {
       await (_db.delete(
         _db.fitnessRecords,
       )..where((t) => t.id.equals(id))).go();
+      await ExpRepository(_db).deleteExpLogsForSource('fitness', id);
     });
   }
 

@@ -15,6 +15,15 @@ class ExpRepository {
     return _db.into(_db.growthExpLogs).insert(log);
   }
 
+  /// 删除指定来源的经验日志（用于业务记录删除时清理经验值）。
+  Future<void> deleteExpLogsForSource(String sourceType, int sourceId) {
+    return (_db.delete(_db.growthExpLogs)
+          ..where((t) =>
+              t.sourceType.equals(sourceType) &
+              t.sourceId.equals(sourceId)))
+        .go();
+  }
+
   /// 获取全部经验值总和。
   Future<int> getTotalExp() async {
     final expSum = _db.growthExpLogs.expValue.sum();

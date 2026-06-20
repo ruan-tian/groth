@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
@@ -245,8 +246,9 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
     Map<String, dynamic> decoded;
     try {
       decoded = value == null ? {} : jsonDecode(value) as Map<String, dynamic>;
-    } catch (_) {
-      decoded = {};
+    } catch (e) {
+      debugPrint('daily_water_records parse failed: $e');
+      return; // Skip this write to preserve existing data
     }
     decoded[_dateKey(day)] = records.map((record) => record.toJson()).toList();
     await repo.setSetting(_dailyRecordsKey, jsonEncode(decoded));

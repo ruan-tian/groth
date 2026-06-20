@@ -156,7 +156,7 @@ class EncryptionService {
       final encrypted = Encrypted.fromBase64(parts[1]);
       return Encrypter(AES(key, mode: AESMode.cbc)).decrypt(encrypted, iv: iv);
     } catch (_) {
-      return encryptedText;
+      return '';
     }
   }
 

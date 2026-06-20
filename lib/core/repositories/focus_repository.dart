@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import 'exp_repository.dart';
 
 /// 专注记录仓库
 ///
@@ -71,8 +72,9 @@ class FocusRepository {
   }
 
   /// 根据 ID 删除一条专注记录。
-  Future<void> deleteFocusSession(int id) {
-    return (_db.delete(_db.focusSessions)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteFocusSession(int id) async {
+    await (_db.delete(_db.focusSessions)..where((t) => t.id.equals(id))).go();
+    await ExpRepository(_db).deleteExpLogsForSource('focus', id);
   }
 
   // ---------------------------------------------------------------------------

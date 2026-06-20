@@ -8,6 +8,7 @@ class KnowledgeV3Repository {
   KnowledgeV3Repository(this._db);
 
   final AppDatabase _db;
+  bool _tablesEnsured = false;
 
   Future<KnowledgeSpaceV3> ensureDefaultSpace() async {
     await _ensureTables();
@@ -718,6 +719,7 @@ class KnowledgeV3Repository {
   }
 
   Future<void> _ensureTables() async {
+    if (_tablesEnsured) return;
     final now = DateTime.now().millisecondsSinceEpoch;
     await _db.customStatement('''
       CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
@@ -826,6 +828,7 @@ class KnowledgeV3Repository {
         variables: [Variable<int>(now), Variable<int>(now)],
       );
     }
+    _tablesEnsured = true;
   }
 
   Future<int> _nextSpaceSortOrder() async {

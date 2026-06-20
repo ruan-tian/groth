@@ -646,7 +646,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
           break;
         case PlayMode.loopAll:
           final next = _trackByOffset(1);
-          if (next != null && next.id != state.currentTrackId) {
+          if (next != null) {
             await playTrack(next);
           } else {
             await _player.seek(Duration.zero);

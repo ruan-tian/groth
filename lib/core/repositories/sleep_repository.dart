@@ -4,6 +4,7 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import '../utils/date_utils.dart';
+import 'exp_repository.dart';
 
 /// 睡眠记录仓库
 ///
@@ -28,8 +29,9 @@ class SleepRepository {
   }
 
   /// 根据 ID 删除一条睡眠记录。
-  Future<void> deleteSleepRecord(int id) {
-    return (_db.delete(_db.sleepRecords)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteSleepRecord(int id) async {
+    await (_db.delete(_db.sleepRecords)..where((t) => t.id.equals(id))).go();
+    await ExpRepository(_db).deleteExpLogsForSource('sleep', id);
   }
 
   // ---------------------------------------------------------------------------

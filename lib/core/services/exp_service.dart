@@ -133,7 +133,7 @@ class ExpService {
 
   /// 根据总经验值计算当前等级。
   ///
-  /// 公式：`floor(sqrt(totalExp / 100)) + 1`
+  /// 公式：`floor(sqrt(totalExp / 5)) + 1`
   int calculateLevel(int totalExp) {
     return (sqrt(totalExp / expPerLevelUnit)).floor() + 1;
   }

@@ -532,7 +532,7 @@ class SettingsPage extends ConsumerWidget {
       ),
       _GoalItem(
         category: '短期目标',
-        key: 'daily_sleep_goal',
+        key: 'sleep_goal_hours',
         label: '每日睡眠时长',
         icon: Icons.bedtime_rounded,
         color: context.growthColors.sleep,

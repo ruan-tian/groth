@@ -27,7 +27,7 @@ class DashboardKnowledgeSummaryCard extends ConsumerWidget {
         final pendingChunks = data.chunkCount - data.linkedChunkCount;
 
         return GestureDetector(
-          onTap: () => context.push('/study/knowledge-sources'),
+          onTap: () => context.push('/plan/study/knowledge/sources'),
           child: Container(
             padding: const EdgeInsets.all(AppSpacing.lg),
             decoration: BoxDecoration(

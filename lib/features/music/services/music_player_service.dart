@@ -34,7 +34,7 @@ class MusicPlayerService {
   Future<void> pause() => _player.pause();
 
   Future<void> stop() async {
-    await _player.pause();
+    await _player.stop();
     await _player.seek(Duration.zero);
   }
 

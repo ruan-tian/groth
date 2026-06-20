@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
@@ -416,7 +417,7 @@ final archivedKnowledgeSpacesProvider = FutureProvider<Set<String>>((
           .where((item) => item.isNotEmpty)
           .toSet();
     }
-  } catch (_) {}
+  } catch (e) { debugPrint('knowledge spaces parse failed: $e'); }
   return const <String>{};
 });
 
@@ -436,7 +437,7 @@ final createdKnowledgeSpacesProvider = FutureProvider<List<KnowledgeSpaceSeed>>(
             )
             .toList(growable: false);
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('knowledge spaces parse failed: $e'); }
     return const [];
   },
 );

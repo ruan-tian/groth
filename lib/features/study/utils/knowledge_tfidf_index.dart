@@ -156,7 +156,7 @@ class TfidfIndex {
         .replaceAll('\r\n', '\n')
         .replaceAll('\r', '\n');
 
-    final result = <String>{};
+    final result = <String>[];
 
     // Split into segments of consecutive Chinese chars vs. everything else.
     // Chinese range: U+4E00–U+9FFF
@@ -199,7 +199,7 @@ class TfidfIndex {
   }
 
   /// Dictionary-first Chinese tokenizer: greedy longest match, then bigrams.
-  static void _tokenizeChinese(String text, Set<String> out) {
+  static void _tokenizeChinese(String text, List<String> out) {
     final chars = text.split('');
     final matched = List<bool>.filled(chars.length, false);
 
@@ -223,7 +223,7 @@ class TfidfIndex {
     // Pass 2: bigrams for unmatched characters.
     for (var i = 0; i < chars.length - 1; i++) {
       if (!matched[i] && !matched[i + 1]) {
-        final bigram = '';
+        final bigram = chars[i] + chars[i + 1];
         if (!_stopWords.contains(bigram)) {
           out.add(bigram);
         }
@@ -233,7 +233,7 @@ class TfidfIndex {
 
   /// Tokenize an English / punctuation segment: split on non-alphanumeric,
   /// apply stemming, and filter stop words.
-  static void _tokenizeEnglish(String text, Set<String> out) {
+  static void _tokenizeEnglish(String text, List<String> out) {
     final words = text.split(RegExp(r'[^a-z0-9_]+'));
     for (final word in words) {
       if (word.length < 2) continue;

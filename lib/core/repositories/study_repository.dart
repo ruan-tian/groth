@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import 'exp_repository.dart';
 
 /// 学习记录仓库
 ///
@@ -32,8 +33,9 @@ class StudyRepository {
   }
 
   /// 根据 ID 删除一条学习记录。
-  Future<void> deleteStudyRecord(int id) {
-    return (_db.delete(_db.studyRecords)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteStudyRecord(int id) async {
+    await (_db.delete(_db.studyRecords)..where((t) => t.id.equals(id))).go();
+    await ExpRepository(_db).deleteExpLogsForSource('study', id);
   }
 
   // ---------------------------------------------------------------------------

@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import '../utils/date_utils.dart';
+import 'exp_repository.dart';
 
 /// 成长日记仓库
 ///
@@ -31,6 +32,7 @@ class JournalRepository {
     await deleteJournalAssets(id);
     // 再删除日记
     await (_db.delete(_db.dailyJournals)..where((t) => t.id.equals(id))).go();
+    await ExpRepository(_db).deleteExpLogsForSource('journal', id);
   }
 
   // ---------------------------------------------------------------------------

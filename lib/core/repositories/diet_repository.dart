@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import 'exp_repository.dart';
 
 /// 饮食记录仓库
 ///
@@ -25,8 +26,9 @@ class DietRepository {
   }
 
   /// 根据 ID 删除一条饮食记录。
-  Future<void> deleteDietRecord(int id) {
-    return (_db.delete(_db.dietRecords)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteDietRecord(int id) async {
+    await (_db.delete(_db.dietRecords)..where((t) => t.id.equals(id))).go();
+    await ExpRepository(_db).deleteExpLogsForSource('diet', id);
   }
 
   // ---------------------------------------------------------------------------
