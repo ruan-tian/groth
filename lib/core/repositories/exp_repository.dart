@@ -123,12 +123,12 @@ class ExpRepository {
     final activeDays = <String>{};
     for (final log in logs) {
       final date = DateTime.fromMillisecondsSinceEpoch(log.createdAt);
-      activeDays.add('${date.year}-${date.month}-${date.day}');
+      activeDays.add('${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}');
     }
 
     for (var i = 0; i < 365; i++) {
       final date = yesterday.subtract(Duration(days: i));
-      if (!activeDays.contains('${date.year}-${date.month}-${date.day}')) {
+      if (!activeDays.contains('${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}')) {
         return i;
       }
     }

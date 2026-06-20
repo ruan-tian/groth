@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:flutter/services.dart' show rootBundle;
 
 import '../../../core/constants/pet_assets.dart';
@@ -96,7 +98,6 @@ class PetAssetsValidator {
       results.values.where((v) => !v).length;
 
   static void debugPrint(String message) {
-    // ignore: avoid_print
-    print(message);
+    developer.log(message, name: 'PetAssetsValidator');
   }
 }

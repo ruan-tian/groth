@@ -159,6 +159,7 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
         ref.invalidate(weeklyAvgSleepDurationProvider);
         ref.invalidate(weeklyAvgSleepQualityProvider);
         ref.invalidate(recentSleepRecordsProvider(5));
+        ref.invalidate(dashboardProvider);
 
         // 发送宠物事件
         final eventId = 'sleep_${DateTime.now().millisecondsSinceEpoch}';

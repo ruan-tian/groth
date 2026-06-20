@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
+import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
-import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/sort_button.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
@@ -276,6 +276,7 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
         ref.invalidate(recentFitnessRecordsProvider);
         ref.invalidate(todayFitnessMinutesProvider);
         ref.invalidate(weeklyFitnessCountProvider);
+        ref.invalidate(dashboardProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,

@@ -150,11 +150,12 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
 
       if (_originalExpGained != null && _originalExpGained != exp) {
         final expRepo = ref.read(expRepositoryProvider);
+        await expRepo.deleteExpLogsForSource('journal', widget.journalId);
         await expRepo.insertExpLog(
           GrowthExpLogsCompanion.insert(
             sourceType: 'journal',
             sourceId: widget.journalId,
-            expValue: exp - _originalExpGained!,
+            expValue: exp,
             reason: '日记编辑: ${_titleController.text.trim()} ($wordCount字)',
             createdAt: nowMs,
           ),
