@@ -13,7 +13,7 @@ import '../../shared/providers/journal_provider.dart';
 import '../../shared/widgets/sort_button.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
 import '../../shared/widgets/common/growth_card.dart';
-import '../pet/models/pet_scene_model.dart';
+import '../../core/domain/pet/pet_scene_model.dart';
 import '../../shared/providers/pet_scene_provider.dart';
 import '../plan/utils/plan_module_assets.dart';
 import '../plan/widgets/plan_module_visuals.dart';

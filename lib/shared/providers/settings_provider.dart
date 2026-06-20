@@ -205,19 +205,6 @@ int getTodayWaterIntake(Map<String, int> waterMap) {
   return waterMap[key] ?? 0;
 }
 
-/// 保存饮水量到数据库
-Future<void> saveWaterIntake(WidgetRef ref, int amount) async {
-  final waterMap = Map<String, int>.from(ref.read(dailyWaterIntakeProvider));
-  final today = DateTime.now();
-  final key =
-      '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
-  waterMap[key] = (waterMap[key] ?? 0) + amount;
-  ref.read(dailyWaterIntakeProvider.notifier).state = waterMap;
-
-  final repo = ref.read(settingRepositoryProvider);
-  await repo.setSetting('daily_water_intake', jsonEncode(waterMap));
-}
-
 // =============================================================================
 // 周目标 Provider
 // =============================================================================
