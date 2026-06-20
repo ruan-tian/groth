@@ -22,7 +22,7 @@ class DocumentImportResult {
 
   bool get isSuccess => errorMessage == null && content.trim().isNotEmpty;
 
-  String? get displayError => errorMessage;
+  String? get displayError => _friendlyImportError(errorMessage, type: type);
 }
 
 /// Extracts text from PDF, Word (.docx), and web pages for import into
@@ -40,10 +40,11 @@ class KnowledgeDocumentImporter {
     final path = file.path;
     final lowerPath = path.toLowerCase();
 
-    if (lowerPath.endsWith('.pdf') ||
+    if (lowerPath.endsWith('.txt') || lowerPath.endsWith('.md')) {
+      return _extractFromPlainText(file, type: _typeForFile(file.path));
+    } else if (lowerPath.endsWith('.pdf') ||
         lowerPath.endsWith('.docx') ||
-        lowerPath.endsWith('.doc') ||
-        lowerPath.endsWith('.md')) {
+        lowerPath.endsWith('.doc')) {
       final result = await _extractWithDocTextExtractor(file);
       // If PDF text extraction returned empty (scanned PDF) and OCR is available
       if (!result.isSuccess &&
@@ -52,8 +53,6 @@ class KnowledgeDocumentImporter {
         return _extractFromImageWithOcr(file, ocrCallback, type: 'pdf_ocr');
       }
       return result;
-    } else if (lowerPath.endsWith('.txt')) {
-      return _extractFromPlainText(file);
     } else if (_isImageFile(lowerPath)) {
       if (ocrCallback == null) {
         return DocumentImportResult(
@@ -61,7 +60,7 @@ class KnowledgeDocumentImporter {
           content: '',
           type: 'image',
           sourcePath: path,
-          errorMessage: '图片导入需要配置 AI API Key 以启用 OCR 文字识别。',
+          errorMessage: '图片导入需要先配置 AI，或先复制图片里的文字粘贴导入。',
         );
       }
       return _extractFromImageWithOcr(file, ocrCallback, type: 'image_ocr');
@@ -72,8 +71,7 @@ class KnowledgeDocumentImporter {
       content: '',
       type: 'text',
       sourcePath: path,
-      errorMessage:
-          '不支持的文件格式：${_fileExtension(path)}。支持 PDF、Word (.docx)、TXT、Markdown 和图片。',
+      errorMessage: '这个文件格式暂时不支持，可以换成 PDF、Word、TXT、Markdown，或复制文字粘贴导入。',
     );
   }
 
@@ -109,19 +107,19 @@ class KnowledgeDocumentImporter {
           content: '',
           type: 'web',
           sourcePath: normalizedUrl,
-          errorMessage: '网页请求失败 (${response.statusCode})。',
+          errorMessage: '网页暂时无法读取，可以复制正文粘贴导入。',
         );
       }
 
       final htmlBody = response.body;
       return _parseHtmlContent(htmlBody, normalizedUrl);
-    } on Exception catch (e) {
+    } on Exception {
       return DocumentImportResult(
         title: '',
         content: '',
         type: 'web',
         sourcePath: normalizedUrl,
-        errorMessage: '网页抓取失败：${e.toString().split('\n').first}',
+        errorMessage: '网页暂时抓取失败，可以复制正文粘贴导入。',
       );
     }
   }
@@ -140,7 +138,7 @@ class KnowledgeDocumentImporter {
           content: '',
           type: _typeForFile(file.path),
           sourcePath: file.path,
-          errorMessage: '文件无法提取文字，可能是扫描件或纯图片文件。',
+          errorMessage: '这份文件没有读到文字。如果是扫描件，可以用图片导入或复制文字粘贴。',
         );
       }
 
@@ -152,13 +150,13 @@ class KnowledgeDocumentImporter {
         type: _typeForFile(file.path),
         sourcePath: file.path,
       );
-    } on Exception catch (e) {
+    } on Exception {
       return DocumentImportResult(
         title: _fileNameWithoutExtension(file.path),
         content: '',
         type: _typeForFile(file.path),
         sourcePath: file.path,
-        errorMessage: '文件解析失败：${e.toString().split('\n').first}',
+        errorMessage: '这个文件暂时无法读取，可以试试复制文字粘贴，或换成 PDF/TXT。',
       );
     }
   }
@@ -167,7 +165,10 @@ class KnowledgeDocumentImporter {
   // Plain text / Markdown (fallback for .txt)
   // ---------------------------------------------------------------------------
 
-  Future<DocumentImportResult> _extractFromPlainText(File file) async {
+  Future<DocumentImportResult> _extractFromPlainText(
+    File file, {
+    String type = 'text',
+  }) async {
     try {
       final text = await file.readAsString();
       final trimmed = text.trim();
@@ -175,16 +176,16 @@ class KnowledgeDocumentImporter {
       return DocumentImportResult(
         title: _fileNameWithoutExtension(file.path),
         content: trimmed,
-        type: 'text',
+        type: type,
         sourcePath: file.path,
       );
-    } on Exception catch (e) {
+    } on Exception {
       return DocumentImportResult(
         title: _fileNameWithoutExtension(file.path),
         content: '',
-        type: 'text',
+        type: type,
         sourcePath: file.path,
-        errorMessage: '文件读取失败：${e.toString().split('\n').first}',
+        errorMessage: '这个文件暂时无法读取，可以试试复制文字粘贴。',
       );
     }
   }
@@ -258,7 +259,7 @@ class KnowledgeDocumentImporter {
           content: '',
           type: 'web',
           sourcePath: url,
-          errorMessage: '网页内容为空或无法提取正文。',
+          errorMessage: '网页里没有读到正文，可以复制正文粘贴导入。',
         );
       }
 
@@ -268,13 +269,13 @@ class KnowledgeDocumentImporter {
         type: 'web',
         sourcePath: url,
       );
-    } on Exception catch (e) {
+    } on Exception {
       return DocumentImportResult(
         title: _fileNameWithoutExtension(url),
         content: '',
         type: 'web',
         sourcePath: url,
-        errorMessage: '网页内容解析失败：${e.toString().split('\n').first}',
+        errorMessage: '网页内容暂时无法解析，可以复制正文粘贴导入。',
       );
     }
   }
@@ -382,7 +383,7 @@ class KnowledgeDocumentImporter {
           content: '',
           type: type,
           sourcePath: file.path,
-          errorMessage: '图片文件为空。',
+          errorMessage: '这张图片没有内容，可以换一张更清晰的图片。',
         );
       }
 
@@ -395,7 +396,7 @@ class KnowledgeDocumentImporter {
           content: '',
           type: type,
           sourcePath: file.path,
-          errorMessage: 'OCR 未识别到文字内容，图片可能不包含文字或清晰度不足。',
+          errorMessage: '没有识别到文字，可以换一张更清晰的图片，或直接粘贴文字。',
         );
       }
 
@@ -405,13 +406,13 @@ class KnowledgeDocumentImporter {
         type: type,
         sourcePath: file.path,
       );
-    } on Exception catch (e) {
+    } on Exception {
       return DocumentImportResult(
         title: _fileNameWithoutExtension(file.path),
         content: '',
         type: type,
         sourcePath: file.path,
-        errorMessage: 'OCR 识别失败：${e.toString().split('\n').first}',
+        errorMessage: '图片文字识别失败，可以换一张更清晰的图片，或直接粘贴文字。',
       );
     }
   }
@@ -459,12 +460,6 @@ class KnowledgeDocumentImporter {
     return dotIndex > 0 ? name.substring(0, dotIndex) : name;
   }
 
-  String _fileExtension(String path) {
-    final name = path.split(RegExp(r'[/\\]')).last;
-    final dotIndex = name.lastIndexOf('.');
-    return dotIndex > 0 ? name.substring(dotIndex) : '';
-  }
-
   String _normalizeUrl(String url) {
     var trimmed = url.trim();
     if (trimmed.isEmpty) return '';
@@ -478,4 +473,30 @@ class KnowledgeDocumentImporter {
       return '';
     }
   }
+}
+
+String? _friendlyImportError(String? message, {required String type}) {
+  if (message == null) return null;
+  final text = message.trim();
+  if (text.isEmpty) return null;
+
+  final lower = text.toLowerCase();
+  final hasInternalError =
+      lower.contains('exception') ||
+      lower.contains('formatexception') ||
+      lower.contains('socketexception') ||
+      lower.contains('timeout') ||
+      lower.contains('stack trace') ||
+      lower.contains('unexpected end of input') ||
+      lower.contains('xmlhttprequest') ||
+      lower.contains('errno');
+  if (!hasInternalError) return text;
+
+  if (type == 'web') {
+    return '网页暂时无法读取，可以复制正文粘贴导入。';
+  }
+  if (type.contains('image') || type.contains('ocr')) {
+    return '图片文字识别失败，可以换一张更清晰的图片，或直接粘贴文字。';
+  }
+  return '这份资料暂时无法读取，可以试试复制文字粘贴导入。';
 }

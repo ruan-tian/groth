@@ -1,0 +1,507 @@
+{
+  "converted_count": 69,
+  "existing_webp_count": 14,
+  "errors": [],
+  "converted": [
+    {
+      "png": "assets/images/focus/foregrounds/fg_focus_desk_portrait.png",
+      "webp": "assets/images/focus/foregrounds/fg_focus_desk_portrait.webp",
+      "png_bytes": 263088,
+      "webp_bytes": 64476
+    },
+    {
+      "png": "assets/images/focus/icons/icon_focus_custom.png",
+      "webp": "assets/images/focus/icons/icon_focus_custom.webp",
+      "png_bytes": 30916,
+      "webp_bytes": 6178
+    },
+    {
+      "png": "assets/images/focus/icons/icon_focus_deep.png",
+      "webp": "assets/images/focus/icons/icon_focus_deep.webp",
+      "png_bytes": 23157,
+      "webp_bytes": 6130
+    },
+    {
+      "png": "assets/images/focus/icons/icon_focus_pomodoro.png",
+      "webp": "assets/images/focus/icons/icon_focus_pomodoro.webp",
+      "png_bytes": 28754,
+      "webp_bytes": 6518
+    },
+    {
+      "png": "assets/images/focus/icons/icon_focus_ultra.png",
+      "webp": "assets/images/focus/icons/icon_focus_ultra.webp",
+      "png_bytes": 28353,
+      "webp_bytes": 8174
+    },
+    {
+      "png": "assets/images/focus/lights/light_focus_rest_glow.png",
+      "webp": "assets/images/focus/lights/light_focus_rest_glow.webp",
+      "png_bytes": 161290,
+      "webp_bytes": 13236
+    },
+    {
+      "png": "assets/images/focus/lights/light_focus_ring_glow.png",
+      "webp": "assets/images/focus/lights/light_focus_ring_glow.webp",
+      "png_bytes": 156857,
+      "webp_bytes": 29972
+    },
+    {
+      "png": "assets/images/focus/particles/particle_focus_heart.png",
+      "webp": "assets/images/focus/particles/particle_focus_heart.webp",
+      "png_bytes": 1794,
+      "webp_bytes": 770
+    },
+    {
+      "png": "assets/images/focus/particles/particle_focus_leaf.png",
+      "webp": "assets/images/focus/particles/particle_focus_leaf.webp",
+      "png_bytes": 6724,
+      "webp_bytes": 1956
+    },
+    {
+      "png": "assets/images/focus/particles/particle_focus_rain.png",
+      "webp": "assets/images/focus/particles/particle_focus_rain.webp",
+      "png_bytes": 3662,
+      "webp_bytes": 1274
+    },
+    {
+      "png": "assets/images/focus/particles/particle_focus_sparkle.png",
+      "webp": "assets/images/focus/particles/particle_focus_sparkle.webp",
+      "png_bytes": 1705,
+      "webp_bytes": 842
+    },
+    {
+      "png": "assets/images/focus/particles/particle_focus_star.png",
+      "webp": "assets/images/focus/particles/particle_focus_star.webp",
+      "png_bytes": 2112,
+      "webp_bytes": 1008
+    },
+    {
+      "png": "assets/images/focus/particles/particle_focus_tomato.png",
+      "webp": "assets/images/focus/particles/particle_focus_tomato.webp",
+      "png_bytes": 7747,
+      "webp_bytes": 2306
+    },
+    {
+      "png": "assets/images/focus/sounds/icon_sound_cafe.png",
+      "webp": "assets/images/focus/sounds/icon_sound_cafe.webp",
+      "png_bytes": 23560,
+      "webp_bytes": 6062
+    },
+    {
+      "png": "assets/images/focus/sounds/icon_sound_forest.png",
+      "webp": "assets/images/focus/sounds/icon_sound_forest.webp",
+      "png_bytes": 25956,
+      "webp_bytes": 6036
+    },
+    {
+      "png": "assets/images/focus/sounds/icon_sound_none.png",
+      "webp": "assets/images/focus/sounds/icon_sound_none.webp",
+      "png_bytes": 24454,
+      "webp_bytes": 5868
+    },
+    {
+      "png": "assets/images/focus/sounds/icon_sound_ocean.png",
+      "webp": "assets/images/focus/sounds/icon_sound_ocean.webp",
+      "png_bytes": 29834,
+      "webp_bytes": 6468
+    },
+    {
+      "png": "assets/images/focus/sounds/icon_sound_rain.png",
+      "webp": "assets/images/focus/sounds/icon_sound_rain.webp",
+      "png_bytes": 22871,
+      "webp_bytes": 5438
+    },
+    {
+      "png": "assets/images/focus/sounds/icon_sound_white_noise.png",
+      "webp": "assets/images/focus/sounds/icon_sound_white_noise.webp",
+      "png_bytes": 18276,
+      "webp_bytes": 5060
+    },
+    {
+      "png": "assets/images/focus/status/focus_break_cup.png",
+      "webp": "assets/images/focus/status/focus_break_cup.webp",
+      "png_bytes": 65593,
+      "webp_bytes": 14356
+    },
+    {
+      "png": "assets/images/focus/status/focus_exp_reward.png",
+      "webp": "assets/images/focus/status/focus_exp_reward.webp",
+      "png_bytes": 70330,
+      "webp_bytes": 17766
+    },
+    {
+      "png": "assets/images/focus/status/focus_interrupt_warning.png",
+      "webp": "assets/images/focus/status/focus_interrupt_warning.webp",
+      "png_bytes": 82410,
+      "webp_bytes": 16830
+    },
+    {
+      "png": "assets/images/focus/status/focus_success_badge.png",
+      "webp": "assets/images/focus/status/focus_success_badge.webp",
+      "png_bytes": 110877,
+      "webp_bytes": 21392
+    },
+    {
+      "png": "assets/images/journal/decor/journal_notebook.png",
+      "webp": "assets/images/journal/decor/journal_notebook.webp",
+      "png_bytes": 95783,
+      "webp_bytes": 15924
+    },
+    {
+      "png": "assets/images/journal/decor/journal_open_book.png",
+      "webp": "assets/images/journal/decor/journal_open_book.webp",
+      "png_bytes": 72797,
+      "webp_bytes": 11358
+    },
+    {
+      "png": "assets/images/journal/decor/journal_pencil.png",
+      "webp": "assets/images/journal/decor/journal_pencil.webp",
+      "png_bytes": 56832,
+      "webp_bytes": 9710
+    },
+    {
+      "png": "assets/images/music/music_cover_relax.png",
+      "webp": "assets/images/music/music_cover_relax.webp",
+      "png_bytes": 2800808,
+      "webp_bytes": 331382
+    },
+    {
+      "png": "assets/images/music/playlist_custom_01.png",
+      "webp": "assets/images/music/playlist_custom_01.webp",
+      "png_bytes": 2985181,
+      "webp_bytes": 388036
+    },
+    {
+      "png": "assets/images/music/playlist_custom_02.png",
+      "webp": "assets/images/music/playlist_custom_02.webp",
+      "png_bytes": 2911233,
+      "webp_bytes": 354430
+    },
+    {
+      "png": "assets/images/music/playlist_custom_03.png",
+      "webp": "assets/images/music/playlist_custom_03.webp",
+      "png_bytes": 2824639,
+      "webp_bytes": 352392
+    },
+    {
+      "png": "assets/images/music/playlist_custom_04.png",
+      "webp": "assets/images/music/playlist_custom_04.webp",
+      "png_bytes": 3115685,
+      "webp_bytes": 424634
+    },
+    {
+      "png": "assets/images/music/playlist_custom_05.png",
+      "webp": "assets/images/music/playlist_custom_05.webp",
+      "png_bytes": 3026187,
+      "webp_bytes": 399954
+    },
+    {
+      "png": "assets/images/music/playlist_custom_06.png",
+      "webp": "assets/images/music/playlist_custom_06.webp",
+      "png_bytes": 3157387,
+      "webp_bytes": 468380
+    },
+    {
+      "png": "assets/images/music/playlist_custom_07.png",
+      "webp": "assets/images/music/playlist_custom_07.webp",
+      "png_bytes": 3005458,
+      "webp_bytes": 404860
+    },
+    {
+      "png": "assets/images/music/playlist_custom_08.png",
+      "webp": "assets/images/music/playlist_custom_08.webp",
+      "png_bytes": 3074859,
+      "webp_bytes": 441934
+    },
+    {
+      "png": "assets/images/weather/common/deco_cloud_small.png",
+      "webp": "assets/images/weather/common/deco_cloud_small.webp",
+      "png_bytes": 11902,
+      "webp_bytes": 3292
+    },
+    {
+      "png": "assets/images/weather/common/deco_cloud_sunny.png",
+      "webp": "assets/images/weather/common/deco_cloud_sunny.webp",
+      "png_bytes": 11814,
+      "webp_bytes": 2900
+    },
+    {
+      "png": "assets/images/weather/common/deco_flower_small.png",
+      "webp": "assets/images/weather/common/deco_flower_small.webp",
+      "png_bytes": 13223,
+      "webp_bytes": 3416
+    },
+    {
+      "png": "assets/images/weather/common/deco_star_small.png",
+      "webp": "assets/images/weather/common/deco_star_small.webp",
+      "png_bytes": 3239,
+      "webp_bytes": 1702
+    },
+    {
+      "png": "assets/images/weather/common/icon_aqi.png",
+      "webp": "assets/images/weather/common/icon_aqi.webp",
+      "png_bytes": 4221,
+      "webp_bytes": 712
+    },
+    {
+      "png": "assets/images/weather/common/icon_clothing.png",
+      "webp": "assets/images/weather/common/icon_clothing.webp",
+      "png_bytes": 4423,
+      "webp_bytes": 744
+    },
+    {
+      "png": "assets/images/weather/common/icon_location.png",
+      "webp": "assets/images/weather/common/icon_location.webp",
+      "png_bytes": 4931,
+      "webp_bytes": 760
+    },
+    {
+      "png": "assets/images/weather/common/icon_time.png",
+      "webp": "assets/images/weather/common/icon_time.webp",
+      "png_bytes": 3026,
+      "webp_bytes": 534
+    },
+    {
+      "png": "assets/images/weather/particles/particle_cloud_1.png",
+      "webp": "assets/images/weather/particles/particle_cloud_1.webp",
+      "png_bytes": 9604,
+      "webp_bytes": 4144
+    },
+    {
+      "png": "assets/images/weather/particles/particle_cloud_2.png",
+      "webp": "assets/images/weather/particles/particle_cloud_2.webp",
+      "png_bytes": 17720,
+      "webp_bytes": 7046
+    },
+    {
+      "png": "assets/images/weather/particles/particle_heat_1.png",
+      "webp": "assets/images/weather/particles/particle_heat_1.webp",
+      "png_bytes": 17455,
+      "webp_bytes": 6210
+    },
+    {
+      "png": "assets/images/weather/particles/particle_heat_2.png",
+      "webp": "assets/images/weather/particles/particle_heat_2.webp",
+      "png_bytes": 14531,
+      "webp_bytes": 5392
+    },
+    {
+      "png": "assets/images/weather/particles/particle_leaf.png",
+      "webp": "assets/images/weather/particles/particle_leaf.webp",
+      "png_bytes": 2806,
+      "webp_bytes": 1420
+    },
+    {
+      "png": "assets/images/weather/particles/particle_lightning.png",
+      "webp": "assets/images/weather/particles/particle_lightning.webp",
+      "png_bytes": 2831,
+      "webp_bytes": 1326
+    },
+    {
+      "png": "assets/images/weather/particles/particle_moon_dust.png",
+      "webp": "assets/images/weather/particles/particle_moon_dust.webp",
+      "png_bytes": 1727,
+      "webp_bytes": 798
+    },
+    {
+      "png": "assets/images/weather/particles/particle_rain_heavy_1.png",
+      "webp": "assets/images/weather/particles/particle_rain_heavy_1.webp",
+      "png_bytes": 25019,
+      "webp_bytes": 2242
+    },
+    {
+      "png": "assets/images/weather/particles/particle_rain_heavy_2.png",
+      "webp": "assets/images/weather/particles/particle_rain_heavy_2.webp",
+      "png_bytes": 29233,
+      "webp_bytes": 9292
+    },
+    {
+      "png": "assets/images/weather/particles/particle_raindrop_1.png",
+      "webp": "assets/images/weather/particles/particle_raindrop_1.webp",
+      "png_bytes": 14084,
+      "webp_bytes": 5514
+    },
+    {
+      "png": "assets/images/weather/particles/particle_raindrop_2.png",
+      "webp": "assets/images/weather/particles/particle_raindrop_2.webp",
+      "png_bytes": 16202,
+      "webp_bytes": 6356
+    },
+    {
+      "png": "assets/images/weather/particles/particle_raindrop_3.png",
+      "webp": "assets/images/weather/particles/particle_raindrop_3.webp",
+      "png_bytes": 14862,
+      "webp_bytes": 842
+    },
+    {
+      "png": "assets/images/weather/particles/particle_snowflake_1.png",
+      "webp": "assets/images/weather/particles/particle_snowflake_1.webp",
+      "png_bytes": 15455,
+      "webp_bytes": 1182
+    },
+    {
+      "png": "assets/images/weather/particles/particle_snowflake_2.png",
+      "webp": "assets/images/weather/particles/particle_snowflake_2.webp",
+      "png_bytes": 19341,
+      "webp_bytes": 7298
+    },
+    {
+      "png": "assets/images/weather/particles/particle_snowflake_3.png",
+      "webp": "assets/images/weather/particles/particle_snowflake_3.webp",
+      "png_bytes": 13044,
+      "webp_bytes": 5704
+    },
+    {
+      "png": "assets/images/weather/particles/particle_sparkle_1.png",
+      "webp": "assets/images/weather/particles/particle_sparkle_1.webp",
+      "png_bytes": 15533,
+      "webp_bytes": 1786
+    },
+    {
+      "png": "assets/images/weather/particles/particle_sparkle_2.png",
+      "webp": "assets/images/weather/particles/particle_sparkle_2.webp",
+      "png_bytes": 14901,
+      "webp_bytes": 864
+    },
+    {
+      "png": "assets/images/weather/particles/particle_star_1.png",
+      "webp": "assets/images/weather/particles/particle_star_1.webp",
+      "png_bytes": 4139,
+      "webp_bytes": 1920
+    },
+    {
+      "png": "assets/images/weather/particles/particle_star_2.png",
+      "webp": "assets/images/weather/particles/particle_star_2.webp",
+      "png_bytes": 4394,
+      "webp_bytes": 2002
+    },
+    {
+      "png": "assets/images/weather/particles/particle_wind_line_1.png",
+      "webp": "assets/images/weather/particles/particle_wind_line_1.webp",
+      "png_bytes": 9620,
+      "webp_bytes": 3566
+    },
+    {
+      "png": "assets/images/weather/particles/particle_wind_line_2.png",
+      "webp": "assets/images/weather/particles/particle_wind_line_2.webp",
+      "png_bytes": 3381,
+      "webp_bytes": 1412
+    },
+    {
+      "png": "assets/images/weather/props/prop_cloudy_book.png",
+      "webp": "assets/images/weather/props/prop_cloudy_book.webp",
+      "png_bytes": 261696,
+      "webp_bytes": 40486
+    },
+    {
+      "png": "assets/images/weather/props/prop_hot_fan.png",
+      "webp": "assets/images/weather/props/prop_hot_fan.webp",
+      "png_bytes": 252505,
+      "webp_bytes": 37358
+    },
+    {
+      "png": "assets/images/weather/props/prop_night_pillow.png",
+      "webp": "assets/images/weather/props/prop_night_pillow.webp",
+      "png_bytes": 291502,
+      "webp_bytes": 44506
+    },
+    {
+      "png": "assets/images/weather/props/prop_rainy_umbrella.png",
+      "webp": "assets/images/weather/props/prop_rainy_umbrella.webp",
+      "png_bytes": 210308,
+      "webp_bytes": 34044
+    },
+    {
+      "png": "assets/images/weather/props/prop_sunny_drink.png",
+      "webp": "assets/images/weather/props/prop_sunny_drink.webp",
+      "png_bytes": 250220,
+      "webp_bytes": 38824
+    }
+  ],
+  "existing_webp": [
+    {
+      "png": "assets/images/music/deco_music_note.png",
+      "webp": "assets/images/music/deco_music_note.webp",
+      "png_bytes": 277059,
+      "webp_bytes": 46966
+    },
+    {
+      "png": "assets/images/music/deco_music_note_pair.png",
+      "webp": "assets/images/music/deco_music_note_pair.webp",
+      "png_bytes": 279181,
+      "webp_bytes": 78380
+    },
+    {
+      "png": "assets/images/music/deco_sound_wave.png",
+      "webp": "assets/images/music/deco_sound_wave.webp",
+      "png_bytes": 133809,
+      "webp_bytes": 76346
+    },
+    {
+      "png": "assets/images/music/deco_sparkle_music.png",
+      "webp": "assets/images/music/deco_sparkle_music.webp",
+      "png_bytes": 221539,
+      "webp_bytes": 48110
+    },
+    {
+      "png": "assets/images/music/music_capsule_idle.png",
+      "webp": "assets/images/music/music_capsule_idle.webp",
+      "png_bytes": 231565,
+      "webp_bytes": 49308
+    },
+    {
+      "png": "assets/images/music/music_capsule_playing.png",
+      "webp": "assets/images/music/music_capsule_playing.webp",
+      "png_bytes": 225817,
+      "webp_bytes": 72144
+    },
+    {
+      "png": "assets/images/music/music_cover_default.png",
+      "webp": "assets/images/music/music_cover_default.webp",
+      "png_bytes": 2579902,
+      "webp_bytes": 205680
+    },
+    {
+      "png": "assets/images/music/music_cover_fitness.png",
+      "webp": "assets/images/music/music_cover_fitness.webp",
+      "png_bytes": 2702475,
+      "webp_bytes": 276948
+    },
+    {
+      "png": "assets/images/music/music_cover_lofi.png",
+      "webp": "assets/images/music/music_cover_lofi.webp",
+      "png_bytes": 3012956,
+      "webp_bytes": 234478
+    },
+    {
+      "png": "assets/images/music/music_cover_morning.png",
+      "webp": "assets/images/music/music_cover_morning.webp",
+      "png_bytes": 2675209,
+      "webp_bytes": 295382
+    },
+    {
+      "png": "assets/images/music/music_cover_rain.png",
+      "webp": "assets/images/music/music_cover_rain.webp",
+      "png_bytes": 3006380,
+      "webp_bytes": 359550
+    },
+    {
+      "png": "assets/images/music/music_cover_sleep.png",
+      "webp": "assets/images/music/music_cover_sleep.webp",
+      "png_bytes": 2683037,
+      "webp_bytes": 329520
+    },
+    {
+      "png": "assets/images/music/music_cover_study.png",
+      "webp": "assets/images/music/music_cover_study.webp",
+      "png_bytes": 2751708,
+      "webp_bytes": 220244
+    },
+    {
+      "png": "assets/images/music/music_wave_playing.png",
+      "webp": "assets/images/music/music_wave_playing.webp",
+      "png_bytes": 155538,
+      "webp_bytes": 53160
+    }
+  ]
+}

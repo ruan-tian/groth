@@ -10,6 +10,7 @@ import '../../core/repositories/focus_repository.dart';
 import '../../core/repositories/journal_repository.dart';
 import '../../core/repositories/knowledge_card_repository.dart';
 import '../../core/repositories/knowledge_source_repository.dart';
+import '../../core/repositories/knowledge_v3_repository.dart';
 import '../../core/repositories/music_repository.dart';
 import '../../core/repositories/pet_diary_repository.dart';
 import '../../core/repositories/setting_repository.dart';
@@ -39,6 +40,11 @@ final knowledgeSourceRepositoryProvider = Provider<KnowledgeSourceRepository>((
 ) {
   final db = ref.watch(appDatabaseProvider);
   return KnowledgeSourceRepository(db);
+});
+
+final knowledgeV3RepositoryProvider = Provider<KnowledgeV3Repository>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return KnowledgeV3Repository(db);
 });
 
 /// 健身记录仓库 Provider。
@@ -118,6 +124,7 @@ final musicRepositoryProvider = Provider<MusicRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return MusicRepository(db);
 });
+
 /// AI 对话历史仓库 Provider。
 final aiChatRepositoryProvider = Provider<AiChatRepository>((ref) {
   final db = ref.watch(appDatabaseProvider);

@@ -414,7 +414,8 @@ class _ReminderSettingsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final status = plan.reminderEnabled ? '已开启' : '已关闭';
+    final status = _reminderStatusText(plan);
+    final statusColor = _reminderStatusColor(plan);
     return _WaterCard(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(24, 18, 24, 12),
@@ -434,9 +435,7 @@ class _ReminderSettingsCard extends StatelessWidget {
                 Text(
                   status,
                   style: TextStyle(
-                    color: plan.reminderEnabled
-                        ? _WaterColors.primary
-                        : _WaterColors.muted,
+                    color: statusColor,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
@@ -1032,4 +1031,46 @@ String _formatShortDuration(Duration duration) {
     return '${duration.inHours}:$minutes:$seconds';
   }
   return '$minutes:$seconds';
+}
+
+String _reminderStatusText(WaterPlanState plan) {
+  if (!plan.reminderEnabled) return '\u5df2\u5173\u95ed';
+  final status = plan.reminderScheduleStatus;
+  switch (status.code) {
+    case HealthReminderScheduleCode.scheduled:
+      final suffix = status.isDelayedBySystemAlarmLimit
+          ? '\uff0c\u53ef\u80fd\u5ef6\u8fdf'
+          : '';
+      return '\u5df2\u5b89\u6392 ${status.pendingCount} '
+          '\u4e2a\u63d0\u9192$suffix';
+    case HealthReminderScheduleCode.permissionDenied:
+      return '\u901a\u77e5\u6743\u9650\u672a\u5f00\u542f';
+    case HealthReminderScheduleCode.exactAlarmDenied:
+      return '\u95f9\u949f\u6743\u9650\u53d7\u9650\uff0c'
+          '\u53ef\u80fd\u5ef6\u8fdf';
+    case HealthReminderScheduleCode.scheduleFailed:
+      return '\u8c03\u5ea6\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5';
+    case HealthReminderScheduleCode.noPendingNotifications:
+      return '\u672a\u68c0\u6d4b\u5230\u7cfb\u7edf\u63d0\u9192';
+    case HealthReminderScheduleCode.off:
+      return '\u5df2\u5173\u95ed';
+    case HealthReminderScheduleCode.unknown:
+      return '\u672a\u6fc0\u6d3b\uff0c\u9700\u91cd\u65b0\u5f00\u542f';
+  }
+}
+
+Color _reminderStatusColor(WaterPlanState plan) {
+  if (!plan.reminderEnabled) return _WaterColors.muted;
+  switch (plan.reminderScheduleStatus.code) {
+    case HealthReminderScheduleCode.scheduled:
+      return _WaterColors.primary;
+    case HealthReminderScheduleCode.unknown:
+    case HealthReminderScheduleCode.off:
+      return _WaterColors.muted;
+    case HealthReminderScheduleCode.permissionDenied:
+    case HealthReminderScheduleCode.exactAlarmDenied:
+    case HealthReminderScheduleCode.scheduleFailed:
+    case HealthReminderScheduleCode.noPendingNotifications:
+      return const Color(0xFFD8792D);
+  }
 }

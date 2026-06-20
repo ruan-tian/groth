@@ -344,7 +344,7 @@ class _MusicTrackList extends ConsumerWidget {
         return _TrackTile(
           track: track,
           selected: selected,
-          onPlay: () => controller.playTrack(track),
+          onPlay: () => controller.playTrackFromQueue(track, tracks),
           onFavorite: () => controller.toggleFavorite(track),
         );
       },

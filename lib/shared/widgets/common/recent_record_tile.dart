@@ -17,6 +17,7 @@ class RecentRecordTile extends StatelessWidget {
     this.primaryBadgeColor,
     this.secondaryBadge,
     this.secondaryBadgeColor,
+    this.imageAsset,
     this.onTap,
   });
 
@@ -29,6 +30,7 @@ class RecentRecordTile extends StatelessWidget {
   final Color? primaryBadgeColor;
   final String? secondaryBadge;
   final Color? secondaryBadgeColor;
+  final String? imageAsset;
   final VoidCallback? onTap;
 
   @override
@@ -54,11 +56,23 @@ class RecentRecordTile extends StatelessWidget {
             Container(
               width: 40,
               height: 40,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
                 color: iconBackgroundColor.withValues(alpha: 0.12),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(icon, color: iconColor, size: 20),
+              child: imageAsset == null
+                  ? Icon(icon, color: iconColor, size: 20)
+                  : Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Image.asset(
+                        imageAsset!,
+                        fit: BoxFit.contain,
+                        cacheWidth: 96,
+                        errorBuilder: (_, _, _) =>
+                            Icon(icon, color: iconColor, size: 20),
+                      ),
+                    ),
             ),
             const SizedBox(width: AppSpacing.md),
 

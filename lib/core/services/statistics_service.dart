@@ -230,44 +230,60 @@ class StatisticsService {
     final queryResults = await Future.wait([
       // Step 2: Study records
       (_db.select(_db.studyRecords)..where(
-        (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-               t.createdAt.isSmallerThanValue(endExclusiveMs),
-      )).get(),
+            (t) =>
+                t.startTime.isBiggerOrEqualValue(startMs) &
+                t.startTime.isSmallerThanValue(endExclusiveMs),
+          ))
+          .get(),
       // Step 3: Fitness records
       (_db.select(_db.fitnessRecords)..where(
-        (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-               t.createdAt.isSmallerThanValue(endExclusiveMs),
-      )).get(),
+            (t) =>
+                t.createdAt.isBiggerOrEqualValue(startMs) &
+                t.createdAt.isSmallerThanValue(endExclusiveMs),
+          ))
+          .get(),
       // Step 5: Journals
       (_db.select(_db.dailyJournals)..where(
-        (t) => t.journalDate.isBiggerOrEqualValue(startDateStr) &
-               t.journalDate.isSmallerOrEqualValue(endDateStr),
-      )).get(),
+            (t) =>
+                t.journalDate.isBiggerOrEqualValue(startDateStr) &
+                t.journalDate.isSmallerOrEqualValue(endDateStr),
+          ))
+          .get(),
       // Step 6: Diet records
       (_db.select(_db.dietRecords)..where(
-        (t) => t.mealDate.isBiggerOrEqualValue(startDateStr) &
-               t.mealDate.isSmallerOrEqualValue(endDateStr),
-      )).get(),
+            (t) =>
+                t.mealDate.isBiggerOrEqualValue(startDateStr) &
+                t.mealDate.isSmallerOrEqualValue(endDateStr),
+          ))
+          .get(),
       // Step 7: Sleep records
       (_db.select(_db.sleepRecords)..where(
-        (t) => t.sleepDate.isBiggerOrEqualValue(startDateStr) &
-               t.sleepDate.isSmallerOrEqualValue(endDateStr),
-      )).get(),
+            (t) =>
+                t.sleepDate.isBiggerOrEqualValue(startDateStr) &
+                t.sleepDate.isSmallerOrEqualValue(endDateStr),
+          ))
+          .get(),
       // Step 8: Focus sessions
       (_db.select(_db.focusSessions)..where(
-        (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-               t.createdAt.isSmallerThanValue(endExclusiveMs),
-      )).get(),
+            (t) =>
+                t.createdAt.isBiggerOrEqualValue(startMs) &
+                t.createdAt.isSmallerThanValue(endExclusiveMs),
+          ))
+          .get(),
       // Step 9: Exp logs
       (_db.select(_db.growthExpLogs)..where(
-        (t) => t.createdAt.isBiggerOrEqualValue(startMs) &
-               t.createdAt.isSmallerThanValue(endExclusiveMs),
-      )).get(),
+            (t) =>
+                t.createdAt.isBiggerOrEqualValue(startMs) &
+                t.createdAt.isSmallerThanValue(endExclusiveMs),
+          ))
+          .get(),
       // Step 10: Daily tasks
       (_db.select(_db.dailyTasks)..where(
-        (t) => t.taskDate.isBiggerOrEqualValue(startDateStr) &
-               t.taskDate.isSmallerOrEqualValue(endDateStr),
-      )).get(),
+            (t) =>
+                t.taskDate.isBiggerOrEqualValue(startDateStr) &
+                t.taskDate.isSmallerOrEqualValue(endDateStr),
+          ))
+          .get(),
     ]);
 
     // Extract results from parallel query
@@ -303,7 +319,7 @@ class StatisticsService {
     // 学习：按日期聚合时长 + session 数
     final studyByDate = <String, _StudyAgg>{};
     for (final r in studyRecords) {
-      final key = msToDateKey(r.createdAt);
+      final key = msToDateKey(r.startTime);
       final prev = studyByDate[key];
       studyByDate[key] = _StudyAgg(
         minutes: (prev?.minutes ?? 0) + r.durationMinutes,

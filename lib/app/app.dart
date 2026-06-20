@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
 import 'design/design.dart';
+import '../features/health/services/health_reminder_scheduler.dart';
 import '../shared/providers/settings_provider.dart';
 
 /// Growth OS 应用根 Widget
@@ -14,6 +15,7 @@ class GrowthOSApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     ref.watch(themeInitProvider); // 从数据库加载已保存的主题
+    ref.watch(healthReminderBootstrapProvider);
     final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(

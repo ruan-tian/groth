@@ -24,7 +24,7 @@ class MusicAssets {
   static const decoSparkle = '$_root/deco_sparkle.webp';
   static const decoCloudHanging = '$_root/deco_cloud_hanging.webp';
   static const decoHeart = '$_root/deco_heart.webp';
-  static const decoStar = '$_root/deco_star.webp';
+  static const decoStar = decoSparkle;
   static const decoMoon = '$_root/deco_moon.webp';
   static const softShadowOval = '$_root/soft_shadow_oval.webp';
 
@@ -65,20 +65,20 @@ class MusicAssets {
   static const emptyPlaylist = '$_root/empty_playlist.webp';
 
   // ── Capsule ──
-  static const capsuleIdle = '$_root/music_capsule_idle.png';
-  static const capsulePlaying = '$_root/music_capsule_playing.png';
+  static const capsuleIdle = '$_root/music_capsule_idle.webp';
+  static const capsulePlaying = '$_root/music_capsule_playing.webp';
   static const floatPlaceholder = '$_root/music_float_placeholder.webp';
   static const wavePlaying = '$_root/music_wave_playing.webp';
 
   // ── Music Covers ──
-  static const coverDefault = '$_root/music_cover_default.png';
-  static const coverFitness = '$_root/music_cover_fitness.png';
-  static const coverLofi = '$_root/music_cover_lofi.png';
-  static const coverMorning = '$_root/music_cover_morning.png';
-  static const coverRain = '$_root/music_cover_rain.png';
-  static const coverRelax = '$_root/music_cover_relax.png';
-  static const coverSleep = '$_root/music_cover_sleep.png';
-  static const coverStudy = '$_root/music_cover_study.png';
+  static const coverDefault = '$_root/music_cover_default.webp';
+  static const coverFitness = '$_root/music_cover_fitness.webp';
+  static const coverLofi = '$_root/music_cover_lofi.webp';
+  static const coverMorning = '$_root/music_cover_morning.webp';
+  static const coverRain = '$_root/music_cover_rain.webp';
+  static const coverRelax = '$_root/music_cover_relax.webp';
+  static const coverSleep = '$_root/music_cover_sleep.webp';
+  static const coverStudy = '$_root/music_cover_study.webp';
 
   // ── Playlist Covers ──
   static const playlistCoverDefault = '$_root/playlist_cover_default.webp';
@@ -89,14 +89,14 @@ class MusicAssets {
   static const playlistCoverSleep = '$_root/playlist_cover_sleep.webp';
   static const playlistCoverStudy = '$_root/playlist_cover_study.webp';
 
-  static const playlistCustom01 = '$_root/playlist_custom_01.png';
-  static const playlistCustom02 = '$_root/playlist_custom_02.png';
-  static const playlistCustom03 = '$_root/playlist_custom_03.png';
-  static const playlistCustom04 = '$_root/playlist_custom_04.png';
-  static const playlistCustom05 = '$_root/playlist_custom_05.png';
-  static const playlistCustom06 = '$_root/playlist_custom_06.png';
-  static const playlistCustom07 = '$_root/playlist_custom_07.png';
-  static const playlistCustom08 = '$_root/playlist_custom_08.png';
+  static const playlistCustom01 = '$_root/playlist_custom_01.webp';
+  static const playlistCustom02 = '$_root/playlist_custom_02.webp';
+  static const playlistCustom03 = '$_root/playlist_custom_03.webp';
+  static const playlistCustom04 = '$_root/playlist_custom_04.webp';
+  static const playlistCustom05 = '$_root/playlist_custom_05.webp';
+  static const playlistCustom06 = '$_root/playlist_custom_06.webp';
+  static const playlistCustom07 = '$_root/playlist_custom_07.webp';
+  static const playlistCustom08 = '$_root/playlist_custom_08.webp';
 
   // ── Settings ──
   static const settingBackgroundPlay =

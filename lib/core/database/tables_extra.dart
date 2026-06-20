@@ -241,6 +241,129 @@ class KnowledgeCardSourceLinks extends Table {
   IntColumn get createdAt => integer()();
 }
 
+/// V3 知识空间。用户只看到空间，不再看到目标/模块/章节。
+@DataClassName('KnowledgeSpaceV3')
+class KnowledgeSpacesV3 extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+  TextColumn get type => text().withDefault(const Constant('custom'))();
+  TextColumn get note => text().nullable()();
+  TextColumn get iconAssetKey => text().nullable()();
+  TextColumn get colorSeed => text().nullable()();
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+}
+
+/// V3 资料。正文保存在本地，后台可检索，UI 不暴露切片/token。
+@DataClassName('KnowledgeMaterial')
+class KnowledgeMaterials extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get spaceId => integer().references(
+    KnowledgeSpacesV3,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  TextColumn get title => text()();
+  TextColumn get content => text()();
+  TextColumn get sourceType => text().withDefault(const Constant('text'))();
+  TextColumn get sourcePath => text().nullable()();
+  TextColumn get url => text().nullable()();
+  IntColumn get orderIndex => integer().withDefault(const Constant(0))();
+  TextColumn get status => text().withDefault(const Constant('ready'))();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+}
+
+/// V3 知识卡。卡片直接绑定空间和可选资料来源。
+@DataClassName('KnowledgeCardV3')
+class KnowledgeCardsV3 extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get spaceId => integer().references(
+    KnowledgeSpacesV3,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  IntColumn get materialId => integer().nullable().references(
+    KnowledgeMaterials,
+    #id,
+    onDelete: KeyAction.setNull,
+  )();
+  TextColumn get question => text()();
+  TextColumn get answer => text()();
+  TextColumn get explanation => text().nullable()();
+  TextColumn get cardType => text().withDefault(const Constant('recall'))();
+  IntColumn get importance => integer().withDefault(const Constant(3))();
+  IntColumn get difficulty => integer().withDefault(const Constant(3))();
+  TextColumn get sourceTitle => text().nullable()();
+  TextColumn get sourceExcerpt => text().nullable()();
+  TextColumn get tagsJson => text().nullable()();
+  IntColumn get masteryLevel => integer().withDefault(const Constant(0))();
+  IntColumn get reviewCount => integer().withDefault(const Constant(0))();
+  IntColumn get correctStreak => integer().withDefault(const Constant(0))();
+  IntColumn get dueAt => integer()();
+  IntColumn get orderIndex => integer().withDefault(const Constant(0))();
+  IntColumn get lastReviewedAt => integer().nullable()();
+  BoolColumn get isArchived => boolean().withDefault(const Constant(false))();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+}
+
+/// V3 闪卡复习日志。
+@DataClassName('KnowledgeReviewLogV3')
+class KnowledgeReviewLogsV3 extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get cardId => integer().references(
+    KnowledgeCardsV3,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  IntColumn get spaceId => integer().references(
+    KnowledgeSpacesV3,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  IntColumn get rating => integer()();
+  IntColumn get previousMastery => integer()();
+  IntColumn get nextMastery => integer()();
+  IntColumn get durationMs => integer().withDefault(const Constant(0))();
+  IntColumn get reviewedAt => integer()();
+  IntColumn get nextDueAt => integer()();
+}
+
+/// 甜甜问答会话。
+@DataClassName('TiantianQaSession')
+class TiantianQaSessions extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get spaceId => integer().references(
+    KnowledgeSpacesV3,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  TextColumn get title => text()();
+  TextColumn get referencedMaterialIdsJson => text().nullable()();
+  IntColumn get createdAt => integer()();
+  IntColumn get updatedAt => integer()();
+}
+
+/// 甜甜问答消息。
+@DataClassName('TiantianQaMessage')
+class TiantianQaMessages extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get sessionId => integer().references(
+    TiantianQaSessions,
+    #id,
+    onDelete: KeyAction.cascade,
+  )();
+  TextColumn get role => text()();
+  TextColumn get content => text()();
+  TextColumn get sourcesJson => text().nullable()();
+  BoolColumn get savedAsCard => boolean().withDefault(const Constant(false))();
+  IntColumn get createdAt => integer()();
+}
+
 /// 经验日志（等级计算核心）
 @DataClassName('GrowthExpLog')
 class GrowthExpLogs extends Table {

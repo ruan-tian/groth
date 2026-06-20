@@ -18,7 +18,7 @@ void main() {
       PetAssets.aiReport,
       PetAssets.commonEmpty,
       PetCenterAssets.bubbleTail,
-      'assets/pet/empty/empty_task.png',
+      'assets/pet/empty/empty_task.webp',
       'assets/pet/concerts/参加ChrisJames演唱会.webp',
     ];
 

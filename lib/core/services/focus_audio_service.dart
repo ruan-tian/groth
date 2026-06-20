@@ -1,5 +1,10 @@
+import 'dart:io';
+
+import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_background/just_audio_background.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class FocusAudioService {
   static bool _initialized = false;
@@ -34,7 +39,7 @@ class FocusAudioService {
       case 'cafe':
         return '咖啡馆';
       case 'white_noise':
-        return '白噪声';
+        return '白噪音';
       case 'wind':
         return '风声';
       default:
@@ -55,21 +60,18 @@ class FocusAudioService {
     if (_currentNoiseAsset == assetPath && _isNoisePlaying) return;
 
     await _noisePlayer.stop();
-    await _noisePlayer.setAudioSource(
-      AudioSource.asset(
-        assetPath,
-        tag: MediaItem(
-          id: 'focus_noise',
-          title: displayNameForSound(soundType),
-          artist: 'Growth OS 专注白噪音',
-        ),
-      ),
-    );
-    await _noisePlayer.setLoopMode(LoopMode.one);
-    await _noisePlayer.setVolume(volume);
-    await _noisePlayer.play();
-    _currentNoiseAsset = assetPath;
-    _isNoisePlaying = true;
+    try {
+      await _setNoiseSource(assetPath, soundType);
+      await _noisePlayer.setLoopMode(LoopMode.one);
+      await _noisePlayer.setVolume(volume);
+      await _noisePlayer.play();
+      _currentNoiseAsset = assetPath;
+      _isNoisePlaying = true;
+    } catch (_) {
+      _currentNoiseAsset = null;
+      _isNoisePlaying = false;
+      rethrow;
+    }
   }
 
   Future<void> pauseNoise() async {
@@ -104,5 +106,44 @@ class FocusAudioService {
   Future<void> dispose() async {
     await _noisePlayer.dispose();
     await _bellPlayer.dispose();
+  }
+
+  Future<void> _setNoiseSource(String assetPath, String soundType) async {
+    try {
+      await _noisePlayer.setAudioSource(
+        AudioSource.asset(assetPath, tag: _mediaItemForSound(soundType)),
+      );
+    } catch (_) {
+      final file = await _cachedAssetFile(assetPath);
+      await _noisePlayer.setAudioSource(
+        AudioSource.file(file.path, tag: _mediaItemForSound(soundType)),
+      );
+    }
+  }
+
+  MediaItem _mediaItemForSound(String soundType) {
+    return MediaItem(
+      id: 'focus_noise_$soundType',
+      title: displayNameForSound(soundType),
+      artist: 'Growth OS 专注白噪音',
+    );
+  }
+
+  Future<File> _cachedAssetFile(String assetPath) async {
+    final bytes = await rootBundle.load(assetPath);
+    final cacheDir = await getTemporaryDirectory();
+    final targetDir = Directory(p.join(cacheDir.path, 'growth_os_audio_cache'));
+    if (!await targetDir.exists()) {
+      await targetDir.create(recursive: true);
+    }
+
+    final file = File(p.join(targetDir.path, p.basename(assetPath)));
+    if (!await file.exists() || await file.length() != bytes.lengthInBytes) {
+      await file.writeAsBytes(
+        bytes.buffer.asUint8List(bytes.offsetInBytes, bytes.lengthInBytes),
+        flush: true,
+      );
+    }
+    return file;
   }
 }

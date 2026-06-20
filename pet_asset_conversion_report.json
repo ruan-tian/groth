@@ -1,0 +1,5262 @@
+{
+  "summary": {
+    "convert_png_to_webp": 87,
+    "skip": 50,
+    "rembg_overwrite_webp": 169
+  },
+  "elapsed_seconds": 184.75,
+  "rows": [
+    {
+      "source": "assets/pet/ai/ai_daily_summary.png",
+      "target": "assets/pet/ai/ai_daily_summary.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 127138,
+        "transparent_ratio": 0.9447,
+        "visible_ratio": 0.1492,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/ai/ai_json_error.png",
+      "target": "assets/pet/ai/ai_json_error.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 108996,
+        "transparent_ratio": 0.9545,
+        "visible_ratio": 0.1273,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/ai/ai_key_missing.png",
+      "target": "assets/pet/ai/ai_key_missing.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 127530,
+        "transparent_ratio": 0.9445,
+        "visible_ratio": 0.1547,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/ai/ai_network_error.png",
+      "target": "assets/pet/ai/ai_network_error.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 128494,
+        "transparent_ratio": 0.9251,
+        "visible_ratio": 0.1595,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/ai/ai_pointing.png",
+      "target": "assets/pet/ai/ai_pointing.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120476,
+        "transparent_ratio": 0.9472,
+        "visible_ratio": 0.1474,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/ai/ai_privacy.png",
+      "target": "assets/pet/ai/ai_privacy.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 116000,
+        "transparent_ratio": 0.9102,
+        "visible_ratio": 0.1572,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/ai/ai_report.png",
+      "target": "assets/pet/ai/ai_report.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120832,
+        "transparent_ratio": 0.9445,
+        "visible_ratio": 0.1531,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/ai/ai_thinking.png",
+      "target": "assets/pet/ai/ai_thinking.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 115780,
+        "transparent_ratio": 0.9378,
+        "visible_ratio": 0.1417,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_empty.png",
+      "target": "assets/pet/common/common_empty.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 98774,
+        "transparent_ratio": 0.9529,
+        "visible_ratio": 0.1264,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_error.png",
+      "target": "assets/pet/common/common_error.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 80946,
+        "transparent_ratio": 0.9532,
+        "visible_ratio": 0.106,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_fallback.png",
+      "target": "assets/pet/common/common_fallback.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 84076,
+        "transparent_ratio": 0.9528,
+        "visible_ratio": 0.1107,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_happy.png",
+      "target": "assets/pet/common/common_happy.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 107816,
+        "transparent_ratio": 0.9434,
+        "visible_ratio": 0.1367,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_idle.png",
+      "target": "assets/pet/common/common_idle.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 100908,
+        "transparent_ratio": 0.9489,
+        "visible_ratio": 0.1309,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_loading.png",
+      "target": "assets/pet/common/common_loading.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 128318,
+        "transparent_ratio": 0.9038,
+        "visible_ratio": 0.1733,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_report.png",
+      "target": "assets/pet/common/common_report.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 114830,
+        "transparent_ratio": 0.931,
+        "visible_ratio": 0.1412,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_thinking.png",
+      "target": "assets/pet/common/common_thinking.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 90662,
+        "transparent_ratio": 0.9567,
+        "visible_ratio": 0.1129,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_warning.png",
+      "target": "assets/pet/common/common_warning.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 116570,
+        "transparent_ratio": 0.9258,
+        "visible_ratio": 0.1514,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/common/common_warning2.png",
+      "target": "assets/pet/common/common_warning2.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 133932,
+        "transparent_ratio": 0.9251,
+        "visible_ratio": 0.1708,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/参加ChrisJames演唱会.webp",
+      "target": "assets/pet/concerts/参加ChrisJames演唱会.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 90308,
+        "transparent_ratio": 0.5982,
+        "visible_ratio": 0.4972,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/参加Imagine Dragons音乐会和其合影.webp",
+      "target": "assets/pet/concerts/参加Imagine Dragons音乐会和其合影.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 109130,
+        "transparent_ratio": 0.5223,
+        "visible_ratio": 0.5824,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/参加OneRepublic音乐会.webp",
+      "target": "assets/pet/concerts/参加OneRepublic音乐会.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 117478,
+        "transparent_ratio": 0.1917,
+        "visible_ratio": 0.9333,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/参加The Chainsmokers演唱会.webp",
+      "target": "assets/pet/concerts/参加The Chainsmokers演唱会.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 134468,
+        "transparent_ratio": 0.4124,
+        "visible_ratio": 0.7286,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/参加邓紫棋演唱会.webp",
+      "target": "assets/pet/concerts/参加邓紫棋演唱会.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120550,
+        "transparent_ratio": 0.6819,
+        "visible_ratio": 0.4545,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看BLACKPINK演唱会.webp",
+      "target": "assets/pet/concerts/看BLACKPINK演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 279052,
+        "transparent_ratio": 0.9394,
+        "visible_ratio": 0.7777,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看BTS演唱会.webp",
+      "target": "assets/pet/concerts/看BTS演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 166844,
+        "transparent_ratio": 0.9995,
+        "visible_ratio": 0.3787,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看Billie Eilish演唱会.webp",
+      "target": "assets/pet/concerts/看Billie Eilish演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 255846,
+        "transparent_ratio": 0.9982,
+        "visible_ratio": 0.738,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看Bruno Mars演唱会.webp",
+      "target": "assets/pet/concerts/看Bruno Mars演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 281864,
+        "transparent_ratio": 0.9395,
+        "visible_ratio": 0.6874,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看Ed Sheeran演唱会.webp",
+      "target": "assets/pet/concerts/看Ed Sheeran演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 269438,
+        "transparent_ratio": 0.9994,
+        "visible_ratio": 0.721,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看Stray Kids演唱会.webp",
+      "target": "assets/pet/concerts/看Stray Kids演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 247152,
+        "transparent_ratio": 0.9026,
+        "visible_ratio": 0.7287,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看Taylor Swift演唱会.webp",
+      "target": "assets/pet/concerts/看Taylor Swift演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 313916,
+        "transparent_ratio": 0.9925,
+        "visible_ratio": 0.7664,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看YOASOBI演唱会.webp",
+      "target": "assets/pet/concerts/看YOASOBI演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 255668,
+        "transparent_ratio": 0.9128,
+        "visible_ratio": 0.725,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看aespa演唱会.webp",
+      "target": "assets/pet/concerts/看aespa演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 311098,
+        "transparent_ratio": 0.9369,
+        "visible_ratio": 0.7627,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看五月天演唱会.webp",
+      "target": "assets/pet/concerts/看五月天演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 274202,
+        "transparent_ratio": 0.9995,
+        "visible_ratio": 0.7814,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看周杰伦演唱.webp",
+      "target": "assets/pet/concerts/看周杰伦演唱.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 87330,
+        "transparent_ratio": 0.6137,
+        "visible_ratio": 0.47,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看林俊杰演唱会.webp",
+      "target": "assets/pet/concerts/看林俊杰演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 290090,
+        "transparent_ratio": 0.9944,
+        "visible_ratio": 0.7924,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看米津玄师演唱会.webp",
+      "target": "assets/pet/concerts/看米津玄师演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 130464,
+        "transparent_ratio": 0.9997,
+        "visible_ratio": 0.3073,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看蔡依林演唱会.webp",
+      "target": "assets/pet/concerts/看蔡依林演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 325548,
+        "transparent_ratio": 1.0,
+        "visible_ratio": 0.7721,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看薛之谦演唱会.webp",
+      "target": "assets/pet/concerts/看薛之谦演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 258544,
+        "transparent_ratio": 0.995,
+        "visible_ratio": 0.7444,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看贾斯汀比伯演唱会.webp",
+      "target": "assets/pet/concerts/看贾斯汀比伯演唱会.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 126542,
+        "transparent_ratio": 0.6484,
+        "visible_ratio": 0.4871,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/concerts/看陈奕迅演唱会.webp",
+      "target": "assets/pet/concerts/看陈奕迅演唱会.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 289966,
+        "transparent_ratio": 1.0,
+        "visible_ratio": 0.6434,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/diet/diet_done.png",
+      "target": "assets/pet/diet/diet_done.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 97966,
+        "transparent_ratio": 0.9496,
+        "visible_ratio": 0.1271,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/diet/diet_drink.png",
+      "target": "assets/pet/diet/diet_drink.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 100178,
+        "transparent_ratio": 0.9472,
+        "visible_ratio": 0.1207,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/diet/diet_eating.png",
+      "target": "assets/pet/diet/diet_eating.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 115096,
+        "transparent_ratio": 0.92,
+        "visible_ratio": 0.1461,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/diet/diet_plate.png",
+      "target": "assets/pet/diet/diet_plate.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 131746,
+        "transparent_ratio": 0.9203,
+        "visible_ratio": 0.1583,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/可爱.png",
+      "target": "assets/pet/emotions/可爱.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 107184,
+        "transparent_ratio": 0.9533,
+        "visible_ratio": 0.136,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/可爱.webp",
+      "target": "assets/pet/emotions/可爱.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 107184,
+        "transparent_ratio": 0.9533,
+        "visible_ratio": 0.136,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/大哭.png",
+      "target": "assets/pet/emotions/大哭.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 140802,
+        "transparent_ratio": 0.924,
+        "visible_ratio": 0.1711,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/大哭.webp",
+      "target": "assets/pet/emotions/大哭.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 140802,
+        "transparent_ratio": 0.924,
+        "visible_ratio": 0.1711,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/好困.png",
+      "target": "assets/pet/emotions/好困.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 101640,
+        "transparent_ratio": 0.9616,
+        "visible_ratio": 0.1181,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/好困.webp",
+      "target": "assets/pet/emotions/好困.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 101640,
+        "transparent_ratio": 0.9616,
+        "visible_ratio": 0.1181,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/尴尬.png",
+      "target": "assets/pet/emotions/尴尬.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 102778,
+        "transparent_ratio": 0.953,
+        "visible_ratio": 0.1271,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/尴尬.webp",
+      "target": "assets/pet/emotions/尴尬.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 102778,
+        "transparent_ratio": 0.953,
+        "visible_ratio": 0.1271,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/开心wink.png",
+      "target": "assets/pet/emotions/开心wink.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 119712,
+        "transparent_ratio": 0.9278,
+        "visible_ratio": 0.1584,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/开心wink.webp",
+      "target": "assets/pet/emotions/开心wink.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 119712,
+        "transparent_ratio": 0.9278,
+        "visible_ratio": 0.1584,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/惊讶.png",
+      "target": "assets/pet/emotions/惊讶.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 90300,
+        "transparent_ratio": 0.9535,
+        "visible_ratio": 0.1109,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/惊讶.webp",
+      "target": "assets/pet/emotions/惊讶.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 90300,
+        "transparent_ratio": 0.9535,
+        "visible_ratio": 0.1109,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/打招呼.png",
+      "target": "assets/pet/emotions/打招呼.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 79426,
+        "transparent_ratio": 0.9607,
+        "visible_ratio": 0.0993,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/打招呼.webp",
+      "target": "assets/pet/emotions/打招呼.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 79426,
+        "transparent_ratio": 0.9607,
+        "visible_ratio": 0.0993,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/疑惑.png",
+      "target": "assets/pet/emotions/疑惑.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 92694,
+        "transparent_ratio": 0.9528,
+        "visible_ratio": 0.1205,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/emotions/疑惑.webp",
+      "target": "assets/pet/emotions/疑惑.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 92694,
+        "transparent_ratio": 0.9528,
+        "visible_ratio": 0.1205,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_ai.png",
+      "target": "assets/pet/empty/empty_ai.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 138798,
+        "transparent_ratio": 0.9369,
+        "visible_ratio": 0.1676,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_backup.png",
+      "target": "assets/pet/empty/empty_backup.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 170062,
+        "transparent_ratio": 0.9183,
+        "visible_ratio": 0.2153,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_diet.png",
+      "target": "assets/pet/empty/empty_diet.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 108410,
+        "transparent_ratio": 0.9513,
+        "visible_ratio": 0.131,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_fitness.png",
+      "target": "assets/pet/empty/empty_fitness.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 131004,
+        "transparent_ratio": 0.9173,
+        "visible_ratio": 0.1723,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_journal.png",
+      "target": "assets/pet/empty/empty_journal.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 165094,
+        "transparent_ratio": 0.941,
+        "visible_ratio": 0.1912,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_sleep.png",
+      "target": "assets/pet/empty/empty_sleep.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 143306,
+        "transparent_ratio": 0.9408,
+        "visible_ratio": 0.1903,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_study.webp",
+      "target": "assets/pet/empty/empty_study.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 113362,
+        "transparent_ratio": 0.9967,
+        "visible_ratio": 0.4811,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/empty/empty_task.png",
+      "target": "assets/pet/empty/empty_task.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 137156,
+        "transparent_ratio": 0.9336,
+        "visible_ratio": 0.1778,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_comeback.png",
+      "target": "assets/pet/events/event_comeback.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 202178,
+        "transparent_ratio": 0.8247,
+        "visible_ratio": 0.3012,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_encourage.png",
+      "target": "assets/pet/events/event_encourage.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 137280,
+        "transparent_ratio": 0.9307,
+        "visible_ratio": 0.1792,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_exp_gain.png",
+      "target": "assets/pet/events/event_exp_gain.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 127080,
+        "transparent_ratio": 0.9263,
+        "visible_ratio": 0.1485,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_goal_done.png",
+      "target": "assets/pet/events/event_goal_done.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 125022,
+        "transparent_ratio": 0.9416,
+        "visible_ratio": 0.152,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_level_up.png",
+      "target": "assets/pet/events/event_level_up.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 205870,
+        "transparent_ratio": 0.9037,
+        "visible_ratio": 0.2428,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_monthly_report.png",
+      "target": "assets/pet/events/event_monthly_report.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 178050,
+        "transparent_ratio": 0.903,
+        "visible_ratio": 0.2172,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_streak_30.png",
+      "target": "assets/pet/events/event_streak_30.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 197314,
+        "transparent_ratio": 0.8941,
+        "visible_ratio": 0.2304,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_streak_7.png",
+      "target": "assets/pet/events/event_streak_7.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 151660,
+        "transparent_ratio": 0.9106,
+        "visible_ratio": 0.1862,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_task_done.png",
+      "target": "assets/pet/events/event_task_done.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 134358,
+        "transparent_ratio": 0.9424,
+        "visible_ratio": 0.1568,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/events/event_weekly_report.png",
+      "target": "assets/pet/events/event_weekly_report.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 119710,
+        "transparent_ratio": 0.9509,
+        "visible_ratio": 0.143,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去冲浪.webp",
+      "target": "assets/pet/experience/小猫去冲浪.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 76772,
+        "transparent_ratio": 0.9995,
+        "visible_ratio": 0.1956,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去坐过山车.webp",
+      "target": "assets/pet/experience/小猫去坐过山车.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 149012,
+        "transparent_ratio": 0.9997,
+        "visible_ratio": 0.3561,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去寺庙.webp",
+      "target": "assets/pet/experience/小猫去寺庙.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 238536,
+        "transparent_ratio": 0.9984,
+        "visible_ratio": 0.6659,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去攀岩.webp",
+      "target": "assets/pet/experience/小猫去攀岩.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 37032,
+        "transparent_ratio": 0.9949,
+        "visible_ratio": 0.103,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去滑雪.webp",
+      "target": "assets/pet/experience/小猫去滑雪.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 114658,
+        "transparent_ratio": 0.9989,
+        "visible_ratio": 0.249,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去潜水.webp",
+      "target": "assets/pet/experience/小猫去潜水.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 70840,
+        "transparent_ratio": 0.9765,
+        "visible_ratio": 0.198,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去跳伞.webp",
+      "target": "assets/pet/experience/小猫去跳伞.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 89654,
+        "transparent_ratio": 0.9986,
+        "visible_ratio": 0.2387,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去蹦极.webp",
+      "target": "assets/pet/experience/小猫去蹦极.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 223516,
+        "transparent_ratio": 0.9997,
+        "visible_ratio": 0.5361,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫去迪士尼.webp",
+      "target": "assets/pet/experience/小猫去迪士尼.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 372352,
+        "transparent_ratio": 0.9846,
+        "visible_ratio": 0.8425,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/experience/小猫开直升飞机.webp",
+      "target": "assets/pet/experience/小猫开直升飞机.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 222106,
+        "transparent_ratio": 0.9916,
+        "visible_ratio": 0.5913,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/fitness/fitness_done.png",
+      "target": "assets/pet/fitness/fitness_done.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 142992,
+        "transparent_ratio": 0.8996,
+        "visible_ratio": 0.1881,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/fitness/fitness_drink.png",
+      "target": "assets/pet/fitness/fitness_drink.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 147762,
+        "transparent_ratio": 0.9451,
+        "visible_ratio": 0.166,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/fitness/fitness_lifting.png",
+      "target": "assets/pet/fitness/fitness_lifting.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 119930,
+        "transparent_ratio": 0.914,
+        "visible_ratio": 0.1663,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/fitness/fitness_stretch.png",
+      "target": "assets/pet/fitness/fitness_stretch.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 137506,
+        "transparent_ratio": 0.9274,
+        "visible_ratio": 0.1891,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/journal/journal_book.png",
+      "target": "assets/pet/journal/journal_book.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 130824,
+        "transparent_ratio": 0.9147,
+        "visible_ratio": 0.1672,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/journal/journal_thinking.png",
+      "target": "assets/pet/journal/journal_thinking.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 91984,
+        "transparent_ratio": 0.9638,
+        "visible_ratio": 0.1098,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/journal/journal_writing.png",
+      "target": "assets/pet/journal/journal_writing.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 112440,
+        "transparent_ratio": 0.9295,
+        "visible_ratio": 0.1418,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/下雨打伞.png",
+      "target": "assets/pet/life/下雨打伞.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 141198,
+        "transparent_ratio": 0.8678,
+        "visible_ratio": 0.2149,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/下雨打伞.webp",
+      "target": "assets/pet/life/下雨打伞.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 141198,
+        "transparent_ratio": 0.8678,
+        "visible_ratio": 0.2149,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/举铁好重.png",
+      "target": "assets/pet/life/举铁好重.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 145480,
+        "transparent_ratio": 0.8823,
+        "visible_ratio": 0.2004,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/举铁好重.webp",
+      "target": "assets/pet/life/举铁好重.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 145480,
+        "transparent_ratio": 0.8823,
+        "visible_ratio": 0.2004,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/做晚饭切菜.webp",
+      "target": "assets/pet/life/做晚饭切菜.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120516,
+        "transparent_ratio": 0.9967,
+        "visible_ratio": 0.3995,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/做沙拉.webp",
+      "target": "assets/pet/life/做沙拉.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 131060,
+        "transparent_ratio": 0.9963,
+        "visible_ratio": 0.4096,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/做黏土手工.webp",
+      "target": "assets/pet/life/做黏土手工.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 110160,
+        "transparent_ratio": 0.9964,
+        "visible_ratio": 0.3387,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/写明日计划.webp",
+      "target": "assets/pet/life/写明日计划.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 129546,
+        "transparent_ratio": 0.9974,
+        "visible_ratio": 0.464,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/写晨间日记.webp",
+      "target": "assets/pet/life/写晨间日记.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 100496,
+        "transparent_ratio": 0.9972,
+        "visible_ratio": 0.3416,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/写毛笔字.webp",
+      "target": "assets/pet/life/写毛笔字.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 103908,
+        "transparent_ratio": 0.9948,
+        "visible_ratio": 0.3453,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/冬天堆雪人.png",
+      "target": "assets/pet/life/冬天堆雪人.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 165066,
+        "transparent_ratio": 0.9442,
+        "visible_ratio": 0.1801,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/冬天堆雪人.webp",
+      "target": "assets/pet/life/冬天堆雪人.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 165066,
+        "transparent_ratio": 0.9442,
+        "visible_ratio": 0.1801,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/切芒果.webp",
+      "target": "assets/pet/life/切芒果.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120054,
+        "transparent_ratio": 0.9962,
+        "visible_ratio": 0.361,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/午后晒太阳.webp",
+      "target": "assets/pet/life/午后晒太阳.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 91030,
+        "transparent_ratio": 0.9947,
+        "visible_ratio": 0.3282,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/叠被子.webp",
+      "target": "assets/pet/life/叠被子.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 97774,
+        "transparent_ratio": 0.998,
+        "visible_ratio": 0.3501,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃寿司.webp",
+      "target": "assets/pet/life/吃寿司.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 109442,
+        "transparent_ratio": 0.996,
+        "visible_ratio": 0.3769,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃小笼包.webp",
+      "target": "assets/pet/life/吃小笼包.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 103960,
+        "transparent_ratio": 0.9967,
+        "visible_ratio": 0.3705,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃意面.webp",
+      "target": "assets/pet/life/吃意面.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 113150,
+        "transparent_ratio": 0.9974,
+        "visible_ratio": 0.3489,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃棉花糖.webp",
+      "target": "assets/pet/life/吃棉花糖.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 94450,
+        "transparent_ratio": 0.9973,
+        "visible_ratio": 0.3572,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃泡面看剧.webp",
+      "target": "assets/pet/life/吃泡面看剧.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 106854,
+        "transparent_ratio": 0.996,
+        "visible_ratio": 0.3688,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃烤串.webp",
+      "target": "assets/pet/life/吃烤串.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 98630,
+        "transparent_ratio": 0.9979,
+        "visible_ratio": 0.3795,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃烤玉米.webp",
+      "target": "assets/pet/life/吃烤玉米.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 105346,
+        "transparent_ratio": 0.9983,
+        "visible_ratio": 0.3393,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃烤面包.webp",
+      "target": "assets/pet/life/吃烤面包.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 131838,
+        "transparent_ratio": 0.9958,
+        "visible_ratio": 0.4104,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃草莓大福.webp",
+      "target": "assets/pet/life/吃草莓大福.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 97734,
+        "transparent_ratio": 0.9969,
+        "visible_ratio": 0.3898,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃薯片.png",
+      "target": "assets/pet/life/吃薯片.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 148928,
+        "transparent_ratio": 0.9207,
+        "visible_ratio": 0.1787,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃薯片.webp",
+      "target": "assets/pet/life/吃薯片.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 148928,
+        "transparent_ratio": 0.9207,
+        "visible_ratio": 0.1787,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃西瓜.png",
+      "target": "assets/pet/life/吃西瓜.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 114988,
+        "transparent_ratio": 0.9086,
+        "visible_ratio": 0.1555,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃西瓜.webp",
+      "target": "assets/pet/life/吃西瓜.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 114988,
+        "transparent_ratio": 0.9086,
+        "visible_ratio": 0.1555,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃铜锣烧.webp",
+      "target": "assets/pet/life/吃铜锣烧.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 104192,
+        "transparent_ratio": 0.9975,
+        "visible_ratio": 0.3907,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃饱了.png",
+      "target": "assets/pet/life/吃饱了.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 100474,
+        "transparent_ratio": 0.9616,
+        "visible_ratio": 0.1186,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/吃饱了.webp",
+      "target": "assets/pet/life/吃饱了.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 100474,
+        "transparent_ratio": 0.9616,
+        "visible_ratio": 0.1186,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/听播客.webp",
+      "target": "assets/pet/life/听播客.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 78644,
+        "transparent_ratio": 0.9968,
+        "visible_ratio": 0.2887,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/听雨声入睡.webp",
+      "target": "assets/pet/life/听雨声入睡.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 86788,
+        "transparent_ratio": 0.9954,
+        "visible_ratio": 0.3175,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/听音乐.png",
+      "target": "assets/pet/life/听音乐.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 122304,
+        "transparent_ratio": 0.9459,
+        "visible_ratio": 0.1451,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/听音乐.webp",
+      "target": "assets/pet/life/听音乐.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 122304,
+        "transparent_ratio": 0.9459,
+        "visible_ratio": 0.1451,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/和仓鼠玩.webp",
+      "target": "assets/pet/life/和仓鼠玩.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 83498,
+        "transparent_ratio": 0.9973,
+        "visible_ratio": 0.3354,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喂鸽子.webp",
+      "target": "assets/pet/life/喂鸽子.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 101176,
+        "transparent_ratio": 0.9974,
+        "visible_ratio": 0.3025,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝个茶.png",
+      "target": "assets/pet/life/喝个茶.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 117656,
+        "transparent_ratio": 0.9533,
+        "visible_ratio": 0.1376,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝个茶.webp",
+      "target": "assets/pet/life/喝个茶.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 117656,
+        "transparent_ratio": 0.9533,
+        "visible_ratio": 0.1376,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝可乐.png",
+      "target": "assets/pet/life/喝可乐.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 150620,
+        "transparent_ratio": 0.9219,
+        "visible_ratio": 0.1801,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝可乐.webp",
+      "target": "assets/pet/life/喝可乐.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 150620,
+        "transparent_ratio": 0.9219,
+        "visible_ratio": 0.1801,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝柠檬水.webp",
+      "target": "assets/pet/life/喝柠檬水.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 84212,
+        "transparent_ratio": 0.9955,
+        "visible_ratio": 0.254,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝椰子水.webp",
+      "target": "assets/pet/life/喝椰子水.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 103204,
+        "transparent_ratio": 0.9967,
+        "visible_ratio": 0.369,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝热可可.webp",
+      "target": "assets/pet/life/喝热可可.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 104918,
+        "transparent_ratio": 0.9977,
+        "visible_ratio": 0.3254,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝珍珠奶茶.webp",
+      "target": "assets/pet/life/喝珍珠奶茶.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 95408,
+        "transparent_ratio": 0.9966,
+        "visible_ratio": 0.328,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝红酒配奶酪.webp",
+      "target": "assets/pet/life/喝红酒配奶酪.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 96720,
+        "transparent_ratio": 0.9971,
+        "visible_ratio": 0.3843,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/喝西瓜汁.webp",
+      "target": "assets/pet/life/喝西瓜汁.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 104844,
+        "transparent_ratio": 0.998,
+        "visible_ratio": 0.3363,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/在云端弹钢琴.webp",
+      "target": "assets/pet/life/在云端弹钢琴.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 122476,
+        "transparent_ratio": 0.9996,
+        "visible_ratio": 0.3238,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/坐摇椅看书.webp",
+      "target": "assets/pet/life/坐摇椅看书.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 146378,
+        "transparent_ratio": 0.9947,
+        "visible_ratio": 0.4416,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/夏天晒太阳.png",
+      "target": "assets/pet/life/夏天晒太阳.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 164792,
+        "transparent_ratio": 0.883,
+        "visible_ratio": 0.2218,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/夏天晒太阳.webp",
+      "target": "assets/pet/life/夏天晒太阳.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 164792,
+        "transparent_ratio": 0.883,
+        "visible_ratio": 0.2218,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/小夜灯下读书.webp",
+      "target": "assets/pet/life/小夜灯下读书.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 105754,
+        "transparent_ratio": 0.9965,
+        "visible_ratio": 0.3194,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/小溪扔石头打水漂.webp",
+      "target": "assets/pet/life/小溪扔石头打水漂.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 116766,
+        "transparent_ratio": 0.9995,
+        "visible_ratio": 0.3452,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/开窗帘.webp",
+      "target": "assets/pet/life/开窗帘.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 117004,
+        "transparent_ratio": 0.998,
+        "visible_ratio": 0.3796,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/弹吉他唱歌.png",
+      "target": "assets/pet/life/弹吉他唱歌.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 110070,
+        "transparent_ratio": 0.9157,
+        "visible_ratio": 0.1495,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/弹吉他唱歌.webp",
+      "target": "assets/pet/life/弹吉他唱歌.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 110070,
+        "transparent_ratio": 0.9157,
+        "visible_ratio": 0.1495,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/抓蝴蝶.png",
+      "target": "assets/pet/life/抓蝴蝶.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 101048,
+        "transparent_ratio": 0.9507,
+        "visible_ratio": 0.129,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/抓蝴蝶.webp",
+      "target": "assets/pet/life/抓蝴蝶.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 101048,
+        "transparent_ratio": 0.9507,
+        "visible_ratio": 0.129,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/折纸鹤.webp",
+      "target": "assets/pet/life/折纸鹤.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 106554,
+        "transparent_ratio": 0.9982,
+        "visible_ratio": 0.3457,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/抱着抱枕发呆.webp",
+      "target": "assets/pet/life/抱着抱枕发呆.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 108830,
+        "transparent_ratio": 0.9767,
+        "visible_ratio": 0.3725,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/拉窗帘.webp",
+      "target": "assets/pet/life/拉窗帘.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 108690,
+        "transparent_ratio": 0.9965,
+        "visible_ratio": 0.414,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/拼拼图.webp",
+      "target": "assets/pet/life/拼拼图.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 115598,
+        "transparent_ratio": 0.998,
+        "visible_ratio": 0.3808,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/捡树叶做标本.webp",
+      "target": "assets/pet/life/捡树叶做标本.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 105580,
+        "transparent_ratio": 0.9971,
+        "visible_ratio": 0.3295,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/捡石头画画.webp",
+      "target": "assets/pet/life/捡石头画画.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 106348,
+        "transparent_ratio": 0.9953,
+        "visible_ratio": 0.3851,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/擦窗户看夕阳.webp",
+      "target": "assets/pet/life/擦窗户看夕阳.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 108494,
+        "transparent_ratio": 0.9975,
+        "visible_ratio": 0.392,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/收衣服.webp",
+      "target": "assets/pet/life/收衣服.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 110558,
+        "transparent_ratio": 0.9977,
+        "visible_ratio": 0.3699,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/放纸船.webp",
+      "target": "assets/pet/life/放纸船.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 95220,
+        "transparent_ratio": 0.9984,
+        "visible_ratio": 0.3624,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/数星星.webp",
+      "target": "assets/pet/life/数星星.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 88172,
+        "transparent_ratio": 0.9979,
+        "visible_ratio": 0.2842,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/敲键盘.png",
+      "target": "assets/pet/life/敲键盘.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 136830,
+        "transparent_ratio": 0.8848,
+        "visible_ratio": 0.2004,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/敲键盘.webp",
+      "target": "assets/pet/life/敲键盘.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 136830,
+        "transparent_ratio": 0.8848,
+        "visible_ratio": 0.2004,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/整理书架.webp",
+      "target": "assets/pet/life/整理书架.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 130660,
+        "transparent_ratio": 0.9949,
+        "visible_ratio": 0.4181,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/敷面膜.webp",
+      "target": "assets/pet/life/敷面膜.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 99412,
+        "transparent_ratio": 0.9966,
+        "visible_ratio": 0.3286,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/春天菜花.png",
+      "target": "assets/pet/life/春天菜花.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 166404,
+        "transparent_ratio": 0.8464,
+        "visible_ratio": 0.2341,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/春天菜花.webp",
+      "target": "assets/pet/life/春天菜花.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 166404,
+        "transparent_ratio": 0.8464,
+        "visible_ratio": 0.2341,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/晒书签.webp",
+      "target": "assets/pet/life/晒书签.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 133928,
+        "transparent_ratio": 0.9978,
+        "visible_ratio": 0.4177,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/晨间听鸟叫.webp",
+      "target": "assets/pet/life/晨间听鸟叫.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 81764,
+        "transparent_ratio": 0.9967,
+        "visible_ratio": 0.3164,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/晨间浇花.webp",
+      "target": "assets/pet/life/晨间浇花.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 96180,
+        "transparent_ratio": 0.9966,
+        "visible_ratio": 0.3369,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/月亮下打哈欠.webp",
+      "target": "assets/pet/life/月亮下打哈欠.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 72094,
+        "transparent_ratio": 0.9962,
+        "visible_ratio": 0.2933,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/树荫下看书.webp",
+      "target": "assets/pet/life/树荫下看书.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 109556,
+        "transparent_ratio": 0.9983,
+        "visible_ratio": 0.3477,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/梳毛.webp",
+      "target": "assets/pet/life/梳毛.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 88248,
+        "transparent_ratio": 0.9979,
+        "visible_ratio": 0.3387,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/没抢到K-pop演唱会门票伤心.webp",
+      "target": "assets/pet/life/没抢到K-pop演唱会门票伤心.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 106572,
+        "transparent_ratio": 0.7991,
+        "visible_ratio": 0.3237,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/泡脚看手机.webp",
+      "target": "assets/pet/life/泡脚看手机.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 85192,
+        "transparent_ratio": 0.9979,
+        "visible_ratio": 0.2994,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/泡花茶.webp",
+      "target": "assets/pet/life/泡花茶.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 115398,
+        "transparent_ratio": 0.9961,
+        "visible_ratio": 0.3035,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/泡面加芝士.webp",
+      "target": "assets/pet/life/泡面加芝士.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 134780,
+        "transparent_ratio": 0.9973,
+        "visible_ratio": 0.3888,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/泡麦片.webp",
+      "target": "assets/pet/life/泡麦片.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 99090,
+        "transparent_ratio": 0.997,
+        "visible_ratio": 0.3522,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/溪边泡脚.webp",
+      "target": "assets/pet/life/溪边泡脚.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 79298,
+        "transparent_ratio": 0.9976,
+        "visible_ratio": 0.307,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/点香薰蜡烛.webp",
+      "target": "assets/pet/life/点香薰蜡烛.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 118440,
+        "transparent_ratio": 0.9984,
+        "visible_ratio": 0.399,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/热牛奶.webp",
+      "target": "assets/pet/life/热牛奶.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 96620,
+        "transparent_ratio": 0.9977,
+        "visible_ratio": 0.3648,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/照镜子.webp",
+      "target": "assets/pet/life/照镜子.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 95494,
+        "transparent_ratio": 0.9978,
+        "visible_ratio": 0.3357,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/玩毛球.png",
+      "target": "assets/pet/life/玩毛球.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 129398,
+        "transparent_ratio": 0.9242,
+        "visible_ratio": 0.1676,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/玩毛球.webp",
+      "target": "assets/pet/life/玩毛球.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 129398,
+        "transparent_ratio": 0.9242,
+        "visible_ratio": 0.1676,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/用放大镜看蚂蚁.webp",
+      "target": "assets/pet/life/用放大镜看蚂蚁.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 88892,
+        "transparent_ratio": 0.9986,
+        "visible_ratio": 0.3092,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/画夕阳.webp",
+      "target": "assets/pet/life/画夕阳.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 132038,
+        "transparent_ratio": 0.9977,
+        "visible_ratio": 0.4211,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/画思维导图.webp",
+      "target": "assets/pet/life/画思维导图.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 105278,
+        "transparent_ratio": 0.9979,
+        "visible_ratio": 0.3765,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/画水彩.webp",
+      "target": "assets/pet/life/画水彩.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 102062,
+        "transparent_ratio": 0.9977,
+        "visible_ratio": 0.3476,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/看晚霞.webp",
+      "target": "assets/pet/life/看晚霞.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 74994,
+        "transparent_ratio": 0.9981,
+        "visible_ratio": 0.2505,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/看窗外发呆.webp",
+      "target": "assets/pet/life/看窗外发呆.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 111578,
+        "transparent_ratio": 0.9947,
+        "visible_ratio": 0.3045,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/看窗外雪景.webp",
+      "target": "assets/pet/life/看窗外雪景.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 96230,
+        "transparent_ratio": 0.997,
+        "visible_ratio": 0.3503,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/秋天捡落叶.png",
+      "target": "assets/pet/life/秋天捡落叶.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 123366,
+        "transparent_ratio": 0.9212,
+        "visible_ratio": 0.1505,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/秋天捡落叶.webp",
+      "target": "assets/pet/life/秋天捡落叶.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 123366,
+        "transparent_ratio": 0.9212,
+        "visible_ratio": 0.1505,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/穿袜子.webp",
+      "target": "assets/pet/life/穿袜子.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 133750,
+        "transparent_ratio": 0.9969,
+        "visible_ratio": 0.3765,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/窗台看雨滴.webp",
+      "target": "assets/pet/life/窗台看雨滴.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 80386,
+        "transparent_ratio": 0.9968,
+        "visible_ratio": 0.257,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/窗边看日出.webp",
+      "target": "assets/pet/life/窗边看日出.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 107286,
+        "transparent_ratio": 0.9986,
+        "visible_ratio": 0.3848,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/窝在被子里.webp",
+      "target": "assets/pet/life/窝在被子里.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 102720,
+        "transparent_ratio": 0.913,
+        "visible_ratio": 0.3657,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/练吉他.webp",
+      "target": "assets/pet/life/练吉他.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 86584,
+        "transparent_ratio": 0.9973,
+        "visible_ratio": 0.295,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/给明信片写字.webp",
+      "target": "assets/pet/life/给明信片写字.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 90070,
+        "transparent_ratio": 0.999,
+        "visible_ratio": 0.3026,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/给盆栽换土.webp",
+      "target": "assets/pet/life/给盆栽换土.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 110928,
+        "transparent_ratio": 0.9962,
+        "visible_ratio": 0.3552,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/给绿植擦叶子.webp",
+      "target": "assets/pet/life/给绿植擦叶子.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 110446,
+        "transparent_ratio": 0.9962,
+        "visible_ratio": 0.3681,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/英语考试.png",
+      "target": "assets/pet/life/英语考试.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 204752,
+        "transparent_ratio": 0.802,
+        "visible_ratio": 0.3035,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/英语考试.webp",
+      "target": "assets/pet/life/英语考试.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 204752,
+        "transparent_ratio": 0.802,
+        "visible_ratio": 0.3035,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/草地上追蝴蝶.webp",
+      "target": "assets/pet/life/草地上追蝴蝶.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 74688,
+        "transparent_ratio": 0.9966,
+        "visible_ratio": 0.273,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/草地上野餐.webp",
+      "target": "assets/pet/life/草地上野餐.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 156688,
+        "transparent_ratio": 0.9936,
+        "visible_ratio": 0.4594,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/荡秋千.png",
+      "target": "assets/pet/life/荡秋千.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 147078,
+        "transparent_ratio": 0.932,
+        "visible_ratio": 0.1728,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/荡秋千.webp",
+      "target": "assets/pet/life/荡秋千.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 147078,
+        "transparent_ratio": 0.932,
+        "visible_ratio": 0.1728,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/荡秋千看云.webp",
+      "target": "assets/pet/life/荡秋千看云.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 97776,
+        "transparent_ratio": 0.9963,
+        "visible_ratio": 0.3286,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/路灯下散步.webp",
+      "target": "assets/pet/life/路灯下散步.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 88240,
+        "transparent_ratio": 0.9952,
+        "visible_ratio": 0.274,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/跳舞.png",
+      "target": "assets/pet/life/跳舞.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 156520,
+        "transparent_ratio": 0.9426,
+        "visible_ratio": 0.1763,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/跳舞.webp",
+      "target": "assets/pet/life/跳舞.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 156520,
+        "transparent_ratio": 0.9426,
+        "visible_ratio": 0.1763,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/踩落叶.webp",
+      "target": "assets/pet/life/踩落叶.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 109126,
+        "transparent_ratio": 0.9976,
+        "visible_ratio": 0.3485,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/躺吊床上看树.webp",
+      "target": "assets/pet/life/躺吊床上看树.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 116798,
+        "transparent_ratio": 0.9984,
+        "visible_ratio": 0.3469,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/逛夜市.webp",
+      "target": "assets/pet/life/逛夜市.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 155106,
+        "transparent_ratio": 0.9945,
+        "visible_ratio": 0.403,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/采野花做花束.webp",
+      "target": "assets/pet/life/采野花做花束.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 111474,
+        "transparent_ratio": 0.9975,
+        "visible_ratio": 0.3604,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/阳台拉伸.webp",
+      "target": "assets/pet/life/阳台拉伸.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 108644,
+        "transparent_ratio": 0.9962,
+        "visible_ratio": 0.3501,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/阳台看城市灯火.webp",
+      "target": "assets/pet/life/阳台看城市灯火.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 100866,
+        "transparent_ratio": 0.9985,
+        "visible_ratio": 0.3325,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/life/骑单车穿过小路.webp",
+      "target": "assets/pet/life/骑单车穿过小路.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 113778,
+        "transparent_ratio": 0.9977,
+        "visible_ratio": 0.3068,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sleep/sleep_done.png",
+      "target": "assets/pet/sleep/sleep_done.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 168706,
+        "transparent_ratio": 0.9159,
+        "visible_ratio": 0.2029,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sleep/sleep_sleeping.png",
+      "target": "assets/pet/sleep/sleep_sleeping.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 108556,
+        "transparent_ratio": 0.9454,
+        "visible_ratio": 0.1355,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sleep/sleep_stretch.png",
+      "target": "assets/pet/sleep/sleep_stretch.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 87764,
+        "transparent_ratio": 0.9731,
+        "visible_ratio": 0.0971,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sleep/sleep_yawn.png",
+      "target": "assets/pet/sleep/sleep_yawn.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 133960,
+        "transparent_ratio": 0.9302,
+        "visible_ratio": 0.1688,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起吃火锅.webp",
+      "target": "assets/pet/social/一起吃火锅.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 135790,
+        "transparent_ratio": 0.9972,
+        "visible_ratio": 0.4464,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起堆沙堡.webp",
+      "target": "assets/pet/social/一起堆沙堡.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 139392,
+        "transparent_ratio": 0.9962,
+        "visible_ratio": 0.4256,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起打水仗.webp",
+      "target": "assets/pet/social/一起打水仗.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 88086,
+        "transparent_ratio": 0.9981,
+        "visible_ratio": 0.2702,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起搭帐篷.webp",
+      "target": "assets/pet/social/一起搭帐篷.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 133378,
+        "transparent_ratio": 0.998,
+        "visible_ratio": 0.3884,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起放河灯.webp",
+      "target": "assets/pet/social/一起放河灯.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 115586,
+        "transparent_ratio": 0.9989,
+        "visible_ratio": 0.314,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起画画.webp",
+      "target": "assets/pet/social/一起画画.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 97952,
+        "transparent_ratio": 0.9961,
+        "visible_ratio": 0.3575,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起看日落.webp",
+      "target": "assets/pet/social/一起看日落.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 112506,
+        "transparent_ratio": 0.997,
+        "visible_ratio": 0.3662,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起看烟花.webp",
+      "target": "assets/pet/social/一起看烟花.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 69126,
+        "transparent_ratio": 0.9983,
+        "visible_ratio": 0.195,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起逛花市.webp",
+      "target": "assets/pet/social/一起逛花市.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 132794,
+        "transparent_ratio": 0.9965,
+        "visible_ratio": 0.3636,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/一起野餐.webp",
+      "target": "assets/pet/social/一起野餐.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 161388,
+        "transparent_ratio": 0.9981,
+        "visible_ratio": 0.4638,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/代朋友照顾宠物.webp",
+      "target": "assets/pet/social/代朋友照顾宠物.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 98740,
+        "transparent_ratio": 0.9974,
+        "visible_ratio": 0.3131,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/分享零食.webp",
+      "target": "assets/pet/social/分享零食.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120052,
+        "transparent_ratio": 0.9968,
+        "visible_ratio": 0.3482,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起吃饭.png",
+      "target": "assets/pet/social/和朋友一起吃饭.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 183338,
+        "transparent_ratio": 0.8777,
+        "visible_ratio": 0.2413,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起吃饭.webp",
+      "target": "assets/pet/social/和朋友一起吃饭.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 183338,
+        "transparent_ratio": 0.8777,
+        "visible_ratio": 0.2413,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起打游戏.webp",
+      "target": "assets/pet/social/和朋友一起打游戏.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 114650,
+        "transparent_ratio": 0.8741,
+        "visible_ratio": 0.2946,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起游泳.webp",
+      "target": "assets/pet/social/和朋友一起游泳.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 126410,
+        "transparent_ratio": 0.8815,
+        "visible_ratio": 0.338,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起看海.png",
+      "target": "assets/pet/social/和朋友一起看海.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 211610,
+        "transparent_ratio": 0.9137,
+        "visible_ratio": 0.2509,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起看海.webp",
+      "target": "assets/pet/social/和朋友一起看海.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 211610,
+        "transparent_ratio": 0.9137,
+        "visible_ratio": 0.2509,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起羽毛球.png",
+      "target": "assets/pet/social/和朋友一起羽毛球.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 186084,
+        "transparent_ratio": 0.9216,
+        "visible_ratio": 0.222,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起羽毛球.webp",
+      "target": "assets/pet/social/和朋友一起羽毛球.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 186084,
+        "transparent_ratio": 0.9216,
+        "visible_ratio": 0.222,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起购物.png",
+      "target": "assets/pet/social/和朋友一起购物.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 195966,
+        "transparent_ratio": 0.8255,
+        "visible_ratio": 0.2872,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起购物.webp",
+      "target": "assets/pet/social/和朋友一起购物.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 195966,
+        "transparent_ratio": 0.8255,
+        "visible_ratio": 0.2872,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起钓鱼.png",
+      "target": "assets/pet/social/和朋友一起钓鱼.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 217866,
+        "transparent_ratio": 0.866,
+        "visible_ratio": 0.2745,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起钓鱼.webp",
+      "target": "assets/pet/social/和朋友一起钓鱼.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 217866,
+        "transparent_ratio": 0.866,
+        "visible_ratio": 0.2745,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起骑车.png",
+      "target": "assets/pet/social/和朋友一起骑车.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 172582,
+        "transparent_ratio": 0.8986,
+        "visible_ratio": 0.2083,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/和朋友一起骑车.webp",
+      "target": "assets/pet/social/和朋友一起骑车.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 172582,
+        "transparent_ratio": 0.8986,
+        "visible_ratio": 0.2083,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/布置聚会场地.webp",
+      "target": "assets/pet/social/布置聚会场地.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 156618,
+        "transparent_ratio": 0.9941,
+        "visible_ratio": 0.3979,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/social/给朋友挑礼物.webp",
+      "target": "assets/pet/social/给朋友挑礼物.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 106234,
+        "transparent_ratio": 0.9959,
+        "visible_ratio": 0.3148,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看F1赛车.webp",
+      "target": "assets/pet/sports/看F1赛车.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 280790,
+        "transparent_ratio": 0.9999,
+        "visible_ratio": 0.6713,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看NBA比赛.webp",
+      "target": "assets/pet/sports/看NBA比赛.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 338404,
+        "transparent_ratio": 0.9823,
+        "visible_ratio": 0.8439,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看世界杯（美加墨）.webp",
+      "target": "assets/pet/sports/看世界杯（美加墨）.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 370176,
+        "transparent_ratio": 1.0,
+        "visible_ratio": 0.8153,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看冬奥会花滑.webp",
+      "target": "assets/pet/sports/看冬奥会花滑.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 182204,
+        "transparent_ratio": 0.9999,
+        "visible_ratio": 0.3536,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看奥运会开幕式.webp",
+      "target": "assets/pet/sports/看奥运会开幕式.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 344952,
+        "transparent_ratio": 0.9834,
+        "visible_ratio": 0.8308,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看游泳比赛.webp",
+      "target": "assets/pet/sports/看游泳比赛.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 113842,
+        "transparent_ratio": 0.9885,
+        "visible_ratio": 0.3573,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看田径百米决赛.webp",
+      "target": "assets/pet/sports/看田径百米决赛.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 89116,
+        "transparent_ratio": 0.9998,
+        "visible_ratio": 0.2517,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看电竞比赛.webp",
+      "target": "assets/pet/sports/看电竞比赛.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 66136,
+        "transparent_ratio": 0.9984,
+        "visible_ratio": 0.2266,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看电竞比赛（机甲风格）.webp",
+      "target": "assets/pet/sports/看电竞比赛（机甲风格）.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 54790,
+        "transparent_ratio": 0.998,
+        "visible_ratio": 0.1867,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看电竞比赛（赛车）.webp",
+      "target": "assets/pet/sports/看电竞比赛（赛车）.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 58276,
+        "transparent_ratio": 0.9993,
+        "visible_ratio": 0.1705,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看电竞比赛（音游）.webp",
+      "target": "assets/pet/sports/看电竞比赛（音游）.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 70380,
+        "transparent_ratio": 0.9987,
+        "visible_ratio": 0.2286,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看网球大满贯.webp",
+      "target": "assets/pet/sports/看网球大满贯.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 99448,
+        "transparent_ratio": 0.9968,
+        "visible_ratio": 0.3319,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/sports/看马拉松.webp",
+      "target": "assets/pet/sports/看马拉松.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 75652,
+        "transparent_ratio": 0.998,
+        "visible_ratio": 0.2232,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/study/study_done.png",
+      "target": "assets/pet/study/study_done.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 95556,
+        "transparent_ratio": 0.9489,
+        "visible_ratio": 0.1103,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/study/study_focus.png",
+      "target": "assets/pet/study/study_focus.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 133522,
+        "transparent_ratio": 0.9317,
+        "visible_ratio": 0.1576,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/study/study_reading.png",
+      "target": "assets/pet/study/study_reading.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 117000,
+        "transparent_ratio": 0.945,
+        "visible_ratio": 0.1366,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/study/study_writing.png",
+      "target": "assets/pet/study/study_writing.webp",
+      "action": "convert_png_to_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120872,
+        "transparent_ratio": 0.9071,
+        "visible_ratio": 0.1614,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/万里长城.webp",
+      "target": "assets/pet/travel/万里长城.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 178496,
+        "transparent_ratio": 0.9944,
+        "visible_ratio": 0.5328,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/冰岛极光.webp",
+      "target": "assets/pet/travel/冰岛极光.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 89048,
+        "transparent_ratio": 0.9994,
+        "visible_ratio": 0.2487,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/加拿大尼亚加拉瀑布.webp",
+      "target": "assets/pet/travel/加拿大尼亚加拉瀑布.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 76168,
+        "transparent_ratio": 0.9921,
+        "visible_ratio": 0.1881,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/印度泰姬陵.webp",
+      "target": "assets/pet/travel/印度泰姬陵.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 208504,
+        "transparent_ratio": 0.9996,
+        "visible_ratio": 0.5352,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/去中国故宫旅游.webp",
+      "target": "assets/pet/travel/去中国故宫旅游.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 133226,
+        "transparent_ratio": 0.7125,
+        "visible_ratio": 0.4697,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/去埃菲尔铁塔旅游被别人拍照.webp",
+      "target": "assets/pet/travel/去埃菲尔铁塔旅游被别人拍照.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 120814,
+        "transparent_ratio": 0.8534,
+        "visible_ratio": 0.335,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/去新西兰草原旅游.webp",
+      "target": "assets/pet/travel/去新西兰草原旅游.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 107802,
+        "transparent_ratio": 0.7802,
+        "visible_ratio": 0.3708,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/去格陵兰岛冰川旅游.webp",
+      "target": "assets/pet/travel/去格陵兰岛冰川旅游.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 137974,
+        "transparent_ratio": 0.8344,
+        "visible_ratio": 0.3615,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/去美国的纽约时代广场.webp",
+      "target": "assets/pet/travel/去美国的纽约时代广场.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 165454,
+        "transparent_ratio": 0.7404,
+        "visible_ratio": 0.4934,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/去非洲草原拍狮子.webp",
+      "target": "assets/pet/travel/去非洲草原拍狮子.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 95114,
+        "transparent_ratio": 0.6864,
+        "visible_ratio": 0.4205,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/土耳其热气球.webp",
+      "target": "assets/pet/travel/土耳其热气球.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 230148,
+        "transparent_ratio": 0.9987,
+        "visible_ratio": 0.5737,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/坦桑尼亚塞伦盖蒂.webp",
+      "target": "assets/pet/travel/坦桑尼亚塞伦盖蒂.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 311824,
+        "transparent_ratio": 0.9867,
+        "visible_ratio": 0.739,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/埃及金字塔.webp",
+      "target": "assets/pet/travel/埃及金字塔.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 232746,
+        "transparent_ratio": 0.9998,
+        "visible_ratio": 0.4894,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/墨西哥奇琴伊察.webp",
+      "target": "assets/pet/travel/墨西哥奇琴伊察.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 236634,
+        "transparent_ratio": 1.0,
+        "visible_ratio": 0.5101,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/尼泊尔珠峰大本营.webp",
+      "target": "assets/pet/travel/尼泊尔珠峰大本营.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 214556,
+        "transparent_ratio": 0.9992,
+        "visible_ratio": 0.5244,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/巴厘岛稻田.webp",
+      "target": "assets/pet/travel/巴厘岛稻田.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 175064,
+        "transparent_ratio": 0.9967,
+        "visible_ratio": 0.4581,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/巴西里约基督山.webp",
+      "target": "assets/pet/travel/巴西里约基督山.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 66820,
+        "transparent_ratio": 0.9996,
+        "visible_ratio": 0.1675,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/希腊圣托里尼.webp",
+      "target": "assets/pet/travel/希腊圣托里尼.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 129142,
+        "transparent_ratio": 0.9995,
+        "visible_ratio": 0.3093,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/意大利罗马斗兽场.webp",
+      "target": "assets/pet/travel/意大利罗马斗兽场.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 244170,
+        "transparent_ratio": 0.9993,
+        "visible_ratio": 0.6589,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/挪威峡湾.webp",
+      "target": "assets/pet/travel/挪威峡湾.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 209482,
+        "transparent_ratio": 0.9994,
+        "visible_ratio": 0.5097,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/摩洛哥蓝色小镇.webp",
+      "target": "assets/pet/travel/摩洛哥蓝色小镇.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 332722,
+        "transparent_ratio": 1.0,
+        "visible_ratio": 0.6478,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/日本东京富士山下看樱花.webp",
+      "target": "assets/pet/travel/日本东京富士山下看樱花.webp",
+      "action": "skip",
+      "reason": "already transparent webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 150212,
+        "transparent_ratio": 0.8201,
+        "visible_ratio": 0.4383,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/柬埔寨吴哥窟.webp",
+      "target": "assets/pet/travel/柬埔寨吴哥窟.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 105116,
+        "transparent_ratio": 0.9997,
+        "visible_ratio": 0.2394,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/法国普罗旺斯薰衣草.webp",
+      "target": "assets/pet/travel/法国普罗旺斯薰衣草.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 259004,
+        "transparent_ratio": 0.9991,
+        "visible_ratio": 0.6069,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/泰国白庙.webp",
+      "target": "assets/pet/travel/泰国白庙.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 73862,
+        "transparent_ratio": 0.9914,
+        "visible_ratio": 0.2422,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/澳洲乌鲁鲁巨石.webp",
+      "target": "assets/pet/travel/澳洲乌鲁鲁巨石.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 348706,
+        "transparent_ratio": 0.9993,
+        "visible_ratio": 0.8137,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/澳洲大堡礁浮潜.webp",
+      "target": "assets/pet/travel/澳洲大堡礁浮潜.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 331926,
+        "transparent_ratio": 0.9829,
+        "visible_ratio": 0.7624,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/玻利维亚天空之镜.webp",
+      "target": "assets/pet/travel/玻利维亚天空之镜.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 73012,
+        "transparent_ratio": 0.9994,
+        "visible_ratio": 0.1561,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/瑞士阿尔卑斯山.webp",
+      "target": "assets/pet/travel/瑞士阿尔卑斯山.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 66760,
+        "transparent_ratio": 0.9984,
+        "visible_ratio": 0.1745,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/秘鲁马丘比丘.webp",
+      "target": "assets/pet/travel/秘鲁马丘比丘.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 55480,
+        "transparent_ratio": 0.9968,
+        "visible_ratio": 0.1306,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/美国大峡谷.webp",
+      "target": "assets/pet/travel/美国大峡谷.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 48538,
+        "transparent_ratio": 0.9994,
+        "visible_ratio": 0.1249,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/美国羚羊谷.webp",
+      "target": "assets/pet/travel/美国羚羊谷.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 312880,
+        "transparent_ratio": 0.9812,
+        "visible_ratio": 0.7513,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/肯尼亚动物大迁徙.webp",
+      "target": "assets/pet/travel/肯尼亚动物大迁徙.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 34788,
+        "transparent_ratio": 0.9985,
+        "visible_ratio": 0.0868,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/荷兰郁金香花田.webp",
+      "target": "assets/pet/travel/荷兰郁金香花田.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 222212,
+        "transparent_ratio": 0.9988,
+        "visible_ratio": 0.4923,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/西班牙圣家堂.webp",
+      "target": "assets/pet/travel/西班牙圣家堂.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 54328,
+        "transparent_ratio": 0.9997,
+        "visible_ratio": 0.1354,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/阿根廷莫雷诺冰川.webp",
+      "target": "assets/pet/travel/阿根廷莫雷诺冰川.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 243438,
+        "transparent_ratio": 1.0,
+        "visible_ratio": 0.5345,
+        "has_alpha": true
+      }
+    },
+    {
+      "source": "assets/pet/travel/马尔代夫水屋.webp",
+      "target": "assets/pet/travel/马尔代夫水屋.webp",
+      "action": "rembg_overwrite_webp",
+      "output": {
+        "format": "WEBP",
+        "mode": "RGBA",
+        "size": [
+          512,
+          512
+        ],
+        "bytes": 146962,
+        "transparent_ratio": 0.9995,
+        "visible_ratio": 0.3777,
+        "has_alpha": true
+      }
+    }
+  ]
+}

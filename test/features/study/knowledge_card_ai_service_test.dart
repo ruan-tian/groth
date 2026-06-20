@@ -1,6 +1,7 @@
-﻿import 'dart:convert';
+import 'dart:convert';
+import 'dart:io';
 
-import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
@@ -8,19 +9,44 @@ import 'package:growth_os/core/repositories/ai_config_repository.dart';
 import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
 import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
+import 'package:growth_os/core/services/encryption_service.dart';
 import 'package:growth_os/features/study/services/knowledge_card_ai_service.dart';
 
+class _StubAiService extends AiService {
+  _StubAiService(this.response);
+
+  final String response;
+
+  @override
+  Future<String> callApi({
+    required String apiKey,
+    required String baseUrl,
+    required String model,
+    required String systemPrompt,
+    required String userPrompt,
+    double temperature = 0.7,
+    int maxTokens = 2048,
+  }) async {
+    return response;
+  }
+}
+
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   setUpAll(() {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   });
 
   group('KnowledgeCardAiService', () {
     late AppDatabase db;
+    late Directory keyDir;
     late KnowledgeSourceRepository sourceRepo;
     late KnowledgeCardAiService service;
 
     setUp(() {
+      keyDir = Directory.systemTemp.createTempSync('growth_os_ai_test_');
+      KeyMaterialService.resetForTests(directory: keyDir);
       db = AppDatabase(NativeDatabase.memory());
       sourceRepo = KnowledgeSourceRepository(db);
       service = KnowledgeCardAiService(
@@ -33,6 +59,10 @@ void main() {
 
     tearDown(() async {
       await db.close();
+      KeyMaterialService.resetForTests();
+      if (keyDir.existsSync()) {
+        keyDir.deleteSync(recursive: true);
+      }
     });
 
     test('buildPayload sends only the selected chunk', () async {
@@ -127,6 +157,34 @@ void main() {
       expect(links.single.chunkId, result.chunk.id);
       expect(links.single.quote, contains('进程是资源分配单位'));
     });
+
+    test('answerSpaceQuestion uses local chunks and returns answer', () async {
+      await sourceRepo.importTextSource(
+        title: '操作系统笔记',
+        type: 'markdown',
+        goalKey: 'kaoyan_computer',
+        moduleKey: 'operating_system',
+        content: '进程是资源分配单位，线程是 CPU 调度单位。',
+      );
+      service = KnowledgeCardAiService(
+        aiConfigRepository: AiConfigRepository(db),
+        cardRepository: KnowledgeCardRepository(db),
+        sourceRepository: sourceRepo,
+        aiService: _StubAiService('进程是资源分配单位，线程是 CPU 调度单位。[片段1]'),
+      );
+      await _insertAiConfig(AiConfigRepository(db));
+
+      final result = (await sourceRepo.searchChunks(query: '进程 线程')).single;
+      final answer = await service.answerSpaceQuestion(
+        results: [result],
+        question: '进程和线程分别是什么？',
+      );
+
+      expect(answer.question, '进程和线程分别是什么？');
+      expect(answer.answer, contains('[片段1]'));
+      expect(answer.results, hasLength(1));
+      expect(answer.results.single.chunk.id, result.chunk.id);
+    });
   });
 
   group('checkDraftQuality', () {
@@ -187,13 +245,10 @@ void main() {
         KnowledgeCardAiDraft(
           title: 'Good',
           question: 'What is a database index?',
-          answer: 'A data structure that speeds up lookup operations at the cost of additional storage.',
+          answer:
+              'A data structure that speeds up lookup operations at the cost of additional storage.',
         ),
-        KnowledgeCardAiDraft(
-          title: 'Bad',
-          question: 'Q',
-          answer: 'A',
-        ),
+        KnowledgeCardAiDraft(title: 'Bad', question: 'Q', answer: 'A'),
       ];
       final warnings = KnowledgeCardAiService.checkDraftQuality(drafts);
       expect(warnings, hasLength(2));
@@ -201,4 +256,20 @@ void main() {
       expect(warnings[1], isNotNull);
     });
   });
+}
+
+Future<void> _insertAiConfig(AiConfigRepository repo) {
+  final nowMs = DateTime(2026, 6, 8, 6).millisecondsSinceEpoch;
+  return repo
+      .insertAiConfig(
+        AiConfigsCompanion.insert(
+          provider: 'test',
+          baseUrl: 'https://example.com/v1',
+          apiKey: 'sk-test',
+          modelName: 'test-model',
+          createdAt: nowMs,
+          updatedAt: nowMs,
+        ),
+      )
+      .then((_) {});
 }

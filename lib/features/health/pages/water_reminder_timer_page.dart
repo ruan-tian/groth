@@ -8,8 +8,10 @@ import '../../plan/models/reminder_timer_state.dart';
 import '../../plan/providers/reminder_timer_provider.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../../plan/widgets/notification_permission_dialog.dart';
+import '../models/health_reminder_schedule_status.dart';
 import '../models/water_plan_state.dart';
 import '../providers/water_plan_provider.dart';
+import '../services/health_reminder_scheduler.dart';
 import '../utils/health_timer_assets.dart';
 
 part '../widgets/water_reminder_timer_widgets.dart';
@@ -24,7 +26,6 @@ class WaterReminderTimerPage extends ConsumerStatefulWidget {
 
 class _WaterReminderTimerPageState
     extends ConsumerState<WaterReminderTimerPage> {
-  static const _notificationId = 5202;
   static const _amounts = [200, 300, 500];
 
   @override
@@ -94,10 +95,7 @@ class _WaterReminderTimerPageState
     await planController.recordDrink();
     final plan = ref.read(waterPlanProvider);
     if (plan.reminderEnabled) {
-      final scheduled = await _scheduleNextReminder(plan);
-      if (!scheduled) {
-        await planController.setReminderEnabled(false);
-      }
+      await _scheduleNextReminder(plan);
     }
   }
 
@@ -105,60 +103,81 @@ class _WaterReminderTimerPageState
     await ref.read(waterPlanProvider.notifier).setReminderEnabled(enabled);
     final plan = ref.read(waterPlanProvider);
     if (enabled) {
-      final scheduled = await _scheduleNextReminder(plan);
-      if (!scheduled) {
-        await ref.read(waterPlanProvider.notifier).setReminderEnabled(false);
-        ref
-            .read(reminderTimerProvider(ReminderKind.water).notifier)
-            .reset(duration: Duration(minutes: plan.intervalMinutes));
-      }
+      await _scheduleNextReminder(plan);
     } else {
-      await ref
-          .read(reminderNotificationServiceProvider)
-          .cancel(_notificationId);
+      final status = await ref
+          .read(healthReminderSchedulerProvider)
+          .cancelWaterRemindersWithStatus();
+      ref.read(waterPlanProvider.notifier).setReminderScheduleStatus(status);
       ref
           .read(reminderTimerProvider(ReminderKind.water).notifier)
           .reset(duration: Duration(minutes: plan.intervalMinutes));
     }
   }
 
-  Future<bool> _scheduleNextReminder(WaterPlanState plan) async {
+  Future<HealthReminderScheduleStatus> _scheduleNextReminder(
+    WaterPlanState plan,
+  ) async {
     final duration = Duration(minutes: plan.intervalMinutes);
     final service = ref.read(reminderNotificationServiceProvider);
-    final permissionsGranted = await service.requestPermissions();
+    final scheduler = ref.read(healthReminderSchedulerProvider);
+    final permissionsGranted = await service.requestPermissions(
+      requestExactAlarm: true,
+    );
     if (!permissionsGranted) {
-      if (!mounted) return false;
+      const status = HealthReminderScheduleStatus(
+        code: HealthReminderScheduleCode.permissionDenied,
+      );
+      ref.read(waterPlanProvider.notifier).setReminderScheduleStatus(status);
+      if (!mounted) return status;
       final opened = await showNotificationPermissionGuide(context);
       if (opened) {
-        final retry = await service.requestPermissions();
+        final retry = await service.requestPermissions(requestExactAlarm: true);
         if (!retry) {
-          if (!mounted) return false;
-          _showNotificationSnack('通知权限仍未开启，无法发送提醒。');
-          return false;
+          if (!mounted) return status;
+          _showNotificationSnack(
+            '\u901a\u77e5\u6743\u9650\u4ecd\u672a\u5f00\u542f\uff0c'
+            '\u65e0\u6cd5\u53d1\u9001\u559d\u6c34\u63d0\u9192\u3002',
+          );
+          return status;
         }
       } else {
-        if (!mounted) return false;
-        _showNotificationSnack('需要通知权限才能发送喝水提醒。');
-        return false;
+        if (!mounted) return status;
+        _showNotificationSnack(
+          '\u9700\u8981\u901a\u77e5\u6743\u9650\u624d\u80fd'
+          '\u53d1\u9001\u559d\u6c34\u63d0\u9192\u3002',
+        );
+        return status;
       }
     }
 
-    final scheduled = await service.scheduleReminder(
-      id: _notificationId,
-      scheduledAt: DateTime.now().add(duration),
-      title: '该喝水啦',
-      body: '喝 ${plan.defaultAmountMl} ml，保持清爽状态。',
-      payload: 'water_reminder',
+    final status = await scheduler.scheduleWaterRemindersWithStatus(
+      amountMl: plan.defaultAmountMl,
+      intervalMinutes: plan.intervalMinutes,
+      startHour: plan.startHour,
+      endHour: plan.endHour,
+      requestPermissions: false,
     );
-    if (!scheduled) {
-      _showNotificationSnack('喝水提醒创建失败，请检查系统通知设置。');
-      return false;
+    ref.read(waterPlanProvider.notifier).setReminderScheduleStatus(status);
+    if (!status.isScheduled) {
+      _showNotificationSnack(_scheduleStatusSnack(status, 'water'));
+      ref
+          .read(reminderTimerProvider(ReminderKind.water).notifier)
+          .reset(duration: duration);
+      return status;
     }
 
     ref
         .read(reminderTimerProvider(ReminderKind.water).notifier)
         .start(duration);
-    return true;
+    if (status.isDelayedBySystemAlarmLimit) {
+      _showNotificationSnack(
+        '\u7cfb\u7edf\u95f9\u949f\u6743\u9650\u53d7\u9650\uff0c'
+        '\u63d0\u9192\u5df2\u964d\u7ea7\u5b89\u6392\uff0c'
+        '\u53ef\u80fd\u4f1a\u5ef6\u8fdf\u3002',
+      );
+    }
+    return status;
   }
 
   void _showNotificationSnack(String message) {
@@ -197,6 +216,7 @@ class _WaterReminderTimerPageState
     );
     if (value != null) {
       await ref.read(waterPlanProvider.notifier).setDefaultAmount(value);
+      await _rescheduleIfEnabled();
     }
   }
 
@@ -213,6 +233,7 @@ class _WaterReminderTimerPageState
     );
     if (value != null) {
       await ref.read(waterPlanProvider.notifier).setInterval(value);
+      await _rescheduleIfEnabled();
     }
   }
 
@@ -228,6 +249,14 @@ class _WaterReminderTimerPageState
       await ref
           .read(waterPlanProvider.notifier)
           .setReminderWindow(startHour: result.start, endHour: result.end);
+      await _rescheduleIfEnabled();
+    }
+  }
+
+  Future<void> _rescheduleIfEnabled() async {
+    final plan = ref.read(waterPlanProvider);
+    if (plan.reminderEnabled) {
+      await _scheduleNextReminder(plan);
     }
   }
 
@@ -296,9 +325,60 @@ class _WaterReminderTimerPageState
                 _editWindow();
               },
             ),
+            _SheetAction(
+              icon: Icons.notifications_active_outlined,
+              title: '立即测试通知',
+              onTap: () {
+                Navigator.pop(context);
+                _sendImmediateTestNotification();
+              },
+            ),
+            _SheetAction(
+              icon: Icons.alarm_add_outlined,
+              title: '1 分钟后测试提醒',
+              onTap: () {
+                Navigator.pop(context);
+                _scheduleOneMinuteTestReminder();
+              },
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _sendImmediateTestNotification() async {
+    final ok = await ref
+        .read(reminderNotificationServiceProvider)
+        .showTestNotification();
+    _showNotificationSnack(ok ? '测试通知已发送。' : '测试通知发送失败，请检查通知权限。');
+  }
+
+  Future<void> _scheduleOneMinuteTestReminder() async {
+    final ok = await ref
+        .read(reminderNotificationServiceProvider)
+        .scheduleTestReminder();
+    _showNotificationSnack(ok ? '已安排 1 分钟后测试提醒。' : '测试提醒安排失败，请检查权限。');
+  }
+}
+
+String _scheduleStatusSnack(HealthReminderScheduleStatus status, String kind) {
+  switch (status.code) {
+    case HealthReminderScheduleCode.permissionDenied:
+      return '通知权限未开启，无法发送提醒。';
+    case HealthReminderScheduleCode.exactAlarmDenied:
+      return '系统闹钟权限受限，提醒可能延迟。';
+    case HealthReminderScheduleCode.noPendingNotifications:
+      return '未检测到系统待投递提醒，请重新授权或重试。';
+    case HealthReminderScheduleCode.scheduleFailed:
+      return kind == 'sleep' ? '睡前提醒创建失败，请检查系统通知设置。' : '喝水提醒创建失败，请检查系统通知设置。';
+    case HealthReminderScheduleCode.off:
+      return '提醒已关闭。';
+    case HealthReminderScheduleCode.scheduled:
+      return status.isDelayedBySystemAlarmLimit
+          ? '提醒已安排，但系统闹钟权限受限，可能延迟。'
+          : '提醒已安排。';
+    case HealthReminderScheduleCode.unknown:
+      return '提醒状态未知，请重新打开提醒试试。';
   }
 }

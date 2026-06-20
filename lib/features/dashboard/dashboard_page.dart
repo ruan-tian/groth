@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/design/design.dart';
 import '../health/models/drink_recommendation.dart';
 import '../../shared/providers/dashboard_provider.dart';
+import '../../shared/widgets/common/growth_calendar_sheet.dart';
 import '../music/widgets/dashboard_music_float.dart';
 import 'widgets/dashboard_pet_widget.dart';
 import 'widgets/dashboard_weather_badge.dart';
@@ -198,6 +199,9 @@ class DashboardPage extends ConsumerWidget {
                       icon: Icons.calendar_today_rounded,
                       label:
                           '${now.month}月${now.day}日 ${weekdays[now.weekday - 1]}',
+                      tooltip: '打开日历',
+                      onTap: () =>
+                          showGrowthCalendarSheet(context, initialDate: now),
                     ),
                   ],
                 ),
@@ -234,37 +238,58 @@ class DashboardPage extends ConsumerWidget {
 }
 
 class _HeaderChip extends StatelessWidget {
-  const _HeaderChip({required this.icon, required this.label});
+  const _HeaderChip({
+    required this.icon,
+    required this.label,
+    this.tooltip,
+    this.onTap,
+  });
 
   final IconData icon;
   final String label;
+  final String? tooltip;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.78),
+    final chip = Material(
+      color: Colors.transparent,
+      child: InkWell(
         borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: colors.border),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: colors.primary),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: colors.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-            ),
+        onTap: onTap,
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: colors.border),
           ),
-        ],
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 13, color: colors.primary),
+              const SizedBox(width: 5),
+              Text(
+                label,
+                style: TextStyle(
+                  color: colors.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
+    );
+
+    if (tooltip == null) return chip;
+
+    return Tooltip(
+      message: tooltip!,
+      child: Semantics(button: onTap != null, child: chip),
     );
   }
 }

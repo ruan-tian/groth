@@ -40,16 +40,19 @@ class StudyRepository {
   // 查询
   // ---------------------------------------------------------------------------
 
-  /// 获取指定日期的学习记录（按 createdAt 毫秒时间戳范围过滤）。
+  /// 获取指定日期的学习记录（按实际学习开始时间归属日期）。
   Future<List<StudyRecord>> getStudyRecordsByDate(DateTime date) {
     final range = _dayRange(date);
     return (_db.select(_db.studyRecords)
           ..where(
             (t) =>
-                t.createdAt.isBiggerOrEqualValue(range.start) &
-                t.createdAt.isSmallerThanValue(range.end),
+                t.startTime.isBiggerOrEqualValue(range.start) &
+                t.startTime.isSmallerThanValue(range.end),
           )
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.startTime),
+            (t) => OrderingTerm.desc(t.createdAt),
+          ]))
         .get();
   }
 
@@ -63,17 +66,23 @@ class StudyRepository {
     return (_db.select(_db.studyRecords)
           ..where(
             (t) =>
-                t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endMs),
+                t.startTime.isBiggerOrEqualValue(startMs) &
+                t.startTime.isSmallerThanValue(endMs),
           )
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.startTime),
+            (t) => OrderingTerm.desc(t.createdAt),
+          ]))
         .get();
   }
 
-  /// 获取最近的 [limit] 条学习记录（按创建时间倒序）。
+  /// 获取最近的 [limit] 条学习记录（按实际学习开始时间倒序）。
   Future<List<StudyRecord>> getRecentStudyRecords({int limit = 5}) {
     return (_db.select(_db.studyRecords)
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.startTime),
+            (t) => OrderingTerm.desc(t.createdAt),
+          ])
           ..limit(limit))
         .get();
   }
@@ -87,8 +96,8 @@ class StudyRepository {
         await (_db.selectOnly(_db.studyRecords)
               ..addColumns([_db.studyRecords.durationMinutes.sum()])
               ..where(
-                _db.studyRecords.createdAt.isBiggerOrEqualValue(range.start) &
-                    _db.studyRecords.createdAt.isSmallerThanValue(range.end),
+                _db.studyRecords.startTime.isBiggerOrEqualValue(range.start) &
+                    _db.studyRecords.startTime.isSmallerThanValue(range.end),
               ))
             .getSingle();
     return result.read(_db.studyRecords.durationMinutes.sum()) ?? 0;
@@ -111,8 +120,8 @@ class StudyRepository {
     final query = _db.selectOnly(_db.studyRecords)
       ..addColumns([subjectCol, durationCol.sum()])
       ..where(
-        _db.studyRecords.createdAt.isBiggerOrEqualValue(startMs) &
-            _db.studyRecords.createdAt.isSmallerThanValue(endMs),
+        _db.studyRecords.startTime.isBiggerOrEqualValue(startMs) &
+            _db.studyRecords.startTime.isSmallerThanValue(endMs),
       )
       ..groupBy([subjectCol]);
 

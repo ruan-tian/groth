@@ -66,8 +66,11 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
 
   Future<void> _bootstrap() async {
     try {
+      await _musicRepo.ensureDefaultStudyPlaylist();
       final tracks = await _resolveDefaultCovers(await _musicRepo.getTracks());
-      final playlists = await _musicRepo.getPlaylists();
+      final playlists = await _resolveLegacyPlaylistCovers(
+        await _musicRepo.getPlaylists(),
+      );
       final playlistTracks = await _musicRepo.getPlaylistTracks();
       final volumeText = await _settings.getSetting(_volumeKey);
       final currentTrackText = await _settings.getSetting(_currentTrackKey);
@@ -94,12 +97,19 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
           : (tracks.isEmpty ? null : tracks.first.id);
       final positionMs = int.tryParse(positionText ?? '') ?? 0;
       await _player.setVolume(volume);
+      final queueIds = _trackIdsForSelection(
+        tracks: tracks,
+        playlistTracks: playlistTracks,
+        collection: collection,
+        playlistId: null,
+      );
       _setState(
         state.copyWith(
           tracks: tracks,
           playlists: playlists,
           playlistTracks: playlistTracks,
           currentTrackId: initialTrackId,
+          playQueueIds: queueIds,
           selectedCollection: collection,
           volume: volume,
           position: Duration(milliseconds: positionMs),
@@ -160,14 +170,32 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   }
 
   Future<void> selectCollection(MusicCollection collection) async {
+    final queueIds = _trackIdsForSelection(
+      tracks: state.tracks,
+      playlistTracks: state.playlistTracks,
+      collection: collection,
+      playlistId: null,
+    );
     _setState(
-      state.copyWith(selectedCollection: collection, selectedPlaylistId: null),
+      state.copyWith(
+        selectedCollection: collection,
+        selectedPlaylistId: null,
+        playQueueIds: queueIds,
+      ),
     );
     await _settings.setSetting(_collectionKey, collection.name);
   }
 
   void selectPlaylist(int playlistId) {
-    _setState(state.copyWith(selectedPlaylistId: playlistId));
+    final queueIds = _trackIdsForSelection(
+      tracks: state.tracks,
+      playlistTracks: state.playlistTracks,
+      collection: state.selectedCollection,
+      playlistId: playlistId,
+    );
+    _setState(
+      state.copyWith(selectedPlaylistId: playlistId, playQueueIds: queueIds),
+    );
   }
 
   Future<int> createPlaylist({
@@ -332,7 +360,9 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
 
   Future<void> refreshTracks() async {
     final tracks = await _resolveDefaultCovers(await _musicRepo.getTracks());
-    final playlists = await _musicRepo.getPlaylists();
+    final playlists = await _resolveLegacyPlaylistCovers(
+      await _musicRepo.getPlaylists(),
+    );
     final playlistTracks = await _musicRepo.getPlaylistTracks();
     final currentId = state.currentTrackId;
     final nextCurrentId = tracks.any((track) => track.id == currentId)
@@ -344,6 +374,17 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
             playlists.any((playlist) => playlist.id == currentPlaylistId)
         ? currentPlaylistId
         : null;
+    final previousQueueIds = state.playQueueIds
+        .where((id) => tracks.any((track) => track.id == id))
+        .toList(growable: false);
+    final nextQueueIds = previousQueueIds.isNotEmpty
+        ? previousQueueIds
+        : _trackIdsForSelection(
+            tracks: tracks,
+            playlistTracks: playlistTracks,
+            collection: state.selectedCollection,
+            playlistId: nextPlaylistId,
+          );
     _setState(
       state.copyWith(
         tracks: tracks,
@@ -351,6 +392,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
         playlistTracks: playlistTracks,
         currentTrackId: nextCurrentId,
         selectedPlaylistId: nextPlaylistId,
+        playQueueIds: nextQueueIds,
       ),
     );
     if (nextCurrentId != currentId) {
@@ -364,14 +406,32 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
     final resolved = <MusicTrack>[];
     for (final track in tracks) {
       final cover = MusicArtworkMapper.coverForTrack(track);
+      final normalizedCover = _normalizeAssetPath(track.coverAsset);
       final shouldUpdate =
-          MusicArtworkMapper.isGeneratedCover(track.coverAsset) &&
-          cover != (track.coverAsset ?? MusicAssets.coverDefault);
+          normalizedCover != track.coverAsset ||
+          (MusicArtworkMapper.isGeneratedCover(track.coverAsset) &&
+              cover != (track.coverAsset ?? MusicAssets.coverDefault));
       if (shouldUpdate) {
         await _musicRepo.updateCoverAsset(track.id, cover);
         resolved.add(track.copyWith(coverAsset: Value(cover)));
       } else {
         resolved.add(track);
+      }
+    }
+    return resolved;
+  }
+
+  Future<List<MusicPlaylist>> _resolveLegacyPlaylistCovers(
+    List<MusicPlaylist> playlists,
+  ) async {
+    final resolved = <MusicPlaylist>[];
+    for (final playlist in playlists) {
+      final cover = _normalizeAssetPath(playlist.coverAsset);
+      if (cover != null && cover != playlist.coverAsset) {
+        await _musicRepo.updatePlaylistCoverAsset(playlist.id, cover);
+        resolved.add(playlist.copyWith(coverAsset: Value(cover)));
+      } else {
+        resolved.add(playlist);
       }
     }
     return resolved;
@@ -401,17 +461,38 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   }
 
   Future<void> playTrack(MusicTrack track) async {
+    final queueIds = _queueForTrack(track.id);
+    await _playTrackWithQueue(track, queueIds);
+  }
+
+  Future<void> playTrackFromQueue(
+    MusicTrack track,
+    List<MusicTrack> queue,
+  ) async {
+    final queueIds = queue.map((track) => track.id).toList(growable: false);
+    await _playTrackWithQueue(
+      track,
+      queueIds.contains(track.id) ? queueIds : [track.id, ...queueIds],
+    );
+  }
+
+  Future<void> _playTrackWithQueue(MusicTrack track, List<int> queueIds) async {
     _setState(
       state.copyWith(
         isLoading: true,
         currentTrackId: track.id,
+        playQueueIds: queueIds,
+        position: Duration.zero,
+        duration: Duration.zero,
         errorMessage: null,
       ),
     );
     try {
-      final file = File(track.filePath);
-      if (!await file.exists()) {
-        throw FileSystemException('音乐文件不存在', track.filePath);
+      if (!MusicPlayerService.isAssetPath(track.filePath)) {
+        final file = File(track.filePath);
+        if (!await file.exists()) {
+          throw FileSystemException('音乐文件不存在', track.filePath);
+        }
       }
       final duration = await _player.playFile(
         track.filePath,
@@ -426,6 +507,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       _setState(
         state.copyWith(
           currentTrackId: track.id,
+          playQueueIds: queueIds,
           isPlaying: true,
           isLoading: false,
           duration: duration ?? state.effectiveDuration,
@@ -473,10 +555,12 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       final track = state.tracks.firstWhere((t) => t.id == trackId);
       // 从数据库删除记录
       await _musicRepo.deleteTrack(trackId);
-      // 删除文件
-      final file = File(track.filePath);
-      if (await file.exists()) {
-        await file.delete();
+      // 删除文件（内置资源不删除，只移除数据库记录）
+      if (!MusicPlayerService.isAssetPath(track.filePath)) {
+        final file = File(track.filePath);
+        if (await file.exists()) {
+          await file.delete();
+        }
       }
       // 如果删除的是当前播放歌曲，切换到下一首
       if (state.currentTrackId == trackId) {
@@ -607,9 +691,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   }
 
   MusicTrack? _trackByOffset(int offset) {
-    final tracks = state.selectedTracks.isEmpty
-        ? state.tracks
-        : state.selectedTracks;
+    final tracks = _playQueueTracks();
     if (tracks.isEmpty) return null;
     if (state.playMode == PlayMode.shuffle) {
       if (tracks.length <= 1) return tracks.first;
@@ -625,6 +707,67 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
     if (index < 0) return tracks.first;
     if (tracks.length == 1) return tracks.first;
     return tracks[(index + offset) % tracks.length];
+  }
+
+  List<MusicTrack> _playQueueTracks() {
+    final queueIds = state.playQueueIds;
+    if (queueIds.isEmpty) {
+      return state.selectedTracks.isEmpty ? state.tracks : state.selectedTracks;
+    }
+    final byId = {for (final track in state.tracks) track.id: track};
+    return queueIds
+        .map((id) => byId[id])
+        .whereType<MusicTrack>()
+        .toList(growable: false);
+  }
+
+  List<int> _queueForTrack(int trackId) {
+    final selectedIds = state.selectedTracks
+        .map((track) => track.id)
+        .toList(growable: false);
+    if (selectedIds.contains(trackId)) return selectedIds;
+
+    final allIds = state.tracks
+        .map((track) => track.id)
+        .toList(growable: false);
+    if (allIds.contains(trackId)) return allIds;
+    return [trackId];
+  }
+
+  List<int> _trackIdsForSelection({
+    required List<MusicTrack> tracks,
+    required List<MusicPlaylistTrack> playlistTracks,
+    required MusicCollection collection,
+    required int? playlistId,
+  }) {
+    if (playlistId != null) {
+      final ids = playlistTracks
+          .where((item) => item.playlistId == playlistId)
+          .map((item) => item.trackId)
+          .toSet();
+      return tracks
+          .where((track) => ids.contains(track.id))
+          .map((track) => track.id)
+          .toList(growable: false);
+    }
+    final selectedTracks = switch (collection) {
+      MusicCollection.all => tracks,
+      MusicCollection.favorites =>
+        tracks.where((track) => track.isFavorite).toList(growable: false),
+      MusicCollection.recent => _recentTracksFrom(tracks),
+    };
+    return selectedTracks.map((track) => track.id).toList(growable: false);
+  }
+
+  List<MusicTrack> _recentTracksFrom(List<MusicTrack> tracks) {
+    final recent = tracks.where((track) => track.lastPlayedAt != null).toList();
+    if (recent.isEmpty) return tracks;
+    recent.sort((a, b) => (b.lastPlayedAt ?? 0).compareTo(a.lastPlayedAt ?? 0));
+    return recent;
+  }
+
+  String? _normalizeAssetPath(String? asset) {
+    return MusicArtworkMapper.normalizeAssetPath(asset);
   }
 
   Future<void> setSleepTimer(Duration duration) async {

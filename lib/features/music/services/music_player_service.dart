@@ -11,9 +11,13 @@ class MusicPlayerService {
   Stream<Duration?> get durationStream => _player.durationStream;
   Stream<PlayerState> get playerStateStream => _player.playerStateStream;
 
+  static bool isAssetPath(String path) => path.startsWith('assets/');
+
   Future<Duration?> load(String filePath) async {
     if (_currentPath == filePath) return _player.duration;
-    final duration = await _player.setFilePath(filePath);
+    final duration = isAssetPath(filePath)
+        ? await _player.setAsset(filePath)
+        : await _player.setFilePath(filePath);
     _currentPath = filePath;
     return duration;
   }

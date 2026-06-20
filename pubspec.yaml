@@ -135,6 +135,7 @@ flutter:
     - assets/images/health_timer/water/
     - assets/images/health_timer/sleep/
     - assets/images/knowledge_cards/
+    - assets/images/knowledge_cards/v3/
     - assets/images/music/
     - assets/images/journal/backgrounds/
     - assets/images/journal/cats/

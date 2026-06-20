@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import '../../features/music/utils/default_music_seed.dart';
 
 class MusicRepository {
   MusicRepository(this._db);
@@ -35,6 +36,27 @@ class MusicRepository {
     return _db.select(_db.musicPlaylistTracks).get();
   }
 
+  Future<int> ensureDefaultStudyPlaylist() async {
+    final existingPlaylist =
+        await (_db.select(_db.musicPlaylists)
+              ..where((t) => t.name.equals(DefaultMusicSeeds.playlistName))
+              ..limit(1))
+            .getSingleOrNull();
+    final playlistId =
+        existingPlaylist?.id ??
+        await createPlaylist(
+          name: DefaultMusicSeeds.playlistName,
+          coverAsset: DefaultMusicSeeds.playlistCover,
+        );
+
+    for (final seed in DefaultMusicSeeds.seeds) {
+      final trackId = await _ensureSeedTrack(seed);
+      await addTrackToPlaylist(playlistId: playlistId, trackId: trackId);
+    }
+
+    return playlistId;
+  }
+
   Future<List<MusicTrack>> getFavoriteTracks() {
     return (_db.select(_db.musicTracks)
           ..where((t) => t.isFavorite.equals(true))
@@ -55,6 +77,24 @@ class MusicRepository {
     return (_db.select(
       _db.musicTracks,
     )..where((t) => t.originalPath.equals(originalPath))).getSingleOrNull();
+  }
+
+  Future<int> _ensureSeedTrack(DefaultMusicSeed seed) async {
+    final existing = await getTrackByOriginalPath(seed.originalPath);
+    if (existing != null) return existing.id;
+
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return insertTrack(
+      MusicTracksCompanion.insert(
+        title: seed.title,
+        filePath: seed.filePath,
+        originalPath: Value(seed.originalPath),
+        coverAsset: Value(seed.coverAsset),
+        sceneOverride: Value(seed.sceneOverride),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
   }
 
   Future<int> insertTrack(MusicTracksCompanion track) {
@@ -161,6 +201,18 @@ class MusicRepository {
     final now = DateTime.now().millisecondsSinceEpoch;
     return (_db.update(_db.musicTracks)..where((t) => t.id.equals(id))).write(
       MusicTracksCompanion(
+        coverAsset: Value(coverAsset),
+        updatedAt: Value(now),
+      ),
+    );
+  }
+
+  Future<void> updatePlaylistCoverAsset(int id, String coverAsset) {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (_db.update(
+      _db.musicPlaylists,
+    )..where((t) => t.id.equals(id))).write(
+      MusicPlaylistsCompanion(
         coverAsset: Value(coverAsset),
         updatedAt: Value(now),
       ),

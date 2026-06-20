@@ -1,4 +1,5 @@
 import '../../../core/database/app_database.dart';
+import 'health_reminder_schedule_status.dart';
 
 class SleepPlanState {
   const SleepPlanState({
@@ -7,6 +8,7 @@ class SleepPlanState {
     this.wakeTime = '07:00',
     this.leadMinutes = 30,
     this.reminderEnabled = true,
+    this.reminderScheduleStatus = const HealthReminderScheduleStatus.unknown(),
     this.readyAt,
     this.wokeAt,
     this.lastRecord,
@@ -18,6 +20,7 @@ class SleepPlanState {
   final String wakeTime;
   final int leadMinutes;
   final bool reminderEnabled;
+  final HealthReminderScheduleStatus reminderScheduleStatus;
   final DateTime? readyAt;
   final DateTime? wokeAt;
   final SleepRecord? lastRecord;
@@ -87,6 +90,7 @@ class SleepPlanState {
     String? wakeTime,
     int? leadMinutes,
     bool? reminderEnabled,
+    HealthReminderScheduleStatus? reminderScheduleStatus,
     DateTime? readyAt,
     bool clearReadyAt = false,
     DateTime? wokeAt,
@@ -101,6 +105,8 @@ class SleepPlanState {
       wakeTime: wakeTime ?? this.wakeTime,
       leadMinutes: leadMinutes ?? this.leadMinutes,
       reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+      reminderScheduleStatus:
+          reminderScheduleStatus ?? this.reminderScheduleStatus,
       readyAt: clearReadyAt ? null : readyAt ?? this.readyAt,
       wokeAt: clearWokeAt ? null : wokeAt ?? this.wokeAt,
       lastRecord: clearLastRecord ? null : lastRecord ?? this.lastRecord,

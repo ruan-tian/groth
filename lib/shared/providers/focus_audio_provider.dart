@@ -13,17 +13,20 @@ class FocusAudioState {
   final String? currentSoundType;
   final double volume;
   final bool isPlaying;
+  final String? errorMessage;
 
   const FocusAudioState({
     this.currentSoundType,
     this.volume = 0.6,
     this.isPlaying = false,
+    this.errorMessage,
   });
 
   FocusAudioState copyWith({
     Object? currentSoundType = _sentinel,
     double? volume,
     bool? isPlaying,
+    Object? errorMessage = _sentinel,
   }) {
     return FocusAudioState(
       currentSoundType: currentSoundType == _sentinel
@@ -31,6 +34,9 @@ class FocusAudioState {
           : currentSoundType as String?,
       volume: volume ?? this.volume,
       isPlaying: isPlaying ?? this.isPlaying,
+      errorMessage: errorMessage == _sentinel
+          ? this.errorMessage
+          : errorMessage as String?,
     );
   }
 }
@@ -49,8 +55,20 @@ class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
 
   Future<void> startNoise(String soundType) async {
     final service = _ref.read(focusAudioServiceProvider);
-    await service.playNoise(soundType, volume: state.volume);
-    state = state.copyWith(currentSoundType: soundType, isPlaying: true);
+    try {
+      await service.playNoise(soundType, volume: state.volume);
+      state = state.copyWith(
+        currentSoundType: soundType,
+        isPlaying: true,
+        errorMessage: null,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        currentSoundType: null,
+        isPlaying: false,
+        errorMessage: '白噪音播放失败，请重试',
+      );
+    }
   }
 
   Future<void> pauseNoise() async {
@@ -68,7 +86,11 @@ class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
   Future<void> stopNoise() async {
     final service = _ref.read(focusAudioServiceProvider);
     await service.stopNoise();
-    state = state.copyWith(currentSoundType: null, isPlaying: false);
+    state = state.copyWith(
+      currentSoundType: null,
+      isPlaying: false,
+      errorMessage: null,
+    );
   }
 
   Future<void> setVolume(double volume) async {
@@ -96,7 +118,19 @@ class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
   Future<void> changeSound(String soundType) async {
     final service = _ref.read(focusAudioServiceProvider);
     await service.stopNoise();
-    await service.playNoise(soundType, volume: state.volume);
-    state = state.copyWith(currentSoundType: soundType, isPlaying: true);
+    try {
+      await service.playNoise(soundType, volume: state.volume);
+      state = state.copyWith(
+        currentSoundType: soundType,
+        isPlaying: true,
+        errorMessage: null,
+      );
+    } catch (_) {
+      state = state.copyWith(
+        currentSoundType: null,
+        isPlaying: false,
+        errorMessage: '白噪音播放失败，请重试',
+      );
+    }
   }
 }

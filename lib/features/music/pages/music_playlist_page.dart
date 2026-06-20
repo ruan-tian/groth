@@ -1129,7 +1129,7 @@ class _TrackList extends ConsumerWidget {
           track: track,
           selected: selected,
           isPlaying: selected && state.isPlaying,
-          onPlay: () => controller.playTrack(track),
+          onPlay: () => controller.playTrackFromQueue(track, tracks),
           onFavorite: () => controller.toggleFavorite(track),
           onManagePlaylists: () => showTrackPlaylistSheet(context, ref, track),
         );

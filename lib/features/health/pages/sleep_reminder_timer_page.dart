@@ -7,8 +7,10 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../../plan/widgets/notification_permission_dialog.dart';
+import '../models/health_reminder_schedule_status.dart';
 import '../models/sleep_plan_state.dart';
 import '../providers/sleep_plan_provider.dart';
+import '../services/health_reminder_scheduler.dart';
 import '../../../shared/widgets/common/growth_time_picker.dart';
 import '../utils/health_timer_assets.dart';
 
@@ -24,8 +26,6 @@ class SleepReminderTimerPage extends ConsumerStatefulWidget {
 
 class _SleepReminderTimerPageState
     extends ConsumerState<SleepReminderTimerPage> {
-  static const _sleepReminderNotificationId = 5204;
-
   @override
   Widget build(BuildContext context) {
     final plan = ref.watch(sleepPlanProvider);
@@ -185,56 +185,85 @@ class _SleepReminderTimerPageState
   Future<void> _syncReminder() async {
     final plan = ref.read(sleepPlanProvider);
     final service = ref.read(reminderNotificationServiceProvider);
+    final scheduler = ref.read(healthReminderSchedulerProvider);
     if (!plan.reminderEnabled) {
-      await service.cancel(_sleepReminderNotificationId);
+      final status = await scheduler.cancelSleepReminderWithStatus();
+      ref.read(sleepPlanProvider.notifier).setReminderScheduleStatus(status);
       return;
     }
 
-    final permissionsGranted = await service.requestPermissions();
+    final permissionsGranted = await service.requestPermissions(
+      requestExactAlarm: true,
+    );
     if (!permissionsGranted) {
+      const status = HealthReminderScheduleStatus(
+        code: HealthReminderScheduleCode.permissionDenied,
+      );
+      ref.read(sleepPlanProvider.notifier).setReminderScheduleStatus(status);
       if (!mounted) return;
       final opened = await showNotificationPermissionGuide(context);
       if (opened) {
-        final retry = await service.requestPermissions();
+        final retry = await service.requestPermissions(requestExactAlarm: true);
         if (!retry) {
-          await _disableReminderAfterScheduleFailure('通知权限仍未开启，无法发送提醒。');
+          _showNotificationSnack(
+            '\u901a\u77e5\u6743\u9650\u4ecd\u672a\u5f00\u542f\uff0c'
+            '\u65e0\u6cd5\u53d1\u9001\u7761\u524d\u63d0\u9192\u3002',
+          );
           return;
         }
       } else {
-        await _disableReminderAfterScheduleFailure('需要通知权限才能发送睡前提醒。');
+        _showNotificationSnack(
+          '\u9700\u8981\u901a\u77e5\u6743\u9650\u624d\u80fd'
+          '\u53d1\u9001\u7761\u524d\u63d0\u9192\u3002',
+        );
         return;
       }
     }
 
-    final scheduled = await service.scheduleReminder(
-      id: _sleepReminderNotificationId,
-      scheduledAt: _nextTimeFor(plan.reminderTime),
-      title: '睡前准备时间到啦',
-      body: '离 ${plan.sleepTime} 入睡目标还有 ${plan.leadMinutes} 分钟，可以慢慢收心了。',
-      payload: 'sleep_plan_reminder',
+    final status = await scheduler.scheduleSleepReminderWithStatus(
+      sleepTime: plan.sleepTime,
+      leadMinutes: plan.leadMinutes,
+      requestPermissions: false,
     );
-    if (!scheduled) {
-      await _disableReminderAfterScheduleFailure('睡前提醒创建失败，请检查系统通知设置。');
+    ref.read(sleepPlanProvider.notifier).setReminderScheduleStatus(status);
+    if (!status.isScheduled) {
+      _showNotificationSnack(_scheduleStatusSnack(status, 'sleep'));
+      return;
+    }
+    if (status.isDelayedBySystemAlarmLimit) {
+      _showNotificationSnack(
+        '\u7cfb\u7edf\u95f9\u949f\u6743\u9650\u53d7\u9650\uff0c'
+        '\u63d0\u9192\u5df2\u964d\u7ea7\u5b89\u6392\uff0c'
+        '\u53ef\u80fd\u4f1a\u5ef6\u8fdf\u3002',
+      );
     }
   }
 
-  Future<void> _disableReminderAfterScheduleFailure(String message) async {
-    await ref.read(sleepPlanProvider.notifier).setReminderEnabled(false);
+  void _showNotificationSnack(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
   }
+}
 
-  DateTime _nextTimeFor(String hhmm) {
-    final now = DateTime.now();
-    final parts = hhmm.split(':');
-    final hour = int.tryParse(parts.first) ?? 22;
-    final minute = int.tryParse(parts.length > 1 ? parts[1] : '') ?? 0;
-    var target = DateTime(now.year, now.month, now.day, hour, minute);
-    if (!target.isAfter(now)) {
-      target = target.add(const Duration(days: 1));
-    }
-    return target;
+String _scheduleStatusSnack(HealthReminderScheduleStatus status, String kind) {
+  switch (status.code) {
+    case HealthReminderScheduleCode.permissionDenied:
+      return '通知权限未开启，无法发送提醒。';
+    case HealthReminderScheduleCode.exactAlarmDenied:
+      return '系统闹钟权限受限，提醒可能延迟。';
+    case HealthReminderScheduleCode.noPendingNotifications:
+      return '未检测到系统待投递提醒，请重新授权或重试。';
+    case HealthReminderScheduleCode.scheduleFailed:
+      return kind == 'sleep' ? '睡前提醒创建失败，请检查系统通知设置。' : '喝水提醒创建失败，请检查系统通知设置。';
+    case HealthReminderScheduleCode.off:
+      return '提醒已关闭。';
+    case HealthReminderScheduleCode.scheduled:
+      return status.isDelayedBySystemAlarmLimit
+          ? '提醒已安排，但系统闹钟权限受限，可能延迟。'
+          : '提醒已安排。';
+    case HealthReminderScheduleCode.unknown:
+      return '提醒状态未知，请重新打开提醒试试。';
   }
 }

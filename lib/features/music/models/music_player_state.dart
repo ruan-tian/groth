@@ -27,6 +27,7 @@ class MusicPlayerState {
     this.tracks = const [],
     this.playlists = const [],
     this.playlistTracks = const [],
+    this.playQueueIds = const [],
     this.currentTrackId,
     this.selectedCollection = MusicCollection.all,
     this.selectedPlaylistId,
@@ -50,6 +51,7 @@ class MusicPlayerState {
   final List<MusicTrack> tracks;
   final List<MusicPlaylist> playlists;
   final List<MusicPlaylistTrack> playlistTracks;
+  final List<int> playQueueIds;
   final int? currentTrackId;
   final MusicCollection selectedCollection;
   final int? selectedPlaylistId;
@@ -174,6 +176,7 @@ class MusicPlayerState {
     List<MusicTrack>? tracks,
     List<MusicPlaylist>? playlists,
     List<MusicPlaylistTrack>? playlistTracks,
+    List<int>? playQueueIds,
     Object? currentTrackId = _sentinel,
     MusicCollection? selectedCollection,
     Object? selectedPlaylistId = _sentinel,
@@ -197,6 +200,7 @@ class MusicPlayerState {
       tracks: tracks ?? this.tracks,
       playlists: playlists ?? this.playlists,
       playlistTracks: playlistTracks ?? this.playlistTracks,
+      playQueueIds: playQueueIds ?? this.playQueueIds,
       currentTrackId: currentTrackId == _sentinel
           ? this.currentTrackId
           : currentTrackId as int?,

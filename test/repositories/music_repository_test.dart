@@ -3,6 +3,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
 import 'package:growth_os/core/repositories/music_repository.dart';
+import 'package:growth_os/features/music/utils/default_music_seed.dart';
 import 'package:growth_os/features/music/utils/music_assets.dart';
 
 MusicTracksCompanion _track({
@@ -135,5 +136,27 @@ void main() {
     final clearedTrack = await repo.getTrackById(trackId);
 
     expect(clearedTrack!.sceneOverride, null);
+  });
+
+  test('seeds default study playlist once with built-in noise tracks', () async {
+    final firstPlaylistId = await repo.ensureDefaultStudyPlaylist();
+    final secondPlaylistId = await repo.ensureDefaultStudyPlaylist();
+
+    final playlists = await repo.getPlaylists();
+    final tracks = await repo.getTracks();
+    final memberships = await repo.getPlaylistTracks();
+    final studyPlaylist = playlists.singleWhere(
+      (playlist) => playlist.name == DefaultMusicSeeds.playlistName,
+    );
+    final seedTracks = tracks.where(DefaultMusicSeeds.isSeedTrack).toList();
+
+    expect(secondPlaylistId, firstPlaylistId);
+    expect(studyPlaylist.id, firstPlaylistId);
+    expect(studyPlaylist.coverAsset, DefaultMusicSeeds.playlistCover);
+    expect(seedTracks, hasLength(DefaultMusicSeeds.seeds.length));
+    expect(
+      memberships.where((item) => item.playlistId == studyPlaylist.id),
+      hasLength(DefaultMusicSeeds.seeds.length),
+    );
   });
 }

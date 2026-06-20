@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
+import '../models/health_reminder_schedule_status.dart';
 import '../models/water_plan_state.dart';
 
 final waterPlanProvider =
@@ -36,6 +37,15 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
     final startHour = int.tryParse(await repo.getSetting(_startHourKey) ?? '');
     final endHour = int.tryParse(await repo.getSetting(_endHourKey) ?? '');
     final enabled = await repo.getSetting(_enabledKey);
+    final scheduleStatus = await repo.getSetting(
+      'water_reminder_schedule_status',
+    );
+    final pendingCount = int.tryParse(
+      await repo.getSetting('water_reminder_pending_count') ?? '',
+    );
+    final usesExactAlarm = await repo.getSetting(
+      'water_reminder_uses_exact_alarm',
+    );
 
     final todayWater = getTodayWaterIntake(waterMap);
     final nextGoal = (goal != null && goal > 0) ? goal : state.goalMl;
@@ -54,6 +64,13 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
           ? interval
           : state.intervalMinutes,
       reminderEnabled: enabled == null ? true : enabled == 'true',
+      reminderScheduleStatus: HealthReminderScheduleStatus.fromStorage(
+        scheduleStatus,
+        pendingCount: pendingCount ?? 0,
+        usesExactAlarm: usesExactAlarm == null
+            ? true
+            : usesExactAlarm == 'true',
+      ),
       startHour: _sanitizeHour(startHour ?? state.startHour),
       endHour: _sanitizeHour(endHour ?? state.endHour),
       records: records,
@@ -92,10 +109,19 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
   }
 
   Future<void> setReminderEnabled(bool enabled) async {
-    state = state.copyWith(reminderEnabled: enabled);
+    state = state.copyWith(
+      reminderEnabled: enabled,
+      reminderScheduleStatus: enabled
+          ? state.reminderScheduleStatus
+          : const HealthReminderScheduleStatus.off(),
+    );
     await _ref
         .read(settingRepositoryProvider)
         .setSetting(_enabledKey, enabled ? 'true' : 'false');
+  }
+
+  void setReminderScheduleStatus(HealthReminderScheduleStatus status) {
+    state = state.copyWith(reminderScheduleStatus: status);
   }
 
   Future<void> setReminderWindow({
@@ -116,9 +142,13 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
         .setSetting(_endHourKey, '${state.endHour}');
   }
 
-  Future<void> recordDrink({DateTime? recordedAt}) async {
+  Future<void> recordDrink({DateTime? recordedAt}) {
+    return recordDrinkAmount(state.selectedAmountMl, recordedAt: recordedAt);
+  }
+
+  Future<void> recordDrinkAmount(int amountMl, {DateTime? recordedAt}) async {
     final now = recordedAt ?? DateTime.now();
-    final amount = state.selectedAmountMl;
+    final amount = _sanitizeAmount(amountMl);
     final waterMap = await _loadWaterMap();
     final todayKey = _dateKey(now);
     final previousMl = waterMap[todayKey] ?? 0;

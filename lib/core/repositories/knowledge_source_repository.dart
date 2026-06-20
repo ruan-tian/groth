@@ -125,6 +125,30 @@ class KnowledgeSourceRepository {
     );
   }
 
+  Future<void> renameCustomGoal({
+    required String oldGoalName,
+    required String newGoalName,
+  }) {
+    final oldName = oldGoalName.trim();
+    final newName = newGoalName.trim();
+    if (oldName.isEmpty || newName.isEmpty || oldName == newName) {
+      return Future.value();
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (_db.update(_db.knowledgeSources)..where(
+          (t) =>
+              t.archived.equals(false) &
+              t.goalKey.equals('custom') &
+              t.goalName.equals(oldName),
+        ))
+        .write(
+          KnowledgeSourcesCompanion(
+            goalName: Value(newName),
+            updatedAt: Value(now),
+          ),
+        );
+  }
+
   Future<void> replaceSourceContent({
     required int id,
     required String content,
@@ -335,15 +359,17 @@ class KnowledgeSourceRepository {
         .get();
   }
 
-
   /// Get chunks for multiple sources in a single query (batch optimization).
   /// Returns a map of sourceId -> list of chunks.
-  Future<Map<int, List<KnowledgeChunk>>> getChunksForSources(List<int> sourceIds) async {
+  Future<Map<int, List<KnowledgeChunk>>> getChunksForSources(
+    List<int> sourceIds,
+  ) async {
     if (sourceIds.isEmpty) return {};
-    final chunks = await (_db.select(_db.knowledgeChunks)
-          ..where((t) => t.sourceId.isIn(sourceIds))
-          ..orderBy([(t) => OrderingTerm.asc(t.chunkIndex)]))
-        .get();
+    final chunks =
+        await (_db.select(_db.knowledgeChunks)
+              ..where((t) => t.sourceId.isIn(sourceIds))
+              ..orderBy([(t) => OrderingTerm.asc(t.chunkIndex)]))
+            .get();
     final result = <int, List<KnowledgeChunk>>{};
     for (final chunk in chunks) {
       result.putIfAbsent(chunk.sourceId, () => []).add(chunk);
@@ -357,9 +383,9 @@ class KnowledgeSourceRepository {
     List<int> sourceIds,
   ) async {
     if (sourceIds.isEmpty) return {};
-    final links = await (_db.select(_db.knowledgeCardSourceLinks)
-          ..where((t) => t.sourceId.isIn(sourceIds)))
-        .get();
+    final links = await (_db.select(
+      _db.knowledgeCardSourceLinks,
+    )..where((t) => t.sourceId.isIn(sourceIds))).get();
     final result = <int, List<KnowledgeCardSourceLink>>{};
     for (final link in links) {
       result.putIfAbsent(link.sourceId, () => []).add(link);

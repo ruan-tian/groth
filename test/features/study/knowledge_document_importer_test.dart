@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/features/study/utils/knowledge_document_importer.dart';
@@ -19,7 +19,7 @@ void main() {
 
         final result = await importer.extractFromFile(file);
         expect(result.isSuccess, isFalse);
-        expect(result.errorMessage, contains('不支持的文件格式'));
+        expect(result.displayError, contains('文件格式暂时不支持'));
 
         await file.delete();
       });
@@ -44,8 +44,65 @@ void main() {
 
         final result = await importer.extractFromFile(file);
         expect(result.isSuccess, isTrue);
-        expect(result.content, contains('Title'));
+        expect(result.content, '# Title\n\nSome markdown content.');
         expect(result.type, 'markdown');
+
+        await file.delete();
+      });
+
+      test('extracts image text through OCR callback', () async {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final file = File('${Directory.systemTemp.path}/scan_$ts.png');
+        await file.writeAsBytes([1, 2, 3, 4]);
+
+        final result = await importer.extractFromFile(
+          file,
+          ocrCallback: (bytes, mimeType) async {
+            expect(bytes, [1, 2, 3, 4]);
+            expect(mimeType, 'image/png');
+            return '行政处罚追诉时效通常从违法行为发生之日起计算。';
+          },
+        );
+
+        expect(result.isSuccess, isTrue);
+        expect(result.type, 'image_ocr');
+        expect(result.content, contains('行政处罚追诉时效'));
+
+        await file.delete();
+      });
+
+      test(
+        'image import without OCR callback gives actionable error',
+        () async {
+          final ts = DateTime.now().millisecondsSinceEpoch;
+          final file = File('${Directory.systemTemp.path}/scan_$ts.webp');
+          await file.writeAsBytes([1, 2, 3, 4]);
+
+          final result = await importer.extractFromFile(file);
+
+          expect(result.isSuccess, isFalse);
+          expect(result.displayError, contains('图片导入需要先配置 AI'));
+          expect(result.displayError, contains('粘贴导入'));
+
+          await file.delete();
+        },
+      );
+
+      test('OCR callback errors are converted to friendly message', () async {
+        final ts = DateTime.now().millisecondsSinceEpoch;
+        final file = File('${Directory.systemTemp.path}/broken_$ts.jpg');
+        await file.writeAsBytes([9, 8, 7]);
+
+        final result = await importer.extractFromFile(
+          file,
+          ocrCallback: (_, _) async {
+            throw const FormatException('Unexpected end of input');
+          },
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.displayError, isNot(contains('FormatException')));
+        expect(result.displayError, contains('图片文字识别失败'));
 
         await file.delete();
       });
@@ -130,6 +187,44 @@ void main() {
           errorMessage: 'File not found',
         );
         expect(result.displayError, 'File not found');
+      });
+
+      test('displayError hides internal parser errors for files', () {
+        const result = DocumentImportResult(
+          title: 'Broken',
+          content: '',
+          type: 'pdf_text',
+          errorMessage:
+              'FormatException: Unexpected end of input (at line 342)',
+        );
+
+        expect(result.displayError, isNot(contains('FormatException')));
+        expect(result.displayError, isNot(contains('Unexpected end')));
+        expect(result.displayError, contains('复制文字粘贴'));
+      });
+
+      test('displayError hides internal network errors for web import', () {
+        const result = DocumentImportResult(
+          title: 'Web',
+          content: '',
+          type: 'web',
+          errorMessage: 'SocketException: Failed host lookup',
+        );
+
+        expect(result.displayError, isNot(contains('SocketException')));
+        expect(result.displayError, contains('网页暂时无法读取'));
+      });
+
+      test('displayError hides internal OCR errors for images', () {
+        const result = DocumentImportResult(
+          title: 'Image',
+          content: '',
+          type: 'image_ocr',
+          errorMessage: 'Exception: model returned stack trace',
+        );
+
+        expect(result.displayError, isNot(contains('Exception')));
+        expect(result.displayError, contains('图片文字识别失败'));
       });
     });
   });

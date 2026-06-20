@@ -38,6 +38,11 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
     required this.softGold,
     required this.textOnAccent,
     required this.shadow,
+    this.knowledgeBg = AppColors.knowledgeBg,
+    this.knowledgePrimary = AppColors.knowledgePrimary,
+    this.weakRed = AppColors.weakRed,
+    this.dueOrange = AppColors.dueOrange,
+    this.masteredGreen = AppColors.masteredGreen,
   });
 
   final Color background;
@@ -74,6 +79,13 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
   final Color textOnAccent;
   final Color shadow;
 
+  // Knowledge card system colors
+  final Color knowledgeBg;
+  final Color knowledgePrimary;
+  final Color weakRed;
+  final Color dueOrange;
+  final Color masteredGreen;
+
   static const light = AppThemeColors(
     background: AppColors.background,
     paper: AppColors.paper,
@@ -108,6 +120,11 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
     softGold: AppColors.softGold,
     textOnAccent: AppColors.textOnAccent,
     shadow: Color(0x14172033),
+    knowledgeBg: AppColors.knowledgeBg,
+    knowledgePrimary: AppColors.knowledgePrimary,
+    weakRed: AppColors.weakRed,
+    dueOrange: AppColors.dueOrange,
+    masteredGreen: AppColors.masteredGreen,
   );
 
   static const dark = AppThemeColors(
@@ -144,6 +161,11 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
     softGold: Color(0xFF332D1F),
     textOnAccent: Color(0xFFFFFFFF),
     shadow: Color(0x66000000),
+    knowledgeBg: Color(0xFF141821),
+    knowledgePrimary: Color(0xFF9FB6FF),
+    weakRed: Color(0xFFFF8C86),
+    dueOrange: Color(0xFFFFB17A),
+    masteredGreen: Color(0xFF74D99F),
   );
 
   @override
@@ -181,6 +203,11 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
     Color? softGold,
     Color? textOnAccent,
     Color? shadow,
+    Color? knowledgeBg,
+    Color? knowledgePrimary,
+    Color? weakRed,
+    Color? dueOrange,
+    Color? masteredGreen,
   }) {
     return AppThemeColors(
       background: background ?? this.background,
@@ -216,6 +243,11 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
       softGold: softGold ?? this.softGold,
       textOnAccent: textOnAccent ?? this.textOnAccent,
       shadow: shadow ?? this.shadow,
+      knowledgeBg: knowledgeBg ?? this.knowledgeBg,
+      knowledgePrimary: knowledgePrimary ?? this.knowledgePrimary,
+      weakRed: weakRed ?? this.weakRed,
+      dueOrange: dueOrange ?? this.dueOrange,
+      masteredGreen: masteredGreen ?? this.masteredGreen,
     );
   }
 
@@ -256,6 +288,11 @@ class AppThemeColors extends ThemeExtension<AppThemeColors> {
       softGold: Color.lerp(softGold, other.softGold, t)!,
       textOnAccent: Color.lerp(textOnAccent, other.textOnAccent, t)!,
       shadow: Color.lerp(shadow, other.shadow, t)!,
+      knowledgeBg: Color.lerp(knowledgeBg, other.knowledgeBg, t)!,
+      knowledgePrimary: Color.lerp(knowledgePrimary, other.knowledgePrimary, t)!,
+      weakRed: Color.lerp(weakRed, other.weakRed, t)!,
+      dueOrange: Color.lerp(dueOrange, other.dueOrange, t)!,
+      masteredGreen: Color.lerp(masteredGreen, other.masteredGreen, t)!,
     );
   }
 }

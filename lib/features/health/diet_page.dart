@@ -17,6 +17,7 @@ import '../../../shared/widgets/swipe_delete_tile.dart';
 import '../plan/utils/plan_module_assets.dart';
 import '../plan/widgets/plan_module_visuals.dart';
 import 'models/drink_recommendation.dart';
+import 'providers/water_plan_provider.dart';
 
 part 'widgets/diet_page_widgets.dart';
 
@@ -577,71 +578,92 @@ class _DietPageState extends ConsumerState<DietPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildWaterTracker() {
-    final waterGoal = ref.watch(dailyWaterGoalProvider);
+    final waterPlan = ref.watch(waterPlanProvider);
+    final waterGoal = waterPlan.goalMl;
+    final currentWater = waterPlan.currentWaterMl;
+    final progress = waterGoal > 0
+        ? (currentWater / waterGoal).clamp(0.0, 1.0)
+        : 0.0;
+    final reminderLabel = waterPlan.reminderEnabled
+        ? '${waterPlan.reminderWindowLabel} / '
+              '${waterPlan.intervalMinutes}\u5206\u949f'
+        : '\u63d0\u9192\u5df2\u5173\u95ed';
     final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.card, colors.softBlue.withValues(alpha: 0.5)],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.softBlue.withValues(alpha: 0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.18),
-            blurRadius: 22,
-            offset: const Offset(0, 9),
-          ),
-        ],
-      ),
+    return GrowthCard(
+      onTap: () => context.push('/plan/diet/water-reminder'),
+      padding: const EdgeInsets.all(18),
+      borderRadius: AppRadius.xxxl,
+      backgroundColor: colors.card,
+      borderColor: colors.diet.withValues(alpha: 0.16),
       child: Column(
         children: [
-          // 标题行
           Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
-                  color: colors.softBlue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.smd),
+                  color: colors.softBlue.withValues(alpha: 0.14),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   Icons.water_drop_rounded,
                   color: colors.softBlue,
-                  size: 16,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                '饮水量',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
-                  color: colors.textPrimary,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '\u996e\u6c34\u91cf',
+                      style: AppTextStyles.cardTitle.copyWith(
+                        fontSize: 16,
+                        color: colors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      reminderLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const Spacer(),
               Semantics(
                 button: true,
-                label: '设置饮水目标',
+                label: '\u8bbe\u7f6e\u996e\u6c34\u76ee\u6807',
                 child: GestureDetector(
                   onTap: _showWaterGoalSettings,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 9,
+                      vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: colors.softBlue.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      color: Color.alphaBlend(
+                        colors.softBlue.withValues(alpha: 0.10),
+                        colors.card,
+                      ),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: colors.softBlue.withValues(alpha: 0.22),
+                      ),
                     ),
                     child: Text(
-                      '目标 ${waterGoal}ml',
-                      style: TextStyle(fontSize: 11, color: colors.softBlue),
+                      '\u76ee\u6807 ${waterGoal}ml',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: colors.softBlue,
+                        fontWeight: FontWeight.w800,
+                      ),
                     ),
                   ),
                 ),
@@ -649,40 +671,37 @@ class _DietPageState extends ConsumerState<DietPage> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // 进度条
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
-              value: (_currentWater / waterGoal).clamp(0.0, 1.0),
+              value: progress,
               minHeight: 12,
-              backgroundColor: colors.softBlue.withValues(alpha: 0.1),
+              backgroundColor: Color.alphaBlend(
+                colors.softBlue.withValues(alpha: 0.14),
+                colors.card,
+              ),
               valueColor: AlwaysStoppedAnimation<Color>(colors.softBlue),
             ),
           ),
           const SizedBox(height: 8),
-
-          // 数量显示
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '$_currentWater ml',
+                '$currentWater ml',
                 style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w900,
                   color: colors.softBlue,
                 ),
               ),
               Text(
-                '${((_currentWater / waterGoal) * 100).toInt()}%',
+                '${(progress * 100).toInt()}%',
                 style: TextStyle(fontSize: 12, color: colors.textTertiary),
               ),
             ],
           ),
           const SizedBox(height: 12),
-
-          // 快捷添加按钮
           Row(
             children: [
               Expanded(child: _buildWaterAddButton(100, '100ml')),
@@ -705,15 +724,15 @@ class _DietPageState extends ConsumerState<DietPage> {
       child: GestureDetector(
         onTap: () {
           HapticFeedback.lightImpact();
-          saveWaterIntake(ref, amount);
+          _recordWaterFromDiet(amount);
         },
         child: Container(
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: colors.softBlue.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: colors.softBlue.withValues(alpha: 0.2)),
+            color: colors.softBlue.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(AppRadius.sm),
+            border: Border.all(color: colors.softBlue.withValues(alpha: 0.24)),
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -727,7 +746,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                   label,
                   style: TextStyle(
                     fontSize: 12,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w800,
                     color: colors.softBlue,
                   ),
                 ),
@@ -737,6 +756,13 @@ class _DietPageState extends ConsumerState<DietPage> {
         ),
       ),
     );
+  }
+
+  Future<void> _recordWaterFromDiet(int amount) async {
+    await ref.read(waterPlanProvider.notifier).recordDrinkAmount(amount);
+    ref.invalidate(dailyCalorieWaterProvider(7));
+    ref.invalidate(dailyCalorieWaterProvider(30));
+    ref.invalidate(dailyCalorieWaterProvider(365));
   }
 
   // ---------------------------------------------------------------------------

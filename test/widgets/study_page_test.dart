@@ -14,7 +14,7 @@ import 'package:growth_os/features/study/study_page.dart';
 import 'package:growth_os/shared/providers/pet_ai_result_provider.dart';
 import 'package:growth_os/shared/providers/pet_orchestrator_provider.dart';
 import 'package:growth_os/shared/providers/pet_projection_provider.dart';
-import 'package:growth_os/shared/providers/knowledge_card_provider.dart';
+import 'package:growth_os/shared/providers/knowledge_v3_provider.dart';
 import 'package:growth_os/shared/providers/settings_provider.dart';
 import 'package:growth_os/shared/providers/study_provider.dart';
 
@@ -122,6 +122,14 @@ List<Override> _studyPageOverrides({
   List<StudyRecord> todayRecords = const [],
   List<StudyRecord> recentRecords = const [],
   Map<String, int> subjectDistribution = const {},
+  KnowledgeWorkspaceOverviewV3 knowledgeOverview =
+      const KnowledgeWorkspaceOverviewV3(
+        spaceCount: 1,
+        materialCount: 0,
+        cardCount: 0,
+        dueCount: 0,
+        weakCount: 0,
+      ),
 }) {
   return [
     petOrchestratorProvider.overrideWith((ref) => _TestPetOrchestrator()),
@@ -144,14 +152,9 @@ List<Override> _studyPageOverrides({
     ),
     todayStudyRecordsProvider.overrideWith((_) async => todayRecords),
     recentStudyRecordsProvider.overrideWith((_) async => recentRecords),
-    knowledgeCardsProvider.overrideWith((_) async => const <KnowledgeCard>[]),
-    knowledgeGoalSummariesProvider.overrideWith(
-      (_) async => const <KnowledgeGoalSummary>[],
+    knowledgeWorkspaceOverviewV3Provider.overrideWith(
+      (_) async => knowledgeOverview,
     ),
-    knowledgeDeckSummariesProvider.overrideWith(
-      (_) async => const <KnowledgeDeckSummary>[],
-    ),
-    dueKnowledgeCardsCountProvider.overrideWith((_) async => 0),
     subjectDistributionProvider.overrideWith((_) async => subjectDistribution),
     subjectDistributionByRangeProvider(
       1,
@@ -185,6 +188,8 @@ void main() {
       expect(find.byType(PlanModuleVisualHeader), findsOneWidget);
       expect(find.byType(PlanModuleActionImageCard), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('导入资料，让甜甜帮你生成知识卡'), findsOneWidget);
     });
 
     testWidgets('renders today summary without hitting the real database', (
@@ -294,6 +299,79 @@ void main() {
       todayCompleter.complete(0);
       weeklyCompleter.complete(0);
       await tester.pump();
+    });
+  });
+
+  group('StudyPage knowledge space entry', () {
+    testWidgets('shows import as the empty-state primary action', (
+      tester,
+    ) async {
+      await _pumpStudyPage(tester, overrides: _studyPageOverrides());
+
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('导入资料，让甜甜帮你生成知识卡'), findsOneWidget);
+      expect(find.text('导入资料'), findsOneWidget);
+    });
+
+    testWidgets('shows generate when materials exist but no cards', (
+      tester,
+    ) async {
+      await _pumpStudyPage(
+        tester,
+        overrides: _studyPageOverrides(
+          knowledgeOverview: const KnowledgeWorkspaceOverviewV3(
+            spaceCount: 1,
+            materialCount: 2,
+            cardCount: 0,
+            dueCount: 0,
+            weakCount: 0,
+          ),
+        ),
+      );
+
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('2 份资料已导入，可生成知识卡'), findsOneWidget);
+      expect(find.text('生成知识卡'), findsOneWidget);
+    });
+
+    testWidgets('shows enter space when cards exist but none are due', (
+      tester,
+    ) async {
+      await _pumpStudyPage(
+        tester,
+        overrides: _studyPageOverrides(
+          knowledgeOverview: const KnowledgeWorkspaceOverviewV3(
+            spaceCount: 1,
+            materialCount: 2,
+            cardCount: 16,
+            dueCount: 0,
+            weakCount: 3,
+          ),
+        ),
+      );
+
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('共 16 张知识卡，3 张薄弱卡'), findsOneWidget);
+      expect(find.text('进入空间'), findsOneWidget);
+    });
+
+    testWidgets('shows start review when cards are due', (tester) async {
+      await _pumpStudyPage(
+        tester,
+        overrides: _studyPageOverrides(
+          knowledgeOverview: const KnowledgeWorkspaceOverviewV3(
+            spaceCount: 1,
+            materialCount: 3,
+            cardCount: 24,
+            dueCount: 7,
+            weakCount: 2,
+          ),
+        ),
+      );
+
+      expect(find.text('继续抽卡复习'), findsOneWidget);
+      expect(find.text('今日 7 张待复习，共 24 张知识卡'), findsOneWidget);
+      expect(find.text('开始抽卡'), findsOneWidget);
     });
   });
 }

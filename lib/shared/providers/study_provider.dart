@@ -47,7 +47,7 @@ final weeklyDailyStudyProvider = FutureProvider<List<DailyStats>>((ref) {
   return statsService.getWeeklyStats();
 });
 
-/// 最近 5 条学习记录（按创建时间倒序）
+/// 最近 5 条学习记录（按学习开始时间倒序）
 final recentStudyRecordsProvider = FutureProvider<List<StudyRecord>>((ref) {
   final repo = ref.watch(studyRepositoryProvider);
   return repo.getRecentStudyRecords(limit: 5);
@@ -108,10 +108,10 @@ final sortedRecentStudyRecordsProvider = FutureProvider<List<StudyRecord>>((
 
   switch (sort) {
     case SortOption.newest:
-      records.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+      records.sort((a, b) => b.startTime.compareTo(a.startTime));
       break;
     case SortOption.oldest:
-      records.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+      records.sort((a, b) => a.startTime.compareTo(b.startTime));
       break;
     case SortOption.highestExp:
       records.sort((a, b) => b.expGained.compareTo(a.expGained));

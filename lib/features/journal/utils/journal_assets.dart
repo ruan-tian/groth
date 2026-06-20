@@ -10,9 +10,9 @@ class JournalAssets {
   static const catThinking = '$_root/cats/journal_cat_thinking.webp';
   static const catBook = '$_root/cats/journal_cat_book.webp';
 
-  static const pencil = '$_root/decor/journal_pencil.png';
-  static const notebook = '$_root/decor/journal_notebook.png';
-  static const openBook = '$_root/decor/journal_open_book.png';
+  static const pencil = '$_root/decor/journal_pencil.webp';
+  static const notebook = '$_root/decor/journal_notebook.webp';
+  static const openBook = '$_root/decor/journal_open_book.webp';
 
   static const empty = '$_root/status/journal_empty.webp';
 

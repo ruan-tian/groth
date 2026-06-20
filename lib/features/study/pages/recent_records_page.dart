@@ -174,7 +174,7 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
     // 按日期分组
     final groups = groupRecordsByDate(
       sorted,
-      (r) => DateTime.fromMillisecondsSinceEpoch(r.createdAt),
+      (r) => DateTime.fromMillisecondsSinceEpoch(r.startTime),
     );
 
     final items = <_ListItem>[];
@@ -315,10 +315,10 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
     final sorted = List<StudyRecord>.from(records);
     switch (_sortOption) {
       case StudySortOption.newest:
-        sorted.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+        sorted.sort((a, b) => b.startTime.compareTo(a.startTime));
         break;
       case StudySortOption.oldest:
-        sorted.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+        sorted.sort((a, b) => a.startTime.compareTo(b.startTime));
         break;
       case StudySortOption.highestExp:
         sorted.sort((a, b) => b.expGained.compareTo(a.expGained));
@@ -440,7 +440,7 @@ class _RecordCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final dt = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
+    final dt = DateTime.fromMillisecondsSinceEpoch(record.startTime);
     final timeStr =
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
     final isProfessional = record.mode == 'professional';

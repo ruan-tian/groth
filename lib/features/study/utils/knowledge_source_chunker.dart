@@ -13,7 +13,7 @@ class KnowledgeSourceChunkDraft {
 }
 
 class KnowledgeSourceChunker {
-  const KnowledgeSourceChunker({this.targetChars = 900, this.maxChars = 1400});
+  const KnowledgeSourceChunker({this.targetChars = 1600, this.maxChars = 2600});
 
   final int targetChars;
   final int maxChars;

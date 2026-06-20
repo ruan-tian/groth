@@ -37,6 +37,13 @@ class AppColors {
   static const Color warning = Color(0xFFB7791F);
   static const Color danger = Color(0xFFC2413A);
 
+  // Knowledge card system colors
+  static const Color knowledgeBg = Color(0xFFF7F8FC);
+  static const Color knowledgePrimary = Color(0xFF5B7CFA);
+  static const Color weakRed = Color(0xFFFF7A7A);
+  static const Color dueOrange = Color(0xFFFFB45C);
+  static const Color masteredGreen = Color(0xFF4CC9A7);
+
   static const Color softPurple = Color(0xFFF1EFFF);
   static const Color softBlue = Color(0xFFEEF3FF);
   static const Color softGreen = Color(0xFFEAF7F4);

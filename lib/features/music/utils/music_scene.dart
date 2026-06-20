@@ -163,11 +163,22 @@ class MusicArtworkMapper {
 
   static String coverForTrack(MusicTrack? track) {
     if (track == null) return MusicAssets.coverDefault;
-    final stored = track.coverAsset;
+    final stored = normalizeAssetPath(track.coverAsset);
     if (stored != null && stored.isNotEmpty && !isGeneratedCover(stored)) {
       return stored;
     }
     return forTrack(track).cover;
+  }
+
+  static String? normalizeAssetPath(String? asset) {
+    if (asset == null || asset.isEmpty) return asset;
+    if (asset.endsWith('.png')) {
+      return '${asset.substring(0, asset.length - 4)}.webp';
+    }
+    if (asset == 'assets/images/music/deco_star.webp') {
+      return MusicAssets.decoSparkle;
+    }
+    return asset;
   }
 
   static bool isGeneratedCover(String? asset) {
@@ -181,7 +192,8 @@ class MusicArtworkMapper {
         asset == MusicAssets.coverRelax ||
         asset == MusicAssets.coverFitness ||
         asset == MusicAssets.coverMorning ||
-        (asset.contains('/music_cover_') && asset.endsWith('.webp'));
+        (asset.contains('/music_cover_') &&
+            (asset.endsWith('.webp') || asset.endsWith('.png')));
   }
 
   static MusicSceneArtwork forScene(MusicScene scene) {

@@ -51,26 +51,26 @@ class WeatherAssets {
   static const lightMoonGlow = '$_lights/light_moon_glow.webp';
 
   // ── Particles ──
-  static const particleSparkle1 = '$_particles/particle_sparkle_1.png';
-  static const particleSparkle2 = '$_particles/particle_sparkle_2.png';
-  static const particleCloud1 = '$_particles/particle_cloud_1.png';
-  static const particleCloud2 = '$_particles/particle_cloud_2.png';
-  static const particleRaindrop1 = '$_particles/particle_raindrop_1.png';
-  static const particleRaindrop2 = '$_particles/particle_raindrop_2.png';
-  static const particleRaindrop3 = '$_particles/particle_raindrop_3.png';
-  static const particleRainHeavy1 = '$_particles/particle_rain_heavy_1.png';
-  static const particleRainHeavy2 = '$_particles/particle_rain_heavy_2.png';
-  static const particleSnowflake1 = '$_particles/particle_snowflake_1.png';
-  static const particleSnowflake2 = '$_particles/particle_snowflake_2.png';
-  static const particleSnowflake3 = '$_particles/particle_snowflake_3.png';
-  static const particleWindLine1 = '$_particles/particle_wind_line_1.png';
-  static const particleWindLine2 = '$_particles/particle_wind_line_2.png';
-  static const particleLeaf = '$_particles/particle_leaf.png';
-  static const particleHeat1 = '$_particles/particle_heat_1.png';
-  static const particleHeat2 = '$_particles/particle_heat_2.png';
-  static const particleStar1 = '$_particles/particle_star_1.png';
-  static const particleStar2 = '$_particles/particle_star_2.png';
-  static const particleMoonDust = '$_particles/particle_moon_dust.png';
+  static const particleSparkle1 = '$_particles/particle_sparkle_1.webp';
+  static const particleSparkle2 = '$_particles/particle_sparkle_2.webp';
+  static const particleCloud1 = '$_particles/particle_cloud_1.webp';
+  static const particleCloud2 = '$_particles/particle_cloud_2.webp';
+  static const particleRaindrop1 = '$_particles/particle_raindrop_1.webp';
+  static const particleRaindrop2 = '$_particles/particle_raindrop_2.webp';
+  static const particleRaindrop3 = '$_particles/particle_raindrop_3.webp';
+  static const particleRainHeavy1 = '$_particles/particle_rain_heavy_1.webp';
+  static const particleRainHeavy2 = '$_particles/particle_rain_heavy_2.webp';
+  static const particleSnowflake1 = '$_particles/particle_snowflake_1.webp';
+  static const particleSnowflake2 = '$_particles/particle_snowflake_2.webp';
+  static const particleSnowflake3 = '$_particles/particle_snowflake_3.webp';
+  static const particleWindLine1 = '$_particles/particle_wind_line_1.webp';
+  static const particleWindLine2 = '$_particles/particle_wind_line_2.webp';
+  static const particleLeaf = '$_particles/particle_leaf.webp';
+  static const particleHeat1 = '$_particles/particle_heat_1.webp';
+  static const particleHeat2 = '$_particles/particle_heat_2.webp';
+  static const particleStar1 = '$_particles/particle_star_1.webp';
+  static const particleStar2 = '$_particles/particle_star_2.webp';
+  static const particleMoonDust = '$_particles/particle_moon_dust.webp';
 
   // ── Common Overlays ──
   static const highlightOverlay =

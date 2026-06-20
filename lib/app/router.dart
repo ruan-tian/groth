@@ -38,18 +38,7 @@ import '../features/settings/pages/weather_settings_page.dart';
 import '../features/ai/pages/ai_analysis_page.dart';
 import '../features/settings/pages/ai_config_page.dart';
 import '../features/study/pages/add_study_record_page.dart';
-import '../features/study/pages/add_knowledge_card_page.dart';
-import '../features/study/pages/bulk_import_knowledge_cards_page.dart';
-import '../features/study/pages/knowledge_archive_page.dart';
-import '../features/study/pages/knowledge_cards_page.dart';
-import '../features/study/pages/knowledge_custom_templates_page.dart';
-import '../features/study/pages/knowledge_export_page.dart';
-import '../features/study/pages/knowledge_goal_detail_page.dart';
-import '../features/study/pages/knowledge_review_page.dart';
-import '../features/study/pages/knowledge_onboarding_page.dart';
-import '../features/study/pages/flash_review_page.dart';
-import '../features/study/pages/knowledge_source_detail_page.dart';
-import '../features/study/pages/knowledge_sources_page.dart';
+import '../features/study/pages/knowledge_workspace_page.dart';
 import '../features/study/pages/study_record_detail_page.dart';
 import '../features/study/pages/subject_distribution_page.dart';
 import '../features/study/pages/recent_records_page.dart';
@@ -57,7 +46,7 @@ import '../features/health/pages/all_diet_records_page.dart';
 import '../features/health/pages/sleep_history_page.dart';
 import '../shared/widgets/common/advanced_bottom_nav.dart';
 
-// ─── Route paths ────────────────────────────────────────────────────────────
+// Route paths
 
 class RoutePaths {
   RoutePaths._();
@@ -67,7 +56,7 @@ class RoutePaths {
   static const String focus = '/focus';
 }
 
-// ─── Shell route names (used with context.goNamed) ──────────────────────────
+// Shell route names
 
 class RouteNames {
   RouteNames._();
@@ -77,12 +66,8 @@ class RouteNames {
   static const String focus = 'focus';
 }
 
-// ─── Page transition helpers ─────────────────────────────────────────────────
+// Page transition helpers
 
-/// 滑入滑出页面过渡动画
-///
-/// [useSecondaryShift] 为 true 时，前一页会向左让 15%（适合 root 级页面）。
-/// Shell branch 内部子路由必须传 false，避免 secondaryAnimation 残留偏移。
 CustomTransitionPage<void> buildSlideTransition(
   BuildContext context,
   GoRouterState state,
@@ -131,7 +116,6 @@ CustomTransitionPage<void> buildSlideTransition(
   );
 }
 
-/// Shell branch 内部子路由专用过渡动画（禁用 secondaryAnimation 左移）
 CustomTransitionPage<void> buildShellSlideTransition(
   BuildContext context,
   GoRouterState state,
@@ -140,7 +124,7 @@ CustomTransitionPage<void> buildShellSlideTransition(
   return buildSlideTransition(context, state, child, useSecondaryShift: false);
 }
 
-// ─── Shell wrapper with AdvancedBottomNav ───────────────────────────────────
+// Shell wrapper with AdvancedBottomNav
 
 class MainShell extends StatelessWidget {
   const MainShell({super.key, required this.navigationShell});
@@ -168,7 +152,7 @@ class MainShell extends StatelessWidget {
   }
 }
 
-// ─── GoRouter configuration ─────────────────────────────────────────────────
+// GoRouter configuration
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -181,7 +165,7 @@ final goRouter = GoRouter(
         return MainShell(navigationShell: navigationShell);
       },
       branches: [
-        // ── 首页 ──
+        // Dashboard
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -189,7 +173,7 @@ final goRouter = GoRouter(
               name: RouteNames.dashboard,
               builder: (_, _) => const DashboardPage(),
               routes: [
-                // 音乐相关
+                // Music
                 GoRoute(
                   path: 'music/playlist',
                   pageBuilder: (context, state) => buildSlideTransition(
@@ -211,7 +195,7 @@ final goRouter = GoRouter(
           ],
         ),
 
-        // ── 计划（学习/健身/日记/饮食/睡眠）──
+        // Plan modules
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -219,7 +203,7 @@ final goRouter = GoRouter(
               name: RouteNames.plan,
               builder: (_, _) => const PlanPage(),
               routes: [
-                // 学习相关
+                // Study
                 GoRoute(
                   path: 'study/add',
                   pageBuilder: (context, state) => buildShellSlideTransition(
@@ -257,151 +241,146 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'study/knowledge',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    const KnowledgeCardsPage(),
+                    const KnowledgeSpaceSelectPage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/add',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    AddKnowledgeCardPage(
-                      initialGoalKey: state.uri.queryParameters['goalKey'],
-                      initialGoalName: state.uri.queryParameters['goalName'],
-                      initialModuleKey: state.uri.queryParameters['moduleKey'],
-                      initialModuleName:
-                          state.uri.queryParameters['moduleName'],
-                      initialDeckKey: state.uri.queryParameters['deckKey'],
-                      editCardId: int.tryParse(
-                        state.uri.queryParameters['editCardId'] ?? '',
-                      ),
-                      initialCustomTemplateId: int.tryParse(
-                        state.uri.queryParameters['customTemplateId'] ?? '',
-                      ),
-                      initialCustomModuleId: int.tryParse(
-                        state.uri.queryParameters['customModuleId'] ?? '',
-                      ),
-                      sourceStudyId: int.tryParse(
-                        state.uri.queryParameters['sourceStudyId'] ?? '',
-                      ),
-                    ),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/import',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    BulkImportKnowledgeCardsPage(
-                      initialGoalKey: state.uri.queryParameters['goalKey'],
-                      initialGoalName: state.uri.queryParameters['goalName'],
-                      initialModuleKey: state.uri.queryParameters['moduleKey'],
-                      initialModuleName:
-                          state.uri.queryParameters['moduleName'],
-                      initialDeckKey: state.uri.queryParameters['deckKey'],
-                      initialSubject: state.uri.queryParameters['subject'],
-                    ),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/sources',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    const KnowledgeSourcesPage(),
+                    const KnowledgeWorkspacePage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/spaces',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeSpaceSelectPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/space',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/sources/:id',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    KnowledgeSourceDetailPage(
-                      sourceId: int.parse(state.pathParameters['id']!),
-                    ),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/archive',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    const KnowledgeArchivePage(),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/export',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    const KnowledgeExportPage(),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/templates',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    const KnowledgeCustomTemplatesPage(),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/goal',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    KnowledgeGoalDetailPage(
-                      goalKey: state.uri.queryParameters['goalKey'] ?? 'custom',
-                      goalName: state.uri.queryParameters['goalName'],
-                    ),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/edit/:id',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    AddKnowledgeCardPage(
-                      editCardId: int.parse(state.pathParameters['id']!),
-                    ),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/review',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    KnowledgeReviewPage(
-                      deckKey: state.uri.queryParameters['deckKey'],
-                      goalKey: state.uri.queryParameters['goalKey'],
-                      goalName: state.uri.queryParameters['goalName'],
-                      moduleKey: state.uri.queryParameters['moduleKey'],
-                      moduleName: state.uri.queryParameters['moduleName'],
-                      includeAll: state.uri.queryParameters['all'] == '1',
-                      weakOnly: state.uri.queryParameters['weak'] == '1',
+                    KnowledgeFlashReviewPage(
+                      spaceId:
+                          int.tryParse(
+                            state.uri.queryParameters['spaceId'] ?? '',
+                          ) ??
+                          1,
                     ),
                   ),
                 ),
                 GoRoute(
                   path: 'study/knowledge/onboarding',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    const KnowledgeOnboardingPage(),
+                    const KnowledgeWorkspacePage(),
                   ),
                 ),
                 GoRoute(
                   path: 'study/flash-review',
+                  parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
                     state,
-                    const FlashReviewPage(),
+                    const KnowledgeSpaceSelectPage(),
                   ),
                 ),
-                // 健身相关
+                // Fitness
                 GoRoute(
                   path: 'fitness/add',
                   pageBuilder: (context, state) {
@@ -471,7 +450,7 @@ final goRouter = GoRouter(
                     const AllFitnessRecordsPage(),
                   ),
                 ),
-                // 日记相关
+                // Journal
                 GoRoute(
                   path: 'journal/write',
                   pageBuilder: (context, state) => buildShellSlideTransition(
@@ -510,7 +489,7 @@ final goRouter = GoRouter(
                     );
                   },
                 ),
-                // 饮食相关
+                // Diet
                 GoRoute(
                   path: 'diet/add',
                   pageBuilder: (context, state) => buildShellSlideTransition(
@@ -544,7 +523,7 @@ final goRouter = GoRouter(
                     const AllDietRecordsPage(),
                   ),
                 ),
-                // 睡眠相关
+                // Sleep
                 GoRoute(
                   path: 'sleep/add',
                   pageBuilder: (context, state) => buildShellSlideTransition(
@@ -570,7 +549,7 @@ final goRouter = GoRouter(
                     const SleepHistoryPage(),
                   ),
                 ),
-                // AI 分析
+                // AI analysis
                 GoRoute(
                   path: 'ai-analysis',
                   pageBuilder: (context, state) => buildShellSlideTransition(
@@ -584,7 +563,7 @@ final goRouter = GoRouter(
           ],
         ),
 
-        // ── 我的 ──
+        // Settings
         StatefulShellBranch(
           routes: [
             GoRoute(
@@ -654,7 +633,7 @@ final goRouter = GoRouter(
         ),
       ],
     ),
-    // ── Focus routes (full-screen, outside shell) ──────────────────────────
+    // Focus routes
     GoRoute(
       path: RoutePaths.focus,
       name: RouteNames.focus,
@@ -681,13 +660,13 @@ final goRouter = GoRouter(
         ),
       ],
     ),
-    // ── Task history (full-screen, outside shell) ──────────────────────────
+    // Task history
     GoRoute(
       path: '/task-history',
       pageBuilder: (context, state) =>
           buildSlideTransition(context, state, const TaskHistoryPage()),
     ),
-    // ── Pet center (full-screen, outside shell) ────────────────────────────
+    // Pet center
     GoRoute(
       path: '/pet-center',
       pageBuilder: (context, state) =>

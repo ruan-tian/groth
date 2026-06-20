@@ -1,0 +1,95 @@
+{
+  "summary": {
+    "image_count": 742,
+    "total_mb": 79.7,
+    "by_ext": {
+      ".webp": {
+        "count": 742,
+        "mb": 79.7
+      }
+    },
+    "non_webp_count": 0,
+    "png_count": 0,
+    "exact_duplicate_groups": 0,
+    "missing_literal_asset_refs": 0,
+    "pubspec_parent_child_entries": 18
+  },
+  "non_webp_files": [],
+  "exact_duplicates": [],
+  "missing_literal_asset_refs": [],
+  "pubspec_parent_child_entries": [
+    [
+      "assets/pet",
+      "assets/pet/study"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/fitness"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/journal"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/diet"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/sleep"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/common"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/ai"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/empty"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/events"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/emotions"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/life"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/social"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/travel"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/concerts"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/experience"
+    ],
+    [
+      "assets/pet",
+      "assets/pet/sports"
+    ],
+    [
+      "assets/data",
+      "assets/data/inspiration"
+    ],
+    [
+      "assets/images/knowledge_cards",
+      "assets/images/knowledge_cards/v3"
+    ]
+  ],
+  "note": "pubspec parent-child entries are retained because Flutter asset directory declarations are not recursive."
+}

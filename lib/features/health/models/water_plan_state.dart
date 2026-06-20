@@ -1,3 +1,5 @@
+import 'health_reminder_schedule_status.dart';
+
 class WaterDrinkRecord {
   const WaterDrinkRecord({required this.amountMl, required this.recordedAt});
 
@@ -33,6 +35,7 @@ class WaterPlanState {
     this.defaultAmountMl = 300,
     this.intervalMinutes = 60,
     this.reminderEnabled = true,
+    this.reminderScheduleStatus = const HealthReminderScheduleStatus.unknown(),
     this.startHour = 8,
     this.endHour = 22,
     this.records = const [],
@@ -46,6 +49,7 @@ class WaterPlanState {
   final int defaultAmountMl;
   final int intervalMinutes;
   final bool reminderEnabled;
+  final HealthReminderScheduleStatus reminderScheduleStatus;
   final int startHour;
   final int endHour;
   final List<WaterDrinkRecord> records;
@@ -71,6 +75,7 @@ class WaterPlanState {
     int? defaultAmountMl,
     int? intervalMinutes,
     bool? reminderEnabled,
+    HealthReminderScheduleStatus? reminderScheduleStatus,
     int? startHour,
     int? endHour,
     List<WaterDrinkRecord>? records,
@@ -84,6 +89,8 @@ class WaterPlanState {
       defaultAmountMl: defaultAmountMl ?? this.defaultAmountMl,
       intervalMinutes: intervalMinutes ?? this.intervalMinutes,
       reminderEnabled: reminderEnabled ?? this.reminderEnabled,
+      reminderScheduleStatus:
+          reminderScheduleStatus ?? this.reminderScheduleStatus,
       startHour: startHour ?? this.startHour,
       endHour: endHour ?? this.endHour,
       records: records ?? this.records,

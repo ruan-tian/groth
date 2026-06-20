@@ -8,6 +8,7 @@ import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/sleep_provider.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
+import '../models/health_reminder_schedule_status.dart';
 import '../models/sleep_plan_state.dart';
 
 final sleepPlanProvider =
@@ -35,6 +36,15 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
     final wake = await settings.getSetting(_wakeTimeKey);
     final lead = int.tryParse(await settings.getSetting(_leadMinutesKey) ?? '');
     final enabled = await settings.getSetting(_enabledKey);
+    final scheduleStatus = await settings.getSetting(
+      'sleep_reminder_schedule_status',
+    );
+    final pendingCount = int.tryParse(
+      await settings.getSetting('sleep_reminder_pending_count') ?? '',
+    );
+    final usesExactAlarm = await settings.getSetting(
+      'sleep_reminder_uses_exact_alarm',
+    );
     final readyAt = _activeTimestamp(
       await settings.getSetting(_readyAtKey),
       DateTime.now(),
@@ -59,6 +69,13 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
       wakeTime: _sanitizeTime(wake, state.wakeTime),
       leadMinutes: _sanitizeLeadMinutes(lead ?? state.leadMinutes),
       reminderEnabled: enabled == null ? true : enabled == 'true',
+      reminderScheduleStatus: HealthReminderScheduleStatus.fromStorage(
+        scheduleStatus,
+        pendingCount: pendingCount ?? 0,
+        usesExactAlarm: usesExactAlarm == null
+            ? true
+            : usesExactAlarm == 'true',
+      ),
       readyAt: readyAt,
       clearReadyAt: readyAt == null,
       wokeAt: cleanWokeAt,
@@ -90,10 +107,19 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
   }
 
   Future<void> setReminderEnabled(bool enabled) async {
-    state = state.copyWith(reminderEnabled: enabled);
+    state = state.copyWith(
+      reminderEnabled: enabled,
+      reminderScheduleStatus: enabled
+          ? state.reminderScheduleStatus
+          : const HealthReminderScheduleStatus.off(),
+    );
     await _ref
         .read(settingRepositoryProvider)
         .setSetting(_enabledKey, enabled ? 'true' : 'false');
+  }
+
+  void setReminderScheduleStatus(HealthReminderScheduleStatus status) {
+    state = state.copyWith(reminderScheduleStatus: status);
   }
 
   Future<void> checkInReady({DateTime? checkedAt}) async {

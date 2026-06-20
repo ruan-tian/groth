@@ -4,7 +4,7 @@ import '../../../core/database/app_database.dart';
 
 /// 学习记录列表项
 ///
-/// 展示单条学习记录的标题、时长、科目、模式和创建时间。
+/// 展示单条学习记录的标题、时长、科目、模式和学习时间。
 /// 支持点击回调和滑动删除。
 class StudyRecordTile extends StatelessWidget {
   /// 学习记录数据
@@ -88,7 +88,7 @@ class StudyRecordTile extends StatelessWidget {
       parts.add(record.subject!);
     }
 
-    final dateTime = DateTime.fromMillisecondsSinceEpoch(record.createdAt);
+    final dateTime = DateTime.fromMillisecondsSinceEpoch(record.startTime);
     final dateStr =
         '${dateTime.month.toString().padLeft(2, '0')}-'
         '${dateTime.day.toString().padLeft(2, '0')} '

@@ -283,6 +283,30 @@ class KnowledgeCardRepository {
     });
   }
 
+  Future<void> renameCustomGoal({
+    required String oldGoalName,
+    required String newGoalName,
+  }) {
+    final oldName = oldGoalName.trim();
+    final newName = newGoalName.trim();
+    if (oldName.isEmpty || newName.isEmpty || oldName == newName) {
+      return Future.value();
+    }
+    final now = DateTime.now().millisecondsSinceEpoch;
+    return (_db.update(_db.knowledgeCards)..where(
+          (t) =>
+              t.archived.equals(false) &
+              t.goalKey.equals('custom') &
+              t.goalName.equals(oldName),
+        ))
+        .write(
+          KnowledgeCardsCompanion(
+            goalName: Value(newName),
+            updatedAt: Value(now),
+          ),
+        );
+  }
+
   Future<void> restoreCard(int id) {
     final now = DateTime.now().millisecondsSinceEpoch;
     return (_db.update(

@@ -18,7 +18,48 @@ final reminderNotificationServiceProvider =
       return service;
     });
 
-class ReminderNotificationService {
+abstract class ReminderNotificationGateway {
+  Future<bool> requestPermissions({bool requestExactAlarm = false});
+
+  Future<bool> areNotificationsEnabled();
+
+  Future<bool> canScheduleExactAlarms();
+
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests();
+
+  Future<int> pendingCountWhere(bool Function(int id) test);
+
+  Future<bool> hasPendingNotification(int id);
+
+  Future<bool> scheduleReminder({
+    required int id,
+    required DateTime scheduledAt,
+    required String title,
+    required String body,
+    String? payload,
+    bool requestPermissionsIfNeeded = true,
+    DateTimeComponents? matchDateTimeComponents,
+  });
+
+  Future<bool> showImmediate({
+    required int id,
+    required String title,
+    required String body,
+    String? payload,
+  });
+
+  Future<bool> showTestNotification();
+
+  Future<bool> scheduleTestReminder({
+    Duration delay = const Duration(minutes: 1),
+  });
+
+  Future<void> cancel(int id);
+
+  Future<void> cancelAll();
+}
+
+class ReminderNotificationService implements ReminderNotificationGateway {
   ReminderNotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
@@ -140,6 +181,7 @@ class ReminderNotificationService {
   ///
   /// Exact alarm permission is best-effort. Scheduled reminders fall back to
   /// inexact alarms when Android does not grant exact alarm access.
+  @override
   Future<bool> requestPermissions({bool requestExactAlarm = false}) async {
     final ready = await initialize();
     if (!ready) return false;
@@ -205,6 +247,7 @@ class ReminderNotificationService {
     return granted;
   }
 
+  @override
   Future<bool> areNotificationsEnabled() async {
     final ready = await initialize();
     if (!ready) return false;
@@ -220,6 +263,13 @@ class ReminderNotificationService {
       debugPrint('[NotificationService] Notification status check failed: $e');
     }
     return true;
+  }
+
+  @override
+  Future<bool> canScheduleExactAlarms() async {
+    final ready = await initialize();
+    if (!ready) return false;
+    return _canScheduleExactNotifications();
   }
 
   Future<bool> _canScheduleExactNotifications() async {
@@ -248,19 +298,22 @@ class ReminderNotificationService {
   ///
   /// Uses exact scheduling when allowed. On Android 12+/14+ devices without
   /// exact alarm access, falls back to an inexact allow-while-idle alarm.
+  @override
   Future<bool> scheduleReminder({
     required int id,
     required DateTime scheduledAt,
     required String title,
     required String body,
     String? payload,
+    bool requestPermissionsIfNeeded = true,
+    DateTimeComponents? matchDateTimeComponents,
   }) async {
     final ready = await initialize();
     if (!ready) return false;
     try {
-      final notificationsGranted = await requestPermissions(
-        requestExactAlarm: true,
-      );
+      final notificationsGranted = requestPermissionsIfNeeded
+          ? await requestPermissions(requestExactAlarm: true)
+          : await areNotificationsEnabled();
       if (!notificationsGranted) {
         debugPrint(
           '[NotificationService] Schedule skipped; notifications denied',
@@ -295,6 +348,7 @@ class ReminderNotificationService {
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         androidScheduleMode: androidScheduleMode,
+        matchDateTimeComponents: matchDateTimeComponents,
         payload: payload,
       );
       debugPrint('[NotificationService] Scheduled #$id successfully');
@@ -306,6 +360,7 @@ class ReminderNotificationService {
   }
 
   /// Show an immediate notification (e.g., focus/fitness completion).
+  @override
   Future<bool> showImmediate({
     required int id,
     required String title,
@@ -352,7 +407,56 @@ class ReminderNotificationService {
     }
   }
 
+  @override
+  Future<List<PendingNotificationRequest>> pendingNotificationRequests() async {
+    final ready = await initialize();
+    if (!ready) return const [];
+    try {
+      return _plugin.pendingNotificationRequests();
+    } catch (e) {
+      debugPrint('[NotificationService] Pending notification check failed: $e');
+      return const [];
+    }
+  }
+
+  @override
+  Future<int> pendingCountWhere(bool Function(int id) test) async {
+    final pending = await pendingNotificationRequests();
+    return pending.where((request) => test(request.id)).length;
+  }
+
+  @override
+  Future<bool> hasPendingNotification(int id) async {
+    final pending = await pendingNotificationRequests();
+    return pending.any((request) => request.id == id);
+  }
+
+  @override
+  Future<bool> showTestNotification() {
+    return showImmediate(
+      id: 529998,
+      title: 'Reminder test',
+      body: 'Immediate notification is working.',
+      payload: 'health_reminder_test_now',
+    );
+  }
+
+  @override
+  Future<bool> scheduleTestReminder({
+    Duration delay = const Duration(minutes: 1),
+  }) {
+    return scheduleReminder(
+      id: 529999,
+      scheduledAt: DateTime.now().add(delay),
+      title: 'Reminder test',
+      body: 'Scheduled reminder is working.',
+      payload: 'health_reminder_test_later',
+      requestPermissionsIfNeeded: true,
+    );
+  }
+
   /// Cancel a scheduled notification by ID.
+  @override
   Future<void> cancel(int id) async {
     try {
       await _plugin.cancel(id);
@@ -363,6 +467,7 @@ class ReminderNotificationService {
   }
 
   /// Cancel all scheduled notifications.
+  @override
   Future<void> cancelAll() async {
     try {
       await _plugin.cancelAll();
