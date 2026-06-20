@@ -113,6 +113,18 @@ class BackupService {
       throw BackupRestoreException(message: '备份来自更高版本的应用，无法恢复。请先更新应用。');
     }
 
+    // 校验备份完整性
+    final storedChecksum = decoded['checksum'] as String?;
+    if (storedChecksum != null && storedChecksum.isNotEmpty) {
+      final dataJson = jsonEncode(decoded['data']);
+      final computedChecksum = _calculateChecksum(dataJson);
+      if (storedChecksum != computedChecksum) {
+        throw const BackupRestoreException(
+          message: '备份文件校验失败，数据可能已损坏。',
+        );
+      }
+    }
+
     final data = decoded['data'];
     if (data is! Map<String, dynamic>) {
       throw const BackupRestoreException(message: 'Backup data is missing');

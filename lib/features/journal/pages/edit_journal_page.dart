@@ -218,7 +218,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       if (decoded is List) {
         return decoded.map((item) => item.toString()).toList();
       }
-    } catch (_) {}
+    } catch (e) { debugPrint('parseTags failed: $e'); }
     return raw
         .split(',')
         .map((tag) => tag.trim())

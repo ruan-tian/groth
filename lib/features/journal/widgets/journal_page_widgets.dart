@@ -951,7 +951,7 @@ class _JournalListItem extends StatelessWidget {
     try {
       final decoded = jsonDecode(tagsString);
       if (decoded is List) return decoded.cast<String>();
-    } catch (_) {}
+    } catch (e) { debugPrint('parseTags failed: $e'); }
     return tagsString.split(',').where((t) => t.trim().isNotEmpty).toList();
   }
 

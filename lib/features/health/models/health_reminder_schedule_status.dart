@@ -2,6 +2,7 @@ enum HealthReminderScheduleCode {
   off,
   scheduled,
   permissionDenied,
+  @Deprecated('从未被赋值，UI 分支不可达，待移除')
   exactAlarmDenied,
   scheduleFailed,
   noPendingNotifications,

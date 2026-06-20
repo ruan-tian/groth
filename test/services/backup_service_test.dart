@@ -92,6 +92,7 @@ void main() {
       final data = payload['data'] as Map<String, dynamic>;
       final fitnessRows = data['fitnessRecords'] as List<dynamic>;
       (fitnessRows.first as Map<String, dynamic>)['durationMinutes'] = 'bad';
+      payload.remove('checksum'); // data was mutated, clear stale checksum
 
       final service = BackupService(targetDb);
       await expectLater(
@@ -267,6 +268,7 @@ void main() {
             as Map<String, dynamic>;
     final data = payload['data'] as Map<String, dynamic>;
     data.remove('fitnessRecords');
+    payload.remove('checksum'); // data was mutated, clear stale checksum
 
     await expectLater(
       BackupService(targetDb).importFromJson(jsonEncode(payload)),
@@ -294,6 +296,7 @@ void main() {
       data.remove('knowledgeSources');
       data.remove('knowledgeChunks');
       data.remove('knowledgeCardSourceLinks');
+      payload.remove('checksum'); // data was mutated, clear stale checksum
 
       await BackupService(targetDb).importFromJson(jsonEncode(payload));
 
@@ -432,6 +435,7 @@ void main() {
           'updatedAt': now,
         },
       ];
+      payload.remove('checksum'); // data was mutated, clear stale checksum
 
       await BackupService(targetDb).importFromJson(jsonEncode(payload));
 

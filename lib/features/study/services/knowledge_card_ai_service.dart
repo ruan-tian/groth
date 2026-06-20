@@ -681,23 +681,27 @@ class KnowledgeCardAiParser {
   KnowledgeCardAiParser._();
 
   static List<KnowledgeCardAiDraft> parse(String raw) {
-    final decoded = jsonDecode(_extractJson(raw));
-    final cardsJson = decoded is Map<String, dynamic>
-        ? decoded['cards']
-        : decoded is List<dynamic>
-        ? decoded
-        : null;
-    if (cardsJson is! List<dynamic>) {
-      throw const FormatException('AI 返回缺少 cards 数组');
-    }
+    try {
+      final decoded = jsonDecode(_extractJson(raw));
+      final cardsJson = decoded is Map<String, dynamic>
+          ? decoded['cards']
+          : decoded is List<dynamic>
+          ? decoded
+          : null;
+      if (cardsJson is! List<dynamic>) {
+        throw const FormatException('AI 返回缺少 cards 数组');
+      }
 
-    return cardsJson
-        .whereType<Map<String, dynamic>>()
-        .map(_parseCard)
-        .where((draft) => draft != null)
-        .cast<KnowledgeCardAiDraft>()
-        .take(25)
-        .toList(growable: false);
+      return cardsJson
+          .whereType<Map<String, dynamic>>()
+          .map(_parseCard)
+          .where((draft) => draft != null)
+          .cast<KnowledgeCardAiDraft>()
+          .take(25)
+          .toList(growable: false);
+    } catch (e) {
+      throw FormatException('AI 返回格式异常: $e');
+    }
   }
 
   /// Extract the reason string from an AI response that returned empty cards.

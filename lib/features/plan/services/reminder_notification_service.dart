@@ -13,7 +13,9 @@ final reminderNotificationServiceProvider =
     Provider<ReminderNotificationService>((ref) {
       final service = ReminderNotificationService();
       // Auto-initialize when first read
-      service.initialize();
+      service.initialize(onNotificationTap: (payload) {
+        debugPrint('[NotificationService] Tapped: $payload');
+      });
       ref.onDispose(() => service.dispose());
       return service;
     });

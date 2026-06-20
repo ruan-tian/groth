@@ -66,6 +66,7 @@ class PetAINotifier extends StateNotifier<PetAIState> {
       final aiConfigRepo = _ref.read(aiConfigRepositoryProvider);
       final config = await aiConfigRepo.getEnabledAiConfig();
       if (config == null) {
+        if (!mounted) return;
         state = const PetAIState(error: '未配置 AI 服务，请先在设置中配置 AI API。');
         return;
       }
@@ -143,6 +144,7 @@ class PetAINotifier extends StateNotifier<PetAIState> {
       // Invalidate the latest analysis provider so it refreshes
       _ref.invalidate(latestPetAnalysisProvider(_getSourceType(type)));
 
+      if (!mounted) return;
       state = PetAIState(result: result, analysisType: type);
       PetEventBus.instance.emit(
         PetEvent.aiCompleted(
@@ -152,6 +154,7 @@ class PetAINotifier extends StateNotifier<PetAIState> {
         ),
       );
     } catch (e) {
+      if (!mounted) return;
       state = PetAIState(error: '分析失败，请重试', analysisType: type);
       PetEventBus.instance.emit(
         PetEvent(

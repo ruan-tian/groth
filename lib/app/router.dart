@@ -215,7 +215,14 @@ final goRouter = GoRouter(
                 GoRoute(
                   path: 'study/detail/:id',
                   pageBuilder: (context, state) {
-                    final id = int.parse(state.pathParameters['id']!);
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
                     return buildShellSlideTransition(
                       context,
                       state,
@@ -410,7 +417,14 @@ final goRouter = GoRouter(
                 GoRoute(
                   path: 'fitness/detail/:id',
                   pageBuilder: (context, state) {
-                    final id = int.parse(state.pathParameters['id']!);
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
                     return buildShellSlideTransition(
                       context,
                       state,
@@ -470,7 +484,14 @@ final goRouter = GoRouter(
                 GoRoute(
                   path: 'journal/detail/:id',
                   pageBuilder: (context, state) {
-                    final id = int.parse(state.pathParameters['id']!);
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
                     return buildShellSlideTransition(
                       context,
                       state,
@@ -481,7 +502,14 @@ final goRouter = GoRouter(
                 GoRoute(
                   path: 'journal/edit/:id',
                   pageBuilder: (context, state) {
-                    final id = int.parse(state.pathParameters['id']!);
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
                     return buildShellSlideTransition(
                       context,
                       state,
@@ -648,12 +676,12 @@ final goRouter = GoRouter(
               context,
               state,
               FocusSessionPage(
-                durationMinutes: int.parse(params['duration'] ?? '25'),
+                durationMinutes: int.tryParse(params['duration'] ?? '') ?? 25,
                 type: params['type'] ?? 'pomodoro',
                 title: params['title'] ?? '',
                 subject: params['subject'] ?? '',
                 soundType: params['sound'],
-                totalRounds: int.parse(params['rounds'] ?? '4'),
+                totalRounds: int.tryParse(params['rounds'] ?? '') ?? 4,
               ),
             );
           },
