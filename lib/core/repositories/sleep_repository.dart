@@ -30,8 +30,10 @@ class SleepRepository {
 
   /// 根据 ID 删除一条睡眠记录。
   Future<void> deleteSleepRecord(int id) async {
-    await (_db.delete(_db.sleepRecords)..where((t) => t.id.equals(id))).go();
-    await ExpRepository(_db).deleteExpLogsForSource('sleep', id);
+    await _db.transaction(() async {
+      await (_db.delete(_db.sleepRecords)..where((t) => t.id.equals(id))).go();
+      await ExpRepository(_db).deleteExpLogsForSource('sleep', id);
+    });
   }
 
   // ---------------------------------------------------------------------------

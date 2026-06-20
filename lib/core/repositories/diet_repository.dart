@@ -27,8 +27,10 @@ class DietRepository {
 
   /// 根据 ID 删除一条饮食记录。
   Future<void> deleteDietRecord(int id) async {
-    await (_db.delete(_db.dietRecords)..where((t) => t.id.equals(id))).go();
-    await ExpRepository(_db).deleteExpLogsForSource('diet', id);
+    await _db.transaction(() async {
+      await (_db.delete(_db.dietRecords)..where((t) => t.id.equals(id))).go();
+      await ExpRepository(_db).deleteExpLogsForSource('diet', id);
+    });
   }
 
   // ---------------------------------------------------------------------------

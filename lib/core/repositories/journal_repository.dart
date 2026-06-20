@@ -28,11 +28,11 @@ class JournalRepository {
 
   /// 根据 ID 删除一篇日记（级联删除附件）。
   Future<void> deleteJournal(int id) async {
-    // 先删除附件
-    await deleteJournalAssets(id);
-    // 再删除日记
-    await (_db.delete(_db.dailyJournals)..where((t) => t.id.equals(id))).go();
-    await ExpRepository(_db).deleteExpLogsForSource('journal', id);
+    await _db.transaction(() async {
+      await deleteJournalAssets(id);
+      await (_db.delete(_db.dailyJournals)..where((t) => t.id.equals(id))).go();
+      await ExpRepository(_db).deleteExpLogsForSource('journal', id);
+    });
   }
 
   // ---------------------------------------------------------------------------

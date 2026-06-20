@@ -430,41 +430,43 @@ class KnowledgeV3Repository {
         nextStreak: nextStreak,
       ),
     );
-    await _db.customUpdate(
-      '''
-      UPDATE knowledge_cards_v3
-      SET mastery_level = ?, review_count = ?, correct_streak = ?,
-          last_reviewed_at = ?, due_at = ?, updated_at = ?
-      WHERE id = ?
-      ''',
-      variables: [
-        Variable<int>(nextMastery),
-        Variable<int>(card.reviewCount + 1),
-        Variable<int>(nextStreak),
-        Variable<int>(now.millisecondsSinceEpoch),
-        Variable<int>(nextDueAt.millisecondsSinceEpoch),
-        Variable<int>(now.millisecondsSinceEpoch),
-        Variable<int>(card.id),
-      ],
-    );
-    await _db.customInsert(
-      '''
-      INSERT INTO knowledge_review_logs_v3
-        (card_id, space_id, rating, previous_mastery, next_mastery,
-         duration_ms, reviewed_at, next_due_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ''',
-      variables: [
-        Variable<int>(card.id),
-        Variable<int>(card.spaceId),
-        Variable<int>(bounded),
-        Variable<int>(previousMastery),
-        Variable<int>(nextMastery),
-        Variable<int>(durationMs),
-        Variable<int>(now.millisecondsSinceEpoch),
-        Variable<int>(nextDueAt.millisecondsSinceEpoch),
-      ],
-    );
+    await _db.transaction(() async {
+      await _db.customUpdate(
+        '''
+        UPDATE knowledge_cards_v3
+        SET mastery_level = ?, review_count = ?, correct_streak = ?,
+            last_reviewed_at = ?, due_at = ?, updated_at = ?
+        WHERE id = ?
+        ''',
+        variables: [
+          Variable<int>(nextMastery),
+          Variable<int>(card.reviewCount + 1),
+          Variable<int>(nextStreak),
+          Variable<int>(now.millisecondsSinceEpoch),
+          Variable<int>(nextDueAt.millisecondsSinceEpoch),
+          Variable<int>(now.millisecondsSinceEpoch),
+          Variable<int>(card.id),
+        ],
+      );
+      await _db.customInsert(
+        '''
+        INSERT INTO knowledge_review_logs_v3
+          (card_id, space_id, rating, previous_mastery, next_mastery,
+           duration_ms, reviewed_at, next_due_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        variables: [
+          Variable<int>(card.id),
+          Variable<int>(card.spaceId),
+          Variable<int>(bounded),
+          Variable<int>(previousMastery),
+          Variable<int>(nextMastery),
+          Variable<int>(durationMs),
+          Variable<int>(now.millisecondsSinceEpoch),
+          Variable<int>(nextDueAt.millisecondsSinceEpoch),
+        ],
+      );
+    });
     await _touchSpace(card.spaceId, now.millisecondsSinceEpoch);
   }
 
@@ -720,112 +722,80 @@ class KnowledgeV3Repository {
 
   Future<void> _ensureTables() async {
     if (_tablesEnsured) return;
-    final now = DateTime.now().millisecondsSinceEpoch;
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        type TEXT NOT NULL DEFAULT 'custom',
-        note TEXT NULL,
-        icon_asset_key TEXT NULL,
-        color_seed TEXT NULL,
-        sort_order INTEGER NOT NULL DEFAULT 0,
-        is_archived INTEGER NOT NULL DEFAULT 0,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS knowledge_materials (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        space_id INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        content TEXT NOT NULL,
-        source_type TEXT NOT NULL DEFAULT 'text',
-        source_path TEXT NULL,
-        url TEXT NULL,
-        order_index INTEGER NOT NULL DEFAULT 0,
-        status TEXT NOT NULL DEFAULT 'ready',
-        is_archived INTEGER NOT NULL DEFAULT 0,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS knowledge_cards_v3 (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        space_id INTEGER NOT NULL,
-        material_id INTEGER NULL,
-        question TEXT NOT NULL,
-        answer TEXT NOT NULL,
-        explanation TEXT NULL,
-        card_type TEXT NOT NULL DEFAULT 'recall',
-        importance INTEGER NOT NULL DEFAULT 3,
-        difficulty INTEGER NOT NULL DEFAULT 3,
-        source_title TEXT NULL,
-        source_excerpt TEXT NULL,
-        tags_json TEXT NULL,
-        mastery_level INTEGER NOT NULL DEFAULT 0,
-        review_count INTEGER NOT NULL DEFAULT 0,
-        correct_streak INTEGER NOT NULL DEFAULT 0,
-        due_at INTEGER NOT NULL,
-        order_index INTEGER NOT NULL DEFAULT 0,
-        last_reviewed_at INTEGER NULL,
-        is_archived INTEGER NOT NULL DEFAULT 0,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS knowledge_review_logs_v3 (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        card_id INTEGER NOT NULL,
-        space_id INTEGER NOT NULL,
-        rating INTEGER NOT NULL,
-        previous_mastery INTEGER NOT NULL,
-        next_mastery INTEGER NOT NULL,
-        duration_ms INTEGER NOT NULL DEFAULT 0,
-        reviewed_at INTEGER NOT NULL,
-        next_due_at INTEGER NOT NULL
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS tiantian_qa_sessions (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        space_id INTEGER NOT NULL,
-        title TEXT NOT NULL,
-        referenced_material_ids_json TEXT NULL,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL
-      )
-    ''');
-    await _db.customStatement('''
-      CREATE TABLE IF NOT EXISTS tiantian_qa_messages (
-        id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-        session_id INTEGER NOT NULL,
-        role TEXT NOT NULL,
-        content TEXT NOT NULL,
-        sources_json TEXT NULL,
-        saved_as_card INTEGER NOT NULL DEFAULT 0,
-        created_at INTEGER NOT NULL
-      )
-    ''');
-    await _ensureColumn(
-      table: 'knowledge_cards_v3',
-      column: 'order_index',
-      definition: 'INTEGER NOT NULL DEFAULT 0',
-    );
+    // 检查表是否存在（production 由 migration 创建，test 由此处创建）
+    final table = await _db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type='table' AND name='knowledge_spaces_v3'",
+        )
+        .getSingleOrNull();
+    if (table == null) {
+      // 表不存在（可能是测试环境），按 app_database.dart 的 DDL 创建
+      await _db.customStatement('''
+        CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          name TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'custom',
+          note TEXT NULL, icon_asset_key TEXT NULL, color_seed TEXT NULL,
+          sort_order INTEGER NOT NULL DEFAULT 0, is_archived INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
+      ''');
+      await _db.customStatement('''
+        CREATE TABLE IF NOT EXISTS knowledge_materials (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          space_id INTEGER NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL,
+          source_type TEXT NOT NULL DEFAULT 'text', source_path TEXT NULL, url TEXT NULL,
+          order_index INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'ready',
+          is_archived INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
+      ''');
+      await _db.customStatement('''
+        CREATE TABLE IF NOT EXISTS knowledge_cards_v3 (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          space_id INTEGER NOT NULL, material_id INTEGER NULL,
+          question TEXT NOT NULL, answer TEXT NOT NULL, explanation TEXT NULL,
+          card_type TEXT NOT NULL DEFAULT 'recall', importance INTEGER NOT NULL DEFAULT 3,
+          difficulty INTEGER NOT NULL DEFAULT 3, source_title TEXT NULL, source_excerpt TEXT NULL,
+          tags_json TEXT NULL, mastery_level INTEGER NOT NULL DEFAULT 0,
+          review_count INTEGER NOT NULL DEFAULT 0, correct_streak INTEGER NOT NULL DEFAULT 0,
+          due_at INTEGER NOT NULL, order_index INTEGER NOT NULL DEFAULT 0,
+          last_reviewed_at INTEGER NULL, is_archived INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
+      ''');
+      await _db.customStatement('''
+        CREATE TABLE IF NOT EXISTS knowledge_review_logs_v3 (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          card_id INTEGER NOT NULL, space_id INTEGER NOT NULL, rating INTEGER NOT NULL,
+          previous_mastery INTEGER NOT NULL, next_mastery INTEGER NOT NULL,
+          duration_ms INTEGER NOT NULL DEFAULT 0, reviewed_at INTEGER NOT NULL, next_due_at INTEGER NOT NULL)
+      ''');
+      await _db.customStatement('''
+        CREATE TABLE IF NOT EXISTS tiantian_qa_sessions (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          space_id INTEGER NOT NULL, title TEXT NOT NULL,
+          referenced_material_ids_json TEXT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
+      ''');
+      await _db.customStatement('''
+        CREATE TABLE IF NOT EXISTS tiantian_qa_messages (
+          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+          session_id INTEGER NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL,
+          sources_json TEXT NULL, saved_as_card INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)
+      ''');
+    }
+    // 确保默认空间存在
     final count = await _db
         .customSelect('SELECT COUNT(*) AS count FROM knowledge_spaces_v3')
         .getSingle();
     if (count.read<int>('count') == 0) {
+      final now = DateTime.now().millisecondsSinceEpoch;
       await _db.customInsert(
-        '''
-        INSERT INTO knowledge_spaces_v3
-          (name, type, note, sort_order, is_archived, created_at, updated_at)
-        VALUES ('默认知识空间', 'custom', '从这里开始导入资料，让甜甜帮你生成知识卡。', 0, 0, ?, ?)
-        ''',
-        variables: [Variable<int>(now), Variable<int>(now)],
+        'INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        variables: [
+          Variable.withString('默认知识空间'),
+          Variable.withString('custom'),
+          Variable.withString('从这里开始导入资料，让甜甜帮你生成知识卡。'),
+          Variable.withInt(0),
+          Variable.withInt(0),
+          Variable.withInt(now),
+          Variable.withInt(now),
+        ],
       );
     }
     _tablesEnsured = true;
@@ -858,19 +828,6 @@ class KnowledgeV3Repository {
     return row.read<int>('count');
   }
 
-  Future<void> _ensureColumn({
-    required String table,
-    required String column,
-    required String definition,
-  }) async {
-    final columns = await _db.customSelect('PRAGMA table_info($table)').get();
-    final exists = columns.any((row) => row.read<String>('name') == column);
-    if (!exists) {
-      await _db.customStatement(
-        'ALTER TABLE $table ADD COLUMN $column $definition',
-      );
-    }
-  }
 
   Future<void> _touchSpace(int spaceId, int now) {
     return _db.customUpdate(

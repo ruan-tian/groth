@@ -34,8 +34,10 @@ class StudyRepository {
 
   /// 根据 ID 删除一条学习记录。
   Future<void> deleteStudyRecord(int id) async {
-    await (_db.delete(_db.studyRecords)..where((t) => t.id.equals(id))).go();
-    await ExpRepository(_db).deleteExpLogsForSource('study', id);
+    await _db.transaction(() async {
+      await (_db.delete(_db.studyRecords)..where((t) => t.id.equals(id))).go();
+      await ExpRepository(_db).deleteExpLogsForSource('study', id);
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -108,36 +110,6 @@ class StudyRepository {
   // ---------------------------------------------------------------------------
   // 内部工具
   // ---------------------------------------------------------------------------
-
-  /// 获取最近30天的科目分布（SQL 聚合，不加载全表）
-  Future<Map<String, int>> getSubjectDistribution() async {
-    final now = DateTime.now();
-    final thirtyDaysAgo = now.subtract(const Duration(days: 30));
-    final startMs = _startOfDay(thirtyDaysAgo).millisecondsSinceEpoch;
-    final endMs = _endOfDay(now).millisecondsSinceEpoch;
-
-    final subjectCol = _db.studyRecords.subject;
-    final durationCol = _db.studyRecords.durationMinutes;
-
-    final query = _db.selectOnly(_db.studyRecords)
-      ..addColumns([subjectCol, durationCol.sum()])
-      ..where(
-        _db.studyRecords.startTime.isBiggerOrEqualValue(startMs) &
-            _db.studyRecords.startTime.isSmallerThanValue(endMs),
-      )
-      ..groupBy([subjectCol]);
-
-    final rows = await query.get();
-    final dist = <String, int>{};
-    for (final row in rows) {
-      final subject = row.read(subjectCol) ?? '未分类';
-      final total = row.read(durationCol.sum()) ?? 0;
-      if (total > 0) {
-        dist[subject] = total;
-      }
-    }
-    return dist;
-  }
 
   /// 返回当天 [startMs, endMs) 的毫秒时间戳范围。
   _DayRange _dayRange(DateTime date) {

@@ -181,8 +181,8 @@ class AppDatabase extends _$AppDatabase {
         if (from < 28) {
           await _createKnowledgeV3Tables();
           await _seedKnowledgeV3FromLegacy();
+          await _ensureKnowledgeV3Schema();
         }
-        await _ensureKnowledgeV3Schema();
       },
     );
   }
@@ -347,23 +347,7 @@ class AppDatabase extends _$AppDatabase {
       column: 'order_index',
       definition: 'INTEGER NOT NULL DEFAULT 0',
     );
-
-    // V3 table indexes
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_materials_space ON knowledge_materials(space_id, is_archived)',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_cards_space ON knowledge_cards_v3(space_id, is_archived)',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_cards_due ON knowledge_cards_v3(due_at, is_archived)',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_review_logs_card ON knowledge_review_logs_v3(card_id, reviewed_at)',
-    );
-    await customStatement(
-      'CREATE INDEX IF NOT EXISTS idx_qa_messages_session ON tiantian_qa_messages(session_id, created_at)',
-    );
+    // V3 索引由 _createPerformanceIndexes() 统一创建，此处不重复
   }
 
   Future<void> _ensureColumnExists({
