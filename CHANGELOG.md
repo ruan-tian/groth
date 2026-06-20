@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-06-20 收尾修复（第三批）
+
+### 功能 Bug 修复
+- **知识删除刷新补全**: 删除卡片/资料后现在正确刷新复习队列和搜索结果（`knowledge_v3_provider.dart`），卡片详情删除按钮加 try-catch 错误处理。
+- **睡眠提醒恢复**: 页面打开时自动校验系统通知状态并重新同步（`sleep_reminder_timer_page.dart` initState），首次安装不再默认开启睡眠提醒。
+- **饮水提醒达标停止**: 饮水达到目标后取消当天剩余提醒（新增 `cancelWaterRemindersForToday` 方法），不再持续提醒。
+- **饮食页饮水卡片颜色**: 水追踪卡片从 `softBlue`（近白/近黑）改为 `primary`（靛蓝），12 处颜色引用全部更新。
+- **番茄音乐修复**: 铃声 asset 不存在时不再崩溃（try-catch），无音乐时显示"请先导入本地音乐"提示。
+
+### 备份恢复补全
+- **V3 知识表纳入备份**: 6 张 V3 知识表（spaces/materials/cards/review_logs/qa_sessions/qa_messages）通过 raw SQL 导出导入，按外键顺序处理。
+- **AI 聊天记录纳入备份**: `AiChatMessages` 表加入 `_tableSpecs`（optional）。
+
+### 死代码清理
+- 删除 6 个未注册的 V3 Drift 表定义（`tables_extra.dart` 约 122 行）
+- 删除 9 个 pet re-export 空文件（`features/pet/models/` 目录）
+- 删除无调用者的 `saveWaterIntake()` 函数
+
 ## 2026-06-20 审计安全修复
 
 ### P0 修复
