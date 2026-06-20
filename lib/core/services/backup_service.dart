@@ -46,6 +46,25 @@ class BackupService {
       counts[spec.name] = rows.length;
     }
 
+    // Export V3 knowledge tables (raw SQL, not registered in Drift)
+    for (final tableName in [
+      'knowledge_spaces_v3',
+      'knowledge_materials',
+      'knowledge_cards_v3',
+      'knowledge_review_logs_v3',
+      'tiantian_qa_sessions',
+      'tiantian_qa_messages',
+    ]) {
+      try {
+        final rows = await _db.customSelect('SELECT * FROM $tableName').get();
+        data[tableName] = rows.map((r) => r.data).toList(growable: false);
+        counts[tableName] = rows.length;
+      } catch (_) {
+        data[tableName] = [];
+        counts[tableName] = 0;
+      }
+    }
+
     final jsonStr = jsonEncode(data);
     final checksum = _calculateChecksum(jsonStr);
 
@@ -110,6 +129,39 @@ class BackupService {
         // 跳过备份记录（设备本地元数据，不应跨设备恢复）
         if (spec.name == 'backupRecords') continue;
         await spec.importRows(data[spec.name]);
+      }
+
+      // Import V3 knowledge tables (raw SQL)
+      final v3Tables = [
+        'knowledge_spaces_v3',
+        'knowledge_materials',
+        'knowledge_cards_v3',
+        'knowledge_review_logs_v3',
+        'tiantian_qa_sessions',
+        'tiantian_qa_messages',
+      ];
+      // Delete existing V3 data in reverse FK order
+      for (final tableName in v3Tables.reversed) {
+        try {
+          await _db.customStatement('DELETE FROM $tableName');
+        } catch (_) {}
+      }
+      // Insert in FK order
+      for (final tableName in v3Tables) {
+        final rawRows = decoded['data'][tableName];
+        if (rawRows is! List) continue;
+        for (final raw in rawRows) {
+          if (raw is! Map) continue;
+          final row = Map<String, dynamic>.from(raw);
+          final columns = row.keys.join(', ');
+          final placeholders = row.keys.map((_) => '?').join(', ');
+          try {
+            await _db.customStatement(
+              'INSERT OR REPLACE INTO $tableName ($columns) VALUES ($placeholders)',
+              row.values.toList(),
+            );
+          } catch (_) {}
+        }
       }
     });
   }
@@ -519,6 +571,17 @@ class BackupService {
           .into(_db.petMessages)
           .insert(row, mode: InsertMode.insertOrReplace),
       deleteAll: () => _db.delete(_db.petMessages).go(),
+    ),
+    _BackupTableSpec<AiChatMessage>(
+      name: 'aiChatMessages',
+      exportRows: () async =>
+          (await _db.select(_db.aiChatMessages).get()).mapJson(),
+      fromJson: AiChatMessage.fromJson,
+      insert: (row) => _db
+          .into(_db.aiChatMessages)
+          .insert(row, mode: InsertMode.insertOrReplace),
+      deleteAll: () => _db.delete(_db.aiChatMessages).go(),
+      optional: true,
     ),
   ];
 
