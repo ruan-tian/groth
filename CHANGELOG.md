@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-22 Knowledge V3 Schema 单一入口
+
+- 新增 `KnowledgeV3SchemaService`，集中维护 Knowledge V3 表结构和卡片补列逻辑，避免数据库迁移与 Repository 各维护一份 DDL。
+- `AppDatabase` 迁移入口和 `KnowledgeV3Repository` 测试/运行时兜底入口改为复用同一 schema service，降低 `source_chunk_id` 等列重复添加和测试库/真机库不一致风险。
+- Repository 默认空间创建改为参数化 SQL 与 Unicode escape 常量，避免终端编码导致默认空间文案写坏。
+- 补充 schema service 测试，覆盖全新 schema 创建、旧表缺列补齐、默认知识空间仍可创建。
+
 ## 2026-06-22 设置写入 Facade 第一批
 
 - 新增 `SettingsFacade`，把设置 KV 写入、Riverpod 状态同步和相关 Provider invalidate 收敛到统一入口。

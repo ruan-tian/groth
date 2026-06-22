@@ -3,25 +3,42 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
+import '../database/knowledge_v3_schema.dart';
 
 class KnowledgeV3Repository {
   KnowledgeV3Repository(this._db);
+
+  static const _defaultSpaceName = '\u9ed8\u8ba4\u77e5\u8bc6\u7a7a\u95f4';
+  static const _defaultSpaceNote =
+      '\u4ece\u8fd9\u91cc\u5f00\u59cb\u5bfc\u5165\u8d44\u6599\uff0c'
+      '\u8ba9\u751c\u751c\u5e2e\u4f60\u751f\u6210\u77e5\u8bc6\u5361\u3002';
 
   final AppDatabase _db;
   bool _tablesEnsured = false;
 
   Future<KnowledgeSpaceV3> ensureDefaultSpace() async {
     await _ensureTables();
-    final spaces = await getSpaces(includeArchived: true);
-    if (spaces.isNotEmpty) return spaces.first;
+    final existing = await _db
+        .customSelect(
+          'SELECT * FROM knowledge_spaces_v3 WHERE name = ? LIMIT 1',
+          variables: [const Variable<String>(_defaultSpaceName)],
+        )
+        .getSingleOrNull();
+    if (existing != null) return KnowledgeSpaceV3.fromRow(existing);
+
     final now = DateTime.now().millisecondsSinceEpoch;
     final id = await _db.customInsert(
       '''
       INSERT INTO knowledge_spaces_v3
         (name, type, note, sort_order, is_archived, created_at, updated_at)
-      VALUES ('默认知识空间', 'custom', '从这里开始导入资料，让甜甜帮你生成知识卡。', 0, 0, ?, ?)
+      VALUES (?, 'custom', ?, 0, 0, ?, ?)
       ''',
-      variables: [Variable<int>(now), Variable<int>(now)],
+      variables: [
+        const Variable<String>(_defaultSpaceName),
+        const Variable<String>(_defaultSpaceNote),
+        Variable<int>(now),
+        Variable<int>(now),
+      ],
     );
     return (await getSpace(id))!;
   }
@@ -817,87 +834,7 @@ class KnowledgeV3Repository {
 
   Future<void> _ensureTables() async {
     if (_tablesEnsured) return;
-    // 检查表是否存在（production 由 migration 创建，test 由此处创建）
-    final table = await _db
-        .customSelect(
-          "SELECT name FROM sqlite_master WHERE type='table' AND name='knowledge_spaces_v3'",
-        )
-        .getSingleOrNull();
-    if (table == null) {
-      // 表不存在（可能是测试环境），按 app_database.dart 的 DDL 创建
-      await _db.customStatement('''
-        CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          name TEXT NOT NULL, type TEXT NOT NULL DEFAULT 'custom',
-          note TEXT NULL, icon_asset_key TEXT NULL, color_seed TEXT NULL,
-          sort_order INTEGER NOT NULL DEFAULT 0, is_archived INTEGER NOT NULL DEFAULT 0,
-          created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
-      ''');
-      await _db.customStatement('''
-        CREATE TABLE IF NOT EXISTS knowledge_materials (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          space_id INTEGER NOT NULL, title TEXT NOT NULL, content TEXT NOT NULL,
-          source_type TEXT NOT NULL DEFAULT 'text', source_path TEXT NULL, url TEXT NULL,
-          order_index INTEGER NOT NULL DEFAULT 0, status TEXT NOT NULL DEFAULT 'ready',
-          is_archived INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
-      ''');
-      await _db.customStatement('''
-        CREATE TABLE IF NOT EXISTS knowledge_cards_v3 (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          space_id INTEGER NOT NULL, material_id INTEGER NULL,
-          question TEXT NOT NULL, answer TEXT NOT NULL, explanation TEXT NULL,
-          card_type TEXT NOT NULL DEFAULT 'recall', importance INTEGER NOT NULL DEFAULT 3,
-          difficulty INTEGER NOT NULL DEFAULT 3, source_title TEXT NULL, source_excerpt TEXT NULL,
-          memory_hint TEXT NULL, source_chunk_id TEXT NULL, source_locator_json TEXT NULL,
-          concept TEXT NULL, knowledge_point TEXT NULL, exam_scene TEXT NULL,
-          common_mistake TEXT NULL, grounded INTEGER NOT NULL DEFAULT 1,
-          status TEXT NOT NULL DEFAULT 'auto_approved', related_concepts_json TEXT NULL,
-          tags_json TEXT NULL, mastery_level INTEGER NOT NULL DEFAULT 0,
-          review_count INTEGER NOT NULL DEFAULT 0, correct_streak INTEGER NOT NULL DEFAULT 0,
-          due_at INTEGER NOT NULL, order_index INTEGER NOT NULL DEFAULT 0,
-          last_reviewed_at INTEGER NULL, is_archived INTEGER NOT NULL DEFAULT 0,
-          created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
-      ''');
-      await _db.customStatement('''
-        CREATE TABLE IF NOT EXISTS knowledge_review_logs_v3 (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          card_id INTEGER NOT NULL, space_id INTEGER NOT NULL, rating INTEGER NOT NULL,
-          previous_mastery INTEGER NOT NULL, next_mastery INTEGER NOT NULL,
-          duration_ms INTEGER NOT NULL DEFAULT 0, reviewed_at INTEGER NOT NULL, next_due_at INTEGER NOT NULL)
-      ''');
-      await _db.customStatement('''
-        CREATE TABLE IF NOT EXISTS tiantian_qa_sessions (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          space_id INTEGER NOT NULL, title TEXT NOT NULL,
-          referenced_material_ids_json TEXT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)
-      ''');
-      await _db.customStatement('''
-        CREATE TABLE IF NOT EXISTS tiantian_qa_messages (
-          id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-          session_id INTEGER NOT NULL, role TEXT NOT NULL, content TEXT NOT NULL,
-          sources_json TEXT NULL, saved_as_card INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)
-      ''');
-    }
-    await _ensureKnowledgeCardColumns();
-    // 确保默认空间存在
-    final count = await _db
-        .customSelect('SELECT COUNT(*) AS count FROM knowledge_spaces_v3')
-        .getSingle();
-    if (count.read<int>('count') == 0) {
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await _db.customInsert(
-        'INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        variables: [
-          Variable.withString('默认知识空间'),
-          Variable.withString('custom'),
-          Variable.withString('从这里开始导入资料，让甜甜帮你生成知识卡。'),
-          Variable.withInt(0),
-          Variable.withInt(0),
-          Variable.withInt(now),
-          Variable.withInt(now),
-        ],
-      );
-    }
+    await KnowledgeV3SchemaService.ensureSchema(_db);
     _tablesEnsured = true;
   }
 
@@ -933,85 +870,6 @@ class KnowledgeV3Repository {
       'UPDATE knowledge_spaces_v3 SET updated_at = ? WHERE id = ?',
       variables: [Variable<int>(now), Variable<int>(spaceId)],
     );
-  }
-
-  Future<void> _ensureKnowledgeCardColumns() async {
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'memory_hint',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'related_concepts_json',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'source_chunk_id',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'source_locator_json',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'concept',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'knowledge_point',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'exam_scene',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'common_mistake',
-      definition: 'TEXT NULL',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'grounded',
-      definition: 'INTEGER NOT NULL DEFAULT 1',
-    );
-    await _ensureColumnExists(
-      table: 'knowledge_cards_v3',
-      column: 'status',
-      definition: "TEXT NOT NULL DEFAULT 'auto_approved'",
-    );
-  }
-
-  Future<void> _ensureColumnExists({
-    required String table,
-    required String column,
-    required String definition,
-  }) async {
-    final exists = await _db
-        .customSelect(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
-          variables: [Variable<String>(table)],
-        )
-        .getSingleOrNull();
-    if (exists == null) return;
-    final columns = await _db.customSelect('PRAGMA table_info($table)').get();
-    final hasColumn = columns.any((row) => row.read<String>('name') == column);
-    if (!hasColumn) {
-      try {
-        await _db.customStatement(
-          'ALTER TABLE $table ADD COLUMN $column $definition',
-        );
-      } catch (error) {
-        final message = error.toString().toLowerCase();
-        if (!message.contains('duplicate column name')) rethrow;
-      }
-    }
   }
 
   int _nextMastery(int current, int rating) {
