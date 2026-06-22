@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-22 数据库稳定性体检第一步
+
+- 新增只读 `DatabaseHealthService`，用于检查 SQLite integrity、Knowledge V3 表/列、关键索引、孤儿引用、白噪音歌单拆分、头像/日记附件/音乐文件路径缺失等问题。
+- 在 `service_providers.dart` 暴露 `databaseHealthServiceProvider`，后续可接入启动诊断、设置页维护工具或 Debug 面板。
+- 补充最小服务测试，覆盖健康库无错误、重复知识空间告警、头像路径缺失告警，作为后续数据库治理的安全基线。
+
 ## 2026-06-22 热力图修复：月份错位、图例重复
 
 ### 修复问题

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/ai_service.dart';
 import '../../core/services/backup_service.dart';
+import '../../core/services/database_health_service.dart';
 import '../../core/services/exp_service.dart';
 import '../../core/services/statistics_service.dart';
 import '../../features/ai/services/ai_analysis_card_service.dart';
@@ -48,4 +49,10 @@ final statisticsServiceProvider = Provider<StatisticsService>((ref) {
 final backupServiceProvider = Provider<BackupService>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return BackupService(db);
+});
+
+/// Read-only database diagnostics used by stabilization and support tooling.
+final databaseHealthServiceProvider = Provider<DatabaseHealthService>((ref) {
+  final db = ref.watch(appDatabaseProvider);
+  return DatabaseHealthService(db);
 });
