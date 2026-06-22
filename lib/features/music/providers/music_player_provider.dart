@@ -17,6 +17,7 @@ import '../models/music_lyrics.dart';
 import '../services/music_import_service.dart';
 import '../services/music_lyrics_service.dart';
 import '../services/music_player_service.dart';
+import '../services/music_settings_write_queue.dart';
 import '../utils/default_music_seed.dart';
 import '../utils/music_assets.dart';
 import '../utils/music_scene.dart';
@@ -60,6 +61,9 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   bool _handlingCompletion = false;
   int _bootstrapRetryCount = 0;
   Future<void>? _bootstrapFuture;
+  late final MusicSettingsWriteQueue _settingsWriter = MusicSettingsWriteQueue(
+    write: _settings.setSetting,
+  );
 
   MusicRepository get _musicRepo => _ref.read(musicRepositoryProvider);
   SettingRepository get _settings => _ref.read(settingRepositoryProvider);
@@ -204,8 +208,8 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
     final clampedX = x.clamp(0.0, 1.0).toDouble();
     final clampedY = y.clamp(0.0, 1.0).toDouble();
     _setState(state.copyWith(floatX: clampedX, floatY: clampedY));
-    await _settings.setSetting(_floatXKey, '$clampedX');
-    await _settings.setSetting(_floatYKey, '$clampedY');
+    _settingsWriter.schedule(_floatXKey, '$clampedX');
+    _settingsWriter.schedule(_floatYKey, '$clampedY');
   }
 
   Future<void> selectCollection(MusicCollection collection) async {
@@ -222,7 +226,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
         playQueueIds: queueIds,
       ),
     );
-    await _settings.setSetting(_collectionKey, collection.name);
+    _settingsWriter.schedule(_collectionKey, collection.name);
   }
 
   void selectPlaylist(int playlistId) {
@@ -547,7 +551,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
         volume: state.volume,
       );
       await _musicRepo.updateLastPlayed(track.id);
-      await _settings.setSetting(_currentTrackKey, '${track.id}');
+      _settingsWriter.schedule(_currentTrackKey, '${track.id}');
       if (duration != null) {
         await _musicRepo.updateDuration(track.id, duration);
       }
@@ -576,20 +580,22 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   Future<void> pause() async {
     await _player.pause();
     await _savePosition(state.position);
+    await _settingsWriter.flush();
     _setState(state.copyWith(isPlaying: false));
   }
 
   Future<void> seek(Duration position) async {
     await _player.seek(position);
     await _savePosition(position);
+    await _settingsWriter.flush();
     _setState(state.copyWith(position: position));
   }
 
   Future<void> setVolume(double volume) async {
     final clamped = volume.clamp(0.0, 1.0).toDouble();
     await _player.setVolume(clamped);
-    await _settings.setSetting(_volumeKey, '$clamped');
     _setState(state.copyWith(volume: clamped));
+    _settingsWriter.schedule(_volumeKey, '$clamped');
   }
 
   Future<void> toggleFavorite(MusicTrack track) async {
@@ -920,7 +926,8 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   }
 
   Future<void> _savePosition(Duration position) {
-    return _settings.setSetting(_positionKey, '${position.inMilliseconds}');
+    _settingsWriter.schedule(_positionKey, '${position.inMilliseconds}');
+    return _settingsWriter.flush();
   }
 
   void clearError() {
@@ -936,6 +943,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   void dispose() {
     _disposed = true;
     _sleepTimer?.cancel();
+    unawaited(_settingsWriter.dispose());
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }

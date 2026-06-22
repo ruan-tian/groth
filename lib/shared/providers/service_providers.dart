@@ -66,6 +66,7 @@ final appBootstrapCoordinatorProvider = Provider<AppBootstrapCoordinator>((
   return AppBootstrapCoordinator(
     database: db,
     knowledgeV3Repository: ref.watch(knowledgeV3RepositoryProvider),
+    musicRepository: ref.watch(musicRepositoryProvider),
     databaseHealthService: ref.watch(databaseHealthServiceProvider),
   );
 });

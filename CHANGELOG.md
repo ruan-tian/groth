@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-22 音乐启动与设置写入稳定性
+
+- 新增 `MusicSettingsWriteQueue`，将音量、悬浮窗位置、播放集合、当前曲目和播放进度等设置写入合并、去重并串行 flush，减少播放/拖动/切歌时的 SQLite 写锁竞争。
+- 音乐播放器接入写入队列：UI 状态仍立即更新，数据库写入延后合并；暂停、seek、dispose 等关键节点会 flush，兼顾流畅性和持久化安全。
+- App 启动协调器增加默认白噪音歌单预初始化，让音乐播放器打开时少做一次重写 seed，降低“音乐初始化失败”和白噪音切换卡顿风险。
+- 补充音乐设置写入队列测试和启动协调器白噪音 seed 断言。
+
 ## 2026-06-22 Knowledge V3 Schema 单一入口
 
 - 新增 `KnowledgeV3SchemaService`，集中维护 Knowledge V3 表结构和卡片补列逻辑，避免数据库迁移与 Repository 各维护一份 DDL。
