@@ -11,6 +11,7 @@ import '../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/providers/pet_diary_provider.dart';
+import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/widgets/common/growth_confirm_dialog.dart';
 import 'widgets/settings_page_sections.dart';
@@ -191,15 +192,8 @@ class SettingsPage extends ConsumerWidget {
     final current = ref.read(autoAiAnalysisProvider);
     if (current) {
       // 关闭
-      ref.read(autoAiAnalysisProvider.notifier).state = false;
-      await ref
-          .read(settingRepositoryProvider)
-          .setSetting('auto_ai_analysis', 'false');
+      await ref.read(settingsFacadeProvider).setAutoAiAnalysisEnabled(false);
       // 同时关闭日记上传
-      ref.read(journalUploadProvider.notifier).state = false;
-      await ref
-          .read(settingRepositoryProvider)
-          .setSetting('journal_upload', 'false');
     } else {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
@@ -210,10 +204,7 @@ class SettingsPage extends ConsumerWidget {
             '数据将会发送到你配置的 AI 服务商服务器（如 DeepSeek、OpenAI 等）。\n\n日记内容默认不会被上传。如需上传日记，请在开启后单独设置。',
         image: 'assets/images/dialogs/ai_privacy.webp',
         onConfirm: () async {
-          ref.read(autoAiAnalysisProvider.notifier).state = true;
-          await ref
-              .read(settingRepositoryProvider)
-              .setSetting('auto_ai_analysis', 'true');
+          await ref.read(settingsFacadeProvider).setAutoAiAnalysisEnabled(true);
         },
       );
     }
@@ -227,10 +218,7 @@ class SettingsPage extends ConsumerWidget {
     final current = ref.read(journalUploadProvider);
     if (current) {
       // 关闭
-      ref.read(journalUploadProvider.notifier).state = false;
-      await ref
-          .read(settingRepositoryProvider)
-          .setSetting('journal_upload', 'false');
+      await ref.read(settingsFacadeProvider).setJournalUploadEnabled(false);
     } else {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
@@ -241,10 +229,7 @@ class SettingsPage extends ConsumerWidget {
             '日记内容将会发送到你配置的 AI 服务商服务器。请确保你信任该服务商。\n\n建议：不要在日记中记录密码、银行卡等敏感信息。',
         image: 'assets/images/dialogs/journal_writing.webp',
         onConfirm: () async {
-          ref.read(journalUploadProvider.notifier).state = true;
-          await ref
-              .read(settingRepositoryProvider)
-              .setSetting('journal_upload', 'true');
+          await ref.read(settingsFacadeProvider).setJournalUploadEnabled(true);
         },
       );
     }
@@ -278,7 +263,7 @@ class SettingsPage extends ConsumerWidget {
     BuildContext context, {
     required String title,
     required String content,
-    required VoidCallback onConfirm,
+    required GrowthConfirmCallback onConfirm,
     String? image,
     String? privacyNotice,
   }) {

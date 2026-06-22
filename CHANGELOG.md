@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-22 设置写入 Facade 第一批
+
+- 新增 `SettingsFacade`，把设置 KV 写入、Riverpod 状态同步和相关 Provider invalidate 收敛到统一入口。
+- 个人资料头像保存/删除改走 Facade，确保设置页头像、全局头像 Provider 和问甜甜用户头像读取链路保持一致。
+- AI 自动分析和日记上传开关改走 Facade；关闭 AI 自动分析时统一关闭日记上传，减少设置页直接写库导致的状态漂移。
+- `GrowthConfirmDialog` 主/副按钮回调改为支持同步或异步确认，降低隐私确认弹窗异步写库和路由关闭时序风险。
+
 ## 2026-06-22 启动初始化协调第一步
 
 - 新增 `AppBootstrapCoordinator`，把 Knowledge V3 表准备、数据库索引准备、只读健康检查串成单一启动入口，降低启动期并发写锁和顺序不确定风险。

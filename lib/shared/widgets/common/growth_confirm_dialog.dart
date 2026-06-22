@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../../../app/design/design.dart';
+
+typedef GrowthConfirmCallback = FutureOr<void> Function();
 
 /// Growth OS 通用确认弹窗
 ///
@@ -58,13 +61,13 @@ class GrowthConfirmDialog extends StatelessWidget {
   final String primaryText;
 
   /// 主按钮回调
-  final VoidCallback onPrimary;
+  final GrowthConfirmCallback onPrimary;
 
   /// 次按钮文字（可选）
   final String? secondaryText;
 
   /// 次按钮回调（可选）
-  final VoidCallback? onSecondary;
+  final GrowthConfirmCallback? onSecondary;
 
   /// 弹窗模式
   final GrowthConfirmMode mode;
@@ -79,12 +82,12 @@ class GrowthConfirmDialog extends StatelessWidget {
     required String title,
     required String message,
     required String primaryText,
-    required VoidCallback onPrimary,
+    required GrowthConfirmCallback onPrimary,
     String? secondaryImage,
     String? subtitle,
     String? privacyNotice,
     String? secondaryText,
-    VoidCallback? onSecondary,
+    GrowthConfirmCallback? onSecondary,
     GrowthConfirmMode mode = GrowthConfirmMode.normal,
     double imageSize = 100,
   }) {
@@ -334,7 +337,10 @@ class GrowthConfirmDialog extends StatelessWidget {
     return OutlinedButton(
       onPressed: () {
         Navigator.of(context).pop();
-        onSecondary?.call();
+        final callback = onSecondary;
+        if (callback != null) {
+          callback();
+        }
       },
       style: OutlinedButton.styleFrom(
         minimumSize: const Size(0, 48),

@@ -10,6 +10,7 @@ import '../../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
 import '../../../shared/providers/fitness_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/growth_date_picker.dart';
 import '../widgets/profile_avatar_section.dart';
@@ -91,20 +92,14 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
     if (mounted) {
       setState(() => _avatarPath = normalizedAvatarPath);
     }
-    ref.read(userAvatarPathProvider.notifier).state = normalizedAvatarPath;
-    await _saveField('avatar_path', normalizedAvatarPath ?? '');
-    ref.invalidate(settingsProvider);
-    ref.invalidate(userAvatarInitProvider);
+    await ref.read(settingsFacadeProvider).setUserAvatarPath(path);
   }
 
   Future<void> _onAvatarDeleted() async {
     if (mounted) {
       setState(() => _avatarPath = null);
     }
-    ref.read(userAvatarPathProvider.notifier).state = null;
-    await _saveField('avatar_path', '');
-    ref.invalidate(settingsProvider);
-    ref.invalidate(userAvatarInitProvider);
+    await ref.read(settingsFacadeProvider).setUserAvatarPath(null);
   }
 
   Future<void> _showNicknameEditor() async {
