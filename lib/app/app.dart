@@ -27,14 +27,17 @@ class GrowthOSApp extends ConsumerWidget {
     ref.watch(weeklyFitnessGoalInitProvider); // 启动时加载每周健身目标
     final themeMode = ref.watch(themeModeProvider);
 
-    return LaunchIntroOverlay(
-      child: MaterialApp.router(
+    return Directionality(
+      textDirection: TextDirection.ltr,
+      child: LaunchIntroOverlay(
+        child: MaterialApp.router(
         title: 'Growth OS',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light(),
         darkTheme: AppTheme.dark(),
         themeMode: themeMode,
         routerConfig: goRouter,
+        ),
       ),
     );
   }
