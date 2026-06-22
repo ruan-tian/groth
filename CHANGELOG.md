@@ -1,5 +1,11 @@
 # Changelog
 
+## 2026-06-22 启动初始化协调第一步
+
+- 新增 `AppBootstrapCoordinator`，把 Knowledge V3 表准备、数据库索引准备、只读健康检查串成单一启动入口，降低启动期并发写锁和顺序不确定风险。
+- `appDatabaseProvider` 不再在下一帧自行创建索引，避免低层 Provider 隐式抢写；App 根节点改为 watch `appBootstrapProvider` 触发基础设施启动。
+- 补充启动协调器测试，验证全新内存数据库可以完成 bootstrap，且多次调用复用同一个 Future 结果。
+
 ## 2026-06-22 数据库稳定性体检第一步
 
 - 新增只读 `DatabaseHealthService`，用于检查 SQLite integrity、Knowledge V3 表/列、关键索引、孤儿引用、白噪音歌单拆分、头像/日记附件/音乐文件路径缺失等问题。

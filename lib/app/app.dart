@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'router.dart';
 import 'design/design.dart';
 import '../features/health/services/health_reminder_scheduler.dart';
+import '../shared/providers/service_providers.dart';
 import '../shared/providers/settings_provider.dart';
 import 'launch_intro_overlay.dart';
 
@@ -15,6 +16,7 @@ class GrowthOSApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(appBootstrapProvider);
     ref.watch(themeInitProvider); // 从数据库加载已保存的主题
     ref.watch(healthReminderBootstrapProvider);
     ref.watch(dailyWaterGoalInitProvider); // 启动时加载饮水目标
@@ -31,12 +33,12 @@ class GrowthOSApp extends ConsumerWidget {
       textDirection: TextDirection.ltr,
       child: LaunchIntroOverlay(
         child: MaterialApp.router(
-        title: 'Growth OS',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.light(),
-        darkTheme: AppTheme.dark(),
-        themeMode: themeMode,
-        routerConfig: goRouter,
+          title: 'Growth OS',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light(),
+          darkTheme: AppTheme.dark(),
+          themeMode: themeMode,
+          routerConfig: goRouter,
         ),
       ),
     );

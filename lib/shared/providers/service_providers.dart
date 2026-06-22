@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/services/ai_service.dart';
+import '../../core/services/app_bootstrap_coordinator.dart';
 import '../../core/services/backup_service.dart';
 import '../../core/services/database_health_service.dart';
 import '../../core/services/exp_service.dart';
@@ -55,4 +56,20 @@ final backupServiceProvider = Provider<BackupService>((ref) {
 final databaseHealthServiceProvider = Provider<DatabaseHealthService>((ref) {
   final db = ref.watch(appDatabaseProvider);
   return DatabaseHealthService(db);
+});
+
+/// Coordinates app startup work that touches shared infrastructure.
+final appBootstrapCoordinatorProvider = Provider<AppBootstrapCoordinator>((
+  ref,
+) {
+  final db = ref.watch(appDatabaseProvider);
+  return AppBootstrapCoordinator(
+    database: db,
+    knowledgeV3Repository: ref.watch(knowledgeV3RepositoryProvider),
+    databaseHealthService: ref.watch(databaseHealthServiceProvider),
+  );
+});
+
+final appBootstrapProvider = FutureProvider<AppBootstrapResult>((ref) {
+  return ref.watch(appBootstrapCoordinatorProvider).bootstrap();
 });
