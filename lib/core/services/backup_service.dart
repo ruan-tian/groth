@@ -154,9 +154,7 @@ class BackupService {
       ];
       // Delete existing V3 data in reverse FK order
       for (final tableName in v3Tables.reversed) {
-        try {
-          await _db.customStatement('DELETE FROM $tableName');
-        } catch (_) {}
+        await _db.customStatement('DELETE FROM $tableName');
       }
       // Insert in FK order
       for (final tableName in v3Tables) {
@@ -167,12 +165,10 @@ class BackupService {
           final row = Map<String, dynamic>.from(raw);
           final columns = row.keys.join(', ');
           final placeholders = row.keys.map((_) => '?').join(', ');
-          try {
-            await _db.customStatement(
-              'INSERT OR REPLACE INTO $tableName ($columns) VALUES ($placeholders)',
-              row.values.toList(),
-            );
-          } catch (_) {}
+          await _db.customStatement(
+            'INSERT OR REPLACE INTO $tableName ($columns) VALUES ($placeholders)',
+            row.values.toList(),
+          );
         }
       }
     });
