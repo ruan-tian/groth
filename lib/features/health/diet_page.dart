@@ -982,9 +982,7 @@ class _DietPageState extends ConsumerState<DietPage> {
       suggestion: '建议每天饮水 1500~2500 ml',
       color: colors.softBlue,
       onSave: (value) async {
-        ref.read(dailyWaterGoalProvider.notifier).state = value;
-        final repo = ref.read(settingRepositoryProvider);
-        await repo.setSetting('daily_water_goal', value.toString());
+        await ref.read(waterPlanProvider.notifier).setGoal(value);
       },
     );
   }
