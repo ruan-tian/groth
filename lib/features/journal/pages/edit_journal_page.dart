@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -40,6 +40,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
   String? _quillDeltaJson;
   bool _openedQuillEditor = false;
   int? _folderId;
+  String? _journalDate;
 
   @override
   void initState() {
@@ -82,6 +83,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
         _contentType = journal.contentType;
         _quillDeltaJson = journal.quillDeltaJson;
         _folderId = journal.folderId;
+        _journalDate = journal.journalDate;
         _selectedTags
           ..clear()
           ..addAll(_parseTags(journal.tags));
@@ -127,7 +129,7 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       final exp = expService.calculateJournalExp(wordCount: wordCount);
       final companion = DailyJournalsCompanion(
         id: Value(widget.journalId),
-        journalDate: Value(_formatDate(now)),
+        journalDate: Value(_journalDate ?? _formatDate(now)),
         title: Value(_titleController.text.trim()),
         content: Value(content),
         contentType: Value(_contentType),
