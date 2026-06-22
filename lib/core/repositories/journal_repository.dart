@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
@@ -194,10 +196,26 @@ class JournalRepository {
         .get();
   }
 
-  /// 删除日记的所有附件
-  Future<void> deleteJournalAssets(int journalId) {
-    return (_db.delete(
-      _db.journalAssets,
-    )..where((t) => t.journalId.equals(journalId))).go();
+  /// 删除日记的所有附件（包括物理文件）
+  Future<void> deleteJournalAssets(int journalId) async {
+    // First query all assets to get their file paths
+    final assets = await (_db.select(_db.journalAssets)
+          ..where((t) => t.journalId.equals(journalId)))
+        .get();
+    // Delete physical files
+    for (final asset in assets) {
+      try {
+        final file = File(asset.localPath);
+        if (await file.exists()) {
+          await file.delete();
+        }
+      } catch (_) {
+        // Ignore file deletion errors (file may already be missing)
+      }
+    }
+    // Delete DB records
+    await (_db.delete(_db.journalAssets)
+          ..where((t) => t.journalId.equals(journalId)))
+        .go();
   }
 }
