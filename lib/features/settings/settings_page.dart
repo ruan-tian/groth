@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -369,10 +367,7 @@ class SettingsPage extends ConsumerWidget {
     return GestureDetector(
       onTap: () async {
         HapticFeedback.lightImpact();
-        ref.read(themeModeProvider.notifier).state = mode;
-        await ref
-            .read(settingRepositoryProvider)
-            .setSetting('theme_mode', mode.name);
+        await ref.read(settingsFacadeProvider).setThemeMode(mode);
         if (context.mounted) Navigator.pop(context);
       },
       child: Container(
@@ -541,68 +536,80 @@ class SettingsPage extends ConsumerWidget {
     WidgetRef ref,
     List<_GoalItem> updatedGoals,
   ) async {
-    final repo = ref.read(settingRepositoryProvider);
+    int valueFor(String key, int fallback) {
+      return updatedGoals
+              .where((goal) => goal.key == key)
+              .map((goal) => goal.value)
+              .firstOrNull ??
+          fallback;
+    }
 
-    // Rebuild daily goals list (学习 / 健身 / 写日记)
     final newDailyGoals = <DailyGoal>[];
-    for (final g in updatedGoals) {
-      switch (g.key) {
+    for (final goal in updatedGoals) {
+      switch (goal.key) {
         case 'daily_study_goal':
-          newDailyGoals.add(DailyGoal(name: '学习', target: g.value, unit: '分钟'));
+          newDailyGoals.add(
+            DailyGoal(
+              name: '\u5b66\u4e60',
+              target: goal.value,
+              unit: '\u5206\u949f',
+            ),
+          );
           break;
         case 'daily_fitness_goal':
-          newDailyGoals.add(DailyGoal(name: '健身', target: g.value, unit: '分钟'));
+          newDailyGoals.add(
+            DailyGoal(
+              name: '\u5065\u8eab',
+              target: goal.value,
+              unit: '\u5206\u949f',
+            ),
+          );
           break;
         case 'daily_journal_goal':
-          newDailyGoals.add(DailyGoal(name: '写日记', target: g.value, unit: '篇'));
+          newDailyGoals.add(
+            DailyGoal(
+              name: '\u5199\u65e5\u8bb0',
+              target: goal.value,
+              unit: '\u7bc7',
+            ),
+          );
           break;
       }
     }
 
-    if (newDailyGoals.isNotEmpty) {
-      ref.read(dailyGoalsProvider.notifier).state = newDailyGoals;
-      await repo.setSetting(
-        'daily_goals',
-        jsonEncode(newDailyGoals.map((g) => g.toJson()).toList()),
-      );
-    }
-
-    // Weekly fitness goal
-    final weeklyItem = updatedGoals
-        .where((g) => g.key == 'weekly_fitness_goal')
-        .firstOrNull;
-    if (weeklyItem != null) {
-      ref.read(weeklyFitnessGoalProvider.notifier).state = weeklyItem.value;
-      await repo.setSetting('weekly_fitness_goal', weeklyItem.value.toString());
-    }
-
-    // Persist remaining goals individually
-    final otherKeys = {'target_weight', 'total_study_hours'};
-    for (final g in updatedGoals) {
-      if (otherKeys.contains(g.key)) {
-        await repo.setSetting(g.key, g.value.toString());
-        // 更新全局 Provider
-        if (g.key == 'target_weight') {
-          ref.read(targetWeightProvider.notifier).state = g.value.toDouble();
-        }
-        if (g.key == 'total_study_hours') {
-          ref.read(totalStudyHoursProvider.notifier).state = g.value;
-        }
-      }
-      // 更新全局 Provider
-      if (g.key == 'sleep_goal_hours') {
-        ref.read(sleepGoalProvider.notifier).state = g.value;
-        await repo.setSetting('sleep_goal_hours', g.value.toString());
-      }
-      if (g.key == 'daily_calorie_goal') {
-        ref.read(dailyCalorieGoalProvider.notifier).state = g.value;
-        await repo.setSetting('daily_calorie_goal', g.value.toString());
-      }
-      if (g.key == 'daily_water_goal') {
-        ref.read(dailyWaterGoalProvider.notifier).state = g.value;
-        await repo.setSetting('daily_water_goal', g.value.toString());
-      }
-    }
+    await ref
+        .read(settingsFacadeProvider)
+        .saveGoals(
+          SettingsGoalSnapshot(
+            dailyGoals: newDailyGoals.isEmpty
+                ? ref.read(dailyGoalsProvider)
+                : newDailyGoals,
+            weeklyFitnessGoal: valueFor(
+              'weekly_fitness_goal',
+              ref.read(weeklyFitnessGoalProvider),
+            ),
+            sleepGoalHours: valueFor(
+              'sleep_goal_hours',
+              ref.read(sleepGoalProvider),
+            ),
+            dailyCalorieGoal: valueFor(
+              'daily_calorie_goal',
+              ref.read(dailyCalorieGoalProvider),
+            ),
+            dailyWaterGoal: valueFor(
+              'daily_water_goal',
+              ref.read(dailyWaterGoalProvider),
+            ),
+            targetWeightKg: valueFor(
+              'target_weight',
+              ref.read(targetWeightProvider).round(),
+            ).toDouble(),
+            totalStudyHours: valueFor(
+              'total_study_hours',
+              ref.read(totalStudyHoursProvider),
+            ),
+          ),
+        );
   }
 
   void _showAboutDialog(BuildContext context) {

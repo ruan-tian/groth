@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-22 设置页目标与主题写入收敛
+
+- `SettingsFacade` 扩展主题模式和成长目标保存能力，统一负责 Provider 状态、KV 写入和初始化 Provider invalidate。
+- 设置页主题切换、每日/每周/长期目标保存改走 Facade，减少页面层直接写库和多 Provider 状态漂移。
+- 目标保存重建日常目标时使用 Unicode escape 常量，避免脚本/终端编码导致“学习/健身/写日记”等中文目标名被写坏。
+- 补充 Facade 测试，覆盖主题保存、目标保存、头像和 AI 开关联动。
+
 ## 2026-06-22 音乐启动与设置写入稳定性
 
 - 新增 `MusicSettingsWriteQueue`，将音量、悬浮窗位置、播放集合、当前曲目和播放进度等设置写入合并、去重并串行 flush，减少播放/拖动/切歌时的 SQLite 写锁竞争。

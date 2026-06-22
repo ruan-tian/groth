@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:drift/native.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
@@ -66,6 +67,54 @@ void main() {
           .read(settingRepositoryProvider)
           .getSetting('journal_upload'),
       'false',
+    );
+  });
+
+  test('setThemeMode syncs provider and setting row', () async {
+    await container.read(settingsFacadeProvider).setThemeMode(ThemeMode.dark);
+
+    expect(container.read(themeModeProvider), ThemeMode.dark);
+    expect(
+      await container.read(settingRepositoryProvider).getSetting('theme_mode'),
+      'dark',
+    );
+  });
+
+  test('saveGoals syncs goal providers and setting rows', () async {
+    final goals = const SettingsGoalSnapshot(
+      dailyGoals: [
+        DailyGoal(name: '\u5b66\u4e60', target: 90, unit: '\u5206\u949f'),
+        DailyGoal(name: '\u5065\u8eab', target: 40, unit: '\u5206\u949f'),
+        DailyGoal(name: '\u5199\u65e5\u8bb0', target: 1, unit: '\u7bc7'),
+      ],
+      weeklyFitnessGoal: 4,
+      sleepGoalHours: 7,
+      dailyCalorieGoal: 1800,
+      dailyWaterGoal: 2200,
+      targetWeightKg: 64,
+      totalStudyHours: 1200,
+    );
+
+    await container.read(settingsFacadeProvider).saveGoals(goals);
+
+    expect(container.read(dailyGoalsProvider).first.target, 90);
+    expect(container.read(weeklyFitnessGoalProvider), 4);
+    expect(container.read(sleepGoalProvider), 7);
+    expect(container.read(dailyCalorieGoalProvider), 1800);
+    expect(container.read(dailyWaterGoalProvider), 2200);
+    expect(container.read(targetWeightProvider), 64);
+    expect(container.read(totalStudyHoursProvider), 1200);
+    expect(
+      await container
+          .read(settingRepositoryProvider)
+          .getSetting('weekly_fitness_goal'),
+      '4',
+    );
+    expect(
+      await container
+          .read(settingRepositoryProvider)
+          .getSetting('daily_water_goal'),
+      '2200',
     );
   });
 }
