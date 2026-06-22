@@ -663,6 +663,7 @@ class _SoftCircle extends StatelessWidget {
 
 Color _categoryColor(String category) {
   return switch (category) {
+    '健康区' => const Color(0xFF4BAA7A),
     '咖啡' => const Color(0xFF8A5B3E),
     '新茶饮' => const Color(0xFFFF7EAA),
     '即饮茶' => const Color(0xFF35A66B),

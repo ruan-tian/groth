@@ -283,6 +283,16 @@ class KnowledgeV3Repository {
     int difficulty = 3,
     String? sourceTitle,
     String? sourceExcerpt,
+    String? memoryHint,
+    String? sourceChunkId,
+    String? sourceLocatorJson,
+    String? concept,
+    String? knowledgePoint,
+    String? examScene,
+    String? commonMistake,
+    bool grounded = true,
+    String status = 'auto_approved',
+    List<String> relatedConcepts = const [],
     List<String> tags = const [],
   }) async {
     await _ensureTables();
@@ -291,10 +301,14 @@ class KnowledgeV3Repository {
       '''
       INSERT INTO knowledge_cards_v3
         (space_id, material_id, question, answer, explanation, card_type,
-         importance, difficulty, source_title, source_excerpt, tags_json,
+         importance, difficulty, source_title, source_excerpt, memory_hint,
+         source_chunk_id, source_locator_json, concept, knowledge_point,
+         exam_scene, common_mistake, grounded, status,
+         related_concepts_json, tags_json,
          mastery_level, review_count, correct_streak, due_at, order_index,
          is_archived, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, 0, ?, ?, 0, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+              0, 0, 0, ?, ?, 0, ?, ?)
       ''',
       variables: [
         Variable<int>(spaceId),
@@ -307,6 +321,18 @@ class KnowledgeV3Repository {
         Variable<int>(difficulty.clamp(1, 5)),
         Variable<String>(_nullable(sourceTitle)),
         Variable<String>(_nullable(sourceExcerpt)),
+        Variable<String>(_nullable(memoryHint)),
+        Variable<String>(_nullable(sourceChunkId)),
+        Variable<String>(_nullable(sourceLocatorJson)),
+        Variable<String>(_nullable(concept)),
+        Variable<String>(_nullable(knowledgePoint)),
+        Variable<String>(_nullable(examScene)),
+        Variable<String>(_nullable(commonMistake)),
+        Variable<int>(grounded ? 1 : 0),
+        Variable<String>(_normalizeCardStatus(status)),
+        Variable<String>(
+          relatedConcepts.isEmpty ? null : jsonEncode(relatedConcepts),
+        ),
         Variable<String>(tags.isEmpty ? null : jsonEncode(tags)),
         Variable<int>(now),
         Variable<int>(await _nextCardOrder(spaceId)),
@@ -622,6 +648,57 @@ class KnowledgeV3Repository {
     return rows.map(TiantianQaSession.fromRow).toList(growable: false);
   }
 
+  /// 获取空间的最新会话，若无则自动创建一个
+  Future<TiantianQaSession> getOrCreateSpaceSession(int spaceId) async {
+    final sessions = await getQaSessions(spaceId);
+    if (sessions.isNotEmpty) return sessions.first;
+    final id = await createQaSession(spaceId: spaceId, title: '甜甜问答');
+    final created = await getQaSession(id);
+    return created!;
+  }
+
+  /// 获取单个会话
+  Future<TiantianQaSession?> getQaSession(int sessionId) async {
+    await _ensureTables();
+    final rows = await _db
+        .customSelect(
+          'SELECT * FROM tiantian_qa_sessions WHERE id = ?',
+          variables: [Variable<int>(sessionId)],
+        )
+        .get();
+    if (rows.isEmpty) return null;
+    return TiantianQaSession.fromRow(rows.first);
+  }
+
+  /// 更新会话的关联资料
+  Future<void> updateSessionMaterials(
+    int sessionId,
+    List<int> materialIds,
+  ) async {
+    await _ensureTables();
+    await _db.customUpdate(
+      'UPDATE tiantian_qa_sessions SET referenced_material_ids_json = ?, updated_at = ? WHERE id = ?',
+      variables: [
+        Variable<String>(materialIds.isEmpty ? null : jsonEncode(materialIds)),
+        Variable<int>(DateTime.now().millisecondsSinceEpoch),
+        Variable<int>(sessionId),
+      ],
+    );
+  }
+
+  /// 更新会话标题
+  Future<void> updateSessionTitle(int sessionId, String title) async {
+    await _ensureTables();
+    await _db.customUpdate(
+      'UPDATE tiantian_qa_sessions SET title = ?, updated_at = ? WHERE id = ?',
+      variables: [
+        Variable<String>(title),
+        Variable<int>(DateTime.now().millisecondsSinceEpoch),
+        Variable<int>(sessionId),
+      ],
+    );
+  }
+
   Future<List<TiantianQaMessage>> getQaMessages(int sessionId) async {
     await _ensureTables();
     final rows = await _db
@@ -642,9 +719,16 @@ class KnowledgeV3Repository {
     required String role,
     required String content,
     List<KnowledgeMaterial> sources = const [],
+    String? answerMode,
+    bool? grounded,
   }) async {
     await _ensureTables();
     final now = DateTime.now().millisecondsSinceEpoch;
+    final sourcesJson = _qaSourcesJson(
+      sources: sources,
+      answerMode: answerMode,
+      grounded: grounded,
+    );
     return _db.customInsert(
       '''
       INSERT INTO tiantian_qa_messages
@@ -655,24 +739,35 @@ class KnowledgeV3Repository {
         Variable<int>(sessionId),
         Variable<String>(role),
         Variable<String>(content),
-        Variable<String>(
-          sources.isEmpty
-              ? null
-              : jsonEncode(
-                  sources
-                      .map(
-                        (item) => {
-                          'id': item.id,
-                          'title': item.title,
-                          'excerpt': _excerpt(item.content),
-                        },
-                      )
-                      .toList(),
-                ),
-        ),
+        Variable<String>(sourcesJson),
         Variable<int>(now),
       ],
     );
+  }
+
+  String? _qaSourcesJson({
+    required List<KnowledgeMaterial> sources,
+    String? answerMode,
+    bool? grounded,
+  }) {
+    final hasMetadata = answerMode != null || grounded != null;
+    if (sources.isEmpty && !hasMetadata) return null;
+    final sourceItems = sources
+        .map(
+          (item) => {
+            'id': item.id,
+            'title': item.title,
+            'excerpt': _excerpt(item.content),
+          },
+        )
+        .toList(growable: false);
+    if (!hasMetadata) return jsonEncode(sourceItems);
+    return jsonEncode({
+      'answerMode': answerMode,
+      'grounded': grounded,
+      'usedMaterialIds': sources.map((item) => item.id).toList(growable: false),
+      'sources': sourceItems,
+    });
   }
 
   Future<void> markLatestAssistantMessageSavedAsCard(int sessionId) async {
@@ -753,6 +848,10 @@ class KnowledgeV3Repository {
           question TEXT NOT NULL, answer TEXT NOT NULL, explanation TEXT NULL,
           card_type TEXT NOT NULL DEFAULT 'recall', importance INTEGER NOT NULL DEFAULT 3,
           difficulty INTEGER NOT NULL DEFAULT 3, source_title TEXT NULL, source_excerpt TEXT NULL,
+          memory_hint TEXT NULL, source_chunk_id TEXT NULL, source_locator_json TEXT NULL,
+          concept TEXT NULL, knowledge_point TEXT NULL, exam_scene TEXT NULL,
+          common_mistake TEXT NULL, grounded INTEGER NOT NULL DEFAULT 1,
+          status TEXT NOT NULL DEFAULT 'auto_approved', related_concepts_json TEXT NULL,
           tags_json TEXT NULL, mastery_level INTEGER NOT NULL DEFAULT 0,
           review_count INTEGER NOT NULL DEFAULT 0, correct_streak INTEGER NOT NULL DEFAULT 0,
           due_at INTEGER NOT NULL, order_index INTEGER NOT NULL DEFAULT 0,
@@ -779,6 +878,7 @@ class KnowledgeV3Repository {
           sources_json TEXT NULL, saved_as_card INTEGER NOT NULL DEFAULT 0, created_at INTEGER NOT NULL)
       ''');
     }
+    await _ensureKnowledgeCardColumns();
     // 确保默认空间存在
     final count = await _db
         .customSelect('SELECT COUNT(*) AS count FROM knowledge_spaces_v3')
@@ -828,12 +928,90 @@ class KnowledgeV3Repository {
     return row.read<int>('count');
   }
 
-
   Future<void> _touchSpace(int spaceId, int now) {
     return _db.customUpdate(
       'UPDATE knowledge_spaces_v3 SET updated_at = ? WHERE id = ?',
       variables: [Variable<int>(now), Variable<int>(spaceId)],
     );
+  }
+
+  Future<void> _ensureKnowledgeCardColumns() async {
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'memory_hint',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'related_concepts_json',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'source_chunk_id',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'source_locator_json',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'concept',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'knowledge_point',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'exam_scene',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'common_mistake',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'grounded',
+      definition: 'INTEGER NOT NULL DEFAULT 1',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'status',
+      definition: "TEXT NOT NULL DEFAULT 'auto_approved'",
+    );
+  }
+
+  Future<void> _ensureColumnExists({
+    required String table,
+    required String column,
+    required String definition,
+  }) async {
+    final exists = await _db
+        .customSelect(
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+          variables: [Variable<String>(table)],
+        )
+        .getSingleOrNull();
+    if (exists == null) return;
+    final columns = await _db.customSelect('PRAGMA table_info($table)').get();
+    final hasColumn = columns.any((row) => row.read<String>('name') == column);
+    if (!hasColumn) {
+      try {
+        await _db.customStatement(
+          'ALTER TABLE $table ADD COLUMN $column $definition',
+        );
+      } catch (error) {
+        final message = error.toString().toLowerCase();
+        if (!message.contains('duplicate column name')) rethrow;
+      }
+    }
   }
 
   int _nextMastery(int current, int rating) {
@@ -883,6 +1061,18 @@ class KnowledgeV3Repository {
   String? _nullable(String? value) {
     final trimmed = value?.trim();
     return trimmed == null || trimmed.isEmpty ? null : trimmed;
+  }
+
+  String _normalizeCardStatus(String value) {
+    const allowed = {
+      'draft',
+      'approved',
+      'rejected',
+      'needs_review',
+      'auto_approved',
+    };
+    final normalized = value.trim().toLowerCase();
+    return allowed.contains(normalized) ? normalized : 'draft';
   }
 }
 
@@ -987,6 +1177,16 @@ class KnowledgeCardV3 {
     required this.difficulty,
     this.sourceTitle,
     this.sourceExcerpt,
+    this.memoryHint,
+    this.sourceChunkId,
+    this.sourceLocatorJson,
+    this.concept,
+    this.knowledgePoint,
+    this.examScene,
+    this.commonMistake,
+    this.grounded = true,
+    this.status = 'auto_approved',
+    this.relatedConceptsJson,
     this.tagsJson,
     required this.orderIndex,
     required this.masteryLevel,
@@ -1012,6 +1212,16 @@ class KnowledgeCardV3 {
       difficulty: row.read<int>('difficulty'),
       sourceTitle: row.readNullable<String>('source_title'),
       sourceExcerpt: row.readNullable<String>('source_excerpt'),
+      memoryHint: row.readNullable<String>('memory_hint'),
+      sourceChunkId: row.readNullable<String>('source_chunk_id'),
+      sourceLocatorJson: row.readNullable<String>('source_locator_json'),
+      concept: row.readNullable<String>('concept'),
+      knowledgePoint: row.readNullable<String>('knowledge_point'),
+      examScene: row.readNullable<String>('exam_scene'),
+      commonMistake: row.readNullable<String>('common_mistake'),
+      grounded: (row.readNullable<int>('grounded') ?? 1) == 1,
+      status: row.readNullable<String>('status') ?? 'auto_approved',
+      relatedConceptsJson: row.readNullable<String>('related_concepts_json'),
       tagsJson: row.readNullable<String>('tags_json'),
       orderIndex: row.readNullable<int>('order_index') ?? 0,
       masteryLevel: row.read<int>('mastery_level'),
@@ -1036,6 +1246,16 @@ class KnowledgeCardV3 {
   final int difficulty;
   final String? sourceTitle;
   final String? sourceExcerpt;
+  final String? memoryHint;
+  final String? sourceChunkId;
+  final String? sourceLocatorJson;
+  final String? concept;
+  final String? knowledgePoint;
+  final String? examScene;
+  final String? commonMistake;
+  final bool grounded;
+  final String status;
+  final String? relatedConceptsJson;
   final String? tagsJson;
   final int orderIndex;
   final int masteryLevel;

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -447,6 +448,12 @@ final userAvatarPathProvider = StateProvider<String?>((ref) {
   return null;
 });
 
+String? normalizeUserAvatarPath(String? value) {
+  final path = value?.trim();
+  if (path == null || path.isEmpty) return null;
+  return File(path).existsSync() ? path : null;
+}
+
 /// 从数据库初始化用户昵称的 Provider
 final userNicknameInitProvider = FutureProvider<void>((ref) async {
   final repo = ref.watch(settingRepositoryProvider);
@@ -460,9 +467,9 @@ final userNicknameInitProvider = FutureProvider<void>((ref) async {
 final userAvatarInitProvider = FutureProvider<void>((ref) async {
   final repo = ref.watch(settingRepositoryProvider);
   final value = await repo.getSetting('avatar_path');
-  if (value != null && value.isNotEmpty) {
-    ref.read(userAvatarPathProvider.notifier).state = value;
-  }
+  ref.read(userAvatarPathProvider.notifier).state = normalizeUserAvatarPath(
+    value,
+  );
 });
 
 /// 用户身高 StateProvider (cm)

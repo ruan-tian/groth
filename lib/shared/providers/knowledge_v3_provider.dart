@@ -1,3 +1,4 @@
+﻿import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/repositories/knowledge_v3_repository.dart';
@@ -187,16 +188,19 @@ class KnowledgeWorkspaceOverviewV3 {
 }
 
 void invalidateKnowledgeV3(WidgetRef ref, {int? spaceId}) {
-  ref.invalidate(knowledgeSpacesV3Provider);
-  ref.invalidate(knowledgeAllSpacesV3Provider);
-  ref.invalidate(currentKnowledgeSpaceV3Provider);
-  ref.invalidate(knowledgeWorkspaceOverviewV3Provider);
-  if (spaceId != null) {
-    ref.invalidate(knowledgeMaterialsV3Provider(spaceId));
-    ref.invalidate(knowledgeCardsV3Provider(spaceId));
-    ref.invalidate(knowledgeSpaceStatsV3Provider(spaceId));
-    ref.invalidate(tiantianQaSessionsProvider(spaceId));
-  }
-  ref.invalidate(knowledgeReviewQueueV3Provider);
-  ref.invalidate(knowledgeSearchV3Provider);
+  // 延迟到下一帧执行，避免在弹窗关闭动画期间触发父组件重建导致渲染失败
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    ref.invalidate(knowledgeSpacesV3Provider);
+    ref.invalidate(knowledgeAllSpacesV3Provider);
+    ref.invalidate(currentKnowledgeSpaceV3Provider);
+    ref.invalidate(knowledgeWorkspaceOverviewV3Provider);
+    if (spaceId != null) {
+      ref.invalidate(knowledgeMaterialsV3Provider(spaceId));
+      ref.invalidate(knowledgeCardsV3Provider(spaceId));
+      ref.invalidate(knowledgeSpaceStatsV3Provider(spaceId));
+      ref.invalidate(tiantianQaSessionsProvider(spaceId));
+    }
+    ref.invalidate(knowledgeReviewQueueV3Provider);
+    ref.invalidate(knowledgeSearchV3Provider);
+  });
 }

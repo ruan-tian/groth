@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+﻿import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 
@@ -238,8 +238,8 @@ class StatisticsService {
       // Step 3: Fitness records
       (_db.select(_db.fitnessRecords)..where(
             (t) =>
-                t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endExclusiveMs),
+                t.startTime.isBiggerOrEqualValue(startMs) &
+                t.startTime.isSmallerThanValue(endExclusiveMs),
           ))
           .get(),
       // Step 5: Journals
@@ -266,8 +266,8 @@ class StatisticsService {
       // Step 8: Focus sessions
       (_db.select(_db.focusSessions)..where(
             (t) =>
-                t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endExclusiveMs),
+                t.startTime.isBiggerOrEqualValue(startMs) &
+                t.startTime.isSmallerThanValue(endExclusiveMs),
           ))
           .get(),
       // Step 9: Exp logs
@@ -330,7 +330,7 @@ class StatisticsService {
     // 健身：按日期聚合时长 + session 数（以 fitnessRecord 为一个 session）
     final fitnessByDate = <String, _FitnessAgg>{};
     for (final r in fitnessRecords) {
-      final key = msToDateKey(r.createdAt);
+      final key = msToDateKey(r.startTime);
       final prev = fitnessByDate[key];
       fitnessByDate[key] = _FitnessAgg(
         minutes: (prev?.minutes ?? 0) + r.durationMinutes,
@@ -371,7 +371,7 @@ class StatisticsService {
     // 专注：按日期聚合
     final focusByDate = <String, _FocusAgg>{};
     for (final r in focusRows) {
-      final key = msToDateKey(r.createdAt);
+      final key = msToDateKey(r.startTime);
       final prev = focusByDate[key];
       focusByDate[key] = _FocusAgg(
         minutes: (prev?.minutes ?? 0) + r.durationMinutes,

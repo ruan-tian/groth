@@ -10,6 +10,7 @@ import '../../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
 import '../../../shared/providers/fitness_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/growth_date_picker.dart';
 import '../widgets/profile_avatar_section.dart';
 import '../widgets/profile_info_tiles.dart';
@@ -61,6 +62,8 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
     final gender = await repo.getSetting('gender');
     final height = await repo.getSetting('height');
     final avatarPath = await repo.getSetting('avatar_path');
+    final normalizedAvatarPath = normalizeUserAvatarPath(avatarPath);
+    ref.read(userAvatarPathProvider.notifier).state = normalizedAvatarPath;
 
     if (mounted) {
       setState(() {
@@ -70,7 +73,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
         }
         if (gender != null) _gender = gender;
         if (height != null) _heightController.text = height;
-        if (avatarPath != null) _avatarPath = avatarPath;
+        _avatarPath = normalizedAvatarPath;
       });
     }
   }
@@ -83,14 +86,25 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
   // ── 编辑动作回调 ────────────────────────────────────────────────────────────
 
-  void _onAvatarUpdated(String path) {
-    setState(() => _avatarPath = path);
-    _saveField('avatar_path', path);
+  Future<void> _onAvatarUpdated(String path) async {
+    final normalizedAvatarPath = normalizeUserAvatarPath(path);
+    if (mounted) {
+      setState(() => _avatarPath = normalizedAvatarPath);
+    }
+    ref.read(userAvatarPathProvider.notifier).state = normalizedAvatarPath;
+    await _saveField('avatar_path', normalizedAvatarPath ?? '');
+    ref.invalidate(settingsProvider);
+    ref.invalidate(userAvatarInitProvider);
   }
 
-  void _onAvatarDeleted() {
-    setState(() => _avatarPath = null);
-    _saveField('avatar_path', '');
+  Future<void> _onAvatarDeleted() async {
+    if (mounted) {
+      setState(() => _avatarPath = null);
+    }
+    ref.read(userAvatarPathProvider.notifier).state = null;
+    await _saveField('avatar_path', '');
+    ref.invalidate(settingsProvider);
+    ref.invalidate(userAvatarInitProvider);
   }
 
   Future<void> _showNicknameEditor() async {

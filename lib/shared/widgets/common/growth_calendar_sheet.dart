@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/services/calendar_service.dart';
 import '../../../core/services/statistics_service.dart';
+import '../../../features/dashboard/widgets/add_task_dialog.dart';
 import '../../providers/calendar_provider.dart';
+import '../../providers/task_provider.dart';
 
 Future<void> showGrowthCalendarSheet(
   BuildContext context, {
@@ -35,7 +37,9 @@ class GrowthCalendarSheet extends ConsumerStatefulWidget {
 class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
   late DateTime _selectedDate;
   late DateTime _displayMonth;
+  late final PageController _monthPageController;
 
+  static const _monthBaseYear = 1900;
   static const _weekdays = ['一', '二', '三', '四', '五', '六', '日'];
   static const _weekdayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
 
@@ -44,17 +48,25 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
     super.initState();
     _selectedDate = _dateOnly(widget.initialDate);
     _displayMonth = DateTime(_selectedDate.year, _selectedDate.month);
+    _monthPageController = PageController(
+      initialPage: _pageForMonth(_displayMonth),
+    );
+  }
+
+  @override
+  void dispose() {
+    _monthPageController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final gridStart = _monthGridStart(_displayMonth);
-    final gridEnd = gridStart.add(const Duration(days: 41));
-    final request = CalendarStatsRequest(start: gridStart, end: gridEnd);
-    final statsAsync = ref.watch(calendarStatsProvider(request));
     final calendarService = ref.watch(calendarServiceProvider);
-    final dayInfos = calendarService.getRange(gridStart, gridEnd);
+    final selectedRequest = _requestForMonth(_displayMonth);
+    final selectedStatsAsync = ref.watch(
+      calendarStatsProvider(selectedRequest),
+    );
 
     final height = math.min(MediaQuery.sizeOf(context).height * 0.88, 720.0);
     final gridHeight = height < 640 ? 292.0 : 330.0;
@@ -97,43 +109,61 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
               const SizedBox(height: 8),
               SizedBox(
                 height: gridHeight,
-                child: statsAsync.when(
-                  loading: () => _CalendarGrid(
-                    dayInfos: dayInfos,
-                    displayMonth: _displayMonth,
-                    selectedDate: _selectedDate,
-                    statsByDate: const {},
-                    onSelect: _selectDate,
-                  ),
-                  error: (_, _) => _CalendarGrid(
-                    dayInfos: dayInfos,
-                    displayMonth: _displayMonth,
-                    selectedDate: _selectedDate,
-                    statsByDate: const {},
-                    onSelect: _selectDate,
-                  ),
-                  data: (stats) => _CalendarGrid(
-                    dayInfos: dayInfos,
-                    displayMonth: _displayMonth,
-                    selectedDate: _selectedDate,
-                    statsByDate: _statsByDate(stats),
-                    onSelect: _selectDate,
-                  ),
+                child: PageView.builder(
+                  controller: _monthPageController,
+                  physics: const BouncingScrollPhysics(),
+                  onPageChanged: _handleMonthPageChanged,
+                  itemBuilder: (context, page) {
+                    final pageMonth = _monthForPage(page);
+                    final request = _requestForMonth(pageMonth);
+                    final statsAsync = ref.watch(
+                      calendarStatsProvider(request),
+                    );
+                    final dayInfos = calendarService.getRange(
+                      request.normalizedStart,
+                      request.normalizedEnd,
+                    );
+
+                    return statsAsync.when(
+                      loading: () => _CalendarGrid(
+                        dayInfos: dayInfos,
+                        displayMonth: pageMonth,
+                        selectedDate: _selectedDate,
+                        statsByDate: const {},
+                        onSelect: _selectDate,
+                      ),
+                      error: (_, _) => _CalendarGrid(
+                        dayInfos: dayInfos,
+                        displayMonth: pageMonth,
+                        selectedDate: _selectedDate,
+                        statsByDate: const {},
+                        onSelect: _selectDate,
+                      ),
+                      data: (stats) => _CalendarGrid(
+                        dayInfos: dayInfos,
+                        displayMonth: pageMonth,
+                        selectedDate: _selectedDate,
+                        statsByDate: _statsByDate(stats),
+                        onSelect: _selectDate,
+                      ),
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 14),
               Expanded(
-                child: statsAsync.when(
+                child: selectedStatsAsync.when(
                   loading: () => _SelectedDayPanel(
                     dayInfo: calendarService.getDayInfo(_selectedDate),
                     weekday: _weekdayNames[_selectedDate.weekday - 1],
                     stats: DailyStats.empty(_selectedDate),
                     isLoading: true,
+                    onCreateTask: _createTaskForSelectedDate,
                   ),
                   error: (error, _) => _CalendarErrorPanel(
                     error: error,
                     onRetry: () =>
-                        ref.invalidate(calendarStatsProvider(request)),
+                        ref.invalidate(calendarStatsProvider(selectedRequest)),
                   ),
                   data: (stats) {
                     final byDate = _statsByDate(stats);
@@ -143,6 +173,7 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
                       stats:
                           byDate[_dateKey(_selectedDate)] ??
                           DailyStats.empty(_selectedDate),
+                      onCreateTask: _createTaskForSelectedDate,
                     );
                   },
                 ),
@@ -156,24 +187,70 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
 
   void _shiftMonth(int delta) {
     HapticFeedback.selectionClick();
-    setState(() {
-      _displayMonth = DateTime(_displayMonth.year, _displayMonth.month + delta);
-      if (_selectedDate.year != _displayMonth.year ||
-          _selectedDate.month != _displayMonth.month) {
-        _selectedDate = DateTime(_displayMonth.year, _displayMonth.month);
-      }
-    });
+    final targetPage = _pageForMonth(_displayMonth) + delta;
+    _monthPageController.animateToPage(
+      targetPage,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
   }
 
   void _selectDate(DateTime date) {
     HapticFeedback.lightImpact();
+    final nextDate = _dateOnly(date);
+    final nextMonth = DateTime(nextDate.year, nextDate.month);
     setState(() {
-      _selectedDate = _dateOnly(date);
-      if (_selectedDate.month != _displayMonth.month ||
-          _selectedDate.year != _displayMonth.year) {
-        _displayMonth = DateTime(_selectedDate.year, _selectedDate.month);
+      _selectedDate = nextDate;
+      _displayMonth = nextMonth;
+    });
+
+    final targetPage = _pageForMonth(nextMonth);
+    final currentPage = _monthPageController.page?.round();
+    if (currentPage != null && currentPage != targetPage) {
+      _monthPageController.animateToPage(
+        targetPage,
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+      );
+    }
+  }
+
+  void _handleMonthPageChanged(int page) {
+    final nextMonth = _monthForPage(page);
+    HapticFeedback.selectionClick();
+    setState(() {
+      _displayMonth = nextMonth;
+      if (_selectedDate.year != nextMonth.year ||
+          _selectedDate.month != nextMonth.month) {
+        _selectedDate = DateTime(nextMonth.year, nextMonth.month);
       }
     });
+  }
+
+  Future<void> _createTaskForSelectedDate() async {
+    final taskDate = _selectedDate;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => AddTaskDialog(initialDate: taskDate),
+    );
+    if (!mounted) return;
+
+    final request = _requestForMonth(_displayMonth);
+    ref
+      ..invalidate(calendarStatsProvider(request))
+      ..invalidate(tasksByDateProvider(_dateKey(taskDate)))
+      ..invalidate(todayTasksProvider)
+      ..invalidate(todayIncompleteTaskCountProvider);
+  }
+
+  static CalendarStatsRequest _requestForMonth(DateTime month) {
+    final start = _monthGridStart(month);
+    return CalendarStatsRequest(
+      start: start,
+      end: start.add(const Duration(days: 41)),
+    );
   }
 
   static DateTime _monthGridStart(DateTime month) {
@@ -183,6 +260,14 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
 
   static Map<String, DailyStats> _statsByDate(List<DailyStats> stats) {
     return {for (final stat in stats) _dateKey(stat.date): stat};
+  }
+
+  static int _pageForMonth(DateTime month) {
+    return (month.year - _monthBaseYear) * 12 + month.month - 1;
+  }
+
+  static DateTime _monthForPage(int page) {
+    return DateTime(_monthBaseYear, page + 1);
   }
 }
 
@@ -480,12 +565,14 @@ class _SelectedDayPanel extends StatelessWidget {
     required this.weekday,
     required this.stats,
     this.isLoading = false,
+    this.onCreateTask,
   });
 
   final CalendarDayInfo dayInfo;
   final String weekday;
   final DailyStats stats;
   final bool isLoading;
+  final VoidCallback? onCreateTask;
 
   @override
   Widget build(BuildContext context) {
@@ -516,14 +603,14 @@ class _SelectedDayPanel extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${dayInfo.date.month}\u6708${dayInfo.date.day}\u65e5 $weekday',
+                              '${dayInfo.date.month}月${dayInfo.date.day}日 $weekday',
                               style: AppTextStyles.cardTitle.copyWith(
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              '\u519c\u5386${dayInfo.lunar.fullLabel}',
+                              '农历${dayInfo.lunar.fullLabel}',
                               style: AppTextStyles.caption.copyWith(
                                 color: colors.textTertiary,
                               ),
@@ -554,6 +641,23 @@ class _SelectedDayPanel extends StatelessWidget {
                   ],
                   const SizedBox(height: 14),
                   _MetricGrid(stats: stats),
+                  if (onCreateTask != null) ...[
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: onCreateTask,
+                        icon: const Icon(Icons.add_task_rounded),
+                        label: const Text('为这天新建任务'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 13),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -583,37 +687,37 @@ class _MetricGrid extends StatelessWidget {
           children: [
             _MetricTile(
               width: itemWidth,
-              label: '\u5b66\u4e60',
+              label: '学习',
               value: '${stats.studyMinutes}m',
               color: colors.study,
             ),
             _MetricTile(
               width: itemWidth,
-              label: '\u5065\u8eab',
+              label: '健身',
               value: '${stats.fitnessMinutes}m',
               color: colors.fitness,
             ),
             _MetricTile(
               width: itemWidth,
-              label: '\u4e13\u6ce8',
+              label: '专注',
               value: '${stats.focusMinutes}m',
               color: colors.focus,
             ),
             _MetricTile(
               width: itemWidth,
-              label: '\u65e5\u8bb0',
-              value: '${stats.journalCount}\u7bc7',
+              label: '日记',
+              value: '${stats.journalCount}篇',
               color: colors.journal,
             ),
             _MetricTile(
               width: itemWidth,
-              label: '\u7ecf\u9a8c',
+              label: '经验',
               value: '+${stats.expGained}',
               color: colors.accent,
             ),
             _MetricTile(
               width: itemWidth,
-              label: '\u4efb\u52a1',
+              label: '任务',
               value: '${stats.taskCompleted}/${stats.taskTotal}',
               color: colors.success,
             ),

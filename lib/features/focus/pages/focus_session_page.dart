@@ -509,7 +509,16 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: (value) {
-                      if (value == 'music') _focusStartedMusic = true;
+                      if (value == 'music') {
+                        _focusStartedMusic = true;
+                        ref.read(focusAudioStateProvider.notifier).stopNoise();
+                      } else if (value != null && value.isNotEmpty && value != 'none') {
+                        ref.read(musicPlayerProvider.notifier).pause();
+                        ref.read(focusAudioStateProvider.notifier).changeSound(value);
+                      } else {
+                        ref.read(focusAudioStateProvider.notifier).stopNoise();
+                      }
+                      _currentSoundType = value;
                       ref.read(focusCycleProvider.notifier).setSoundType(value);
                     },
                   )
@@ -523,7 +532,16 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: (value) {
-                      if (value == 'music') _focusStartedMusic = true;
+                      if (value == 'music') {
+                        _focusStartedMusic = true;
+                        ref.read(focusAudioStateProvider.notifier).stopNoise();
+                      } else if (value != null && value.isNotEmpty && value != 'none') {
+                        ref.read(musicPlayerProvider.notifier).pause();
+                        ref.read(focusAudioStateProvider.notifier).changeSound(value);
+                      } else {
+                        ref.read(focusAudioStateProvider.notifier).stopNoise();
+                      }
+                      _currentSoundType = value;
                       ref.read(focusCycleProvider.notifier).setSoundType(value);
                     },
                   )
@@ -537,7 +555,16 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: (value) {
-                      if (value == 'music') _focusStartedMusic = true;
+                      if (value == 'music') {
+                        _focusStartedMusic = true;
+                        ref.read(focusAudioStateProvider.notifier).stopNoise();
+                      } else if (value != null && value.isNotEmpty && value != 'none') {
+                        ref.read(musicPlayerProvider.notifier).pause();
+                        ref.read(focusAudioStateProvider.notifier).changeSound(value);
+                      } else {
+                        ref.read(focusAudioStateProvider.notifier).stopNoise();
+                      }
+                      _currentSoundType = value;
                       ref.read(focusCycleProvider.notifier).setSoundType(value);
                     },
                   ),

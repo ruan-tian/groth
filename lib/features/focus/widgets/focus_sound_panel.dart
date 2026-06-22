@@ -83,14 +83,8 @@ class FocusSoundPanel extends ConsumerWidget {
           const SizedBox(height: 12),
           _AudioModeSwitch(
             musicMode: musicMode,
-            onNoise: () {
-              ref.read(musicPlayerProvider.notifier).pause();
-              onSoundChanged?.call(null);
-            },
-            onMusic: () {
-              ref.read(focusAudioStateProvider.notifier).stopNoise();
-              onSoundChanged?.call('music');
-            },
+            onNoise: () => onSoundChanged?.call(null),
+            onMusic: () => onSoundChanged?.call('music'),
           ),
           const SizedBox(height: 14),
           if (musicMode)
@@ -220,16 +214,7 @@ class _NoisePanel extends ConsumerWidget {
                   selected: selected,
                   compact: compact,
                   onTap: () {
-                    ref.read(musicPlayerProvider.notifier).pause();
-                    if (sound.value == 'none') {
-                      ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      onSoundChanged?.call(null);
-                    } else {
-                      ref
-                          .read(focusAudioStateProvider.notifier)
-                          .changeSound(sound.value);
-                      onSoundChanged?.call(sound.value);
-                    }
+                    onSoundChanged?.call(sound.value == 'none' ? null : sound.value);
                   },
                 );
               })

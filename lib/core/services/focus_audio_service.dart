@@ -12,8 +12,10 @@ class FocusAudioService {
 
   final AudioPlayer _noisePlayer = AudioPlayer();
   final AudioPlayer _bellPlayer = AudioPlayer();
+  final Map<String, AudioSource> _noiseSources = {};
   String? _currentNoiseAsset;
   bool _isNoisePlaying = false;
+  int _noiseSwitchToken = 0;
 
   bool get isNoisePlaying => _isNoisePlaying;
   String? get currentNoiseAsset => _currentNoiseAsset;
@@ -23,7 +25,7 @@ class FocusAudioService {
     _initialized = true;
     await JustAudioBackground.init(
       androidNotificationChannelId: 'com.growthos.focus.audio',
-      androidNotificationChannelName: '专注白噪音',
+      androidNotificationChannelName: '\u4e13\u6ce8\u767d\u566a\u97f3',
       androidNotificationOngoing: true,
       preloadArtwork: false,
     );
@@ -32,17 +34,17 @@ class FocusAudioService {
   static String displayNameForSound(String soundType) {
     switch (soundType) {
       case 'rain':
-        return '雨声';
+        return '\u96e8\u58f0';
       case 'ocean':
-        return '海浪';
+        return '\u6d77\u6d6a';
       case 'forest':
-        return '森林';
+        return '\u68ee\u6797';
       case 'cafe':
-        return '咖啡馆';
+        return '\u5496\u5561\u9986';
       case 'white_noise':
-        return '白噪音';
+        return '\u767d\u566a\u97f3';
       case 'wind':
-        return '风声';
+        return '\u98ce\u58f0';
       default:
         return soundType;
     }
@@ -58,24 +60,43 @@ class FocusAudioService {
 
   Future<void> playNoise(String soundType, {double volume = 0.6}) async {
     final assetPath = assetPathForSound(soundType);
-    if (_currentNoiseAsset == assetPath && _isNoisePlaying) return;
+    final token = ++_noiseSwitchToken;
 
-    await _noisePlayer.stop();
     try {
-      await _setNoiseSource(assetPath, soundType);
       await _noisePlayer.setLoopMode(LoopMode.one);
-      await _noisePlayer.setVolume(volume);
+      await _noisePlayer.setVolume(volume.clamp(0.0, 1.0));
+
+      if (_currentNoiseAsset == assetPath) {
+        if (!_isNoisePlaying) {
+          await _noisePlayer.play();
+          _isNoisePlaying = true;
+        }
+        return;
+      }
+
+      if (_currentNoiseAsset != assetPath) {
+        await _noisePlayer.pause();
+        await _setNoiseSource(assetPath, soundType);
+        if (token != _noiseSwitchToken) return;
+        _currentNoiseAsset = assetPath;
+      }
+
+      await _noisePlayer.seek(Duration.zero);
+      if (token != _noiseSwitchToken) return;
       await _noisePlayer.play();
-      _currentNoiseAsset = assetPath;
+      if (token != _noiseSwitchToken) return;
       _isNoisePlaying = true;
     } catch (_) {
-      _currentNoiseAsset = null;
-      _isNoisePlaying = false;
+      if (token == _noiseSwitchToken) {
+        _currentNoiseAsset = null;
+        _isNoisePlaying = false;
+      }
       rethrow;
     }
   }
 
   Future<void> pauseNoise() async {
+    _noiseSwitchToken++;
     await _noisePlayer.pause();
     _isNoisePlaying = false;
   }
@@ -87,6 +108,7 @@ class FocusAudioService {
   }
 
   Future<void> stopNoise() async {
+    _noiseSwitchToken++;
     await _noisePlayer.stop();
     _isNoisePlaying = false;
     _currentNoiseAsset = null;
@@ -104,7 +126,6 @@ class FocusAudioService {
       await _bellPlayer.setVolume(1.0);
       await _bellPlayer.play();
     } catch (e) {
-      // Bell asset not available, skip silently
       debugPrint('Bell playback failed: $e');
     }
   }
@@ -116,14 +137,19 @@ class FocusAudioService {
 
   Future<void> _setNoiseSource(String assetPath, String soundType) async {
     try {
-      await _noisePlayer.setAudioSource(
-        AudioSource.asset(assetPath, tag: _mediaItemForSound(soundType)),
+      final source = _noiseSources.putIfAbsent(
+        assetPath,
+        () => AudioSource.asset(assetPath, tag: _mediaItemForSound(soundType)),
       );
+      await _noisePlayer.setAudioSource(source, preload: true);
     } catch (_) {
       final file = await _cachedAssetFile(assetPath);
-      await _noisePlayer.setAudioSource(
-        AudioSource.file(file.path, tag: _mediaItemForSound(soundType)),
+      final fileKey = 'file:$assetPath';
+      final source = _noiseSources.putIfAbsent(
+        fileKey,
+        () => AudioSource.file(file.path, tag: _mediaItemForSound(soundType)),
       );
+      await _noisePlayer.setAudioSource(source, preload: true);
     }
   }
 
@@ -131,7 +157,7 @@ class FocusAudioService {
     return MediaItem(
       id: 'focus_noise_$soundType',
       title: displayNameForSound(soundType),
-      artist: 'Growth OS 专注白噪音',
+      artist: 'Growth OS \u4e13\u6ce8\u767d\u566a\u97f3',
     );
   }
 

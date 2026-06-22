@@ -36,25 +36,27 @@ class MusicRepository {
     return _db.select(_db.musicPlaylistTracks).get();
   }
 
-  Future<int> ensureDefaultStudyPlaylist() async {
-    final existingPlaylist =
-        await (_db.select(_db.musicPlaylists)
-              ..where((t) => t.name.equals(DefaultMusicSeeds.playlistName))
-              ..limit(1))
-            .getSingleOrNull();
-    final playlistId =
-        existingPlaylist?.id ??
-        await createPlaylist(
-          name: DefaultMusicSeeds.playlistName,
-          coverAsset: DefaultMusicSeeds.playlistCover,
-        );
+  Future<int> ensureDefaultFocusNoisePlaylist() {
+    return _db.transaction(() async {
+      final playlistId = await _ensureFocusNoisePlaylist();
+      final seedTrackIds = <int>[];
 
-    for (final seed in DefaultMusicSeeds.seeds) {
-      final trackId = await _ensureSeedTrack(seed);
-      await addTrackToPlaylist(playlistId: playlistId, trackId: trackId);
-    }
+      for (final seed in DefaultMusicSeeds.seeds) {
+        final trackId = await _ensureSeedTrack(seed);
+        seedTrackIds.add(trackId);
+        await addTrackToPlaylist(playlistId: playlistId, trackId: trackId);
+      }
 
-    return playlistId;
+      await _removeSeedTracksFromOtherPlaylists(
+        defaultPlaylistId: playlistId,
+        seedTrackIds: seedTrackIds,
+      );
+      return playlistId;
+    });
+  }
+
+  Future<int> ensureDefaultStudyPlaylist() {
+    return ensureDefaultFocusNoisePlaylist();
   }
 
   Future<List<MusicTrack>> getFavoriteTracks() {
@@ -74,9 +76,11 @@ class MusicRepository {
   }
 
   Future<MusicTrack?> getTrackByOriginalPath(String originalPath) {
-    return (_db.select(
-      _db.musicTracks,
-    )..where((t) => t.originalPath.equals(originalPath))).getSingleOrNull();
+    return (_db.select(_db.musicTracks)
+          ..where((t) => t.originalPath.equals(originalPath))
+          ..orderBy([(t) => OrderingTerm.asc(t.id)])
+          ..limit(1))
+        .getSingleOrNull();
   }
 
   Future<int> _ensureSeedTrack(DefaultMusicSeed seed) async {
@@ -95,6 +99,69 @@ class MusicRepository {
         updatedAt: now,
       ),
     );
+  }
+
+  Future<int> _ensureFocusNoisePlaylist() async {
+    final playlist =
+        await (_db.select(_db.musicPlaylists)
+              ..where((t) => t.name.equals(DefaultMusicSeeds.playlistName))
+              ..limit(1))
+            .getSingleOrNull();
+    if (playlist != null) {
+      if (playlist.coverAsset != DefaultMusicSeeds.playlistCover) {
+        await _updateFocusNoisePlaylistMetadata(playlist.id);
+      }
+      return playlist.id;
+    }
+
+    final legacyPlaylist =
+        await (_db.select(_db.musicPlaylists)
+              ..where(
+                (t) => t.name.equals(DefaultMusicSeeds.legacyPlaylistName),
+              )
+              ..limit(1))
+            .getSingleOrNull();
+    if (legacyPlaylist != null) {
+      await (_db.update(
+        _db.musicPlaylists,
+      )..where((t) => t.id.equals(legacyPlaylist.id))).write(
+        MusicPlaylistsCompanion(
+          name: const Value(DefaultMusicSeeds.playlistName),
+          coverAsset: const Value(DefaultMusicSeeds.playlistCover),
+          updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+        ),
+      );
+      return legacyPlaylist.id;
+    }
+
+    return createPlaylist(
+      name: DefaultMusicSeeds.playlistName,
+      coverAsset: DefaultMusicSeeds.playlistCover,
+    );
+  }
+
+  Future<void> _updateFocusNoisePlaylistMetadata(int playlistId) {
+    return (_db.update(
+      _db.musicPlaylists,
+    )..where((t) => t.id.equals(playlistId))).write(
+      MusicPlaylistsCompanion(
+        coverAsset: const Value(DefaultMusicSeeds.playlistCover),
+        updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
+      ),
+    );
+  }
+
+  Future<void> _removeSeedTracksFromOtherPlaylists({
+    required int defaultPlaylistId,
+    required List<int> seedTrackIds,
+  }) {
+    if (seedTrackIds.isEmpty) return Future.value();
+    return (_db.delete(_db.musicPlaylistTracks)..where(
+          (t) =>
+              t.trackId.isIn(seedTrackIds) &
+              t.playlistId.equals(defaultPlaylistId).not(),
+        ))
+        .go();
   }
 
   Future<int> insertTrack(MusicTracksCompanion track) {
@@ -124,8 +191,13 @@ class MusicRepository {
         );
   }
 
-  Future<void> deletePlaylist(int id) {
-    return (_db.delete(_db.musicPlaylists)..where((t) => t.id.equals(id))).go();
+  Future<void> deletePlaylist(int id) async {
+    final playlist = await (_db.select(
+      _db.musicPlaylists,
+    )..where((t) => t.id.equals(id))).getSingleOrNull();
+    if (playlist == null || _isFocusNoisePlaylistName(playlist.name)) return;
+
+    await (_db.delete(_db.musicPlaylists)..where((t) => t.id.equals(id))).go();
   }
 
   Future<void> addTrackToPlaylist({
@@ -148,8 +220,19 @@ class MusicRepository {
   Future<void> removeTrackFromPlaylist({
     required int playlistId,
     required int trackId,
-  }) {
-    return (_db.delete(_db.musicPlaylistTracks)..where(
+  }) async {
+    final track = await getTrackById(trackId);
+    final playlist = await (_db.select(
+      _db.musicPlaylists,
+    )..where((t) => t.id.equals(playlistId))).getSingleOrNull();
+    if (track != null &&
+        DefaultMusicSeeds.isSeedTrack(track) &&
+        playlist != null &&
+        _isFocusNoisePlaylistName(playlist.name)) {
+      return;
+    }
+
+    await (_db.delete(_db.musicPlaylistTracks)..where(
           (t) => t.playlistId.equals(playlistId) & t.trackId.equals(trackId),
         ))
         .go();
@@ -159,7 +242,11 @@ class MusicRepository {
     required int trackId,
     required Iterable<int> playlistIds,
   }) async {
-    final uniqueIds = playlistIds.toSet();
+    final track = await getTrackById(trackId);
+    final isSeedTrack = track != null && DefaultMusicSeeds.isSeedTrack(track);
+    final uniqueIds = isSeedTrack
+        ? {await _ensureFocusNoisePlaylist()}
+        : playlistIds.toSet();
     await _db.transaction(() async {
       await (_db.delete(
         _db.musicPlaylistTracks,
@@ -229,7 +316,15 @@ class MusicRepository {
     );
   }
 
-  Future<void> deleteTrack(int id) {
-    return (_db.delete(_db.musicTracks)..where((t) => t.id.equals(id))).go();
+  Future<void> deleteTrack(int id) async {
+    final track = await getTrackById(id);
+    if (track == null || DefaultMusicSeeds.isSeedTrack(track)) return;
+
+    await (_db.delete(_db.musicTracks)..where((t) => t.id.equals(id))).go();
+  }
+
+  bool _isFocusNoisePlaylistName(String name) {
+    return name == DefaultMusicSeeds.playlistName ||
+        name == DefaultMusicSeeds.legacyPlaylistName;
   }
 }

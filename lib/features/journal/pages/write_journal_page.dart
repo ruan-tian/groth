@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -85,7 +85,12 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       final contentType = _quillDeltaJson != null ? 'quill' : 'markdown';
 
       final expService = ref.read(expServiceProvider);
-      final exp = expService.calculateJournalExp(wordCount: wordCount);
+      final rawExp = expService.calculateJournalExp(wordCount: wordCount);
+      // 每日上限 20 EXP：查询当日已获得的日记 EXP，计算剩余可用额度
+      final expRepoForCap = ref.read(expRepositoryProvider);
+      final todayJournalExp = await expRepoForCap.getTotalExpBySourceAndDate('journal', now);
+      final remainingCap = (20 - todayJournalExp).clamp(0, 20);
+      final exp = rawExp.clamp(0, remainingCap);
       final journalRepo = ref.read(journalRepositoryProvider);
 
       final companion = DailyJournalsCompanion.insert(

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../providers/music_player_provider.dart';
+import '../utils/default_music_seed.dart';
 import '../utils/music_assets.dart';
 import '../utils/music_scene.dart';
 
@@ -137,7 +138,7 @@ class _MusicImportDestinationSheetState
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        '导入到歌单',
+                        '\u5bfc\u5165\u5230\u6b4c\u5355',
                         style: TextStyle(
                           color: colors.textPrimary,
                           fontSize: 21,
@@ -146,7 +147,7 @@ class _MusicImportDestinationSheetState
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '歌曲始终会进入全部本地，也可以同时加入多个自建歌单',
+                        '\u6b4c\u66f2\u59cb\u7ec8\u4f1a\u8fdb\u5165\u5168\u90e8\u672c\u5730\uff0c\u4e5f\u53ef\u4ee5\u540c\u65f6\u52a0\u5165\u591a\u4e2a\u81ea\u5efa\u6b4c\u5355',
                         style: TextStyle(
                           color: colors.textSecondary,
                           fontSize: 12,
@@ -160,7 +161,7 @@ class _MusicImportDestinationSheetState
             ),
             const SizedBox(height: 14),
             Text(
-              '默认场景',
+              '榛樿鍦烘櫙',
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 14,
@@ -239,7 +240,7 @@ class _MusicImportDestinationSheetState
                       foregroundColor: colors.primary,
                       side: BorderSide(color: colors.border),
                     ),
-                    child: const Text('只导入本地'),
+                    child: const Text('\u53ea\u5bfc\u5165\u672c\u5730'),
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -257,8 +258,8 @@ class _MusicImportDestinationSheetState
                     ),
                     child: Text(
                       _selectedIds.isEmpty
-                          ? '开始导入'
-                          : '加入 ${_selectedIds.length} 个歌单',
+                          ? '\u5f00\u59cb\u5bfc\u5165'
+                          : '\u52a0\u5165 ${_selectedIds.length} \u4e2a\u6b4c\u5355',
                     ),
                   ),
                 ),
@@ -309,7 +310,7 @@ class _SceneDestinationRail extends StatelessWidget {
           if (index == 0) {
             return _SceneDestinationTile(
               title: '智能识别',
-              subtitle: '按歌名判断',
+              subtitle: '\u6309\u6b4c\u540d\u5224\u65ad',
               cover: MusicAssets.settingScene,
               selected: selectedScene == null,
               onTap: () {
@@ -432,7 +433,7 @@ class _EmptyPlaylistPrompt extends StatelessWidget {
           Image.asset(MusicAssets.playerEmptyImport, width: 150, height: 150),
           const SizedBox(height: 10),
           Text(
-            '还没有自建歌单',
+            '\u8fd8\u6ca1\u6709\u81ea\u5efa\u6b4c\u5355',
             style: TextStyle(
               color: colors.textPrimary,
               fontSize: 17,
@@ -441,7 +442,7 @@ class _EmptyPlaylistPrompt extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           Text(
-            '先创建一个歌单，再把这次导入的歌曲放进去',
+            '先创建一中单，再把这导入的歌曲放进去',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: colors.textSecondary,
@@ -512,7 +513,7 @@ class _PlaylistSelectTile extends StatelessWidget {
   final String title;
   final String cover;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -615,7 +616,7 @@ class _CreatePlaylistDialogState extends ConsumerState<_CreatePlaylistDialog> {
               controller: _controller,
               autofocus: true,
               decoration: InputDecoration(
-                hintText: '例如：夜晚陪伴',
+                hintText: '\u4f8b\u5982\uff1a\u591c\u665a\u966a\u4f34',
                 filled: true,
                 fillColor: colors.surfaceVariant,
                 border: OutlineInputBorder(
@@ -630,7 +631,7 @@ class _CreatePlaylistDialogState extends ConsumerState<_CreatePlaylistDialog> {
             ),
             const SizedBox(height: 14),
             Text(
-              '选择封面',
+              '閫夋嫨灏侀潰',
               style: TextStyle(
                 color: colors.textSecondary,
                 fontSize: 12,
@@ -740,6 +741,7 @@ class _TrackPlaylistSheetState extends ConsumerState<_TrackPlaylistSheet> {
     final colors = context.growthColors;
     final state = ref.watch(musicPlayerProvider);
     final playlists = state.playlists;
+    final isSeedTrack = DefaultMusicSeeds.isSeedTrack(widget.track);
     return Container(
       height: MediaQuery.sizeOf(context).height * 0.68,
       margin: const EdgeInsets.fromLTRB(12, 0, 12, 12),
@@ -783,7 +785,9 @@ class _TrackPlaylistSheetState extends ConsumerState<_TrackPlaylistSheet> {
             ),
             const SizedBox(height: 5),
             Text(
-              '选择它属于哪些自建歌单',
+              isSeedTrack
+                  ? '\u5185\u7f6e\u767d\u566a\u97f3\u56fa\u5b9a\u5728\u4e13\u6ce8\u767d\u566a\u97f3\u6b4c\u5355'
+                  : '选择它属于哪些自建歌单',
               style: TextStyle(
                 color: colors.textSecondary,
                 fontSize: 12,
@@ -792,7 +796,7 @@ class _TrackPlaylistSheetState extends ConsumerState<_TrackPlaylistSheet> {
             ),
             const SizedBox(height: 14),
             Text(
-              '默认场景',
+              '榛樿鍦烘櫙',
               style: TextStyle(
                 color: colors.textPrimary,
                 fontSize: 14,
@@ -843,15 +847,17 @@ class _TrackPlaylistSheetState extends ConsumerState<_TrackPlaylistSheet> {
                               playlist.coverAsset ??
                               MusicAssets.playlistCustom01,
                           selected: selected,
-                          onTap: () {
-                            setState(() {
-                              if (selected) {
-                                _selectedIds.remove(playlist.id);
-                              } else {
-                                _selectedIds.add(playlist.id);
-                              }
-                            });
-                          },
+                          onTap: isSeedTrack
+                              ? null
+                              : () {
+                                  setState(() {
+                                    if (selected) {
+                                      _selectedIds.remove(playlist.id);
+                                    } else {
+                                      _selectedIds.add(playlist.id);
+                                    }
+                                  });
+                                },
                         );
                       },
                     ),
@@ -872,12 +878,14 @@ class _TrackPlaylistSheetState extends ConsumerState<_TrackPlaylistSheet> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: FilledButton(
-                    onPressed: _save,
+                    onPressed: isSeedTrack
+                        ? () => Navigator.of(context).pop()
+                        : _save,
                     style: FilledButton.styleFrom(
                       backgroundColor: colors.primary,
                       foregroundColor: colors.textOnAccent,
                     ),
-                    child: const Text('保存'),
+                    child: Text(isSeedTrack ? '\u77e5\u9053\u4e86' : '保存'),
                   ),
                 ),
               ],

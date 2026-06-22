@@ -138,25 +138,131 @@ void main() {
     expect(clearedTrack!.sceneOverride, null);
   });
 
-  test('seeds default study playlist once with built-in noise tracks', () async {
-    final firstPlaylistId = await repo.ensureDefaultStudyPlaylist();
-    final secondPlaylistId = await repo.ensureDefaultStudyPlaylist();
+  test(
+    'seeds default focus noise playlist once with built-in tracks',
+    () async {
+      final firstPlaylistId = await repo.ensureDefaultFocusNoisePlaylist();
+      final secondPlaylistId = await repo.ensureDefaultFocusNoisePlaylist();
+
+      final playlists = await repo.getPlaylists();
+      final tracks = await repo.getTracks();
+      final memberships = await repo.getPlaylistTracks();
+      final studyPlaylist = playlists.singleWhere(
+        (playlist) => playlist.name == DefaultMusicSeeds.playlistName,
+      );
+      final seedTracks = tracks.where(DefaultMusicSeeds.isSeedTrack).toList();
+
+      expect(secondPlaylistId, firstPlaylistId);
+      expect(studyPlaylist.id, firstPlaylistId);
+      expect(studyPlaylist.coverAsset, DefaultMusicSeeds.playlistCover);
+      expect(seedTracks, hasLength(DefaultMusicSeeds.seeds.length));
+      expect(
+        memberships.where((item) => item.playlistId == studyPlaylist.id),
+        hasLength(DefaultMusicSeeds.seeds.length),
+      );
+    },
+  );
+
+  test('renames legacy study playlist to focus noise playlist', () async {
+    final legacyId = await repo.createPlaylist(
+      name: DefaultMusicSeeds.legacyPlaylistName,
+      coverAsset: MusicAssets.playlistCustom01,
+    );
+
+    final playlistId = await repo.ensureDefaultFocusNoisePlaylist();
+    final playlists = await repo.getPlaylists();
+    final playlist = playlists.singleWhere((item) => item.id == playlistId);
+
+    expect(playlistId, legacyId);
+    expect(playlist.name, DefaultMusicSeeds.playlistName);
+    expect(playlist.coverAsset, DefaultMusicSeeds.playlistCover);
+  });
+
+  test('does not delete default playlist or built-in noise tracks', () async {
+    final playlistId = await repo.ensureDefaultFocusNoisePlaylist();
+    final seedTrack = (await repo.getTracks()).firstWhere(
+      DefaultMusicSeeds.isSeedTrack,
+    );
+
+    await repo.deleteTrack(seedTrack.id);
+    await repo.deletePlaylist(playlistId);
 
     final playlists = await repo.getPlaylists();
     final tracks = await repo.getTracks();
-    final memberships = await repo.getPlaylistTracks();
-    final studyPlaylist = playlists.singleWhere(
-      (playlist) => playlist.name == DefaultMusicSeeds.playlistName,
-    );
-    final seedTracks = tracks.where(DefaultMusicSeeds.isSeedTrack).toList();
 
-    expect(secondPlaylistId, firstPlaylistId);
-    expect(studyPlaylist.id, firstPlaylistId);
-    expect(studyPlaylist.coverAsset, DefaultMusicSeeds.playlistCover);
-    expect(seedTracks, hasLength(DefaultMusicSeeds.seeds.length));
     expect(
-      memberships.where((item) => item.playlistId == studyPlaylist.id),
-      hasLength(DefaultMusicSeeds.seeds.length),
+      playlists.where((playlist) => playlist.id == playlistId),
+      hasLength(1),
+    );
+    expect(tracks.where((track) => track.id == seedTrack.id), hasLength(1));
+  });
+
+  test('keeps built-in noise tracks only in the default playlist', () async {
+    final playlistId = await repo.ensureDefaultFocusNoisePlaylist();
+    final seedTrack = (await repo.getTracks()).firstWhere(
+      DefaultMusicSeeds.isSeedTrack,
+    );
+    final customPlaylist = await repo.createPlaylist(
+      name: 'Custom',
+      coverAsset: MusicAssets.playlistCustom01,
+    );
+
+    await repo.removeTrackFromPlaylist(
+      playlistId: playlistId,
+      trackId: seedTrack.id,
+    );
+    await repo.setTrackPlaylists(
+      trackId: seedTrack.id,
+      playlistIds: [customPlaylist],
+    );
+
+    final memberships = await repo.getPlaylistTracks();
+    final seedMemberships = memberships
+        .where((item) => item.trackId == seedTrack.id)
+        .map((item) => item.playlistId)
+        .toSet();
+
+    expect(seedMemberships, {playlistId});
+    expect(seedMemberships, isNot(contains(customPlaylist)));
+  });
+
+  test('tolerates duplicate legacy built-in noise tracks', () async {
+    final seed = DefaultMusicSeeds.seeds.first;
+    final now = DateTime.now().millisecondsSinceEpoch;
+    await repo.insertTrack(
+      MusicTracksCompanion.insert(
+        title: '${seed.title} A',
+        filePath: seed.filePath,
+        originalPath: Value(seed.originalPath),
+        coverAsset: Value(seed.coverAsset),
+        sceneOverride: Value(seed.sceneOverride),
+        createdAt: now,
+        updatedAt: now,
+      ),
+    );
+    await repo.insertTrack(
+      MusicTracksCompanion.insert(
+        title: '${seed.title} B',
+        filePath: seed.filePath,
+        originalPath: Value(seed.originalPath),
+        coverAsset: Value(seed.coverAsset),
+        sceneOverride: Value(seed.sceneOverride),
+        createdAt: now + 1,
+        updatedAt: now + 1,
+      ),
+    );
+
+    final playlistId = await repo.ensureDefaultFocusNoisePlaylist();
+    final memberships = await repo.getPlaylistTracks();
+    final seedTrack = await repo.getTrackByOriginalPath(seed.originalPath);
+
+    expect(seedTrack, isNotNull);
+    expect(
+      memberships.where(
+        (item) =>
+            item.playlistId == playlistId && item.trackId == seedTrack!.id,
+      ),
+      hasLength(1),
     );
   });
 }

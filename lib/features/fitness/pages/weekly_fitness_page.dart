@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -236,7 +236,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
             ).millisecondsSinceEpoch;
 
             final weekRecords = records
-                .where((r) => r.createdAt >= weekStartMs)
+                .where((r) => r.startTime >= weekStartMs)
                 .toList();
 
             if (weekRecords.isEmpty) {

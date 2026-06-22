@@ -1,4 +1,4 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/sort_button.dart';
 
 import '../../core/constants/fitness_constants.dart';
@@ -198,7 +198,7 @@ final fitnessChartDataProvider = FutureProvider.family<List<FitnessChartData>, i
   final Map<String, FitnessChartData> dateMap = {};
 
   for (final r in records) {
-    final date = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
+    final date = DateTime.fromMillisecondsSinceEpoch(r.startTime);
     final key =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
 

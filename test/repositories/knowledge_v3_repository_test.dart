@@ -40,6 +40,78 @@ void main() {
     expect(hits.single.excerpt, contains('CPU 调度'));
   });
 
+  test('getOrCreateSpaceSession reuses the latest space session', () async {
+    final space = await repo.ensureDefaultSpace();
+
+    final first = await repo.getOrCreateSpaceSession(space.id);
+    final second = await repo.getOrCreateSpaceSession(space.id);
+
+    expect(second.id, first.id);
+    expect(second.spaceId, space.id);
+    expect(second.title, '甜甜问答');
+  });
+
+  test(
+    'updateSessionMaterials stores non-empty and empty selections',
+    () async {
+      final space = await repo.ensureDefaultSpace();
+      final firstMaterialId = await repo.importMaterial(
+        spaceId: space.id,
+        title: '资料 A',
+        content: 'A 内容',
+      );
+      final secondMaterialId = await repo.importMaterial(
+        spaceId: space.id,
+        title: '资料 B',
+        content: 'B 内容',
+      );
+      final session = await repo.getOrCreateSpaceSession(space.id);
+
+      await repo.updateSessionMaterials(session.id, [
+        firstMaterialId,
+        secondMaterialId,
+      ]);
+      final withMaterials = await repo.getQaSession(session.id);
+      expect(
+        withMaterials!.referencedMaterialIdsJson,
+        '[$firstMaterialId,$secondMaterialId]',
+      );
+
+      await repo.updateSessionMaterials(session.id, const []);
+      final emptyMaterials = await repo.getQaSession(session.id);
+      expect(emptyMaterials!.referencedMaterialIdsJson, isNull);
+    },
+  );
+
+  test('addQaMessage supports empty and selected sources', () async {
+    final space = await repo.ensureDefaultSpace();
+    final materialId = await repo.importMaterial(
+      spaceId: space.id,
+      title: '行政法笔记',
+      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+    );
+    final material = await repo.getMaterial(materialId);
+    final session = await repo.getOrCreateSpaceSession(space.id);
+
+    await repo.addQaMessage(
+      sessionId: session.id,
+      role: 'user',
+      content: '不带资料的问题',
+    );
+    await repo.addQaMessage(
+      sessionId: session.id,
+      role: 'user',
+      content: '带资料的问题',
+      sources: [material!],
+    );
+
+    final messages = await repo.getQaMessages(session.id);
+    expect(messages, hasLength(2));
+    expect(messages[0].sourcesJson, isNull);
+    expect(messages[1].sourcesJson, contains('"id":$materialId'));
+    expect(messages[1].sourcesJson, contains('"title":"行政法笔记"'));
+  });
+
   test('reviewCard ratings create meaningfully different schedules', () async {
     final space = await repo.ensureDefaultSpace();
     final ids = <int>[];
@@ -163,4 +235,47 @@ void main() {
       expect(messages[2].savedAsCard, isTrue);
     },
   );
+
+  test('archiveSpace hides space from default listing', () async {
+    final space = await repo.ensureDefaultSpace();
+    // Create a second space so getSpaces doesn't auto-create a new default
+    await repo.createSpace(name: '备用空间');
+    await repo.archiveSpace(space.id);
+
+    final visible = await repo.getSpaces();
+    expect(visible, hasLength(1));
+    expect(visible.first.name, '备用空间');
+
+    final all = await repo.getSpaces(includeArchived: true);
+    expect(all, hasLength(2));
+    expect(all.any((s) => s.id == space.id && s.isArchived), isTrue);
+  });
+
+  test('archiveMaterial hides material from space listing', () async {
+    final space = await repo.ensureDefaultSpace();
+    final id = await repo.importMaterial(
+      spaceId: space.id,
+      title: '资料',
+      content: '内容',
+    );
+
+    await repo.archiveMaterial(id);
+
+    final materials = await repo.getMaterials(space.id);
+    expect(materials, isEmpty);
+  });
+
+  test('archiveCard hides card from space listing', () async {
+    final space = await repo.ensureDefaultSpace();
+    final id = await repo.createCard(
+      spaceId: space.id,
+      question: '问题',
+      answer: '答案',
+    );
+
+    await repo.archiveCard(id);
+
+    final cards = await repo.getCards(space.id);
+    expect(cards, isEmpty);
+  });
 }

@@ -52,3 +52,16 @@ android/key.properties
 android/app/release-keystore.jks
 android/app/*.jks
 android/app/*.keystore
+# Temp/backup files
+*.bak
+*.bak2
+fix_colors*.py
+*.json.bak
+*.dart.bak
+
+# Tool caches (parent directory)
+.cache/
+.opencode/
+.pub-cache/
+.tool_home/
+.agents/

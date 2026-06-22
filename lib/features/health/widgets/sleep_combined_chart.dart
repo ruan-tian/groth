@@ -244,6 +244,8 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                             touchTooltipData: BarTouchTooltipData(
                               getTooltipColor: (_) => widget.durationColor,
                               tooltipBorderRadius: BorderRadius.circular(8),
+                              fitInsideHorizontally: true,
+                              fitInsideVertically: true,
                               getTooltipItem:
                                   (group, groupIndex, rod, rodIndex) {
                                     final d = data[group.x];
@@ -351,6 +353,26 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
                                 FlLine(color: colors.divider, strokeWidth: 0.5),
                           ),
                           borderData: FlBorderData(show: false),
+                          extraLinesData: ExtraLinesData(
+                            horizontalLines: [
+                              HorizontalLine(
+                                y: widget.goalHours.toDouble(),
+                                color: widget.durationColor.withValues(alpha: 0.4),
+                                strokeWidth: 1.5,
+                                dashArray: const [6, 4],
+                                label: HorizontalLineLabel(
+                                  show: true,
+                                  alignment: Alignment.topRight,
+                                  labelResolver: (_) => '${widget.goalHours}h',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w500,
+                                    color: widget.durationColor,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                           barGroups: List.generate(n, (i) {
                             final dur =
                                 (data[i]['duration'] as num?)?.toDouble() ?? 0;

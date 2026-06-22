@@ -600,16 +600,17 @@ class _TrackTile extends ConsumerWidget {
                     showTrackPlaylistSheet(parentContext, ref, track);
                   },
                 ),
-                _buildOption(
-                  context,
-                  icon: Icons.delete_rounded,
-                  label: '删除',
-                  color: colors.danger,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _showDeleteConfirmation(context, ref);
-                  },
-                ),
+                if (!DefaultMusicSeeds.isSeedTrack(track))
+                  _buildOption(
+                    context,
+                    icon: Icons.delete_rounded,
+                    label: '删除',
+                    color: colors.danger,
+                    onTap: () {
+                      Navigator.pop(context);
+                      _showDeleteConfirmation(context, ref);
+                    },
+                  ),
                 _buildOption(
                   context,
                   icon: Icons.close_rounded,

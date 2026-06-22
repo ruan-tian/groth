@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/error_retry_widget.dart';
 import '../../../features/fitness/utils/fitness_timer_assets.dart';
 
@@ -487,7 +488,7 @@ class _SettingsAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final path = avatarPath;
+    final path = normalizeUserAvatarPath(avatarPath);
 
     return Container(
       width: 72,

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:math' show Random;
 
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:just_audio/just_audio.dart' as audio;
 import 'package:path/path.dart' as p;
@@ -16,6 +17,7 @@ import '../models/music_lyrics.dart';
 import '../services/music_import_service.dart';
 import '../services/music_lyrics_service.dart';
 import '../services/music_player_service.dart';
+import '../utils/default_music_seed.dart';
 import '../utils/music_assets.dart';
 import '../utils/music_scene.dart';
 
@@ -56,6 +58,8 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   Timer? _sleepTimer;
   bool _disposed = false;
   bool _handlingCompletion = false;
+  int _bootstrapRetryCount = 0;
+  Future<void>? _bootstrapFuture;
 
   MusicRepository get _musicRepo => _ref.read(musicRepositoryProvider);
   SettingRepository get _settings => _ref.read(settingRepositoryProvider);
@@ -64,9 +68,22 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   MusicPlayerService get _player => _ref.read(musicPlayerServiceProvider);
   MusicLyricsService get _lyrics => _ref.read(musicLyricsServiceProvider);
 
-  Future<void> _bootstrap() async {
+  Future<void> _bootstrap() {
+    final running = _bootstrapFuture;
+    if (running != null) return running;
+    final future = _runBootstrap();
+    _bootstrapFuture = future;
+    future.whenComplete(() {
+      if (identical(_bootstrapFuture, future)) {
+        _bootstrapFuture = null;
+      }
+    });
+    return future;
+  }
+
+  Future<void> _runBootstrap() async {
     try {
-      await _musicRepo.ensureDefaultStudyPlaylist();
+      await _musicRepo.ensureDefaultFocusNoisePlaylist();
       final tracks = await _resolveDefaultCovers(await _musicRepo.getTracks());
       final playlists = await _resolveLegacyPlaylistCovers(
         await _musicRepo.getPlaylists(),
@@ -118,9 +135,31 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
         ),
       );
       await _loadLyricsForCurrentTrack();
+      _bootstrapRetryCount = 0;
     } catch (error) {
-      _setState(state.copyWith(errorMessage: '音乐初始化失败，请重试'));
+      debugPrint('Music bootstrap failed: $error');
+      if (_shouldRetryBootstrap(error) && _bootstrapRetryCount < 3) {
+        _bootstrapRetryCount++;
+        final delay = Duration(milliseconds: 220 * _bootstrapRetryCount);
+        Timer(delay, () {
+          if (!_disposed) unawaited(_bootstrap());
+        });
+        return;
+      }
+      _setState(
+        state.copyWith(
+          errorMessage:
+              '\u97f3\u4e50\u521d\u59cb\u5316\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
+        ),
+      );
     }
+  }
+
+  bool _shouldRetryBootstrap(Object error) {
+    final message = error.toString().toLowerCase();
+    return message.contains('database is locked') ||
+        message.contains('sqliteexception(5') ||
+        message.contains('code 5');
   }
 
   void _listenToPlayer() {
@@ -259,7 +298,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       loader: _importService.pickAndCopyTracks,
       playlistIds: playlistIds,
       sceneOverride: sceneOverride,
-      failureMessage: '导入音乐失败，请重试',
+      failureMessage: '导入音乐失败，重试',
     );
   }
 
@@ -271,7 +310,8 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       loader: _importService.pickAndCopyDirectory,
       playlistIds: playlistIds,
       sceneOverride: sceneOverride,
-      failureMessage: '扫描文件夹失败，请重试',
+      failureMessage:
+          '\u626b\u63cf\u6587\u4ef6\u5939\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
     );
   }
 
@@ -444,7 +484,12 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
     }
     final track = state.currentTrack;
     if (track == null) {
-      _setState(state.copyWith(errorMessage: '先导入一首本地音乐'));
+      _setState(
+        state.copyWith(
+          errorMessage:
+              '\u5148\u5bfc\u5165\u4e00\u9996\u672c\u5730\u97f3\u4e50',
+        ),
+      );
       return;
     }
     await playTrack(track);
@@ -491,7 +536,10 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       if (!MusicPlayerService.isAssetPath(track.filePath)) {
         final file = File(track.filePath);
         if (!await file.exists()) {
-          throw FileSystemException('音乐文件不存在', track.filePath);
+          throw FileSystemException(
+            '\u97f3\u4e50\u6587\u4ef6\u4e0d\u5b58\u5728',
+            track.filePath,
+          );
         }
       }
       final duration = await _player.playFile(
@@ -519,7 +567,7 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
         state.copyWith(
           isPlaying: false,
           isLoading: false,
-          errorMessage: '播放失败，请重试',
+          errorMessage: '撔失败，重试',
         ),
       );
     }
@@ -553,22 +601,31 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
     try {
       // 找到要删除的歌曲
       final track = state.tracks.firstWhere((t) => t.id == trackId);
-      // 从数据库删除记录
+      if (DefaultMusicSeeds.isSeedTrack(track)) {
+        _setState(
+          state.copyWith(
+            errorMessage:
+                '\u5185\u7f6e\u767d\u566a\u97f3\u4e0d\u80fd\u5220\u9664',
+          ),
+        );
+        return;
+      }
+      // 从数捺删除记录
       await _musicRepo.deleteTrack(trackId);
-      // 删除文件（内置资源不删除，只移除数据库记录）
+      // 删除文件（内罵源不删除，只移除数据库录）
       if (!MusicPlayerService.isAssetPath(track.filePath)) {
         final file = File(track.filePath);
         if (await file.exists()) {
           await file.delete();
         }
       }
-      // 如果删除的是当前播放歌曲，切换到下一首
+      // 如果删除的是当前撔歌曲，切换到下一?
       if (state.currentTrackId == trackId) {
         final nextTrack = _trackByOffset(1);
         if (nextTrack != null && nextTrack.id != trackId) {
           await playTrack(nextTrack);
         } else {
-          // 没有下一首，停止播放
+          // 娌℃湁涓嬩竴棣栵紝鍋滄鎾斁
           await _player.stop();
           _setState(
             state.copyWith(
@@ -582,21 +639,31 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       // 刷新列表
       await refreshTracks();
     } catch (error) {
-      _setState(state.copyWith(errorMessage: '删除歌曲失败，请重试'));
+      _setState(state.copyWith(errorMessage: '删除歌曲失败，重试'));
     }
   }
 
   Future<void> removeFromList(int trackId) async {
     try {
-      // 只从数据库删除记录，不删除文件
+      final track = state.tracks.firstWhere((t) => t.id == trackId);
+      if (DefaultMusicSeeds.isSeedTrack(track)) {
+        _setState(
+          state.copyWith(
+            errorMessage:
+                '\u5185\u7f6e\u767d\u566a\u97f3\u4e0d\u80fd\u79fb\u9664',
+          ),
+        );
+        return;
+      }
+      // Only remove the database record; keep the source file.
       await _musicRepo.deleteTrack(trackId);
-      // 如果删除的是当前播放歌曲，切换到下一首
+      // 如果删除的是当前撔歌曲，切换到下一?
       if (state.currentTrackId == trackId) {
         final nextTrack = _trackByOffset(1);
         if (nextTrack != null && nextTrack.id != trackId) {
           await playTrack(nextTrack);
         } else {
-          // 没有下一首，停止播放
+          // 娌℃湁涓嬩竴棣栵紝鍋滄鎾斁
           await _player.stop();
           _setState(
             state.copyWith(
@@ -610,7 +677,12 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
       // 刷新列表
       await refreshTracks();
     } catch (error) {
-      _setState(state.copyWith(errorMessage: '从列表移除失败，请重试'));
+      _setState(
+        state.copyWith(
+          errorMessage:
+              '\u4ece\u5217\u8868\u79fb\u9664\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
+        ),
+      );
     }
   }
 

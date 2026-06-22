@@ -1,6 +1,6 @@
 part of '../study_page.dart';
 
-// 鈹€鈹€ 鍥捐〃鐢ㄦ牸寮忓寲锛?0m / 1.5h 鈹€鈹€
+//  图表用格式化?0m / 1.5h 
 String _formatMinutesCompact(int minutes) {
   if (minutes <= 0) return '0m';
   if (minutes < 60) return '${minutes}m';
@@ -10,7 +10,7 @@ String _formatMinutesCompact(int minutes) {
 }
 
 // =============================================================================
-// 鏌辩姸鍥炬暟鎹ā鍨?
+// 柱状图数据模型
 // =============================================================================
 
 class _BarData {
@@ -38,7 +38,7 @@ class _BarData {
 }
 
 // =============================================================================
-// 瀛︿範瓒嬪娍鏌辩姸鍥撅紙fl_chart锛屾敮鎸佸懆/鏈?骞达級
+// 学习趋势柱状图（fl_chart，支持周/?年）
 // =============================================================================
 
 class _StudyBarChart extends StatefulWidget {
@@ -102,7 +102,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
       ),
       child: Column(
         children: [
-          // 鈹€鈹€ 椤堕儴缁熻 鈹€鈹€
+          //  顶部统 
           Row(
             children: [
               _buildStat(
@@ -123,7 +123,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
             ],
           ),
           const SizedBox(height: AppSpacing.lg),
-          // 鈹€鈹€ 鏌辩姸鍥?+ 椤堕儴鏍囩 鈹€鈹€
+          //  柱状?+ 顶部标 
           ClipRect(
             child: SizedBox(
               height: 240,
@@ -149,7 +149,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // 鈹€鈹€ 瑙︽懜浜や簰 鈹€鈹€
+  //  触摸交互 
   BarTouchData _buildTouchData() {
     final minutesList = widget.stats.map((s) => s.value).toList();
     final scale = buildDurationChartScale(minutesList);
@@ -160,6 +160,8 @@ class _StudyBarChartState extends State<_StudyBarChart> {
         getTooltipColor: (_) => _colors.surfaceVariant,
         tooltipBorderRadius: BorderRadius.circular(8),
         tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        fitInsideHorizontally: true,
+        fitInsideVertically: true,
         getTooltipItem: (group, groupIndex, rod, rodIndex) {
           final bar = widget.stats[group.x];
           final title = bar.label;
@@ -207,7 +209,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // 鈹€鈹€ 鍧愭爣杞存爣棰?鈹€鈹€
+  //  坐标轴标?
   FlTitlesData _buildTitles(DurationChartScale scale, double yMax) {
     return FlTitlesData(
       show: true,
@@ -242,7 +244,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
           },
         ),
       ),
-      // 鈹€鈹€ 椤堕儴鏁板€兼爣绛?鈹€鈹€
+      //  顶部数标?
       topTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
@@ -267,7 +269,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // 鈹€鈹€ 缃戞牸绾?鈹€鈹€
+  //  网格?
   FlGridData _buildGrid(DurationChartScale scale) {
     return FlGridData(
       show: true,
@@ -281,7 +283,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // 鈹€鈹€ 鍗曚釜鏌卞瓙 鈹€鈹€
+  //  单个柱子 
   BarChartGroupData _buildBarGroup(int index, double yMax) {
     final bar = widget.stats[index];
     final isTouched = index == _touchedIndex;
@@ -311,7 +313,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // 鈹€鈹€ 搴曢儴鏍囩锛堝弻琛岋細涓绘爣绛?+ 鏃ユ湡/鑼冨洿锛夆攢鈹€
+  //  底部标（双行：主标?+ 日期/范围）─
   Widget _buildBottomLabel(int index) {
     final bar = widget.stats[index];
     final highlighted = _isHighlighted(index);
@@ -375,7 +377,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     }
   }
 
-  // 鈹€鈹€ 鍥句緥 鈹€鈹€
+  //  图例 
   Widget _buildLegend() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -397,7 +399,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  // 鈹€鈹€ 杈呭姪鏂规硶 鈹€鈹€
+  //  辅助方法 
   Widget _buildStat(String label, String value) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,7 +447,7 @@ class _StudyBarChartState extends State<_StudyBarChart> {
 }
 
 // =============================================================================
-// 鏌遍《鏁板€兼皵娉?
+// 柱顶数值气泡
 // =============================================================================
 
 class _ValueBubble extends StatelessWidget {
@@ -497,7 +499,7 @@ class _ValueBubble extends StatelessWidget {
 }
 
 // =============================================================================
-// 蹇嵎鎿嶄綔鍗＄墖
+// 忍操作卡片
 // =============================================================================
 
 class _QuickActionCard extends StatelessWidget {
@@ -637,7 +639,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // 鈹€鈹€ 宸︿晶锛氶ゼ鍥?鈹€鈹€
+          //  左侧：饼?
           SizedBox(
             width: 160,
             height: 160,
@@ -699,7 +701,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
 
           const SizedBox(width: 20),
 
-          // 鈹€鈹€ 鍙充晶锛氬浘渚嬪垪琛?鈹€鈹€
+          //  右侧：图例列?
           Expanded(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -748,7 +750,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        // 绉戠洰鍚?
+                        // 科目名
                         SizedBox(
                           width: 36,
                           child: Text(

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../../../features/fitness/utils/fitness_timer_assets.dart';
 import '../../../shared/widgets/common/error_retry_widget.dart';
 
@@ -27,6 +28,7 @@ class ProfileAvatarSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final validAvatarPath = normalizeUserAvatarPath(avatarPath);
     return Column(
       children: [
         // ── 头像（点击可更换）──
@@ -57,11 +59,11 @@ class ProfileAvatarSection extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: avatarPath != null
+                    child: validAvatarPath != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(28),
                             child: Image.file(
-                              File(avatarPath!),
+                              File(validAvatarPath),
                               fit: BoxFit.cover,
                               errorBuilder: (_, _, _) => ClipRRect(
                                 borderRadius: BorderRadius.circular(28),

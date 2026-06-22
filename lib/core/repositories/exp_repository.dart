@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+﻿import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 
@@ -52,6 +52,21 @@ class ExpRepository {
       ..addColumns([expSum])
       ..where(
         _db.growthExpLogs.createdAt.isBiggerOrEqualValue(range.$1) &
+            _db.growthExpLogs.createdAt.isSmallerOrEqualValue(range.$2),
+      );
+    final result = await query.getSingle();
+    return result.read(expSum) ?? 0;
+  }
+
+  /// 获取指定日期、指定来源类型的经验值总和。
+  Future<int> getTotalExpBySourceAndDate(String sourceType, DateTime date) async {
+    final range = _dayRange(date);
+    final expSum = _db.growthExpLogs.expValue.sum();
+    final query = _db.selectOnly(_db.growthExpLogs)
+      ..addColumns([expSum])
+      ..where(
+        _db.growthExpLogs.sourceType.equals(sourceType) &
+            _db.growthExpLogs.createdAt.isBiggerOrEqualValue(range.$1) &
             _db.growthExpLogs.createdAt.isSmallerOrEqualValue(range.$2),
       );
     final result = await query.getSingle();

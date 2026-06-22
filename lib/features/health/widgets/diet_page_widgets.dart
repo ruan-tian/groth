@@ -212,6 +212,8 @@ class _CalorieWaterChartState extends State<_CalorieWaterChart> {
           lineTouchData: LineTouchData(
             touchSpotThreshold: 20,
             handleBuiltInTouches: true,
+            getTouchLineStart: (barData, spotIndex) => 0,
+            getTouchLineEnd: (barData, spotIndex) => double.infinity,
             touchCallback: (event, response) {
               setState(() {
                 if (event is FlPanEndEvent || event is FlLongPressEnd) {

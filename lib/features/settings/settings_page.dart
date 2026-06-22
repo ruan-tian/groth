@@ -6,11 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
+import '../../core/services/exp_service.dart';
 import '../../shared/providers/dashboard_provider.dart'
     hide settingRepositoryProvider;
 import '../../shared/providers/repository_providers.dart';
 import '../../shared/providers/pet_diary_provider.dart';
 import '../../shared/providers/settings_provider.dart';
+import '../../shared/widgets/common/growth_confirm_dialog.dart';
 import 'widgets/settings_page_sections.dart';
 
 part 'widgets/settings_page_sheets.dart';
@@ -202,11 +204,11 @@ class SettingsPage extends ConsumerWidget {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
         context,
-        title: '🤖 开启 AI 自动分析',
-        content:
-            '开启后，每次打开 app 会自动分析你的学习、健身、饮食、睡眠数据。\n\n'
-            '⚠️ 数据将会发送到你配置的 AI 服务商服务器（如 DeepSeek、OpenAI 等）。\n\n'
-            '📝 日记内容默认不会被上传。如需上传日记，请在开启后单独设置。',
+        title: '开启 AI 自动分析',
+        content: '开启后，每次打开 app 会自动分析你的学习、健身、饮食、睡眠数据。',
+        privacyNotice:
+            '数据将会发送到你配置的 AI 服务商服务器（如 DeepSeek、OpenAI 等）。\n\n日记内容默认不会被上传。如需上传日记，请在开启后单独设置。',
+        image: 'assets/images/dialogs/ai_privacy.webp',
         onConfirm: () async {
           ref.read(autoAiAnalysisProvider.notifier).state = true;
           await ref
@@ -233,11 +235,11 @@ class SettingsPage extends ConsumerWidget {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
         context,
-        title: '📔 开启日记上传分析',
-        content:
-            '开启后，AI 会分析你的日记内容，为你提供更个性化的成长建议。\n\n'
-            '⚠️ 日记内容将会发送到你配置的 AI 服务商服务器。请确保你信任该服务商。\n\n'
-            '💡 建议：不要在日记中记录密码、银行卡等敏感信息。',
+        title: '开启日记上传分析',
+        content: '开启后，AI 会分析你的日记内容，为你提供更个性化的成长建议。',
+        privacyNotice:
+            '日记内容将会发送到你配置的 AI 服务商服务器。请确保你信任该服务商。\n\n建议：不要在日记中记录密码、银行卡等敏感信息。',
+        image: 'assets/images/dialogs/journal_writing.webp',
         onConfirm: () async {
           ref.read(journalUploadProvider.notifier).state = true;
           await ref
@@ -259,10 +261,10 @@ class SettingsPage extends ConsumerWidget {
     _showPrivacyDialog(
       context,
       title: '开启甜甜自动写日记',
-      content:
-          '开启后，每天早上 6 点后首次打开 App 时，甜甜会检查今天是否已有小日记。\n\n'
-          '只会发送昨天的本地统计摘要，例如学习时长、健身时长、睡眠/饮食摘要、经验变化、任务完成情况、天气和日期。\n\n'
-          '不会发送你的完整日记正文，也不会把小猫日记计入成长经验。',
+      content: '开启后，每天早上 6 点后首次打开 App 时，甜甜会检查今天是否已有小日记。',
+      privacyNotice:
+          '只会发送昨天的本地统计摘要，例如学习时长、健身时长、睡眠/饮食摘要、经验变化、任务完成情况、天气和日期。\n\n不会发送你的完整日记正文，也不会把小猫日记计入成长经验。',
+      image: 'assets/images/dialogs/common_happy.webp',
       onConfirm: () async {
         final service = ref.read(petDiaryServiceProvider);
         await service.markPrivacyConfirmed();
@@ -277,42 +279,19 @@ class SettingsPage extends ConsumerWidget {
     required String title,
     required String content,
     required VoidCallback onConfirm,
+    String? image,
+    String? privacyNotice,
   }) {
-    showDialog(
+    GrowthConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        content: Text(
-          content,
-          style: const TextStyle(fontSize: 14, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              '取消',
-              style: TextStyle(color: context.growthColors.textSecondary),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              onConfirm();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: context.growthColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('确认开启'),
-          ),
-        ],
-      ),
+      image: image ?? 'assets/images/dialogs/ai_privacy.webp',
+      title: title,
+      message: content,
+      privacyNotice: privacyNotice ?? '数据将会发送到你配置的 AI 服务商服务器，请确保你信任该服务商。',
+      primaryText: '确认开启',
+      secondaryText: '取消',
+      onPrimary: onConfirm,
+      mode: GrowthConfirmMode.normal,
     );
   }
 
@@ -626,7 +605,7 @@ class SettingsPage extends ConsumerWidget {
         }
       }
       // 更新全局 Provider
-      if (g.key == 'daily_sleep_goal') {
+      if (g.key == 'sleep_goal_hours') {
         ref.read(sleepGoalProvider.notifier).state = g.value;
         await repo.setSetting('sleep_goal_hours', g.value.toString());
       }
@@ -642,50 +621,15 @@ class SettingsPage extends ConsumerWidget {
   }
 
   void _showAboutDialog(BuildContext context) {
-    showDialog(
+    GrowthConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: context.growthColors.softOrange,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text('🐱', style: TextStyle(fontSize: 24)),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Growth OS',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: context.growthColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Growth OS 是一款陪伴你持续成长的操作系统。\n\n通过数据记录、智能分析与温暖陪伴，帮你把每一天都活成进步的版本。',
-          style: TextStyle(
-            fontSize: 14,
-            color: context.growthColors.textSecondary,
-            height: 1.5,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              '确定',
-              style: TextStyle(color: context.growthColors.primary),
-            ),
-          ),
-        ],
-      ),
+      image: 'assets/images/app_icon.webp',
+      title: 'Growth OS',
+      subtitle: '版本 0.1.0',
+      message: 'Growth OS 是一款陪伴你持续成长的操作系统。\n\n通过数据记录、智能分析与温暖陪伴，帮你把每一天都活成进步的版本。',
+      primaryText: '确定',
+      onPrimary: () {},
+      mode: GrowthConfirmMode.info,
     );
   }
 

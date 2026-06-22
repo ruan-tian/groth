@@ -64,70 +64,73 @@ class AppDatabase extends _$AppDatabase {
   }
 
   @override
-  int get schemaVersion => 28;
+  int get schemaVersion => 30;
 
   @override
   MigrationStrategy get migration {
     return MigrationStrategy(
       beforeOpen: (details) async {
+        await customStatement('PRAGMA busy_timeout = 5000');
+        await customStatement('PRAGMA journal_mode = WAL');
+        await customStatement('PRAGMA synchronous = NORMAL');
         await customStatement('PRAGMA foreign_keys = ON');
         // Index creation moved to background - see ensureIndexesReady()
       },
       onUpgrade: (m, from, to) async {
         if (from < 2) {
-          // 娣诲姞姣忔棩浠诲姟锟?
+          // 添加每日任务表
           await m.createTable(dailyTasks);
-          // 娣诲姞浠诲姟妯℃澘锟?
+          // 添加任务模板表
           await m.createTable(taskTemplates);
         }
         if (from < 3) {
-          // 娣诲姞楗璁板綍锟?
+          // 添加饮食记录表
           await m.createTable(dietRecords);
-          // 娣诲姞鐫＄湢璁板綍锟?
+          // 添加睡眠记录表
           await m.createTable(sleepRecords);
         }
         if (from < 4) {
-          // 娣诲姞瀹犵墿锟?
+          // 添加宠物表
           await m.createTable(petProfiles);
           await m.createTable(petStates);
         }
         if (from < 5) {
-          // 娣诲姞鏃ヨ闄勪欢锟?
+          // 添加日记附件表
           await m.createTable(journalAssets);
-          // 涓烘棩璁拌〃娣诲姞 Markdown 鏀寔锟?
+          // 为日记表添加 Markdown 支持
           await m.addColumn(dailyJournals, dailyJournals.markdownContent);
           await m.addColumn(dailyJournals, dailyJournals.plainText);
         }
         if (from < 6) {
-          // 娣诲姞瀵屾枃鏈紪杈戝櫒鏀寔锟?
+          // 添加富文本编辑器支持
           await m.addColumn(dailyJournals, dailyJournals.contentType);
           await m.addColumn(dailyJournals, dailyJournals.quillDeltaJson);
         }
         if (from < 7) {
-          // 娣诲姞瀹犵墿娑堟伅锟?
+          // 添加宠物消息表
           await m.createTable(petMessages);
         }
         if (from < 9) {
-          // 娣诲姞澶╂皵璁板綍锟?
+          // 添加天气记录表
           await m.createTable(dailyWeatherTable);
         }
         if (from < 10) {
-          // 娣诲姞 API 閰嶇疆锟?
+          // 添加 API 配置表
           await m.createTable(apiConfigs);
         }
         if (from < 11) {
-          // 娣诲姞澶╂皵鍩庡競鎼滅储鍘嗗彶锟?
+          // 添加天气城市搜索历史表
           await m.createTable(weatherSearchHistoryTable);
         }
         if (from < 13) {
-          // 涓烘瘡鏃ヤ换鍔¤〃娣诲姞浼樺厛绾у垪
+          // 为每日任务表添加优先级列
           await m.addColumn(dailyTasks, dailyTasks.priority);
         }
         if (from < 14) {
           await m.createTable(petDiaries);
         }
         if (from < 15) {
-          // 涓轰笓娉ㄨ褰曡〃娣诲姞杞鍜屽垎缁勫垪
+          // 为专注记录表添加轮次和分组列
           await m.addColumn(focusSessions, focusSessions.roundIndex);
           await m.addColumn(focusSessions, focusSessions.sessionGroupId);
         }
@@ -142,7 +145,7 @@ class AppDatabase extends _$AppDatabase {
           await m.createTable(musicTracks);
         }
         if (from < 19) {
-          // 涓哄仴韬褰曡〃娣诲姞杩愬姩绫诲瀷锟?
+          // 为健身记录表添加运动类型列
           await m.addColumn(fitnessRecords, fitnessRecords.activityType);
         }
         if (from < 20) {
@@ -181,6 +184,12 @@ class AppDatabase extends _$AppDatabase {
         if (from < 28) {
           await _createKnowledgeV3Tables();
           await _seedKnowledgeV3FromLegacy();
+          await _ensureKnowledgeV3Schema();
+        }
+        if (from < 29) {
+          await _ensureKnowledgeV3Schema();
+        }
+        if (from < 30) {
           await _ensureKnowledgeV3Schema();
         }
       },
@@ -293,6 +302,16 @@ class AppDatabase extends _$AppDatabase {
         difficulty INTEGER NOT NULL DEFAULT 3,
         source_title TEXT NULL,
         source_excerpt TEXT NULL,
+        memory_hint TEXT NULL,
+        related_concepts_json TEXT NULL,
+        source_chunk_id TEXT NULL,
+        source_locator_json TEXT NULL,
+        concept TEXT NULL,
+        knowledge_point TEXT NULL,
+        exam_scene TEXT NULL,
+        common_mistake TEXT NULL,
+        grounded INTEGER NOT NULL DEFAULT 1,
+        status TEXT NOT NULL DEFAULT 'auto_approved',
         tags_json TEXT NULL,
         mastery_level INTEGER NOT NULL DEFAULT 0,
         review_count INTEGER NOT NULL DEFAULT 0,
@@ -347,6 +366,56 @@ class AppDatabase extends _$AppDatabase {
       column: 'order_index',
       definition: 'INTEGER NOT NULL DEFAULT 0',
     );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'memory_hint',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'related_concepts_json',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'source_chunk_id',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'source_locator_json',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'concept',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'knowledge_point',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'exam_scene',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'common_mistake',
+      definition: 'TEXT NULL',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'grounded',
+      definition: 'INTEGER NOT NULL DEFAULT 1',
+    );
+    await _ensureColumnExists(
+      table: 'knowledge_cards_v3',
+      column: 'status',
+      definition: "TEXT NOT NULL DEFAULT 'auto_approved'",
+    );
     // V3 索引由 _createPerformanceIndexes() 统一创建，此处不重复
   }
 
@@ -363,9 +432,14 @@ class AppDatabase extends _$AppDatabase {
     final columns = await customSelect('PRAGMA table_info($table)').get();
     final hasColumn = columns.any((row) => row.read<String>('name') == column);
     if (!hasColumn) {
-      await customStatement(
-        'ALTER TABLE $table ADD COLUMN $column $definition',
-      );
+      try {
+        await customStatement(
+          'ALTER TABLE $table ADD COLUMN $column $definition',
+        );
+      } catch (error) {
+        final message = error.toString().toLowerCase();
+        if (!message.contains('duplicate column name')) rethrow;
+      }
     }
   }
 
@@ -517,7 +591,7 @@ class AppDatabase extends _$AppDatabase {
   Future<void> ensureIndexesReady() async {
     if (_indexesReady) return;
 
-    // 锟斤拷锟斤拷锟斤拷诖锟斤拷锟斤拷锟斤拷却锟斤拷锟斤拷
+    // 如果已有索引创建任务在进行中，等待其完成
     if (_indexCompleter != null) {
       return _indexCompleter!.future;
     }

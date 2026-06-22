@@ -266,8 +266,11 @@ class _JournalHeatmapSectionState
                       HeatmapCalendar(
                         data: data,
                         monthsToShow: 12,
+                        startDate: DateTime(selectedYear),
+                        endDate: DateTime(selectedYear, 12, 31),
                         baseColor: JournalColors.heat0,
                         maxColor: JournalColors.heat4,
+                        showLegend: false,
                       ),
                       const SizedBox(height: 12),
                       const _HeatmapLegend(),
@@ -884,14 +887,14 @@ class _JournalListItem extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(moodEmoji, style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 6),
-                        if (journal.tags != null) ...[
-                          Flexible(child: _buildTagsPreview(journal.tags!)),
-                        ],
-                        const Spacer(),
+                        if (journal.tags != null)
+                          _buildTagsPreview(journal.tags!),
                         Text(
                           '${journal.wordCount}字',
                           style: const TextStyle(
@@ -899,7 +902,6 @@ class _JournalListItem extends StatelessWidget {
                             color: JournalColors.textMuted,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 7,
@@ -951,7 +953,9 @@ class _JournalListItem extends StatelessWidget {
     try {
       final decoded = jsonDecode(tagsString);
       if (decoded is List) return decoded.cast<String>();
-    } catch (e) { debugPrint('parseTags failed: $e'); }
+    } catch (e) {
+      debugPrint('parseTags failed: $e');
+    }
     return tagsString.split(',').where((t) => t.trim().isNotEmpty).toList();
   }
 
@@ -959,18 +963,19 @@ class _JournalListItem extends StatelessWidget {
     final tags = _parseTagsSafe(tagsJson);
     if (tags.isEmpty) return const SizedBox.shrink();
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
       children: tags.take(2).map((tag) {
+        final label = tag.length > 10 ? '${tag.substring(0, 10)}…' : tag;
         return Container(
-          margin: const EdgeInsets.only(right: 6),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
             color: JournalColors.pinkBg,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
-            '#$tag',
+            '#$label',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(

@@ -103,6 +103,7 @@ flutter:
     - assets/pet/experience/
     - assets/pet/sports/
     - assets/audio/noise/
+    - assets/audio/bell/
     - assets/data/
     - assets/data/inspiration/
     - assets/images/weather/cats/
@@ -129,6 +130,7 @@ flutter:
     - assets/images/fitness_timer/
     - assets/images/timer_common/
     - assets/images/ai_providers/
+    - assets/images/app/
     - assets/images/quick_actions/
     - assets/images/drinks/
     - assets/images/inspiration/
@@ -161,6 +163,7 @@ flutter:
     - assets/images/plan_modules/journal/premium_v2/
     - assets/images/plan_modules/diet/premium_v2/
     - assets/images/plan_modules/sleep/premium_v2/
+    - assets/images/dialogs/
     - assets/journal/banners/
 
   # To add assets to your application, add an assets section, like this:

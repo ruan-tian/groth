@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' hide isNull;
+import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
@@ -83,5 +83,46 @@ void main() {
     expect(folders, isEmpty);
     expect(journal!.folderId, isNull);
     expect(uncategorized.map((item) => item.id), contains(journalId));
+  });
+
+  test('deletes a journal and its assets', () async {
+    final journalId = await repo.insertJournal(_journal(title: 'To delete'));
+
+    // Insert an asset for this journal
+    await repo.insertJournalAsset(
+      JournalAssetsCompanion.insert(
+        journalId: journalId,
+        localPath: '/tmp/test.jpg',
+        createdAt: DateTime.now().millisecondsSinceEpoch,
+      ),
+    );
+
+    // Verify asset exists
+    final assetsBefore = await repo.getJournalAssets(journalId);
+    expect(assetsBefore, hasLength(1));
+
+    // Delete journal
+    await repo.deleteJournal(journalId);
+
+    // Verify journal and assets are gone
+    final journal = await repo.getJournalById(journalId);
+    expect(journal, isNull);
+
+    final assetsAfter = await repo.getJournalAssets(journalId);
+    expect(assetsAfter, isEmpty);
+  });
+
+  test('deleteJournal only targets the specified journal', () async {
+    final id1 = await repo.insertJournal(_journal(title: 'Keep'));
+    final id2 = await repo.insertJournal(_journal(title: 'Delete'));
+
+    await repo.deleteJournal(id2);
+
+    final remaining = await repo.getJournalById(id1);
+    final deleted = await repo.getJournalById(id2);
+
+    expect(remaining, isNotNull);
+    expect(remaining!.title, 'Keep');
+    expect(deleted, isNull);
   });
 }

@@ -10,8 +10,8 @@ import '../../../app/design/design.dart';
 Future<void> showAvatarPickerSheet(
   BuildContext context, {
   required String? avatarPath,
-  required ValueChanged<String> onAvatarUpdated,
-  required VoidCallback onAvatarDeleted,
+  required Future<void> Function(String path) onAvatarUpdated,
+  required Future<void> Function() onAvatarDeleted,
 }) {
   return showModalBottomSheet(
     context: context,
@@ -32,8 +32,8 @@ class _AvatarPickerSheet extends StatelessWidget {
   });
 
   final String? avatarPath;
-  final ValueChanged<String> onAvatarUpdated;
-  final VoidCallback onAvatarDeleted;
+  final Future<void> Function(String path) onAvatarUpdated;
+  final Future<void> Function() onAvatarDeleted;
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +107,7 @@ class _AvatarPickerSheet extends StatelessWidget {
         pickedFile.path,
       ).copy('${avatarDir.path}/$fileName');
 
-      onAvatarUpdated(savedFile.path);
+      await onAvatarUpdated(savedFile.path);
 
       if (context.mounted) {
         HapticFeedback.lightImpact();
@@ -134,7 +134,7 @@ class _AvatarPickerSheet extends StatelessWidget {
         await file.delete();
       }
     }
-    onAvatarDeleted();
+    await onAvatarDeleted();
     HapticFeedback.lightImpact();
   }
 }

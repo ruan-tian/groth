@@ -2,115 +2,91 @@ import 'package:flutter/material.dart';
 
 import '../../../app/design/design.dart';
 
-// =============================================================================
-// HeatmapCalendar Widget
-// =============================================================================
-
-/// GitHub 风格的热力图日历组件
+/// Growth OS 热力图日历组件
 ///
-/// 每个单元格代表一天，颜色深浅表示活动强度。
-/// 默认显示最近 3 个月，可通过 [monthsToShow] 自定义。
-///
-/// ## 使用示例
-/// ```dart
-/// HeatmapCalendar(
-///   data: {
-///     DateTime(2026, 6, 1): 2,
-///     DateTime(2026, 6, 2): 4,
-///     DateTime(2026, 6, 3): 1,
-///   },
-/// )
-/// ```
+/// 参考 GitHub Contribution Graph 设计，支持：
+/// - 月份标签跟随网格同步滚动（修复月份错位问题）
+/// - 自定义颜色范围
+/// - 今日高亮
+/// - 触摸回调
 class HeatmapCalendar extends StatelessWidget {
   const HeatmapCalendar({
     super.key,
     required this.data,
     this.monthsToShow = 3,
-    this.cellSize = 14,
+    this.cellSize = 16,
     this.cellSpacing = 3,
     this.baseColor,
     this.maxColor,
     this.showLegend = true,
     this.onDayTap,
+    this.startDate,
+    this.endDate,
   });
 
-  /// 日期 → 强度值 (0~4) 的映射。
-  ///
-  /// 强度值会被 clamp 到 [0, 4] 范围内。
-  /// 值为 0 或不在 map 中的日期显示为最低色阶。
   final Map<DateTime, int> data;
-
-  /// 显示的月数（默认 3 个月）。
   final int monthsToShow;
-
-  /// 每个单元格的边长（默认 14）。
   final double cellSize;
-
-  /// 单元格间距（默认 3）。
   final double cellSpacing;
-
-  /// 无活动时的基础颜色（默认灰色）。
   final Color? baseColor;
-
-  /// 最高活动强度颜色（默认绿色）。
   final Color? maxColor;
-
-  /// 是否显示图例（默认 true）。
   final bool showLegend;
-
-  /// 点击某一天的回调，参数为该天的日期。
   final ValueChanged<DateTime>? onDayTap;
-
-  // ── 强度色阶 (0~4) ──
+  final DateTime? startDate;
+  final DateTime? endDate;
 
   static const _defaultMax = Color(0xFF216E39);
   static const _levels = [
-    Color(0xFFEBEDF0), // 0: 无活动
-    Color(0xFF9BE9A8), // 1: 低
-    Color(0xFF40C463), // 2: 中
-    Color(0xFF30A14E), // 3: 高
-    Color(0xFF216E39), // 4: 极高
+    Color(0xFFEBEDF0),
+    Color(0xFF9BE9A8),
+    Color(0xFF40C463),
+    Color(0xFF30A14E),
+    Color(0xFF216E39),
   ];
 
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
     final colors = context.growthColors;
-
-    // 计算起始日期（monthsToShow 个月前的第一天）
-    final startDate = DateTime(now.year, now.month - monthsToShow + 1, 1);
-    // 计算结束日期（当月最后一天）
-    final endDate = DateTime(now.year, now.month + 1, 0);
-
-    // 构建日期网格（按周排列，每周 7 天）
-    final weeks = _buildWeeks(startDate, endDate);
+    final rangeStart =
+        startDate ?? DateTime(now.year, now.month - monthsToShow + 1);
+    final rangeEnd = endDate ?? DateTime(now.year, now.month + 1, 0);
+    final weeks = _buildWeeks(rangeStart, rangeEnd);
 
     return RepaintBoundary(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── 月份标签 ──
-          _MonthLabels(
-            weeks: weeks,
-            cellSize: cellSize,
-            cellSpacing: cellSpacing,
-          ),
-
-          // ── 热力图网格 ──
+          // ── 可滚动区域（月份标签 + 网格）──
+          // 月份标签和网格放在同一个 SingleChildScrollView 内，确保同步滚动
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: Row(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 星期标签列
-                _WeekdayLabels(cellSize: cellSize, cellSpacing: cellSpacing),
-                const SizedBox(width: 4),
+                // 月份标签（跟随滚动）
+                _MonthLabels(
+                  weeks: weeks,
+                  cellSize: cellSize,
+                  cellSpacing: cellSpacing,
+                ),
+                const SizedBox(height: 4),
                 // 网格
-                ...weeks.map((week) => _buildWeekColumn(context, week)),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _WeekdayLabels(
+                      cellSize: cellSize,
+                      cellSpacing: cellSpacing,
+                    ),
+                    const SizedBox(width: 4),
+                    ...weeks.map((week) => _buildWeekColumn(context, week)),
+                  ],
+                ),
               ],
             ),
           ),
-
           // ── 图例 ──
           if (showLegend) ...[
             const SizedBox(height: AppSpacing.md),
@@ -124,7 +100,6 @@ class HeatmapCalendar extends StatelessWidget {
     );
   }
 
-  /// 构建一周的列（7 行）
   Widget _buildWeekColumn(BuildContext context, List<DateTime?> week) {
     final colors = context.growthColors;
 
@@ -132,25 +107,18 @@ class HeatmapCalendar extends StatelessWidget {
       children: List.generate(7, (dayIndex) {
         final date = week[dayIndex];
         if (date == null) {
-          // 空白占位
-          return Container(
-            width: cellSize,
-            height: cellSize,
-            margin: EdgeInsets.all(cellSpacing / 2),
+          return SizedBox(
+            width: cellSize + cellSpacing,
+            height: cellSize + cellSpacing,
           );
         }
 
         final normalized = _normalizeDate(date);
         final intensity = (data[normalized] ?? 0).clamp(0, 4);
-        final color = _colorForIntensity(context, intensity);
-
-        final isToday =
-            date.year == DateTime.now().year &&
-            date.month == DateTime.now().month &&
-            date.day == DateTime.now().day;
+        final isToday = _isSameDay(date, DateTime.now());
 
         return GestureDetector(
-          onTap: onDayTap != null ? () => onDayTap!(date) : null,
+          onTap: onDayTap == null ? null : () => onDayTap!(date),
           child: Tooltip(
             message: _tooltipText(date, intensity),
             child: Container(
@@ -158,15 +126,15 @@ class HeatmapCalendar extends StatelessWidget {
               height: cellSize,
               margin: EdgeInsets.all(cellSpacing / 2),
               decoration: BoxDecoration(
-                color: color,
+                color: _colorForIntensity(context, intensity),
                 borderRadius: BorderRadius.circular(AppRadius.xxs),
                 border: isToday
-                    ? Border.all(color: colors.card, width: 2)
+                    ? Border.all(color: colors.primary, width: 2)
                     : null,
                 boxShadow: isToday
                     ? [
                         BoxShadow(
-                          color: colors.shadow.withValues(alpha: 0.45),
+                          color: colors.primary.withValues(alpha: 0.3),
                           blurRadius: 4,
                         ),
                       ]
@@ -179,66 +147,48 @@ class HeatmapCalendar extends StatelessWidget {
     );
   }
 
-  /// 根据强度值返回对应颜色
   Color _colorForIntensity(BuildContext context, int intensity) {
-    if (intensity <= 0) {
-      return baseColor ?? context.growthColors.surfaceVariant;
-    }
+    if (intensity <= 0) return baseColor ?? context.growthColors.surfaceVariant;
     if (intensity >= 4) return maxColor ?? _defaultMax;
     return _levels[intensity];
   }
 
-  /// 工具提示文本
   String _tooltipText(DateTime date, int intensity) {
     final dateStr =
         '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-    if (intensity == 0) return '$dateStr: 无活动';
-    final labels = ['', '低', '中', '高', '极高'];
-    return '$dateStr: ${labels[intensity]}活动';
+    if (intensity == 0) return '$dateStr: 无记录';
+    const labels = ['', '少量', '中等', '较多', '很多'];
+    return '$dateStr: ${labels[intensity]}记录';
   }
 
-  /// 将日期归一化为当天 0 点（忽略时分秒）
   static DateTime _normalizeDate(DateTime date) {
     return DateTime(date.year, date.month, date.day);
   }
 
-  /// 构建按周排列的日期网格
-  ///
-  /// 返回值：每个元素是一周 (`List<DateTime?>`)，长度为 7，
-  /// 索引 0 = 周一，索引 6 = 周日。不在该周范围内的日期为 null。
   static List<List<DateTime?>> _buildWeeks(
     DateTime startDate,
     DateTime endDate,
   ) {
-    final weeks = <List<DateTime?>>[];
-    List<DateTime?> currentWeek = List.filled(7, null);
-
-    // 找到 startDate 所在周的周一
-    final startMonday = startDate.subtract(
-      Duration(days: (startDate.weekday - 1) % 7),
+    final normalizedStart = _normalizeDate(startDate);
+    final normalizedEnd = _normalizeDate(endDate);
+    final gridStart = normalizedStart.subtract(
+      Duration(days: normalizedStart.weekday - 1),
     );
+    final gridEnd = normalizedEnd.add(
+      Duration(days: 7 - normalizedEnd.weekday),
+    );
+    final weeks = <List<DateTime?>>[];
+    var cursor = gridStart;
 
-    var current = startMonday;
-    while (current.isBefore(endDate) || _isSameDay(current, endDate)) {
-      final weekdayIndex = (current.weekday - 1) % 7; // 0=周一, 6=周日
-
-      // 如果是周一且当前周非空，开始新的一周
-      if (weekdayIndex == 0 && currentWeek.any((d) => d != null)) {
-        weeks.add(currentWeek);
-        currentWeek = List.filled(7, null);
+    while (!cursor.isAfter(gridEnd)) {
+      final week = <DateTime?>[];
+      for (var i = 0; i < 7; i++) {
+        final inRange =
+            !cursor.isBefore(normalizedStart) && !cursor.isAfter(normalizedEnd);
+        week.add(inRange ? cursor : null);
+        cursor = cursor.add(const Duration(days: 1));
       }
-
-      // 只填充 endDate 之前（含）的日期
-      if (!current.isAfter(endDate)) {
-        currentWeek[weekdayIndex] = current;
-      }
-
-      current = current.add(const Duration(days: 1));
-    }
-
-    // 添加最后一周
-    if (currentWeek.any((d) => d != null)) {
-      weeks.add(currentWeek);
+      weeks.add(week);
     }
 
     return weeks;
@@ -248,24 +198,23 @@ class HeatmapCalendar extends StatelessWidget {
     return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 
-  /// 从 DailyStats 列表生成热力图数据
   static Map<DateTime, int> fromDailyStats(List<dynamic> stats) {
     final data = <DateTime, int>{};
     for (final stat in stats) {
-      // Use activeModules as intensity (0-6)
       final intensity = stat.activeModules as int;
       if (intensity > 0) {
-        data[stat.date as DateTime] = intensity;
+        final date = stat.date as DateTime;
+        data[_normalizeDate(date)] = intensity;
       }
     }
     return data;
   }
 }
 
-// =============================================================================
-// 月份标签
-// =============================================================================
-
+/// 月份标签组件
+///
+/// 使用 Row 布局，跟随网格同步滚动。
+/// 跨年边界处显示年份（如 "2024年12月" → "1月"）。
 class _MonthLabels extends StatelessWidget {
   const _MonthLabels({
     required this.weeks,
@@ -280,57 +229,113 @@ class _MonthLabels extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final labels = <Widget>[];
-
-    // 星期标签列的宽度偏移
     const weekdayLabelWidth = 28.0;
+    final labels = <Widget>[];
+    var lastMonth = 0;
+    var lastYear = 0;
 
     for (var i = 0; i < weeks.length; i++) {
-      final week = weeks[i];
-      // 找到该周第一个有效日期
-      final firstDate = week.firstWhere((d) => d != null, orElse: () => null);
-      if (firstDate == null) continue;
+      final dates = weeks[i].whereType<DateTime>().toList();
+      if (dates.isEmpty) continue;
 
-      // 只在每月第一周显示月份标签
-      if (firstDate.day <= 7) {
-        final monthNames = [
-          '',
-          '1月',
-          '2月',
-          '3月',
-          '4月',
-          '5月',
-          '6月',
-          '7月',
-          '8月',
-          '9月',
-          '10月',
-          '11月',
-          '12月',
-        ];
-        labels.add(
-          Positioned(
-            left: weekdayLabelWidth + i * (cellSize + cellSpacing),
-            child: Text(
-              monthNames[firstDate.month],
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 10,
-              ),
+      final monthDate = dates.firstWhere(
+        (date) => date.day <= 7 || date.month != lastMonth,
+        orElse: () => dates.first,
+      );
+
+      if (monthDate.month == lastMonth && monthDate.year == lastYear) {
+        continue;
+      }
+
+      // 判断是否需要显示年份（跨年边界）
+      final showYear =
+          monthDate.year != lastYear && (lastMonth > 0 && monthDate.month <= lastMonth);
+      lastMonth = monthDate.month;
+      lastYear = monthDate.year;
+
+      // 添加月份标签（用 SizedBox 占位，保持与网格对齐）
+      labels.add(
+        SizedBox(
+          width: i == 0
+              ? weekdayLabelWidth + i * (cellSize + cellSpacing)
+              : (cellSize + cellSpacing),
+          child: i == 0
+              ? Padding(
+                  padding: EdgeInsets.only(
+                    left: weekdayLabelWidth + i * (cellSize + cellSpacing) - (cellSize + cellSpacing),
+                  ),
+                  child: Text(
+                    showYear
+                        ? '${monthDate.year}年${monthDate.month}月'
+                        : '${monthDate.month}月',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 10,
+                    ),
+                  ),
+                )
+              : null,
+        ),
+      );
+    }
+
+    // 使用 Row 布局，让标签跟随滚动
+    return SizedBox(
+      height: 16,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: _buildLabelRow(weeks, theme),
+      ),
+    );
+  }
+
+  /// 构建月份标签行（使用 Spacer 占位对齐）
+  List<Widget> _buildLabelRow(
+    List<List<DateTime?>> weeks,
+    ThemeData theme,
+  ) {
+    final result = <Widget>[];
+    var lastMonth = 0;
+    var lastYear = 0;
+
+    for (var i = 0; i < weeks.length; i++) {
+      final dates = weeks[i].whereType<DateTime>().toList();
+      if (dates.isEmpty) {
+        continue;
+      }
+
+      final monthDate = dates.firstWhere(
+        (date) => date.day <= 7 || date.month != lastMonth,
+        orElse: () => dates.first,
+      );
+
+      if (monthDate.month != lastMonth || monthDate.year != lastYear) {
+        // 判断是否需要显示年份
+        final showYear = monthDate.year != lastYear &&
+            (lastMonth > 0 && monthDate.month <= lastMonth);
+        lastMonth = monthDate.month;
+        lastYear = monthDate.year;
+
+        // 添加标签
+        result.add(
+          Text(
+            showYear
+                ? '${monthDate.year}年${monthDate.month}月'
+                : '${monthDate.month}月',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 10,
             ),
           ),
         );
       }
     }
 
-    return SizedBox(height: 16, child: Stack(children: labels));
+    return result;
   }
 }
 
-// =============================================================================
-// 星期标签
-// =============================================================================
-
+/// 星期标签组件（周一到周日）
 class _WeekdayLabels extends StatelessWidget {
   const _WeekdayLabels({required this.cellSize, required this.cellSpacing});
 
@@ -340,17 +345,16 @@ class _WeekdayLabels extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dayLabels = ['一', '二', '三', '四', '五', '六', '日'];
-    // 只显示奇数天（周一、周三、周五、周日）以节省空间
-    final visibleIndices = [0, 2, 4, 6];
+    const dayLabels = ['一', '二', '三', '四', '五', '六', '日'];
+    const visibleIndices = [0, 2, 4, 6];
 
     return Column(
       children: List.generate(7, (index) {
-        final isvisible = visibleIndices.contains(index);
+        final visible = visibleIndices.contains(index);
         return SizedBox(
           width: 24,
           height: cellSize + cellSpacing,
-          child: isvisible
+          child: visible
               ? Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
@@ -371,10 +375,7 @@ class _WeekdayLabels extends StatelessWidget {
   }
 }
 
-// =============================================================================
-// 图例
-// =============================================================================
-
+/// 热力图图例组件
 class _HeatmapLegend extends StatelessWidget {
   const _HeatmapLegend({required this.baseColor, required this.maxColor});
 
@@ -384,6 +385,13 @@ class _HeatmapLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = [
+      baseColor,
+      const Color(0xFF9BE9A8),
+      const Color(0xFF40C463),
+      const Color(0xFF30A14E),
+      maxColor,
+    ];
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -395,24 +403,17 @@ class _HeatmapLegend extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 4),
-        ...List.generate(5, (i) {
-          final colors = [
-            baseColor,
-            const Color(0xFF9BE9A8),
-            const Color(0xFF40C463),
-            const Color(0xFF30A14E),
-            maxColor,
-          ];
-          return Container(
+        ...colors.map(
+          (color) => Container(
             width: 12,
             height: 12,
             margin: const EdgeInsets.symmetric(horizontal: 1.5),
             decoration: BoxDecoration(
-              color: colors[i],
+              color: color,
               borderRadius: BorderRadius.circular(2),
             ),
-          );
-        }),
+          ),
+        ),
         const SizedBox(width: 4),
         Text(
           '多',

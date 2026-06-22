@@ -125,7 +125,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 鈹€鈹€ 灏忕尗鎻愮ず鏉?鈹€鈹€
+                //  小猫提示?
                 PlanModuleVisualHeader(
                   module: PlanModuleType.study,
                   color: colors.study,
@@ -140,7 +140,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 _buildKnowledgeReviewEntry(context, knowledgeOverview),
                 const SizedBox(height: AppSpacing.lg),
 
-                // 鈹€鈹€ 椤堕儴鏁版嵁鍗＄墖 鈹€鈹€
+                //  顶部数据卡片 
                 _buildStatsCards(
                   context,
                   ref,
@@ -150,13 +150,13 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                // 鈹€鈹€ 瀛︿範瓒嬪娍 鈹€鈹€
-                // 鈹€鈹€ 蹇嵎鎿嶄綔 鈹€鈹€
+                //  学习趋势 
+                //  忍操作 
                 _buildQuickActions(context),
                 const SizedBox(height: AppSpacing.xl),
 
-                // 鈹€鈹€ 绉戠洰鍒嗗竷 鈹€鈹€
-                // 鈹€鈹€ 鏈€杩戣褰?鈹€鈹€
+                //  科目分布 
+                //  近?
                 _buildRecentRecords(context, ref, recentRecords),
                 const SizedBox(height: AppSpacing.xl),
 
@@ -372,7 +372,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // 鈹€鈹€ 椤堕儴鏁版嵁鍗＄墖锛堟ā鍧楄嫳闆勫崱鐗囷級鈹€鈹€
+  //  顶部数据卡片（模块英雄卡片）
   Widget _buildStatsCards(
     BuildContext context,
     WidgetRef ref,
@@ -476,7 +476,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // 鈹€鈹€ 鐩爣缂栬緫寮圭獥 鈹€鈹€
+  //  盠编辑弹窗 
   void _showGoalEditSheet(
     BuildContext context,
     WidgetRef ref,
@@ -512,7 +512,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return jsonEncode(goals.map((g) => g.toJson()).toList());
   }
 
-  // 鈹€鈹€ 瀛︿範瓒嬪娍鍖哄煙锛堝甫鏃堕棿鑼冨洿閫夋嫨鍣級鈹€鈹€
+  //  学习趋势区域（带时间范围选择噼
   Widget _buildStudyTrendSection(BuildContext context) {
     final colors = context.growthColors;
     return Column(
@@ -529,16 +529,16 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        // 鈹€鈹€ 鏃堕棿鑼冨洿閫夋嫨鍣?鈹€鈹€
+        //  时间范围选择?
         _buildRangeSelector(context),
         const SizedBox(height: AppSpacing.md),
-        // 鈹€鈹€ 鍥捐〃 鈹€鈹€
+        //  图表 
         _buildChartForRange(),
       ],
     );
   }
 
-  // 鈹€鈹€ 鏃堕棿鑼冨洿閫夋嫨鍣?鈹€鈹€
+  //  时间范围选择?
   Widget _buildRangeSelector(BuildContext context) {
     final colors = context.growthColors;
     return Container(
@@ -598,7 +598,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // 鈹€鈹€ 鏍规嵁鑼冨洿鏋勫缓鍥捐〃 鈹€鈹€
+  //  根据范围构建图表 
   Widget _buildChartForRange() {
     switch (_selectedRange) {
       case 'week':
@@ -783,7 +783,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return names[date.weekday - 1];
   }
 
-  // 鈹€鈹€ 蹇嵎鎿嶄綔 鈹€鈹€
+  //  忍操作 
   Widget _buildQuickActions(BuildContext context) {
     final colors = context.growthColors;
     return Row(
@@ -818,7 +818,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // 鈹€鈹€ 绉戠洰鍒嗗竷 鈹€鈹€
+  //  科目分布 
   Widget _buildSubjectDistribution(
     BuildContext context,
     AsyncValue<Map<String, int>> subjectDist,
@@ -876,7 +876,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // 鈹€鈹€ 鏈€杩戣褰?鈹€鈹€
+  //  近?
   Widget _buildRecentRecords(
     BuildContext context,
     WidgetRef ref,
@@ -985,7 +985,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  // 鈹€鈹€鈹€ 璁板綍璇︽儏寮圭獥 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+  //  记录详情弹窗 
 
   void _showStudyRecordDetail(BuildContext context, StudyRecord record) {
     final colors = context.growthColors;

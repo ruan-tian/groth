@@ -375,7 +375,7 @@ class _LevelDetailSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final nextLevelExp = currentLevel * currentLevel * 100;
+    final nextLevelExp = ExpService.getExpForNextLevel(currentLevel);
     final progress = nextLevelExp > 0
         ? (expProgress / nextLevelExp).clamp(0.0, 1.0)
         : 0.0;

@@ -167,6 +167,29 @@ class _FitnessTrendChartState extends State<_FitnessTrendChart> {
       lineTouchData: LineTouchData(
         touchSpotThreshold: 20,
         handleBuiltInTouches: true,
+        getTouchLineStart: (barData, spotIndex) => 0,
+        getTouchLineEnd: (barData, spotIndex) => double.infinity,
+        getTouchedSpotIndicator: (barData, spotIndexes) {
+          return spotIndexes.map((index) {
+            return TouchedSpotIndicatorData(
+              FlLine(
+                color: colors.border.withValues(alpha: 0.4),
+                strokeWidth: 1.5,
+                dashArray: const [4, 4],
+              ),
+              FlDotData(
+                show: true,
+                getDotPainter: (spot, percent, barData, index) =>
+                    FlDotCirclePainter(
+                  radius: 6,
+                  color: colors.card,
+                  strokeColor: barData.color ?? colors.fitness,
+                  strokeWidth: 3,
+                ),
+              ),
+            );
+          }).toList();
+        },
         touchCallback: (event, response) {
           setState(() {
             if (event is FlPanEndEvent || event is FlLongPressEnd) {

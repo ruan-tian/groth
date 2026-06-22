@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+﻿import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import 'exp_repository.dart';
@@ -47,16 +47,16 @@ class FitnessRepository {
     )..where((t) => t.id.equals(id))).getSingle();
   }
 
-  /// 获取指定日期的健身记录（按 createdAt 毫秒时间戳范围过滤）。
+  /// 获取指定日期的健身记录（按 startTime 毫秒时间戳范围过滤）。
   Future<List<FitnessRecord>> getFitnessRecordsByDate(DateTime date) {
     final range = _dayRange(date);
     return (_db.select(_db.fitnessRecords)
           ..where(
             (t) =>
-                t.createdAt.isBiggerOrEqualValue(range.start) &
-                t.createdAt.isSmallerThanValue(range.end),
+                t.startTime.isBiggerOrEqualValue(range.start) &
+                t.startTime.isSmallerThanValue(range.end),
           )
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          ..orderBy([(t) => OrderingTerm.desc(t.startTime)]))
         .get();
   }
 
@@ -70,10 +70,10 @@ class FitnessRepository {
     return (_db.select(_db.fitnessRecords)
           ..where(
             (t) =>
-                t.createdAt.isBiggerOrEqualValue(startMs) &
-                t.createdAt.isSmallerThanValue(endMs),
+                t.startTime.isBiggerOrEqualValue(startMs) &
+                t.startTime.isSmallerThanValue(endMs),
           )
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          ..orderBy([(t) => OrderingTerm.desc(t.startTime)]))
         .get();
   }
 
@@ -86,8 +86,8 @@ class FitnessRepository {
         await (_db.selectOnly(_db.fitnessRecords)
               ..addColumns([_db.fitnessRecords.durationMinutes.sum()])
               ..where(
-                _db.fitnessRecords.createdAt.isBiggerOrEqualValue(range.start) &
-                    _db.fitnessRecords.createdAt.isSmallerThanValue(range.end),
+                _db.fitnessRecords.startTime.isBiggerOrEqualValue(range.start) &
+                    _db.fitnessRecords.startTime.isSmallerThanValue(range.end),
               ))
             .getSingle();
     return result.read(_db.fitnessRecords.durationMinutes.sum()) ?? 0;
@@ -303,8 +303,8 @@ class FitnessRepository {
         await (_db.selectOnly(_db.fitnessRecords)
               ..addColumns([_db.fitnessRecords.id.count()])
               ..where(
-                _db.fitnessRecords.createdAt.isBiggerOrEqualValue(range.start) &
-                    _db.fitnessRecords.createdAt.isSmallerThanValue(range.end),
+                _db.fitnessRecords.startTime.isBiggerOrEqualValue(range.start) &
+                    _db.fitnessRecords.startTime.isSmallerThanValue(range.end),
               ))
             .getSingle();
     return result.read(_db.fitnessRecords.id.count()) ?? 0;

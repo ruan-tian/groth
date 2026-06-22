@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 
@@ -282,11 +282,15 @@ class _TaskTile extends StatelessWidget {
     final endMinutes = task.endHour * 60 + task.endMinute;
 
     final isCompleted = task.isCompleted;
+    final todayStr = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    final isTaskToday = task.taskDate == todayStr;
     final isInProgress =
         !isCompleted &&
+        isTaskToday &&
         startMinutes <= currentMinutes &&
         endMinutes >= currentMinutes;
-    final isOverdue = !isCompleted && endMinutes < currentMinutes;
+    final isOverdue =
+        !isCompleted && (!isTaskToday || endMinutes < currentMinutes);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),

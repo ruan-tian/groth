@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart';
+﻿import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import 'exp_repository.dart';
@@ -83,16 +83,16 @@ class FocusRepository {
   // 查询
   // ---------------------------------------------------------------------------
 
-  /// 获取指定日期的专注记录（按 createdAt 毫秒时间戳范围过滤）。
+  /// 获取指定日期的专注记录（按 startTime 毫秒时间戳范围过滤）。
   Future<List<FocusSession>> getFocusSessionsByDate(DateTime date) {
     final range = _dayRange(date);
     return (_db.select(_db.focusSessions)
           ..where(
             (t) =>
-                t.createdAt.isBiggerOrEqualValue(range.start) &
-                t.createdAt.isSmallerThanValue(range.end),
+                t.startTime.isBiggerOrEqualValue(range.start) &
+                t.startTime.isSmallerThanValue(range.end),
           )
-          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+          ..orderBy([(t) => OrderingTerm.desc(t.startTime)]))
         .get();
   }
 
@@ -113,8 +113,8 @@ class FocusRepository {
         await (_db.selectOnly(_db.focusSessions)
               ..addColumns([_db.focusSessions.durationMinutes.sum()])
               ..where(
-                _db.focusSessions.createdAt.isBiggerOrEqualValue(range.start) &
-                    _db.focusSessions.createdAt.isSmallerThanValue(range.end),
+                _db.focusSessions.startTime.isBiggerOrEqualValue(range.start) &
+                    _db.focusSessions.startTime.isSmallerThanValue(range.end),
               ))
             .getSingle();
     return result.read(_db.focusSessions.durationMinutes.sum()) ?? 0;

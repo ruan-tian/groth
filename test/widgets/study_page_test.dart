@@ -142,7 +142,7 @@ List<Override> _studyPageOverrides({
     ),
     latestPetAnalysisProvider('study').overrideWith((_) async => null),
     dailyGoalsProvider.overrideWith(
-      (_) => const [DailyGoal(name: '瀛︿範', target: 120, unit: '鍒嗛挓')],
+      (_) => const [DailyGoal(name: '学习', target: 120, unit: '分钟')],
     ),
     todayStudyMinutesProvider.overrideWith(
       (_) => todayMinutes?.call() ?? Future.value(0),

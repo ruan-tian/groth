@@ -15,9 +15,10 @@ import 'task_priority.dart';
 // =============================================================================
 
 class AddTaskDialog extends ConsumerStatefulWidget {
-  const AddTaskDialog({super.key, this.editTask});
+  const AddTaskDialog({super.key, this.editTask, this.initialDate});
 
   final DailyTask? editTask;
+  final DateTime? initialDate;
 
   @override
   ConsumerState<AddTaskDialog> createState() => _AddTaskDialogState();
@@ -44,7 +45,7 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
     );
     _selectedDate = task != null
         ? DateTime.tryParse(task.taskDate) ?? DateTime.now()
-        : DateTime.now();
+        : widget.initialDate ?? DateTime.now();
     _startTime = task != null
         ? TimeOfDay(hour: task.startHour, minute: task.startMinute)
         : TimeOfDay.now();
@@ -519,6 +520,15 @@ class _AddTaskDialogState extends ConsumerState<AddTaskDialog> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('请输入任务名称')));
+      return;
+    }
+
+    final startMinutes = _startTime.hour * 60 + _startTime.minute;
+    final endMinutes = _endTime.hour * 60 + _endTime.minute;
+    if (endMinutes <= startMinutes) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('结束时间需晚于开始时间')));
       return;
     }
 
