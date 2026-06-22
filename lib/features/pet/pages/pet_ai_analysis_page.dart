@@ -353,7 +353,7 @@ class _PrivacyCard extends StatelessWidget {
       child: _Header(
         asset: PetAssets.aiPrivacy,
         title: '隐私确认',
-        subtitle: '分析前会弹出数据预览；只有你点击确认后，才会调用已配置的 AI 服务。',
+        subtitle: '所有数据本地存储。分析前会弹出数据预览；只有你点击确认后，才会调用已配置的 AI 服务（需联网）。',
       ),
     );
   }
