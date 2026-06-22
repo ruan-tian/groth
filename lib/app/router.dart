@@ -283,6 +283,15 @@ final goRouter = GoRouter(
                   ),
                 ),
                 GoRoute(
+                  path: 'study/knowledge/sources/:sourceId',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeWorkspacePage(),
+                  ),
+                ),
+                GoRoute(
                   path: 'study/knowledge/spaces',
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
@@ -293,15 +302,6 @@ final goRouter = GoRouter(
                 ),
                 GoRoute(
                   path: 'study/knowledge/space',
-                  parentNavigatorKey: _rootNavigatorKey,
-                  pageBuilder: (context, state) => buildShellSlideTransition(
-                    context,
-                    state,
-                    const KnowledgeWorkspacePage(),
-                  ),
-                ),
-                GoRoute(
-                  path: 'study/knowledge/sources/:id',
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
@@ -346,7 +346,16 @@ final goRouter = GoRouter(
                   ),
                 ),
                 GoRoute(
-                  path: 'study/knowledge/edit/:id',
+                  path: 'study/knowledge/edit',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => buildShellSlideTransition(
+                    context,
+                    state,
+                    const KnowledgeWorkspacePage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'study/knowledge/edit/:materialId',
                   parentNavigatorKey: _rootNavigatorKey,
                   pageBuilder: (context, state) => buildShellSlideTransition(
                     context,
@@ -395,12 +404,14 @@ final goRouter = GoRouter(
                     final duration = int.tryParse(
                       state.uri.queryParameters['duration'] ?? '',
                     );
+                    final bodyPart = state.uri.queryParameters['bodyPart'];
                     return buildShellSlideTransition(
                       context,
                       state,
                       AddFitnessRecordPage(
                         initialMode: mode,
                         initialDurationMinutes: duration,
+                        initialBodyPart: bodyPart,
                       ),
                     );
                   },

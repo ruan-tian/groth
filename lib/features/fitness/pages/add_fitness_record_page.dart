@@ -18,10 +18,12 @@ class AddFitnessRecordPage extends ConsumerStatefulWidget {
     super.key,
     this.initialMode = 'simple',
     this.initialDurationMinutes,
+    this.initialBodyPart,
   });
 
   final String initialMode;
   final int? initialDurationMinutes;
+  final String? initialBodyPart;
 
   @override
   ConsumerState<AddFitnessRecordPage> createState() =>
@@ -65,6 +67,10 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     if (duration != null && duration > 0) {
       _durationController.text = '$duration';
       _endTime = _startTime.add(Duration(minutes: duration));
+    }
+    final bodyPart = widget.initialBodyPart;
+    if (bodyPart != null && bodyPart.isNotEmpty) {
+      _bodyPartController.text = bodyPart;
     }
     _durationController.addListener(_handleFieldChanged);
     _bodyPartController.addListener(_handleFieldChanged);
