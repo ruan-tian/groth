@@ -2,6 +2,7 @@ import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import 'exp_repository.dart';
+import '../utils/date_utils.dart';
 
 /// 饮食记录仓库
 ///
@@ -39,7 +40,7 @@ class DietRepository {
 
   /// 获取指定日期的饮食记录（按创建时间倒序）。
   Future<List<DietRecord>> getDietRecordsByDate(DateTime date) {
-    final dateStr = _formatDate(date);
+    final dateStr = GrowthDateUtils.formatDateKey(date);
     return (_db.select(_db.dietRecords)
           ..where((t) => t.mealDate.equals(dateStr))
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
@@ -56,8 +57,8 @@ class DietRepository {
 
   /// 获取指定日期范围内的饮食记录（按日期正序）。
   Future<List<DietRecord>> getDietRecordsByRange(DateTime start, DateTime end) {
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(end);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(end);
     return (_db.select(_db.dietRecords)
           ..where(
             (t) =>
@@ -81,7 +82,7 @@ class DietRepository {
 
   /// 获取指定日期的饮食次数。
   Future<int> getDietCountByDate(DateTime date) async {
-    final dateStr = _formatDate(date);
+    final dateStr = GrowthDateUtils.formatDateKey(date);
     final result =
         await (_db.selectOnly(_db.dietRecords)
               ..addColumns([_db.dietRecords.id.count()])
@@ -92,7 +93,7 @@ class DietRepository {
 
   /// 获取指定日期的平均健康评分。
   Future<double?> getAvgHealthScoreByDate(DateTime date) async {
-    final dateStr = _formatDate(date);
+    final dateStr = GrowthDateUtils.formatDateKey(date);
     final result =
         await (_db.selectOnly(_db.dietRecords)
               ..addColumns([_db.dietRecords.healthScore.avg()])
@@ -107,8 +108,8 @@ class DietRepository {
   Future<Map<String, double>> getDailyAvgHealthScore(int days) async {
     final now = DateTime.now();
     final start = now.subtract(Duration(days: days - 1));
-    final startStr = _formatDate(start);
-    final endStr = _formatDate(now);
+    final startStr = GrowthDateUtils.formatDateKey(start);
+    final endStr = GrowthDateUtils.formatDateKey(now);
 
     final query = _db.selectOnly(_db.dietRecords)
       ..addColumns([
@@ -144,11 +145,4 @@ class DietRepository {
     return getDietCountByDate(DateTime.now());
   }
 
-  // ---------------------------------------------------------------------------
-  // 内部工具
-  // ---------------------------------------------------------------------------
-
-  String _formatDate(DateTime date) {
-    return '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
-  }
 }
