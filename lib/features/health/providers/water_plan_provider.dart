@@ -64,7 +64,7 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
       intervalMinutes: (interval != null && interval >= 5)
           ? interval
           : state.intervalMinutes,
-      reminderEnabled: enabled == null ? true : enabled == 'true',
+      reminderEnabled: enabled == null ? false : enabled == 'true',
       reminderScheduleStatus: HealthReminderScheduleStatus.fromStorage(
         scheduleStatus,
         pendingCount: pendingCount ?? 0,

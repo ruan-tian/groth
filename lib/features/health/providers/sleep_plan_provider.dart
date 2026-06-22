@@ -68,7 +68,7 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
       sleepTime: _sanitizeTime(sleep, state.sleepTime),
       wakeTime: _sanitizeTime(wake, state.wakeTime),
       leadMinutes: _sanitizeLeadMinutes(lead ?? state.leadMinutes),
-      reminderEnabled: enabled == null ? true : enabled == 'true',
+      reminderEnabled: enabled == null ? false : enabled == 'true',
       reminderScheduleStatus: HealthReminderScheduleStatus.fromStorage(
         scheduleStatus,
         pendingCount: pendingCount ?? 0,
