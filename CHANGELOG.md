@@ -10,6 +10,7 @@
 - Promoted the music settings write queue into a shared `SettingsWriteQueue` and routed water/sleep plan configuration writes through it to reduce SQLite write contention.
 - Centralized knowledge-space preference persistence helpers and routed health reminder schedule-status writes through the shared settings write queue.
 - Routed pet diary setting writes and pet life-session persistence through injectable writers backed by the shared settings write queue in app providers.
+- Added an architecture regression test that blocks feature pages/widgets from writing settings directly, preserving the facade/provider/service boundary.
 
 ## 2026-06-22 设置页目标与主题写入收敛
 
