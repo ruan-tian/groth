@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../knowledge/repositories/knowledge_source_repository.dart';
 import '../../../core/services/ai_service.dart';
+import '../../knowledge/repositories/knowledge_source_repository.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../study/providers/study_provider.dart';
 import '../../fitness/providers/fitness_provider.dart';
