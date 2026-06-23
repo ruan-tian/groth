@@ -1,4 +1,3 @@
-import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
@@ -68,15 +67,8 @@ final todayIncompleteTaskCountProvider = FutureProvider<int>((ref) async {
 
 /// 所有任务 Provider（用于历史页面）
 final allTasksProvider = FutureProvider<List<DailyTask>>((ref) async {
-  final db = ref.watch(databaseProvider);
-  final tasks =
-      await (db.select(db.dailyTasks)..orderBy([
-            (t) => OrderingTerm.desc(t.taskDate),
-            (t) => OrderingTerm.asc(t.startHour),
-            (t) => OrderingTerm.asc(t.startMinute),
-          ]))
-          .get();
-  return tasks;
+  final repo = ref.watch(dailyTaskRepositoryProvider);
+  return repo.getAllTasks();
 });
 
 /// 任务模板列表 Provider

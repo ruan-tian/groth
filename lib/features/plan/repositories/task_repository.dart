@@ -89,6 +89,17 @@ class DailyTaskRepository {
     return result.read(count) ?? 0;
   }
 
+  /// 获取全部任务（按日期降序、开始时间升序）。
+  Future<List<DailyTask>> getAllTasks() {
+    return (_db.select(_db.dailyTasks)
+          ..orderBy([
+            (t) => OrderingTerm.desc(t.taskDate),
+            (t) => OrderingTerm.asc(t.startHour),
+            (t) => OrderingTerm.asc(t.startMinute),
+          ]))
+        .get();
+  }
+
   // ---------------------------------------------------------------------------
   // 内部工具
   // ---------------------------------------------------------------------------
