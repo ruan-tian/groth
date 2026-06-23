@@ -317,7 +317,7 @@ List<String> _checkCrossFeatureImport() {
   const whitelist = <String, List<String>>{
     'ai': ['services', 'providers'],
     'focus': ['models', 'providers', 'utils'],
-    'dashboard': ['utils', 'pages'], // avatar assets + quick action sheet
+    'dashboard': ['utils', 'pages', 'providers'], // avatar assets + quick action sheet + refresh
     'settings': ['utils'], // avatar assets
     'fitness': ['providers'], // refresh dashboard after adding record
   };

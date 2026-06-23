@@ -22,18 +22,19 @@ core -> must not import features
 
 Short-term exceptions documented in `scripts/check_architecture.dart`:
 
-| Source | Target | Reason |
-|--------|--------|--------|
-| ai | knowledge/services, knowledge/providers | AI analysis uses knowledge context |
-| focus | music/models, music/providers, music/utils | White noise in focus timer |
-| dashboard | fitness/utils, health/pages | Dashboard aggregation |
-| settings | fitness/utils | Avatar assets |
+| Source | Target | Allowed Paths | Reason |
+|--------|--------|---------------|--------|
+| ai | knowledge | services, providers | AI analysis uses knowledge context |
+| focus | music | models, providers, utils | White noise in focus timer |
+| dashboard | fitness, health | utils, pages, providers | Dashboard aggregation + refresh |
+| settings | fitness | utils | Avatar assets |
+| fitness | dashboard | providers | Refresh dashboard after adding record |
 
 ## Legacy Exceptions
 
 | File | Exception | TODO |
 |------|-----------|------|
-| features/ai/pages/ai_analysis_page.dart | Imports 5 module providers | Refactor to AiAnalysisInputFacade |
+| features/ai/pages/ai_analysis_page.dart | Imports 5 module providers | Refactor to AiAnalysisInputFacade (facade created) |
 
 ## Legacy Re-exports
 
