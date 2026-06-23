@@ -427,13 +427,6 @@ final dashboardCardIdsInitProvider = FutureProvider<void>((ref) async {
   }
 });
 
-/// 保存首页卡片配置到数据库
-Future<void> saveDashboardCardIds(WidgetRef ref, List<String> ids) async {
-  ref.read(dashboardCardIdsProvider.notifier).state = ids;
-  final repo = ref.read(settingRepositoryProvider);
-  await repo.setSetting('dashboard_cards', jsonEncode(ids));
-}
-
 // =============================================================================
 // 用户资料 Provider
 // =============================================================================

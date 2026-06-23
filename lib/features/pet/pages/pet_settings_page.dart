@@ -5,10 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/pet_provider.dart';
-import '../../../shared/providers/repository_providers.dart';
-import '../../../shared/providers/settings_provider.dart';
-import '../services/pet_diary_service.dart';
 import '../../../core/constants/pet_assets.dart';
+import '../providers/pet_diary_provider.dart';
 import '../widgets/pet_floating_asset.dart';
 
 class PetSettingsPage extends ConsumerStatefulWidget {
@@ -32,10 +30,8 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     final nameAsync = ref.watch(petNameProvider);
-    final autoDiaryAsync = ref.watch(
-      settingProvider(PetDiaryService.autoEnabledKey),
-    );
-    final autoDiary = autoDiaryAsync.valueOrNull == 'true';
+    ref.watch(petDiaryAutoEnabledInitProvider);
+    final autoDiary = ref.watch(petDiaryAutoEnabledProvider);
 
     final loadedName = nameAsync.valueOrNull;
     if (!_nameTouched && loadedName != null && _nameController.text.isEmpty) {
@@ -166,11 +162,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
 
   Future<void> _setAutoDiary(bool value) async {
     HapticFeedback.selectionClick();
-    await ref
-        .read(settingRepositoryProvider)
-        .setSetting(PetDiaryService.autoEnabledKey, value.toString());
-    ref.invalidate(settingProvider(PetDiaryService.autoEnabledKey));
-    ref.invalidate(settingsProvider);
+    await savePetDiaryAutoEnabled(ref, value);
   }
 }
 

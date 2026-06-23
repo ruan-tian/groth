@@ -6,6 +6,7 @@
 - Removed save-time init-provider invalidation from the facade so user saves do not race with startup hydration and overwrite fresh provider state.
 - Updated dashboard, study, fitness, diet, sleep, and focus mode UI entry points to await facade writes before closing sheets where needed.
 - Added targeted facade tests for single setting setters, dashboard card ids, and daily goal updates.
+- Removed the obsolete dashboard card save helper and routed pet diary auto-toggle writes through the shared pet diary provider path.
 
 ## 2026-06-22 设置页目标与主题写入收敛
 
