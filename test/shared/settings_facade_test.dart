@@ -47,6 +47,27 @@ void main() {
     );
   });
 
+  test(
+    'setUserProfileField syncs profile providers and setting rows',
+    () async {
+      final facade = container.read(settingsFacadeProvider);
+
+      await facade.setUserProfileField('nickname', 'Tian');
+      await facade.setUserProfileField('height', '172.5');
+
+      expect(container.read(userNicknameProvider), 'Tian');
+      expect(container.read(userHeightProvider), 172.5);
+      expect(
+        await container.read(settingRepositoryProvider).getSetting('nickname'),
+        'Tian',
+      );
+      expect(
+        await container.read(settingRepositoryProvider).getSetting('height'),
+        '172.5',
+      );
+    },
+  );
+
   test('disabling auto AI analysis also disables journal upload', () async {
     final facade = container.read(settingsFacadeProvider);
     await facade.setAutoAiAnalysisEnabled(true);

@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
@@ -80,26 +84,89 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   }
 
   Future<void> _saveField(String key, String value) async {
-    final repo = ref.read(settingRepositoryProvider);
-    await repo.setSetting(key, value);
+    await ref.read(settingsFacadeProvider).setUserProfileField(key, value);
     HapticFeedback.lightImpact();
   }
 
   // ── 编辑动作回调 ────────────────────────────────────────────────────────────
 
-  Future<void> _onAvatarUpdated(String path) async {
-    final normalizedAvatarPath = normalizeUserAvatarPath(path);
-    if (mounted) {
-      setState(() => _avatarPath = normalizedAvatarPath);
+  Future<void> _showAvatarPicker() async {
+    final action = await showAvatarPickerSheet(
+      context,
+      avatarPath: _avatarPath,
+    );
+    if (!mounted || action == null) return;
+
+    switch (action) {
+      case AvatarPickerAction.camera:
+        await _pickAndSaveAvatar(ImageSource.camera);
+        break;
+      case AvatarPickerAction.gallery:
+        await _pickAndSaveAvatar(ImageSource.gallery);
+        break;
+      case AvatarPickerAction.delete:
+        await _deleteAvatar();
+        break;
     }
-    await ref.read(settingsFacadeProvider).setUserAvatarPath(path);
   }
 
-  Future<void> _onAvatarDeleted() async {
-    if (mounted) {
-      setState(() => _avatarPath = null);
+  Future<void> _pickAndSaveAvatar(ImageSource source) async {
+    final colors = context.growthColors;
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+        requestFullMetadata: false,
+      );
+      if (pickedFile == null) return;
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final avatarDir = Directory('${appDir.path}/avatars');
+      if (!await avatarDir.exists()) {
+        await avatarDir.create(recursive: true);
+      }
+
+      final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedFile = await File(
+        pickedFile.path,
+      ).copy('${avatarDir.path}/$fileName');
+
+      await ref.read(settingsFacadeProvider).setUserAvatarPath(savedFile.path);
+      if (!mounted) return;
+      setState(() => _avatarPath = savedFile.path);
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('\u5934\u50cf\u5df2\u66f4\u65b0'),
+          backgroundColor: colors.success,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '\u9009\u62e9\u56fe\u7247\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAvatar() async {
+    final current = _avatarPath;
+    if (current != null) {
+      final file = File(current);
+      if (await file.exists()) {
+        await file.delete();
+      }
     }
     await ref.read(settingsFacadeProvider).setUserAvatarPath(null);
+    if (!mounted) return;
+    setState(() => _avatarPath = null);
+    HapticFeedback.lightImpact();
   }
 
   Future<void> _showNicknameEditor() async {
@@ -296,12 +363,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
               avatarPath: _avatarPath,
               nickname: _nicknameController.text,
               dashboard: dashboard,
-              onAvatarTap: () => showAvatarPickerSheet(
-                context,
-                avatarPath: _avatarPath,
-                onAvatarUpdated: _onAvatarUpdated,
-                onAvatarDeleted: _onAvatarDeleted,
-              ),
+              onAvatarTap: _showAvatarPicker,
               onNicknameTap: _showNicknameEditor,
             ),
             const SizedBox(height: 32),

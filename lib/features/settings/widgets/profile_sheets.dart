@@ -1,39 +1,24 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
 
 import '../../../app/design/design.dart';
 
-Future<void> showAvatarPickerSheet(
+enum AvatarPickerAction { camera, gallery, delete }
+
+Future<AvatarPickerAction?> showAvatarPickerSheet(
   BuildContext context, {
   required String? avatarPath,
-  required Future<void> Function(String path) onAvatarUpdated,
-  required Future<void> Function() onAvatarDeleted,
 }) {
-  return showModalBottomSheet(
+  return showModalBottomSheet<AvatarPickerAction?>(
     context: context,
     backgroundColor: Colors.transparent,
-    builder: (ctx) => _AvatarPickerSheet(
-      avatarPath: avatarPath,
-      onAvatarUpdated: onAvatarUpdated,
-      onAvatarDeleted: onAvatarDeleted,
-    ),
+    builder: (ctx) => _AvatarPickerSheet(avatarPath: avatarPath),
   );
 }
 
 class _AvatarPickerSheet extends StatelessWidget {
-  const _AvatarPickerSheet({
-    required this.avatarPath,
-    required this.onAvatarUpdated,
-    required this.onAvatarDeleted,
-  });
+  const _AvatarPickerSheet({required this.avatarPath});
 
   final String? avatarPath;
-  final Future<void> Function(String path) onAvatarUpdated;
-  final Future<void> Function() onAvatarDeleted;
 
   @override
   Widget build(BuildContext context) {
@@ -44,98 +29,36 @@ class _AvatarPickerSheet extends StatelessWidget {
         children: [
           _buildDragHandle(context),
           const SizedBox(height: 20),
-          Text('更换头像', style: _sheetTitleStyle(colors)),
+          Text('\u66f4\u6362\u5934\u50cf', style: _sheetTitleStyle(colors)),
           const SizedBox(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               _AvatarOption(
                 icon: Icons.camera_alt_rounded,
-                label: '拍照',
+                label: '\u62cd\u7167',
                 color: colors.primary,
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickAndSave(context, ImageSource.camera);
-                },
+                onTap: () => Navigator.pop(context, AvatarPickerAction.camera),
               ),
               _AvatarOption(
                 icon: Icons.photo_library_rounded,
-                label: '相册',
+                label: '\u76f8\u518c',
                 color: colors.success,
-                onTap: () {
-                  Navigator.pop(context);
-                  _pickAndSave(context, ImageSource.gallery);
-                },
+                onTap: () => Navigator.pop(context, AvatarPickerAction.gallery),
               ),
               if (avatarPath != null)
                 _AvatarOption(
                   icon: Icons.delete_outline_rounded,
-                  label: '删除',
+                  label: '\u5220\u9664',
                   color: colors.danger,
-                  onTap: () {
-                    Navigator.pop(context);
-                    _deleteAvatar(context);
-                  },
+                  onTap: () =>
+                      Navigator.pop(context, AvatarPickerAction.delete),
                 ),
             ],
           ),
         ],
       ),
     );
-  }
-
-  Future<void> _pickAndSave(BuildContext context, ImageSource source) async {
-    final colors = context.growthColors;
-    try {
-      final picker = ImagePicker();
-      final pickedFile = await picker.pickImage(
-        source: source,
-        maxWidth: 512,
-        maxHeight: 512,
-        imageQuality: 85,
-      );
-      if (pickedFile == null) return;
-
-      final appDir = await getApplicationDocumentsDirectory();
-      final avatarDir = Directory('${appDir.path}/avatars');
-      if (!await avatarDir.exists()) {
-        await avatarDir.create(recursive: true);
-      }
-
-      final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
-      final savedFile = await File(
-        pickedFile.path,
-      ).copy('${avatarDir.path}/$fileName');
-
-      await onAvatarUpdated(savedFile.path);
-
-      if (context.mounted) {
-        HapticFeedback.lightImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('头像已更新'),
-            backgroundColor: colors.success,
-          ),
-        );
-      }
-    } catch (_) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('选择图片失败，请重试')));
-      }
-    }
-  }
-
-  Future<void> _deleteAvatar(BuildContext context) async {
-    if (avatarPath != null) {
-      final file = File(avatarPath!);
-      if (await file.exists()) {
-        await file.delete();
-      }
-    }
-    await onAvatarDeleted();
-    HapticFeedback.lightImpact();
   }
 }
 
@@ -211,11 +134,11 @@ class _GenderPickerSheet extends StatelessWidget {
         children: [
           _buildDragHandle(context),
           const SizedBox(height: 20),
-          Text('选择性别', style: _sheetTitleStyle(colors)),
+          Text('\u9009\u62e9\u6027\u522b', style: _sheetTitleStyle(colors)),
           const SizedBox(height: 24),
           _GenderOption(
             value: 'male',
-            label: '男',
+            label: '\u7537',
             icon: Icons.male_rounded,
             isSelected: currentGender == 'male',
             onTap: () => Navigator.pop(context, 'male'),
@@ -223,7 +146,7 @@ class _GenderPickerSheet extends StatelessWidget {
           const SizedBox(height: 12),
           _GenderOption(
             value: 'female',
-            label: '女',
+            label: '\u5973',
             icon: Icons.female_rounded,
             isSelected: currentGender == 'female',
             onTap: () => Navigator.pop(context, 'female'),
@@ -254,7 +177,7 @@ class _GenderOption extends StatelessWidget {
     final colors = context.growthColors;
     return Semantics(
       button: true,
-      label: '选择性别: $label',
+      label: '\u9009\u62e9\u6027\u522b: $label',
       selected: isSelected,
       child: GestureDetector(
         onTap: onTap,
@@ -319,16 +242,18 @@ Future<String?> showHeightEditorSheet(
       child: _NumberEditorSheet<String>(
         controller: controller,
         formKey: formKey,
-        title: '设置身高',
+        title: '\u8bbe\u7f6e\u8eab\u9ad8',
         icon: Icons.height,
         iconColor: context.growthColors.success,
         suffixText: 'cm',
         keyboardType: TextInputType.number,
         validator: (value) {
-          if (value == null || value.isEmpty) return '请输入身高';
+          if (value == null || value.isEmpty) {
+            return '\u8bf7\u8f93\u5165\u8eab\u9ad8';
+          }
           final number = double.tryParse(value);
           if (number == null || number <= 0 || number > 250) {
-            return '请输入有效身高';
+            return '\u8bf7\u8f93\u5165\u6709\u6548\u8eab\u9ad8';
           }
           return null;
         },
@@ -382,7 +307,7 @@ Widget buildEditSheet(
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text('保存'),
+            child: const Text('\u4fdd\u5b58'),
           ),
         ),
       ],
@@ -408,16 +333,18 @@ Future<double?> showWeightEditorSheet(
       child: _NumberEditorSheet<double>(
         controller: controller,
         formKey: formKey,
-        title: '记录体重',
+        title: '\u8bb0\u5f55\u4f53\u91cd',
         icon: Icons.monitor_weight_outlined,
         iconColor: context.growthColors.primary,
         suffixText: 'kg',
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         validator: (value) {
-          if (value == null || value.isEmpty) return '请输入体重';
+          if (value == null || value.isEmpty) {
+            return '\u8bf7\u8f93\u5165\u4f53\u91cd';
+          }
           final number = double.tryParse(value);
           if (number == null || number <= 0 || number > 500) {
-            return '请输入有效体重';
+            return '\u8bf7\u8f93\u5165\u6709\u6548\u4f53\u91cd';
           }
           return null;
         },
@@ -445,16 +372,18 @@ Future<double?> showBodyFatEditorSheet(
       child: _NumberEditorSheet<double>(
         controller: controller,
         formKey: formKey,
-        title: '记录体脂率',
+        title: '\u8bb0\u5f55\u4f53\u8102\u7387',
         icon: Icons.water_drop_outlined,
         iconColor: context.growthColors.fitness,
         suffixText: '%',
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         validator: (value) {
-          if (value == null || value.isEmpty) return '请输入体脂率';
+          if (value == null || value.isEmpty) {
+            return '\u8bf7\u8f93\u5165\u4f53\u8102\u7387';
+          }
           final number = double.tryParse(value);
           if (number == null || number < 0 || number > 60) {
-            return '请输入有效体脂率';
+            return '\u8bf7\u8f93\u5165\u6709\u6548\u4f53\u8102\u7387';
           }
           return null;
         },
@@ -557,7 +486,7 @@ class _NumberEditorSheet<T> extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text('保存'),
+                child: const Text('\u4fdd\u5b58'),
               ),
             ),
           ],

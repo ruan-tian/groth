@@ -23,6 +23,22 @@ class SettingsFacade {
     _ref.invalidate(settingProvider(key));
   }
 
+  Future<void> setUserProfileField(String key, String value) async {
+    await _settings.setSetting(key, value);
+    switch (key) {
+      case 'nickname':
+        _ref.read(userNicknameProvider.notifier).state = value;
+        _ref.invalidate(userNicknameInitProvider);
+        break;
+      case 'height':
+        _ref.read(userHeightProvider.notifier).state = double.tryParse(value);
+        _ref.invalidate(userHeightInitProvider);
+        break;
+    }
+    _ref.invalidate(settingsProvider);
+    _ref.invalidate(settingProvider(key));
+  }
+
   Future<void> setThemeMode(ThemeMode mode) async {
     _ref.read(themeModeProvider.notifier).state = mode;
     await _settings.setSetting('theme_mode', mode.name);
