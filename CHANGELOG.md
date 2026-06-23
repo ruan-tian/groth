@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-23 Architecture Upgrade Phase C: Provider 重组 (complete)
+
+- Fixed all provider import paths after migration
+- Restored corrupted knowledge_card_provider, knowledge_card_ai_provider, knowledge_source_provider
+- Fixed pet_providers imports (6 files)
+- Fixed weather_provider, journal_provider, task_provider imports
+- All 12 feature provider directories pass dart analyze
+
 ## 2026-06-23 Architecture Upgrade Phase C: Provider 重组 (partial)
 
 - Moved 16 business providers from shared/providers/ to corresponding features
