@@ -24,7 +24,12 @@ final sleepPlanProvider =
 class SleepPlanController extends StateNotifier<SleepPlanState> {
   SleepPlanController(this._ref) : super(const SleepPlanState()) {
     _ref.onDispose(() {
-      unawaited(_settingsWriter.dispose());
+      // Wrap in try-catch to handle ProviderContainer already disposed
+      try {
+        unawaited(_settingsWriter.dispose());
+      } catch (_) {
+        // Ignore errors during dispose
+      }
     });
   }
 
@@ -78,7 +83,7 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
       sleepTime: _sanitizeTime(sleep, state.sleepTime),
       wakeTime: _sanitizeTime(wake, state.wakeTime),
       leadMinutes: _sanitizeLeadMinutes(lead ?? state.leadMinutes),
-      reminderEnabled: enabled == null ? false : enabled == 'true',
+      reminderEnabled: enabled == null ? true : enabled == 'true',
       reminderScheduleStatus: HealthReminderScheduleStatus.fromStorage(
         scheduleStatus,
         pendingCount: pendingCount ?? 0,

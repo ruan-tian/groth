@@ -1,4 +1,5 @@
-﻿import 'dart:math' as math;
+﻿import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
@@ -28,6 +29,7 @@ class _LaunchIntroOverlayState extends State<LaunchIntroOverlay>
   late final AnimationController _breathe;
   late final AnimationController _particles;
   late final AnimationController _shimmer;
+  Timer? _shimmerTimer;
   bool _visible = true;
 
   @override
@@ -74,7 +76,7 @@ class _LaunchIntroOverlayState extends State<LaunchIntroOverlay>
       _main.forward();
       _breathe.repeat(reverse: true);
       _particles.repeat();
-      Future.delayed(const Duration(milliseconds: 800), () {
+      _shimmerTimer = Timer(const Duration(milliseconds: 800), () {
         if (mounted) _shimmer.forward();
       });
     });
@@ -88,6 +90,7 @@ class _LaunchIntroOverlayState extends State<LaunchIntroOverlay>
 
   @override
   void dispose() {
+    _shimmerTimer?.cancel();
     _main.dispose();
     _breathe.dispose();
     _particles.dispose();
@@ -276,7 +279,7 @@ class _Scene extends StatelessWidget {
           Transform.scale(
             scale: 0.4 + logoIn * 0.6,
             child: Opacity(
-              opacity: logoIn,
+              opacity: logoIn.clamp(0.0, 1.0),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(size * 0.22),
                 child: Image.asset(
@@ -311,7 +314,7 @@ class _Scene extends StatelessWidget {
         return Transform.translate(
           offset: Offset(0, show ? 0 : 12 * (1 - charSpring)),
           child: Opacity(
-            opacity: show ? charSpring : 0,
+            opacity: (show ? charSpring : 0).clamp(0.0, 1.0).toDouble(),
             child: Text(
               text[i],
               style: TextStyle(

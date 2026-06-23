@@ -943,7 +943,12 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   void dispose() {
     _disposed = true;
     _sleepTimer?.cancel();
-    unawaited(_settingsWriter.dispose());
+    // Use try-catch to handle ProviderContainer already disposed
+    try {
+      unawaited(_settingsWriter.dispose());
+    } catch (_) {
+      // Ignore errors during dispose (container may already be disposed)
+    }
     for (final subscription in _subscriptions) {
       subscription.cancel();
     }

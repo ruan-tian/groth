@@ -21,7 +21,12 @@ final waterPlanProvider =
 class WaterPlanController extends StateNotifier<WaterPlanState> {
   WaterPlanController(this._ref) : super(const WaterPlanState()) {
     _ref.onDispose(() {
-      unawaited(_settingsWriter.dispose());
+      // Wrap in try-catch to handle ProviderContainer already disposed
+      try {
+        unawaited(_settingsWriter.dispose());
+      } catch (_) {
+        // Ignore errors during dispose
+      }
     });
   }
 

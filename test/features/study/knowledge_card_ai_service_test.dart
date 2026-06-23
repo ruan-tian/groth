@@ -10,7 +10,7 @@ import 'package:growth_os/features/knowledge/repositories/knowledge_card_reposit
 import 'package:growth_os/features/knowledge/repositories/knowledge_source_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
-import 'package:growth_os/features/study/services/knowledge_card_ai_service.dart';
+import 'package:growth_os/features/knowledge/services/knowledge_card_ai_service.dart';
 
 class _StubAiService extends AiService {
   _StubAiService(this.response);

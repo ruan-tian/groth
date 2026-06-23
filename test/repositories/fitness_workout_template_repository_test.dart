@@ -1,4 +1,4 @@
-﻿import 'package:drift/drift.dart' hide isNotNull;
+import 'package:drift/drift.dart' hide isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
@@ -28,7 +28,7 @@ void main() {
         expect(templates, hasLength(3));
         expect(
           templates.map((template) => template.name),
-          containsAll(['鍏ㄨ韩鍩虹', '鏍稿績绋冲畾', '涓婅偄鍔涢噺']),
+          containsAll(['全身基础', '核心稳定', '上肢力量']),
         );
         expect(templates.every((template) => template.isBuiltIn), isTrue);
 
@@ -49,7 +49,7 @@ void main() {
       () async {
         await repo.ensureBuiltInWorkoutTemplates();
         final source = (await repo.getWorkoutTemplates()).firstWhere(
-          (template) => template.name == '鍏ㄨ韩鍩虹',
+          (template) => template.name == '全身基础',
         );
         final sourceExercises = await repo.getWorkoutTemplateExercises(
           source.id,
@@ -57,14 +57,14 @@ void main() {
 
         final copyId = await repo.copyWorkoutTemplate(
           source.id,
-          name: '鎴戠殑鍏ㄨ韩璁粌',
+          name: '我的全身训练',
         );
 
         final copy = await repo.getWorkoutTemplateById(copyId);
         final copiedExercises = await repo.getWorkoutTemplateExercises(copyId);
 
         expect(copy, isNotNull);
-        expect(copy!.name, '鎴戠殑鍏ㄨ韩璁粌');
+        expect(copy!.name, '我的全身训练');
         expect(copy.isBuiltIn, isFalse);
         expect(copy.bodyPart, source.bodyPart);
         expect(copiedExercises, hasLength(sourceExercises.length));
@@ -121,4 +121,3 @@ void main() {
     });
   });
 }
-
