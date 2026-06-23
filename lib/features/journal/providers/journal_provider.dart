@@ -1,12 +1,8 @@
-import 'dart:convert';
-
-import 'package:drift/drift.dart' show OrderingTerm;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/sort_button.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/services/image_service.dart';
-import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 
 enum JournalFolderFilterKind { all, uncategorized, folder }
@@ -37,17 +33,6 @@ class JournalFolderSelection {
 
   @override
   int get hashCode => Object.hash(kind, folderId);
-}
-
-List<String> _parseTagsSafe(String? tagsString) {
-  if (tagsString == null || tagsString.isEmpty) return const [];
-  try {
-    final decoded = jsonDecode(tagsString);
-    if (decoded is List) return decoded.cast<String>();
-  } catch (_) {
-    // JSON 解析失败，回退到逗号分隔
-  }
-  return tagsString.split(',').where((t) => t.trim().isNotEmpty).toList();
 }
 
 // =============================================================================
@@ -110,30 +95,15 @@ final journalsByFolderProvider =
 
 /// 全部日记中出现过的标签（去重）
 final allJournalTagsProvider = FutureProvider<List<String>>((ref) async {
-  final db = ref.watch(databaseProvider);
-  final journals = await (db.select(
-    db.dailyJournals,
-  )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
-
-  final tagSet = <String>{};
-  for (final j in journals) {
-    tagSet.addAll(_parseTagsSafe(j.tags));
-  }
-  return tagSet.toList();
+  final repo = ref.watch(journalRepositoryProvider);
+  return repo.getAllTags();
 });
 
 /// 按标签筛选日记
 final journalsByTagProvider = FutureProvider.family<List<DailyJournal>, String>(
   (ref, tag) async {
-    final db = ref.watch(databaseProvider);
-    final journals = await (db.select(
-      db.dailyJournals,
-    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
-
-    // Drift doesn't support JSON array contains natively, filter in Dart
-    return journals.where((j) {
-      return _parseTagsSafe(j.tags).contains(tag);
-    }).toList();
+    final repo = ref.watch(journalRepositoryProvider);
+    return repo.getJournalsByTag(tag);
   },
 );
 

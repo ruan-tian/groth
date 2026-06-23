@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart';
@@ -246,6 +247,42 @@ class JournalRepository {
         updatedAt: Value(DateTime.now().millisecondsSinceEpoch),
       ),
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 标签查询
+  // ---------------------------------------------------------------------------
+
+  /// 获取全部日记中出现过的标签（去重）
+  Future<List<String>> getAllTags() async {
+    final journals = await (_db.select(_db.dailyJournals)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+    final tagSet = <String>{};
+    for (final j in journals) {
+      tagSet.addAll(_parseTags(j.tags));
+    }
+    return tagSet.toList();
+  }
+
+  /// 按标签筛选日记
+  Future<List<DailyJournal>> getJournalsByTag(String tag) async {
+    final journals = await (_db.select(_db.dailyJournals)
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)]))
+        .get();
+    return journals.where((j) => _parseTags(j.tags).contains(tag)).toList();
+  }
+
+  /// 解析标签字符串（JSON 数组或逗号分隔）
+  static List<String> _parseTags(String? tagsString) {
+    if (tagsString == null || tagsString.isEmpty) return const [];
+    try {
+      final decoded = jsonDecode(tagsString);
+      if (decoded is List) return decoded.cast<String>();
+    } catch (_) {
+      // JSON 解析失败，回退到逗号分隔
+    }
+    return tagsString.split(',').where((t) => t.trim().isNotEmpty).toList();
   }
 
   // ---------------------------------------------------------------------------
