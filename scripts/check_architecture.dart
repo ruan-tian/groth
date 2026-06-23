@@ -259,6 +259,7 @@ List<String> _checkPagesDbAccess() {
 }
 
 // ─── R7: features/*/providers direct databaseProvider (warning) ──────────────
+// Only warns about direct DB queries, not repository creation patterns
 
 List<String> _checkProvidersDbAccess() {
   final warnings = <String>[];
@@ -270,6 +271,11 @@ List<String> _checkProvidersDbAccess() {
     r'''ref\.(read|watch)\s*\(\s*(databaseProvider|appDatabaseProvider)\s*\)''',
   );
 
+  // Exclude repository creation patterns like: return XxxRepository(ref.watch(databaseProvider))
+  final repoCreationPattern = RegExp(
+    r'''Repository\s*\(\s*ref\.(read|watch)\s*\(\s*(databaseProvider|appDatabaseProvider)\s*\)\s*\)''',
+  );
+
   for (final entity in featuresDir.listSync(recursive: true)) {
     if (entity is! File) continue;
     if (!entity.path.endsWith('.dart')) continue;
@@ -279,7 +285,7 @@ List<String> _checkProvidersDbAccess() {
     for (var i = 0; i < lines.length; i++) {
       final line = lines[i];
       if (line.trim().startsWith('//')) continue;
-      if (dbPattern.hasMatch(line)) {
+      if (dbPattern.hasMatch(line) && !repoCreationPattern.hasMatch(line)) {
         final relativePath = _relative(entity.path);
         warnings.add(
           'R7: provider direct DB access: $relativePath:${i + 1} -- ${line.trim()}',
