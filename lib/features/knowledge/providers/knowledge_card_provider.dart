@@ -2,9 +2,9 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../knowledge/repositories/knowledge_card_repository.dart';
-import '../../knowledge/repositories/knowledge_source_repository.dart';
-import '../../study/utils/knowledge_card_assets.dart';
+import '../../../core/repositories/knowledge_card_repository.dart';
+import '../../../core/repositories/knowledge_source_repository.dart';
+import '../constants/knowledge_card_assets.dart';
 import 'knowledge_source_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import 'dart:convert';

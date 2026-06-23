@@ -7,7 +7,7 @@ import '../../../core/repositories/ai_config_repository.dart';
 import '../../../core/repositories/knowledge_card_repository.dart';
 import '../../../core/repositories/knowledge_source_repository.dart';
 import '../../../core/services/ai_service.dart';
-import '../utils/knowledge_card_assets.dart';
+import '../../knowledge/constants/knowledge_card_assets.dart';
 
 class KnowledgeCardAiService {
   KnowledgeCardAiService({

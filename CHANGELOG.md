@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-06-23 Architecture Upgrade Phase D: Page Import Path Fixes
+
+- Fixed dashboard_page: `dashboard_providers.dart` → `providers/dashboard_provider.dart`
+- Fixed fitness_page: `dashboard_providers.dart`/`fitness_providers.dart` → correct paths
+- Fixed diet_page: `../../health/providers/` → `providers/`
+- Fixed sleep_page: `../../dashboard/providers/` → `../dashboard/providers/`
+- Fixed journal_page: `dashboard_providers.dart`/`journal_providers.dart` → correct paths
+- Fixed pet_diary_page: `../../../shared/providers/pet_diary_provider.dart` → `../providers/pet_diary_provider.dart`
+- profile_page: replaced direct `databaseProvider.into(db.bodyMetrics)` with `fitnessRepositoryProvider.insertBodyMetric()`
+- Removed unused `app_database.dart` import from backup_page
+- task_history_page: added back `app_database.dart` import for DailyTask type
+
 ## 2026-06-23 Architecture Upgrade Phase E+F: Validation & Documentation
 
 - Phase E: Verified core/shared have no business logic

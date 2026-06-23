@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/database/app_database.dart';
 import '../../core/repositories/knowledge_card_repository.dart';
 import '../../core/repositories/knowledge_source_repository.dart';
-import '../../features/study/utils/knowledge_card_assets.dart';
+import '../../features/knowledge/constants/knowledge_card_assets.dart';
 import 'knowledge_source_provider.dart';
 import 'repository_providers.dart';
 import 'dart:convert';
