@@ -8,7 +8,7 @@ import 'package:growth_os/core/repositories/ai_config_repository.dart';
 import 'package:growth_os/core/repositories/knowledge_v3_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
-import 'package:growth_os/features/study/services/knowledge_v3_ai_service.dart';
+import 'package:growth_os/features/knowledge/services/knowledge_v3_ai_service.dart';
 
 class _SequenceAiService extends AiService {
   _SequenceAiService(this.responses);
