@@ -1,5 +1,15 @@
 # Changelog
 
+## 2026-06-23 Architecture Upgrade Phase A2: shared → features dependency fix (complete)
+
+- Moved settings_facade to features/settings/providers/
+- Moved knowledge_card_provider to features/knowledge/providers/
+- Moved knowledge_card_ai_provider to features/knowledge/providers/
+- Moved focus_provider to features/focus/providers/
+- Moved growth_calendar_sheet to features/dashboard/widgets/
+- Updated all re-exports for backward compatibility
+- Fixed test imports for knowledge_context_service
+
 ## 2026-06-23 Architecture Upgrade Phase A2: shared → features dependency fix (partial)
 
 - Moved knowledge_context_service to features/knowledge/services/
