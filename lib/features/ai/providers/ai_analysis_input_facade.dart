@@ -36,8 +36,8 @@ class AiAnalysisInputData {
 final aiAnalysisInputProvider = FutureProvider<AiAnalysisInputData>((ref) async {
   final studyRecords = await ref.watch(recentStudyRecordsProvider.future);
   final fitnessRecords = await ref.watch(recentFitnessRecordsProvider.future);
-  final dietRecords = await ref.watch(recentDietRecordsProvider(10).future);
-  final sleepRecords = await ref.watch(recentSleepRecordsProvider(7).future);
+  final dietRecords = await ref.watch(recentDietRecordsProvider(20).future);
+  final sleepRecords = await ref.watch(recentSleepRecordsProvider(14).future);
   final dashboard = await ref.watch(dashboardProvider.future);
   final weeklyAvgSleepDuration = await ref.watch(weeklyAvgSleepDurationProvider.future) ?? 0;
   final weeklyAvgSleepQuality = await ref.watch(weeklyAvgSleepQualityProvider.future) ?? 0;

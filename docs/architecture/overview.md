@@ -84,18 +84,17 @@ features/xxx/
 
 ## 五、剩余待处理项
 
-1. **Provider DB access（1 个 provider）**：`pet_service_providers.dart` 直接使用 `appDatabaseProvider` 传递 DB 实例给 `PetDiaryService`，这是正常模式（Service 需要 DB），作为 warning inventory。
+1. **Provider DB access（1 个 provider）**：`pet_service_providers.dart` 直接使用 `appDatabaseProvider` 传递 DB 实例给 `PetDiaryService`。这是跨模块数据聚合的合法模式（Service 需要查询 5 个模块的表），作为 warning inventory。
 2. **跨 feature 白名单**：ai→knowledge, focus→music, dashboard→fitness/health, settings→fitness
-3. **AI 分析页 Facade**：✅ 已创建 `AiAnalysisInputFacade`，part 文件仍使用直接 import（legacy exception）
-
-### Drift 类型 import 清单
-
-✅ **已完成**：29/30 页面已迁移至 feature data files，仅 `ai_analysis_page` 保留（需跨模块 types）
+3. **AI 分析页 Facade**：✅ 已创建 `AiAnalysisInputFacade`，待接入 part 文件（需更深层重构，涉及类型引用）
+4. **知识空间页面迁移**：✅ 已完成（10 个文件从 `study/pages/` → `knowledge/pages/`）
+5. **Drift 类型 import 消除**：✅ 已完成（30→0，通过 feature data files）
 
 ### 后续优化项（不阻塞）
 
-1. **AI 分析页接入 Facade**：`AiAnalysisInputFacade` 已创建，part 文件待接入
-2. **跨 feature 依赖优化**：当前 5 组白名单，后续可通过 facade/domain event 解耦
+1. **AI 分析页接入 Facade**：`AiAnalysisInputFacade` 已创建，part 文件待接入（需处理跨模块类型引用）
+2. **PetDiaryDataCollector**：创建数据聚合服务，消除 `pet_service_providers.dart` 的 R7 warning
+3. **跨 feature 依赖优化**：当前 5 组白名单，后续可通过 facade/domain event 解耦
 
 ---
 
