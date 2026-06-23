@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/design/design.dart';
-import '../../../../shared/providers/weather_provider.dart';
+import '../../../health/providers/weather_provider.dart';
 import 'weather_assets.dart';
 import 'weather_card_data.dart';
 import 'weather_particle_layer.dart';

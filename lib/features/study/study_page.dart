@@ -8,7 +8,7 @@ import '../../core/database/app_database.dart';
 import '../../core/services/statistics_service.dart';
 import '../../core/utils/chart_scale_utils.dart';
 import '../dashboard/providers/dashboard_provider.dart';
-import '../../shared/providers/knowledge_v3_provider.dart';
+import '../knowledge/providers/knowledge_v3_provider.dart';
 import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
 import 'providers/study_provider.dart';

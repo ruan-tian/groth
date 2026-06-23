@@ -9,8 +9,8 @@ import 'package:growth_os/core/database/app_database.dart';
 import 'package:growth_os/core/domain/pet/pet_event.dart';
 import 'package:growth_os/core/services/pet_event_bus.dart';
 import 'package:growth_os/features/fitness/models/activity_type.dart';
-import 'package:growth_os/shared/providers/dashboard_provider.dart';
-import 'package:growth_os/shared/providers/fitness_provider.dart';
+import 'package:growth_os/features/dashboard/providers/dashboard_provider.dart';
+import 'package:growth_os/features/fitness/providers/fitness_provider.dart';
 import 'package:growth_os/shared/widgets/common/common_widgets.dart';
 
 class AddFitnessRecordPage extends ConsumerStatefulWidget {

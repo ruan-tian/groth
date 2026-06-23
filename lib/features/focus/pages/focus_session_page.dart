@@ -14,7 +14,7 @@ import '../../dashboard/providers/dashboard_provider.dart'
         focusRepositoryProvider,
         studyRepositoryProvider;
 import '../../../shared/providers/focus_audio_provider.dart';
-import '../../../shared/providers/focus_provider.dart';
+import '../providers/focus_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../study/providers/study_provider.dart';
 import '../../../core/domain/pet/pet_event.dart';

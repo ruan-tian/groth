@@ -10,8 +10,8 @@ import '../../study/providers/study_provider.dart';
 import '../../fitness/providers/fitness_provider.dart';
 import '../../health/providers/diet_provider.dart';
 import '../../health/providers/sleep_provider.dart';
-import '../../../shared/providers/knowledge_card_ai_provider.dart';
-import '../../../shared/providers/knowledge_card_provider.dart';
+import '../../knowledge/providers/knowledge_card_ai_provider.dart';
+import '../../knowledge/providers/knowledge_card_provider.dart';
 import '../../knowledge/services/knowledge_context_service.dart';
 import '../../knowledge/services/knowledge_card_ai_service.dart';
 

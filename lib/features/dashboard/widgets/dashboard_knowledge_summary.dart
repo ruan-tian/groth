@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/knowledge_source_provider.dart';
+import '../../knowledge/providers/knowledge_source_provider.dart';
 
 /// Dashboard 知识库摘要卡片
 ///

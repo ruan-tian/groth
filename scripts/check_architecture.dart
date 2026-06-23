@@ -311,6 +311,7 @@ List<String> _checkCrossFeatureImport() {
     'focus': ['models', 'providers', 'utils'],
     'dashboard': ['utils', 'pages'], // avatar assets + quick action sheet
     'settings': ['utils'], // avatar assets
+    'fitness': ['providers'], // refresh dashboard after adding record
   };
 
   // Legacy exception files (documented, to be refactored later)

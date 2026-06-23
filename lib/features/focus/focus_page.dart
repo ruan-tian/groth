@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
-import '../../shared/providers/focus_provider.dart';
+import 'providers/focus_provider.dart';
 import '../../shared/providers/settings_provider.dart';
 import 'models/study_mode.dart';
 import 'utils/focus_assets.dart';

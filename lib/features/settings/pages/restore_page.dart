@@ -14,7 +14,7 @@ import '../../plan/providers/task_provider.dart';
 import '../../study/providers/study_provider.dart';
 import '../../fitness/providers/fitness_provider.dart';
 import '../../journal/providers/journal_provider.dart';
-import '../../../shared/providers/focus_provider.dart';
+import '../../focus/providers/focus_provider.dart';
 import '../../health/providers/sleep_provider.dart';
 import '../../health/providers/diet_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
