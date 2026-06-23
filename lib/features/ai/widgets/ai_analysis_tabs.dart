@@ -6,7 +6,7 @@ class _StudyAnalysisTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analysisState = ref.watch(aiAnalysisStateProvider);
-    final recentRecords = ref.watch(recentStudyRecordsProvider);
+    final inputData = ref.watch(aiAnalysisInputProvider);
     final knowledgeContext = ref.watch(knowledgeContextServiceProvider);
 
     return Padding(
@@ -22,14 +22,15 @@ class _StudyAnalysisTab extends ConsumerWidget {
                 children: [
                   _buildSectionTitle('数据预览'),
                   const SizedBox(height: 8),
-                  recentRecords.when(
+                  inputData.when(
                     loading: () => Center(
                       child: CircularProgressIndicator(
                         color: context.growthColors.primary,
                       ),
                     ),
                     error: (e, _) => _buildErrorCard('加载学习记录失败: $e'),
-                    data: (records) {
+                    data: (input) {
+                      final records = input.studyRecords;
                       if (records.isEmpty) {
                         return _buildEmptyCard('暂无学习记录，请先添加一些学习记录。');
                       }
@@ -117,7 +118,7 @@ class _StudyAnalysisTab extends ConsumerWidget {
       return;
     }
 
-    final records = await ref.read(recentStudyRecordsProvider.future);
+    final records = await ref.read(aiAnalysisInputProvider.future).then((d) => d.studyRecords);
     if (records.isEmpty) {
       ref
           .read(aiAnalysisStateProvider.notifier)
@@ -220,7 +221,7 @@ class _FitnessAnalysisTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final analysisState = ref.watch(aiAnalysisStateProvider);
-    final recentRecords = ref.watch(recentFitnessRecordsProvider);
+    final inputData = ref.watch(aiAnalysisInputProvider);
     final knowledgeContext = ref.watch(knowledgeContextServiceProvider);
 
     return Padding(
@@ -235,14 +236,15 @@ class _FitnessAnalysisTab extends ConsumerWidget {
                 children: [
                   _buildSectionTitle('数据预览'),
                   const SizedBox(height: 8),
-                  recentRecords.when(
+                  inputData.when(
                     loading: () => Center(
                       child: CircularProgressIndicator(
                         color: context.growthColors.primary,
                       ),
                     ),
                     error: (e, _) => _buildErrorCard('加载健身记录失败: $e'),
-                    data: (records) {
+                    data: (input) {
+                      final records = input.fitnessRecords;
                       if (records.isEmpty) {
                         return _buildEmptyCard('暂无健身记录，请先添加一些训练记录。');
                       }
@@ -328,7 +330,7 @@ class _FitnessAnalysisTab extends ConsumerWidget {
       return;
     }
 
-    final records = await ref.read(recentFitnessRecordsProvider.future);
+    final records = await ref.read(aiAnalysisInputProvider.future).then((d) => d.fitnessRecords);
     if (records.isEmpty) {
       ref
           .read(aiAnalysisStateProvider.notifier)

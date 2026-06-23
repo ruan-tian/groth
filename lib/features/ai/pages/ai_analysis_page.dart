@@ -4,17 +4,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/services/ai_service.dart';
 import '../../knowledge/repositories/knowledge_source_repository.dart';
-// ignore: unused_import — facade for future refactoring, see docs/architecture/ai-boundary.md
-import '../providers/ai_analysis_input_facade.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
-// ignore: unused_import — used by ai_analysis_more_tabs.dart part file
-import '../../dashboard/models/dashboard_data.dart';
-import '../../study/providers/study_provider.dart';
+import '../providers/ai_analysis_input_facade.dart';
+// ignore: unused_import — used by ai_analysis_tabs.dart part file
 import '../../study/models/study_data.dart';
-import '../../fitness/providers/fitness_provider.dart';
+// ignore: unused_import — used by ai_analysis_tabs.dart part file
 import '../../fitness/models/fitness_data.dart';
-import '../../health/providers/diet_provider.dart';
-import '../../health/providers/sleep_provider.dart';
+// ignore: unused_import — used by ai_analysis_more_tabs.dart part file
 import '../../health/models/health_data.dart';
 import '../../knowledge/providers/knowledge_card_ai_provider.dart';
 import '../../knowledge/providers/knowledge_card_provider.dart';

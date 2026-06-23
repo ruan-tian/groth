@@ -7,7 +7,7 @@ class _DietAnalysisTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
     final analysisState = ref.watch(aiAnalysisStateProvider);
-    final recentRecords = ref.watch(recentDietRecordsProvider(20));
+    final inputData = ref.watch(aiAnalysisInputProvider);
     final knowledgeContext = ref.watch(knowledgeContextServiceProvider);
 
     return Padding(
@@ -22,12 +22,13 @@ class _DietAnalysisTab extends ConsumerWidget {
                 children: [
                   _buildSectionTitle('数据预览'),
                   const SizedBox(height: 8),
-                  recentRecords.when(
+                  inputData.when(
                     loading: () => Center(
                       child: CircularProgressIndicator(color: colors.primary),
                     ),
                     error: (e, _) => _buildErrorCard('加载饮食记录失败: $e'),
-                    data: (records) {
+                    data: (input) {
+                      final records = input.dietRecords;
                       if (records.isEmpty) {
                         return _buildEmptyCard('暂无饮食记录，请先添加一些饮食记录。');
                       }
@@ -110,7 +111,7 @@ class _DietAnalysisTab extends ConsumerWidget {
       return;
     }
 
-    final records = await ref.read(recentDietRecordsProvider(20).future);
+    final records = await ref.read(aiAnalysisInputProvider.future).then((d) => d.dietRecords);
     if (records.isEmpty) {
       ref
           .read(aiAnalysisStateProvider.notifier)
@@ -264,9 +265,7 @@ class _SleepAnalysisTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
     final analysisState = ref.watch(aiAnalysisStateProvider);
-    final recentRecords = ref.watch(recentSleepRecordsProvider(14));
-    final weeklyAvgDuration = ref.watch(weeklyAvgSleepDurationProvider);
-    final weeklyAvgQuality = ref.watch(weeklyAvgSleepQualityProvider);
+    final inputData = ref.watch(aiAnalysisInputProvider);
     final knowledgeContext = ref.watch(knowledgeContextServiceProvider);
 
     return Padding(
@@ -281,12 +280,13 @@ class _SleepAnalysisTab extends ConsumerWidget {
                 children: [
                   _buildSectionTitle('数据预览'),
                   const SizedBox(height: 8),
-                  recentRecords.when(
+                  inputData.when(
                     loading: () => Center(
                       child: CircularProgressIndicator(color: colors.primary),
                     ),
                     error: (e, _) => _buildErrorCard('加载睡眠记录失败: $e'),
-                    data: (records) {
+                    data: (input) {
+                      final records = input.sleepRecords;
                       if (records.isEmpty) {
                         return _buildEmptyCard('暂无睡眠记录，请先添加一些睡眠记录。');
                       }
@@ -296,8 +296,8 @@ class _SleepAnalysisTab extends ConsumerWidget {
                         builder: (context, snapshot) {
                           return _buildSleepDataPreview(
                             records,
-                            weeklyAvgDuration,
-                            weeklyAvgQuality,
+                            AsyncData(input.weeklyAvgSleepDuration),
+                            AsyncData(input.weeklyAvgSleepQuality),
                             colors,
                             bundle: snapshot.data,
                             isLoadingContext:
@@ -371,7 +371,7 @@ class _SleepAnalysisTab extends ConsumerWidget {
       return;
     }
 
-    final records = await ref.read(recentSleepRecordsProvider(14).future);
+    final records = await ref.read(aiAnalysisInputProvider.future).then((d) => d.sleepRecords);
     if (records.isEmpty) {
       ref
           .read(aiAnalysisStateProvider.notifier)
@@ -499,7 +499,7 @@ class _GrowthReportTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
     final analysisState = ref.watch(aiAnalysisStateProvider);
-    final dashboardAsync = ref.watch(dashboardProvider);
+    final inputData = ref.watch(aiAnalysisInputProvider);
     final knowledgeContext = ref.watch(knowledgeContextServiceProvider);
 
     return Padding(
@@ -514,12 +514,13 @@ class _GrowthReportTab extends ConsumerWidget {
                 children: [
                   _buildSectionTitle('数据预览'),
                   const SizedBox(height: 8),
-                  dashboardAsync.when(
+                  inputData.when(
                     loading: () => Center(
                       child: CircularProgressIndicator(color: colors.primary),
                     ),
                     error: (e, _) => _buildErrorCard('加载成长数据失败: $e'),
-                    data: (data) {
+                    data: (input) {
+                      final data = input.dashboard;
                       final query = _growthContextQuery(data);
                       return FutureBuilder<KnowledgeContextBundle>(
                         future: knowledgeContext.buildForQuery(query),
@@ -630,7 +631,7 @@ class _GrowthReportTab extends ConsumerWidget {
       return;
     }
 
-    final data = await ref.read(dashboardProvider.future);
+    final data = await ref.read(aiAnalysisInputProvider.future).then((d) => d.dashboard);
     final weeklyData = {
       '学习时长': '${data.todayStudyMinutes} 分钟',
       '健身时长': '${data.todayFitnessMinutes} 分钟',
