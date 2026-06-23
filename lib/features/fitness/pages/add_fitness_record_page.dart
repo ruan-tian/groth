@@ -1398,7 +1398,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
     try {
       final repo = ref.read(fitnessRepositoryProvider);
-      final db = ref.read(databaseProvider);
       final now = DateTime.now();
       final expService = ref.read(expServiceProvider);
       final exp = expService.calculateFitnessExp(
@@ -1411,78 +1410,61 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             : 0,
         hasFeeling: _feelingController.text.trim().isNotEmpty,
       );
+      final oldTotal = await ref.read(expRepositoryProvider).getTotalExp();
+      final exerciseCompanions = <FitnessExercisesCompanion>[
+        if (_selectedActivityType == ActivityType.strength && _modeIndex == 1)
+          for (final exercise in _exercises)
+            FitnessExercisesCompanion(
+              exerciseName: Value(exercise.name),
+              sets: Value(exercise.sets),
+              reps: Value(exercise.reps),
+              weight: Value(exercise.weight),
+              restSeconds: Value(exercise.restSeconds),
+              createdAt: Value(now.millisecondsSinceEpoch),
+            ),
+      ];
 
-      late final int recordId;
-      late final int oldTotal;
-      await db.transaction(() async {
-        recordId = await repo.insertFitnessRecord(
-          FitnessRecordsCompanion(
-            mode: Value(
-              _selectedActivityType == ActivityType.strength
-                  ? (_modeIndex == 0 ? 'simple' : 'professional')
-                  : 'simple',
-            ),
-            title: Value(_resolveTitle()),
-            bodyPart: Value(bodyPart),
-            activityType: Value(_selectedActivityType.name),
-            startTime: Value(_startTime.millisecondsSinceEpoch),
-            endTime: Value(_endTime.millisecondsSinceEpoch),
-            durationMinutes: Value(duration),
-            fatigueLevel: Value(
-              _selectedActivityType == ActivityType.strength
-                  ? (_modeIndex == 1 ? _fatigue : null)
-                  : _fatigue,
-            ),
-            intensityLevel: Value(
-              _selectedActivityType == ActivityType.strength
-                  ? (_modeIndex == 1 ? _intensity : null)
-                  : _intensity,
-            ),
-            feeling: Value(
-              _feelingController.text.trim().isEmpty
-                  ? null
-                  : _feelingController.text.trim(),
-            ),
-            note: Value(
-              _notesController.text.trim().isEmpty
-                  ? null
-                  : _notesController.text.trim(),
-            ),
-            createdAt: Value(now.millisecondsSinceEpoch),
-            updatedAt: Value(now.millisecondsSinceEpoch),
+      await repo.saveFitnessRecordWithExp(
+        record: FitnessRecordsCompanion(
+          mode: Value(
+            _selectedActivityType == ActivityType.strength
+                ? (_modeIndex == 0 ? 'simple' : 'professional')
+                : 'simple',
           ),
-        );
-
-        if (_selectedActivityType == ActivityType.strength && _modeIndex == 1) {
-          for (final exercise in _exercises) {
-            await repo.insertFitnessExercise(
-              FitnessExercisesCompanion(
-                fitnessRecordId: Value(recordId),
-                exerciseName: Value(exercise.name),
-                sets: Value(exercise.sets),
-                reps: Value(exercise.reps),
-                weight: Value(exercise.weight),
-                restSeconds: Value(exercise.restSeconds),
-                createdAt: Value(now.millisecondsSinceEpoch),
-              ),
-            );
-          }
-        }
-
-        await repo.updateFitnessRecordExp(recordId, exp);
-
-        final expRepo = ref.read(expRepositoryProvider);
-        oldTotal = await expRepo.getTotalExp();
-        await expRepo.insertExpLog(
-          GrowthExpLogsCompanion.insert(
-            sourceType: 'fitness',
-            sourceId: recordId,
-            expValue: exp,
-            reason: '${_selectedActivityType.label}: $bodyPart ($duration分钟)',
-            createdAt: now.millisecondsSinceEpoch,
+          title: Value(_resolveTitle()),
+          bodyPart: Value(bodyPart),
+          activityType: Value(_selectedActivityType.name),
+          startTime: Value(_startTime.millisecondsSinceEpoch),
+          endTime: Value(_endTime.millisecondsSinceEpoch),
+          durationMinutes: Value(duration),
+          fatigueLevel: Value(
+            _selectedActivityType == ActivityType.strength
+                ? (_modeIndex == 1 ? _fatigue : null)
+                : _fatigue,
           ),
-        );
-      });
+          intensityLevel: Value(
+            _selectedActivityType == ActivityType.strength
+                ? (_modeIndex == 1 ? _intensity : null)
+                : _intensity,
+          ),
+          feeling: Value(
+            _feelingController.text.trim().isEmpty
+                ? null
+                : _feelingController.text.trim(),
+          ),
+          note: Value(
+            _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+          ),
+          createdAt: Value(now.millisecondsSinceEpoch),
+          updatedAt: Value(now.millisecondsSinceEpoch),
+        ),
+        exercises: exerciseCompanions,
+        exp: exp,
+        reason: '${_selectedActivityType.label}: $bodyPart ($duration min)',
+        createdAt: now.millisecondsSinceEpoch,
+      );
 
       final oldLevel = expService.calculateLevel(oldTotal);
       final newLevel = expService.calculateLevel(oldTotal + exp);

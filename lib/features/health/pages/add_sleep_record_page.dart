@@ -6,7 +6,12 @@ import 'package:go_router/go_router.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/sleep_provider.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/dashboard_provider.dart'
+    hide expRepositoryProvider, expServiceProvider, sleepRepositoryProvider;
+import '../../../shared/providers/repository_providers.dart'
+    show expRepositoryProvider, sleepRepositoryProvider;
+import '../../../shared/providers/service_providers.dart'
+    show expServiceProvider;
 import '../../../shared/widgets/common/growth_time_picker.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
@@ -118,7 +123,6 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
 
       // 原子操作：插入记录 + 经验日志
       final expService = ref.read(expServiceProvider);
-      final db = ref.read(databaseProvider);
       final repo = ref.read(sleepRepositoryProvider);
       final expRepo = ref.read(expRepositoryProvider);
       final oldTotal = await expRepo.getTotalExp();
@@ -128,22 +132,13 @@ class _AddSleepRecordPageState extends ConsumerState<AddSleepRecordPage> {
         qualityLevel: _qualityLevel,
         targetMinutes: 480,
       );
-      late final int recordId;
-      await db.transaction(() async {
-        recordId = await repo.insertSleepRecord(companion);
 
-        if (sleepExp > 0) {
-          await expRepo.insertExpLog(
-            GrowthExpLogsCompanion.insert(
-              sourceType: 'sleep',
-              sourceId: recordId,
-              expValue: sleepExp,
-              reason: '睡眠: $duration分钟 质量$_qualityLevel',
-              createdAt: now.millisecondsSinceEpoch,
-            ),
-          );
-        }
-      });
+      await repo.saveSleepRecordWithExp(
+        record: companion,
+        exp: sleepExp,
+        reason: 'sleep: $duration min quality $_qualityLevel',
+        createdAt: now.millisecondsSinceEpoch,
+      );
 
       if (sleepExp > 0) {
         final newLevel = expService.calculateLevel(oldTotal + sleepExp);

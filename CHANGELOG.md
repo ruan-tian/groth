@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-23 Health record transaction stabilization
+
+- Moved fitness, diet, and sleep record save flows into repository-level transactions that write records, related rows, and exp logs together instead of opening database transactions from UI pages.
+
 ## 2026-06-23 Feature database boundary stabilization
 
 - Moved study-record detail lookup behind `StudyRepository` and shared study providers, then added an architecture guard preventing feature pages/widgets from reading `appDatabaseProvider` directly.

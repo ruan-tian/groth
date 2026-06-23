@@ -21,6 +21,29 @@ class DietRepository {
     return _db.into(_db.dietRecords).insert(record);
   }
 
+  Future<int> saveDietRecordWithExp({
+    required DietRecordsCompanion record,
+    required int exp,
+    required String reason,
+    required int createdAt,
+  }) {
+    return _db.transaction(() async {
+      final recordId = await insertDietRecord(record);
+      if (exp > 0) {
+        await ExpRepository(_db).insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'diet',
+            sourceId: recordId,
+            expValue: exp,
+            reason: reason,
+            createdAt: createdAt,
+          ),
+        );
+      }
+      return recordId;
+    });
+  }
+
   /// 更新一条饮食记录。
   Future<void> updateDietRecord(DietRecordsCompanion record) {
     return _db.update(_db.dietRecords).replace(record);
@@ -144,5 +167,4 @@ class DietRepository {
   Future<int> getTodayDietCount() {
     return getDietCountByDate(DateTime.now());
   }
-
 }

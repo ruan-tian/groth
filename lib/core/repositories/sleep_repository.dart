@@ -23,6 +23,29 @@ class SleepRepository {
     return _db.into(_db.sleepRecords).insert(record);
   }
 
+  Future<int> saveSleepRecordWithExp({
+    required SleepRecordsCompanion record,
+    required int exp,
+    required String reason,
+    required int createdAt,
+  }) {
+    return _db.transaction(() async {
+      final recordId = await insertSleepRecord(record);
+      if (exp > 0) {
+        await ExpRepository(_db).insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'sleep',
+            sourceId: recordId,
+            expValue: exp,
+            reason: reason,
+            createdAt: createdAt,
+          ),
+        );
+      }
+      return recordId;
+    });
+  }
+
   /// 更新一条睡眠记录。
   Future<void> updateSleepRecord(SleepRecordsCompanion record) {
     return _db.update(_db.sleepRecords).replace(record);

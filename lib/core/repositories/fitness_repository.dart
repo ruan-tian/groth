@@ -1,4 +1,4 @@
-﻿import 'package:drift/drift.dart';
+import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
 import 'exp_repository.dart';
@@ -18,6 +18,36 @@ class FitnessRepository {
   /// 插入一条健身记录，返回自增 ID。
   Future<int> insertFitnessRecord(FitnessRecordsCompanion record) {
     return _db.into(_db.fitnessRecords).insert(record);
+  }
+
+  Future<int> saveFitnessRecordWithExp({
+    required FitnessRecordsCompanion record,
+    required Iterable<FitnessExercisesCompanion> exercises,
+    required int exp,
+    required String reason,
+    required int createdAt,
+  }) {
+    return _db.transaction(() async {
+      final recordId = await insertFitnessRecord(record);
+      if (exercises.isNotEmpty) {
+        await insertFitnessExercises(
+          exercises.map(
+            (exercise) => exercise.copyWith(fitnessRecordId: Value(recordId)),
+          ),
+        );
+      }
+      await updateFitnessRecordExp(recordId, exp);
+      await ExpRepository(_db).insertExpLog(
+        GrowthExpLogsCompanion.insert(
+          sourceType: 'fitness',
+          sourceId: recordId,
+          expValue: exp,
+          reason: reason,
+          createdAt: createdAt,
+        ),
+      );
+      return recordId;
+    });
   }
 
   /// 更新一条健身记录（以 companion 中的 id 为准）。

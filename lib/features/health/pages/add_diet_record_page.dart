@@ -9,7 +9,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
 import '../../../shared/providers/dashboard_provider.dart'
-    show dashboardProvider, databaseProvider;
+    show dashboardProvider;
 import '../../../shared/providers/diet_provider.dart';
 import '../../../shared/providers/repository_providers.dart'
     show dietRepositoryProvider, expRepositoryProvider;
@@ -119,7 +119,6 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       );
 
       final expService = ref.read(expServiceProvider);
-      final db = ref.read(databaseProvider);
       final repo = ref.read(dietRepositoryProvider);
       final expRepo = ref.read(expRepositoryProvider);
       final oldTotal = await expRepo.getTotalExp();
@@ -133,22 +132,12 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             _proteinLevel == 'medium' || _proteinLevel == 'high',
       );
 
-      late final int recordId;
-      await db.transaction(() async {
-        recordId = await repo.insertDietRecord(companion);
-
-        if (dietExp > 0) {
-          await expRepo.insertExpLog(
-            GrowthExpLogsCompanion.insert(
-              sourceType: 'diet',
-              sourceId: recordId,
-              expValue: dietExp,
-              reason: '饮食: ${_foodController.text.trim()}',
-              createdAt: now.millisecondsSinceEpoch,
-            ),
-          );
-        }
-      });
+      await repo.saveDietRecordWithExp(
+        record: companion,
+        exp: dietExp,
+        reason: 'diet: ${_foodController.text.trim()}',
+        createdAt: now.millisecondsSinceEpoch,
+      );
 
       if (dietExp > 0) {
         final newLevel = expService.calculateLevel(oldTotal + dietExp);
