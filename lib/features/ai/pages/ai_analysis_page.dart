@@ -2,18 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
 import '../../../core/services/ai_service.dart';
 import '../../knowledge/repositories/knowledge_source_repository.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
+// ignore: unused_import — used by ai_analysis_more_tabs.dart part file
+import '../../dashboard/models/dashboard_data.dart';
 import '../../study/providers/study_provider.dart';
+import '../../study/models/study_data.dart';
 import '../../fitness/providers/fitness_provider.dart';
+import '../../fitness/models/fitness_data.dart';
 import '../../health/providers/diet_provider.dart';
 import '../../health/providers/sleep_provider.dart';
+import '../../health/models/health_data.dart';
 import '../../knowledge/providers/knowledge_card_ai_provider.dart';
 import '../../knowledge/providers/knowledge_card_provider.dart';
+// ignore: unused_import — used by ai_analysis_more_tabs.dart part file
+import '../../knowledge/models/knowledge_data.dart';
 import '../../knowledge/services/knowledge_context_service.dart';
 import '../../knowledge/services/knowledge_card_ai_service.dart';
+import '../models/ai_data.dart';
 
 part '../widgets/ai_analysis_tabs.dart';
 part '../widgets/ai_analysis_more_tabs.dart';
