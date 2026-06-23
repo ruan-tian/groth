@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/services/ai_service.dart';
 import '../../knowledge/repositories/knowledge_source_repository.dart';
+// ignore: unused_import — facade for future refactoring, see docs/architecture/ai-boundary.md
+import '../providers/ai_analysis_input_facade.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 // ignore: unused_import — used by ai_analysis_more_tabs.dart part file
 import '../../dashboard/models/dashboard_data.dart';

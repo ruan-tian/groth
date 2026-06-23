@@ -9,6 +9,7 @@ import 'package:growth_os/features/pet/repositories/pet_diary_repository.dart';
 import 'package:growth_os/core/repositories/setting_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
+import 'package:growth_os/features/pet/services/pet_diary_data_collector.dart';
 import 'package:growth_os/features/pet/services/pet_diary_service.dart';
 
 void main() {
@@ -53,7 +54,7 @@ void main() {
     settingRepo = SettingRepository(db);
     aiConfigRepo = AiConfigRepository(db);
     service = PetDiaryService(
-      db: db,
+      dataCollector: PetDiaryDataCollector(db),
       diaryRepository: PetDiaryRepository(db),
       aiConfigRepository: aiConfigRepo,
       settingRepository: settingRepo,

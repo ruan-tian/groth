@@ -9,6 +9,7 @@ import '../../../core/repositories/setting_repository.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/domain/pet/pet_diary_draft.dart';
 import '../../../core/utils/pet_diary_prompt_builder.dart';
+import 'pet_diary_data_collector.dart';
 
 typedef PetDiaryAiCaller =
     Future<String> Function({
@@ -25,7 +26,7 @@ typedef PetDiarySettingWriter = Future<void> Function(String key, String value);
 
 class PetDiaryService {
   PetDiaryService({
-    required AppDatabase db,
+    required PetDiaryDataCollector dataCollector,
     required PetDiaryRepository diaryRepository,
     required AiConfigRepository aiConfigRepository,
     required SettingRepository settingRepository,
@@ -33,7 +34,7 @@ class PetDiaryService {
     PetDiaryPromptBuilder promptBuilder = const PetDiaryPromptBuilder(),
     PetDiaryAiCaller? aiCaller,
     PetDiarySettingWriter? settingWriter,
-  }) : _db = db,
+  }) : _dataCollector = dataCollector,
        _diaryRepository = diaryRepository,
        _aiConfigRepository = aiConfigRepository,
        _settingRepository = settingRepository,
@@ -44,7 +45,7 @@ class PetDiaryService {
   static const autoEnabledKey = 'pet_diary_auto_enabled';
   static const privacyConfirmedKey = 'pet_diary_privacy_confirmed';
 
-  final AppDatabase _db;
+  final PetDiaryDataCollector _dataCollector;
   final PetDiaryRepository _diaryRepository;
   final AiConfigRepository _aiConfigRepository;
   final SettingRepository _settingRepository;
@@ -132,37 +133,22 @@ class PetDiaryService {
     final yesterdayKey = formatDate(yesterday);
     final todayKey = formatDate(today);
 
-    final studyRecords =
-        await (_db.select(_db.studyRecords)..where(
-              (t) =>
-                  t.startTime.isBiggerOrEqualValue(startMs) &
-                  t.startTime.isSmallerThanValue(endMs),
-            ))
-            .get();
-    final fitnessRecords =
-        await (_db.select(_db.fitnessRecords)..where(
-              (t) =>
-                  t.startTime.isBiggerOrEqualValue(startMs) &
-                  t.startTime.isSmallerThanValue(endMs),
-            ))
-            .get();
-    final dietRecords = await (_db.select(
-      _db.dietRecords,
-    )..where((t) => t.mealDate.equals(yesterdayKey))).get();
-    final sleepRecords = await (_db.select(
-      _db.sleepRecords,
-    )..where((t) => t.sleepDate.equals(yesterdayKey))).get();
-    final expLogs =
-        await (_db.select(_db.growthExpLogs)..where(
-              (t) =>
-                  t.createdAt.isBiggerOrEqualValue(startMs) &
-                  t.createdAt.isSmallerThanValue(endMs),
-            ))
-            .get();
-    final tasks = await (_db.select(
-      _db.dailyTasks,
-    )..where((t) => t.taskDate.equals(yesterdayKey))).get();
-    final weather = await _loadWeather(yesterdayKey, todayKey);
+    final studyRecords = await _dataCollector.getStudyRecords(
+      startMs: startMs,
+      endMs: endMs,
+    );
+    final fitnessRecords = await _dataCollector.getFitnessRecords(
+      startMs: startMs,
+      endMs: endMs,
+    );
+    final dietRecords = await _dataCollector.getDietRecords(yesterdayKey);
+    final sleepRecords = await _dataCollector.getSleepRecords(yesterdayKey);
+    final expLogs = await _dataCollector.getExpLogs(
+      startMs: startMs,
+      endMs: endMs,
+    );
+    final tasks = await _dataCollector.getTasks(yesterdayKey);
+    final weather = await _dataCollector.getWeather(yesterdayKey);
 
     final studyMinutes = studyRecords.fold<int>(
       0,
@@ -286,23 +272,6 @@ class PetDiaryService {
         updatedAt: nowMs,
       ),
     );
-  }
-
-  Future<DailyWeather?> _loadWeather(
-    String yesterdayKey,
-    String todayKey,
-  ) async {
-    final yesterday =
-        await (_db.select(_db.dailyWeatherTable)
-              ..where((t) => t.date.equals(yesterdayKey))
-              ..limit(1))
-            .getSingleOrNull();
-    if (yesterday != null) return yesterday;
-
-    return (_db.select(_db.dailyWeatherTable)
-          ..where((t) => t.date.equals(todayKey))
-          ..limit(1))
-        .getSingleOrNull();
   }
 
   Map<String, dynamic> _decodeJsonObject(String raw) {

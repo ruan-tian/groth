@@ -6,11 +6,16 @@ import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../../../shared/services/settings_write_queue.dart';
+import '../services/pet_diary_data_collector.dart';
 import '../services/pet_diary_service.dart';
+
+/// PetDiaryDataCollector Provider.
+final petDiaryDataCollectorProvider = Provider<PetDiaryDataCollector>((ref) {
+  return PetDiaryDataCollector(ref.watch(appDatabaseProvider));
+});
 
 /// Pet diary generation service Provider.
 final petDiaryServiceProvider = Provider<PetDiaryService>((ref) {
-  final db = ref.watch(appDatabaseProvider);
   final settingsWriter = SettingsWriteQueue(
     write: ref.read(settingRepositoryProvider).setSetting,
   );
@@ -18,7 +23,7 @@ final petDiaryServiceProvider = Provider<PetDiaryService>((ref) {
     unawaited(settingsWriter.dispose());
   });
   return PetDiaryService(
-    db: db,
+    dataCollector: ref.watch(petDiaryDataCollectorProvider),
     diaryRepository: ref.watch(petDiaryRepositoryProvider),
     aiConfigRepository: ref.watch(aiConfigRepositoryProvider),
     settingRepository: ref.watch(settingRepositoryProvider),
