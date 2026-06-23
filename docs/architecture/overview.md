@@ -84,8 +84,10 @@ features/xxx/
 
 ## 五、剩余待处理项
 
-1. `shared/providers/knowledge_card_ai_provider.dart` 中引用 `features/study/services/` → 需要移动到 `features/knowledge/providers/`
-2. 33 个页面仍 import `app_database.dart`（需要类型定义，非直接 DB 操作，可接受）
+1. 30 个页面仍 import `app_database.dart`（仅用于 Drift 类型定义，非直接 DB 操作，作为 warning inventory）
+2. 5 个 provider 直接使用 `databaseProvider` 创建 Repository 实例（作为 warning inventory）
+3. 知识空间页面仍在 `features/study/pages/`，后续迁移到 `features/knowledge/pages/`
+4. `features/ai/pages/ai_analysis_page.dart` 依赖 5 个模块 provider，后续改为 `AiAnalysisInputFacade`
 
 ---
 

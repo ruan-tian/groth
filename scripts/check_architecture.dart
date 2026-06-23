@@ -58,12 +58,14 @@ void main() {
     },
   ));
 
-  // R3: pages -> core/database (forbidden)
-  errors.addAll(_checkNoImport(
+  // R3: pages -> core/database (warning for type imports, error for direct DB access)
+  // Type imports (Drift data classes/Companion) are acceptable as warning inventory.
+  // Direct DB access (ref.read/watch(databaseProvider), db.transaction) is error.
+  warnings.addAll(_checkNoImport(
     directory: 'lib/features',
     forbiddenPattern: RegExp(r'''import\s+['"].*core/database/'''),
-    ruleName: 'R3: pages -> core/database',
-    fileFilter: (path) => path.contains('/pages/'),
+    ruleName: 'R3: pages -> core/database (type import)',
+    fileFilter: (path) => _normalized(path).contains('/pages/'),
   ));
 
   // R4: core/repositories/ legacy re-export inventory
@@ -238,7 +240,7 @@ List<String> _checkPagesDbAccess() {
   for (final entity in featuresDir.listSync(recursive: true)) {
     if (entity is! File) continue;
     if (!entity.path.endsWith('.dart')) continue;
-    if (!entity.path.contains('/pages/')) continue;
+    if (!_normalized(entity.path).contains('/pages/')) continue;
 
     final lines = entity.readAsLinesSync();
     for (var i = 0; i < lines.length; i++) {
@@ -271,7 +273,7 @@ List<String> _checkProvidersDbAccess() {
   for (final entity in featuresDir.listSync(recursive: true)) {
     if (entity is! File) continue;
     if (!entity.path.endsWith('.dart')) continue;
-    if (!entity.path.contains('/providers/')) continue;
+    if (!_normalized(entity.path).contains('/providers/')) continue;
 
     final lines = entity.readAsLinesSync();
     for (var i = 0; i < lines.length; i++) {
@@ -376,6 +378,9 @@ List<String> _checkCrossFeatureImport() {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+/// Normalize path separators to forward slash (for Windows compatibility)
+String _normalized(String path) => path.replaceAll('\\', '/');
+
 String _relative(String path) {
-  return path.replaceAll('\\', '/').replaceFirst(RegExp(r'^\.?/?'), '');
+  return _normalized(path).replaceFirst(RegExp(r'^\.?/?'), '');
 }

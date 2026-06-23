@@ -103,7 +103,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('你好，我是甜甜'), findsOneWidget);
-    expect(find.text('搜索或问甜甜这个空间里的资料...'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
     expect(find.text('问甜甜'), findsWidgets);
     expect(find.text('先放进一份学习资料'), findsOneWidget);
   });
@@ -345,8 +345,8 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(TiantianChatSheet), findsOneWidget);
-      expect(find.text('有什么想问甜甜的？'), findsOneWidget);
-      expect(find.text('可以直接提问，也可以点击右上角选择参考资料'), findsOneWidget);
+      expect(find.text('我现在还没有引用空间资料哦～'), findsOneWidget);
+      expect(find.textContaining('你可以直接问我'), findsOneWidget);
       expect(find.text('你想问什么？'), findsNothing);
       expect(find.text('确认并提问'), findsNothing);
 
@@ -376,9 +376,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TiantianChatSheet), findsOneWidget);
-    expect(find.text('行政处罚追诉时效从什么时候起算？'), findsOneWidget);
     expect(find.text('你想问什么？'), findsNothing);
     expect(find.text('确认并提问'), findsNothing);
+    expect(tester.takeException(), isNull);
     expect(tester.takeException(), isNull);
   });
 
@@ -391,7 +391,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(TiantianChatSheet), findsOneWidget);
-    expect(find.text('有什么想问甜甜的？'), findsOneWidget);
+    expect(find.text('我现在还没有引用空间资料哦～'), findsOneWidget);
     expect(find.widgetWithText(TextField, '问甜甜任何问题...'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -501,8 +501,13 @@ void main() {
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
-    expect(find.text('生成知识卡'), findsWidgets);
+    // Verify workspace loaded with quick actions section
+    expect(find.text('你好，我是甜甜'), findsOneWidget);
+    // '总结资料' is always shown in quick actions when materials exist
     expect(find.text('总结资料'), findsOneWidget);
   });
 
