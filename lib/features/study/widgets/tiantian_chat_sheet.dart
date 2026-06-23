@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/repositories/knowledge_v3_repository.dart';
-import '../services/knowledge_v3_ai_service.dart';
+import '../../knowledge/services/knowledge_v3_ai_service.dart';
 import '../../../shared/providers/knowledge_card_ai_provider.dart';
 import '../../../shared/providers/knowledge_v3_provider.dart';
 import '../../../shared/providers/repository_providers.dart';

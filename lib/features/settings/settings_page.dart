@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
 import '../../core/services/exp_service.dart';
-import 'dashboard_providers.dart';
+import '../dashboard/providers/dashboard_provider.dart';
 import '../../shared/providers/pet_diary_provider.dart';
 import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';

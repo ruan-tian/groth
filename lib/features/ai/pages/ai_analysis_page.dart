@@ -13,7 +13,7 @@ import '../../health/providers/sleep_provider.dart';
 import '../../../shared/providers/knowledge_card_ai_provider.dart';
 import '../../../shared/providers/knowledge_card_provider.dart';
 import '../../knowledge/services/knowledge_context_service.dart';
-import '../../study/services/knowledge_card_ai_service.dart';
+import '../../knowledge/services/knowledge_card_ai_service.dart';
 
 part '../widgets/ai_analysis_tabs.dart';
 part '../widgets/ai_analysis_more_tabs.dart';

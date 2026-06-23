@@ -84,9 +84,17 @@ features/xxx/
 
 ## 五、剩余待处理项
 
-1. `features/study/utils/knowledge_card_assets.dart` → 应移动到 `features/knowledge/constants/`
-2. `shared/providers/knowledge_card_provider.dart` 中引用上述文件 → 需要更新 import
-3. 34 个页面直连数据库 → 需要通过 Provider 解耦（Phase D）
+1. `shared/providers/knowledge_card_ai_provider.dart` 中引用 `features/study/services/` → 需要移动到 `features/knowledge/providers/`
+2. 33 个页面仍 import `app_database.dart`（需要类型定义，非直接 DB 操作，可接受）
+
+---
+
+## 六、架构守卫
+
+运行架构检查：
+```bash
+dart scripts/check_architecture.dart
+```
 
 ---
 
