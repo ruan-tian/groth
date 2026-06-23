@@ -52,6 +52,14 @@ final backupServiceProvider = Provider<BackupService>((ref) {
   return BackupService(db);
 });
 
+final backupRecordsProvider = FutureProvider((ref) {
+  return ref.watch(backupServiceProvider).getBackupRecords();
+});
+
+final backupOverviewProvider = FutureProvider((ref) {
+  return ref.watch(backupServiceProvider).getBackupOverview();
+});
+
 /// Read-only database diagnostics used by stabilization and support tooling.
 final databaseHealthServiceProvider = Provider<DatabaseHealthService>((ref) {
   final db = ref.watch(appDatabaseProvider);

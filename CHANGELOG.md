@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-23 Backup boundary stabilization
+
+- Moved backup record listing, overview calculation, and deletion behind `BackupService` and shared providers so settings backup/restore pages no longer access the database provider directly.
+
 ## 2026-06-23 Settings read boundary stabilization
 
 - Moved settings profile, AI connection, and last-backup status reads into shared providers so settings subpages no longer import provider state from `SettingsPage`.

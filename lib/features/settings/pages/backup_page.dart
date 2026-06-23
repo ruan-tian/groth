@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -9,22 +8,9 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../../../shared/providers/settings_provider.dart'
     show lastBackupTimeProvider;
-
-// =============================================================================
-// Backup Records Provider
-// =============================================================================
-
-final backupRecordsProvider = FutureProvider<List<BackupRecord>>((ref) async {
-  final db = ref.watch(appDatabaseProvider);
-  final records = await (db.select(
-    db.backupRecords,
-  )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
-  return records;
-});
 
 // =============================================================================
 // Backup Page（褐色渐变风格）
@@ -40,37 +26,6 @@ class BackupPage extends ConsumerStatefulWidget {
 
 class _BackupPageState extends ConsumerState<BackupPage> {
   bool _isBackingUp = false;
-  int _backupSizeInBytes = 0;
-  DateTime? _lastBackupTime;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadBackupOverview();
-  }
-
-  Future<void> _loadBackupOverview() async {
-    final db = ref.read(appDatabaseProvider);
-    final records = await (db.select(
-      db.backupRecords,
-    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
-
-    if (!mounted) return;
-
-    int totalSize = 0;
-    for (final r in records) {
-      totalSize += r.fileSize ?? 0;
-    }
-
-    setState(() {
-      _backupSizeInBytes = totalSize;
-      if (records.isNotEmpty) {
-        _lastBackupTime = DateTime.fromMillisecondsSinceEpoch(
-          records.first.createdAt,
-        );
-      }
-    });
-  }
 
   Future<void> _backupData() async {
     setState(() => _isBackingUp = true);
@@ -81,8 +36,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final filePath = await backupService.saveBackupToFile();
 
       ref.invalidate(backupRecordsProvider);
+      ref.invalidate(backupOverviewProvider);
       ref.invalidate(lastBackupTimeProvider);
-      await _loadBackupOverview();
 
       if (mounted) {
         HapticFeedback.lightImpact();
@@ -130,19 +85,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
     if (confirmed == true && mounted) {
       try {
         // 删除本地文件
-        final file = File(record.backupPath);
-        if (await file.exists()) {
-          await file.delete();
-        }
-
-        // 删除数据库记录
-        final db = ref.read(appDatabaseProvider);
-        await (db.delete(
-          db.backupRecords,
-        )..where((t) => t.id.equals(record.id))).go();
+        await ref.read(backupServiceProvider).deleteBackup(record);
 
         ref.invalidate(backupRecordsProvider);
-        await _loadBackupOverview();
+        ref.invalidate(backupOverviewProvider);
 
         if (mounted) {
           ScaffoldMessenger.of(
@@ -234,6 +180,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   @override
   Widget build(BuildContext context) {
     final records = ref.watch(backupRecordsProvider);
+    final overview = ref.watch(backupOverviewProvider);
     final colors = context.growthColors;
 
     return Scaffold(
@@ -262,7 +209,16 @@ class _BackupPageState extends ConsumerState<BackupPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // ── 备份概览 ──
-            _buildOverviewCard(),
+            _buildOverviewCard(
+              totalSizeInBytes: overview.maybeWhen(
+                data: (value) => value.totalSizeInBytes,
+                orElse: () => 0,
+              ),
+              lastBackupTime: overview.maybeWhen(
+                data: (value) => value.lastBackupTime,
+                orElse: () => null,
+              ),
+            ),
             const SizedBox(height: 20),
 
             // ── 立即备份按钮 ──
@@ -311,7 +267,10 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   // 概览卡片
   // ---------------------------------------------------------------------------
 
-  Widget _buildOverviewCard() {
+  Widget _buildOverviewCard({
+    required int totalSizeInBytes,
+    required DateTime? lastBackupTime,
+  }) {
     final colors = context.growthColors;
 
     return Container(
@@ -346,7 +305,7 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  _formatFileSize(_backupSizeInBytes),
+                  _formatFileSize(totalSizeInBytes),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w600,
@@ -376,8 +335,8 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _lastBackupTime != null
-                        ? _formatDateTime(_lastBackupTime!)
+                    lastBackupTime != null
+                        ? _formatDateTime(lastBackupTime)
                         : '未备份',
                     style: TextStyle(
                       fontSize: 14,
