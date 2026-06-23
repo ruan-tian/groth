@@ -1,4 +1,5 @@
-﻿import 'package:flutter/widgets.dart';
+﻿// Legacy compatibility only. New code should import from features/$feature/providers/knowledge_v3_provider.dart
+import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/repositories/knowledge_v3_repository.dart';
@@ -204,3 +205,4 @@ void invalidateKnowledgeV3(WidgetRef ref, {int? spaceId}) {
     ref.invalidate(knowledgeSearchV3Provider);
   });
 }
+
