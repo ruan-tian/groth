@@ -255,62 +255,47 @@ class _FitnessTrainingTimerPageState
       hasFeeling: feeling.trim().isNotEmpty,
     );
 
-    final db = ref.read(databaseProvider);
     final oldTotal = await expRepo.getTotalExp();
     final oldLevel = expService.calculateLevel(oldTotal);
-    late final int recordId;
-    await db.transaction(() async {
-      recordId = await repo.insertFitnessRecord(
-        FitnessRecordsCompanion(
-          mode: const Value('professional'),
-          title: Value(session.templateName),
-          bodyPart: Value(session.bodyPart),
-          startTime: Value((session.startedAt ?? now).millisecondsSinceEpoch),
-          endTime: Value(now.millisecondsSinceEpoch),
-          durationMinutes: Value(durationMinutes),
-          fatigueLevel: Value(fatigue),
-          intensityLevel: Value(intensity),
-          feeling: Value(feeling.trim().isEmpty ? null : feeling.trim()),
-          note: Value(
-            '训练会话完成 ${session.completedSets}/${session.totalTargetSets} 组',
-          ),
-          createdAt: Value(now.millisecondsSinceEpoch),
-          updatedAt: Value(now.millisecondsSinceEpoch),
+
+    await repo.saveFitnessRecordWithExp(
+      record: FitnessRecordsCompanion(
+        mode: const Value('professional'),
+        title: Value(session.templateName),
+        bodyPart: Value(session.bodyPart),
+        startTime: Value((session.startedAt ?? now).millisecondsSinceEpoch),
+        endTime: Value(now.millisecondsSinceEpoch),
+        durationMinutes: Value(durationMinutes),
+        fatigueLevel: Value(fatigue),
+        intensityLevel: Value(intensity),
+        feeling: Value(feeling.trim().isEmpty ? null : feeling.trim()),
+        note: Value(
+          '训练会话完成 ${session.completedSets}/${session.totalTargetSets} 组',
         ),
-      );
-
-      await repo.insertFitnessExercises(
-        session.completed.entries.map((entry) {
-          final index = entry.key;
-          final progress = entry.value;
-          return FitnessExercisesCompanion.insert(
-            fitnessRecordId: recordId,
-            exerciseName: progress.plan.name,
-            sets: progress.completedSets,
-            reps: progress.plan.targetReps ?? 0,
-            weight: Value(progress.plan.weightKg),
-            restSeconds: Value(progress.plan.restSeconds),
-            exerciseType: Value(progress.plan.typeCode),
-            durationSeconds: Value(progress.plan.targetSeconds),
-            sortOrder: Value(index),
-            note: Value(progress.plan.note),
-            createdAt: now.millisecondsSinceEpoch,
-          );
-        }),
-      );
-
-      await repo.updateFitnessRecordExp(recordId, exp);
-
-      await expRepo.insertExpLog(
-        GrowthExpLogsCompanion.insert(
-          sourceType: 'fitness',
-          sourceId: recordId,
-          expValue: exp,
-          reason: '健身: ${session.templateName} ($durationMinutes分钟)',
+        createdAt: Value(now.millisecondsSinceEpoch),
+        updatedAt: Value(now.millisecondsSinceEpoch),
+      ),
+      exercises: session.completed.entries.map((entry) {
+        final index = entry.key;
+        final progress = entry.value;
+        return FitnessExercisesCompanion.insert(
+          fitnessRecordId: 0,
+          exerciseName: progress.plan.name,
+          sets: progress.completedSets,
+          reps: progress.plan.targetReps ?? 0,
+          weight: Value(progress.plan.weightKg),
+          restSeconds: Value(progress.plan.restSeconds),
+          exerciseType: Value(progress.plan.typeCode),
+          durationSeconds: Value(progress.plan.targetSeconds),
+          sortOrder: Value(index),
+          note: Value(progress.plan.note),
           createdAt: now.millisecondsSinceEpoch,
-        ),
-      );
-    });
+        );
+      }),
+      exp: exp,
+      reason: '健身: ${session.templateName} ($durationMinutes分钟)',
+      createdAt: now.millisecondsSinceEpoch,
+    );
 
     final newLevel = expService.calculateLevel(oldTotal + exp);
     if (newLevel > oldLevel) {
