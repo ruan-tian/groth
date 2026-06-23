@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../core/repositories/pet_repository.dart';
-import '../../core/constants/pet_assets.dart';
+import '../../pet/repositories/pet_repository.dart';
+import '../../../core/constants/pet_assets.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/service_providers.dart';
 
-export '../../core/repositories/pet_repository.dart'
+export '../../pet/repositories/pet_repository.dart'
     show PetRepository, normalizePetName;
 
 enum PetStateType { idle, peek, happy, sleepy }

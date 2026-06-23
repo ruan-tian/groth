@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/domain/pet/pet_display_intent.dart';
-import '../../core/domain/pet/pet_intent.dart';
-import '../../core/domain/pet/pet_runtime_state.dart';
+import '../../../core/domain/pet/pet_display_intent.dart';
+import '../../../core/domain/pet/pet_intent.dart';
+import '../../../core/domain/pet/pet_runtime_state.dart';
 import 'pet_ai_result_provider.dart';
 import 'pet_orchestrator_provider.dart';
 

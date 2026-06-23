@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/repositories/knowledge_v3_repository.dart';
-import 'repository_providers.dart';
+import '../../knowledge/repositories/knowledge_v3_repository.dart';
+import '../../../shared/providers/repository_providers.dart';
 
 final knowledgeSpacesV3Provider = FutureProvider<List<KnowledgeSpaceV3>>((ref) {
   final repo = ref.watch(knowledgeV3RepositoryProvider);

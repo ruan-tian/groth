@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/domain/pet/pet_ai_result.dart';
+import '../../../core/domain/pet/pet_ai_result.dart';
 import '../../../shared/providers/database_provider.dart';
 
 /// Get the latest AI analysis result for a specific module

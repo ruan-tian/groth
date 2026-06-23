@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../core/services/weather_service.dart';
+import '../../../core/services/weather_service.dart';
 import '../../../shared/providers/repository_providers.dart';
 
 final weatherServiceProvider = Provider<WeatherService>((ref) {

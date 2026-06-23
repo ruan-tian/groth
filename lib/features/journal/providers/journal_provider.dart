@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/sort_button.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../core/services/image_service.dart';
+import '../../../core/services/image_service.dart';
 import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 

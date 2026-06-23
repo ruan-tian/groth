@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-06-23 Architecture Upgrade Phase C: Provider 重组 (partial)
+
+- Moved 16 business providers from shared/providers/ to corresponding features
+- study_provider → features/study/providers/
+- fitness_provider → features/fitness/providers/
+- journal_provider → features/journal/providers/
+- diet/sleep/weather_provider → features/health/providers/
+- dashboard/calendar_provider → features/dashboard/providers/
+- task_provider → features/plan/providers/
+- pet_* providers → features/pet/providers/
+- knowledge_source/v3_provider → features/knowledge/providers/
+- Created re-exports in shared/providers/ for backward compatibility
+
 ## 2026-06-23 Architecture Upgrade Phase B: Repository 归位
 
 - Moved 19 business repositories from core/repositories/ to corresponding features

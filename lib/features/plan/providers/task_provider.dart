@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../plan/repositories/task_repository.dart';
-import '../../core/utils/date_utils.dart';
+import '../../../core/utils/date_utils.dart';
 import '../../../shared/providers/database_provider.dart';
 
 // =============================================================================
