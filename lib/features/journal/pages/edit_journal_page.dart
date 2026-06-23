@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -148,21 +148,15 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       );
 
       final journalRepo = ref.read(journalRepositoryProvider);
-      await journalRepo.updateJournal(companion);
-
-      if (_originalExpGained != null && _originalExpGained != exp) {
-        final expRepo = ref.read(expRepositoryProvider);
-        await expRepo.deleteExpLogsForSource('journal', widget.journalId);
-        await expRepo.insertExpLog(
-          GrowthExpLogsCompanion.insert(
-            sourceType: 'journal',
-            sourceId: widget.journalId,
-            expValue: exp,
-            reason: '日记编辑: ${_titleController.text.trim()} ($wordCount字)',
-            createdAt: nowMs,
-          ),
-        );
-      }
+      await journalRepo.updateJournalWithExp(
+        journalId: widget.journalId,
+        journal: companion,
+        exp: exp,
+        replaceExpLog: _originalExpGained != null && _originalExpGained != exp,
+        reason:
+            'journal edit: ${_titleController.text.trim()} ($wordCount words)',
+        createdAt: nowMs,
+      );
 
       ref.invalidate(recentJournalsProvider);
       ref.invalidate(journalsByFolderProvider);
@@ -221,7 +215,9 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       if (decoded is List) {
         return decoded.map((item) => item.toString()).toList();
       }
-    } catch (e) { debugPrint('parseTags failed: $e'); }
+    } catch (e) {
+      debugPrint('parseTags failed: $e');
+    }
     return raw
         .split(',')
         .map((tag) => tag.trim())

@@ -23,9 +23,71 @@ class JournalRepository {
     return _db.into(_db.dailyJournals).insert(journal);
   }
 
+  Future<int> createJournalWithAssetsAndExp({
+    required DailyJournalsCompanion journal,
+    required List<String> assetPaths,
+    required int exp,
+    required String reason,
+    required int createdAt,
+  }) {
+    return _db.transaction(() async {
+      final journalId = await insertJournal(journal);
+      final uniquePaths = assetPaths.toSet().toList(growable: false);
+      for (var i = 0; i < uniquePaths.length; i++) {
+        await insertJournalAsset(
+          JournalAssetsCompanion.insert(
+            journalId: journalId,
+            localPath: uniquePaths[i],
+            sortOrder: Value(i),
+            createdAt: createdAt,
+          ),
+        );
+      }
+      if (exp > 0) {
+        await ExpRepository(_db).insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'journal',
+            sourceId: journalId,
+            expValue: exp,
+            reason: reason,
+            createdAt: createdAt,
+          ),
+        );
+      }
+      return journalId;
+    });
+  }
+
   /// 更新一篇日记（以 companion 中的 id 为准）。
   Future<void> updateJournal(DailyJournalsCompanion journal) {
     return _db.update(_db.dailyJournals).replace(journal);
+  }
+
+  Future<void> updateJournalWithExp({
+    required int journalId,
+    required DailyJournalsCompanion journal,
+    required int exp,
+    required bool replaceExpLog,
+    required String reason,
+    required int createdAt,
+  }) {
+    return _db.transaction(() async {
+      await updateJournal(journal);
+      if (!replaceExpLog) return;
+      final expRepo = ExpRepository(_db);
+      await expRepo.deleteExpLogsForSource('journal', journalId);
+      if (exp > 0) {
+        await expRepo.insertExpLog(
+          GrowthExpLogsCompanion.insert(
+            sourceType: 'journal',
+            sourceId: journalId,
+            expValue: exp,
+            reason: reason,
+            createdAt: createdAt,
+          ),
+        );
+      }
+    });
   }
 
   /// 根据 ID 删除一篇日记（级联删除附件）。
@@ -84,6 +146,13 @@ class JournalRepository {
           ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
           ..limit(limit))
         .get();
+  }
+
+  Future<int> getTotalJournalCount() async {
+    final count = _db.dailyJournals.id.count();
+    final query = _db.selectOnly(_db.dailyJournals)..addColumns([count]);
+    final result = await query.getSingle();
+    return result.read(count) ?? 0;
   }
 
   Future<List<DailyJournal>> getJournalsByFolder({
@@ -199,9 +268,9 @@ class JournalRepository {
   /// 删除日记的所有附件（包括物理文件）
   Future<void> deleteJournalAssets(int journalId) async {
     // First query all assets to get their file paths
-    final assets = await (_db.select(_db.journalAssets)
-          ..where((t) => t.journalId.equals(journalId)))
-        .get();
+    final assets = await (_db.select(
+      _db.journalAssets,
+    )..where((t) => t.journalId.equals(journalId))).get();
     // Delete physical files
     for (final asset in assets) {
       try {
@@ -214,8 +283,8 @@ class JournalRepository {
       }
     }
     // Delete DB records
-    await (_db.delete(_db.journalAssets)
-          ..where((t) => t.journalId.equals(journalId)))
-        .go();
+    await (_db.delete(
+      _db.journalAssets,
+    )..where((t) => t.journalId.equals(journalId))).go();
   }
 }

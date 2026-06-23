@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -88,7 +88,10 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
       final rawExp = expService.calculateJournalExp(wordCount: wordCount);
       // 每日上限 20 EXP：查询当日已获得的日记 EXP，计算剩余可用额度
       final expRepoForCap = ref.read(expRepositoryProvider);
-      final todayJournalExp = await expRepoForCap.getTotalExpBySourceAndDate('journal', now);
+      final todayJournalExp = await expRepoForCap.getTotalExpBySourceAndDate(
+        'journal',
+        now,
+      );
       final remainingCap = (20 - todayJournalExp).clamp(0, 20);
       final exp = rawExp.clamp(0, remainingCap);
       final journalRepo = ref.read(journalRepositoryProvider);
@@ -112,37 +115,16 @@ class _WriteJournalPageState extends ConsumerState<WriteJournalPage> {
         updatedAt: nowMs,
       );
 
-      // 原子操作：插入日记 + 图片 + 经验日志
-      final db = ref.read(databaseProvider);
       final expRepo = ref.read(expRepositoryProvider);
       final oldTotal = await expRepo.getTotalExp();
       final oldLevel = expService.calculateLevel(oldTotal);
-      late final int journalId;
-      await db.transaction(() async {
-        journalId = await journalRepo.insertJournal(companion);
-
-        final imagePaths = _pendingImagePaths.toSet().toList(growable: false);
-        for (var i = 0; i < imagePaths.length; i++) {
-          await journalRepo.insertJournalAsset(
-            JournalAssetsCompanion.insert(
-              journalId: journalId,
-              localPath: imagePaths[i],
-              sortOrder: Value(i),
-              createdAt: nowMs,
-            ),
-          );
-        }
-
-        await expRepo.insertExpLog(
-          GrowthExpLogsCompanion.insert(
-            sourceType: 'journal',
-            sourceId: journalId,
-            expValue: exp,
-            reason: '日记: ${_titleController.text.trim()} ($wordCount字)',
-            createdAt: nowMs,
-          ),
-        );
-      });
+      await journalRepo.createJournalWithAssetsAndExp(
+        journal: companion,
+        assetPaths: _pendingImagePaths,
+        exp: exp,
+        reason: 'journal: ${_titleController.text.trim()} ($wordCount words)',
+        createdAt: nowMs,
+      );
 
       final newLevel = expService.calculateLevel(oldTotal + exp);
       if (newLevel > oldLevel) {

@@ -125,4 +125,84 @@ void main() {
     expect(remaining!.title, 'Keep');
     expect(deleted, isNull);
   });
+
+  test('createJournalWithAssetsAndExp writes journal assets and exp', () async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+
+    final id = await repo.createJournalWithAssetsAndExp(
+      journal: _journal(title: 'Atomic note', createdAt: now),
+      assetPaths: const ['/tmp/a.jpg', '/tmp/a.jpg', '/tmp/b.jpg'],
+      exp: 12,
+      reason: 'journal test',
+      createdAt: now,
+    );
+
+    final journal = await repo.getJournalById(id);
+    final assets = await repo.getJournalAssets(id);
+    final logs =
+        await (db.select(db.growthExpLogs)..where(
+              (t) => t.sourceType.equals('journal') & t.sourceId.equals(id),
+            ))
+            .get();
+
+    expect(journal?.title, 'Atomic note');
+    expect(assets.map((asset) => asset.localPath), [
+      '/tmp/a.jpg',
+      '/tmp/b.jpg',
+    ]);
+    expect(logs, hasLength(1));
+    expect(logs.single.expValue, 12);
+  });
+
+  test(
+    'updateJournalWithExp replaces journal exp log when requested',
+    () async {
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final id = await repo.createJournalWithAssetsAndExp(
+        journal: _journal(title: 'Before', createdAt: now),
+        assetPaths: const [],
+        exp: 4,
+        reason: 'journal before',
+        createdAt: now,
+      );
+
+      await repo.updateJournalWithExp(
+        journalId: id,
+        journal: DailyJournalsCompanion(
+          id: Value(id),
+          journalDate: const Value('2026-06-11'),
+          title: const Value('After'),
+          content: const Value('Updated journal content'),
+          plainText: const Value('Updated journal content'),
+          wordCount: const Value(23),
+          expGained: const Value(9),
+          createdAt: Value(now),
+          updatedAt: Value(now + 1),
+        ),
+        exp: 9,
+        replaceExpLog: true,
+        reason: 'journal after',
+        createdAt: now + 1,
+      );
+
+      final journal = await repo.getJournalById(id);
+      final logs =
+          await (db.select(db.growthExpLogs)..where(
+                (t) => t.sourceType.equals('journal') & t.sourceId.equals(id),
+              ))
+              .get();
+
+      expect(journal?.title, 'After');
+      expect(logs, hasLength(1));
+      expect(logs.single.expValue, 9);
+      expect(logs.single.reason, 'journal after');
+    },
+  );
+
+  test('getTotalJournalCount returns all journal rows', () async {
+    await repo.insertJournal(_journal(title: 'One'));
+    await repo.insertJournal(_journal(title: 'Two'));
+
+    expect(await repo.getTotalJournalCount(), 2);
+  });
 }

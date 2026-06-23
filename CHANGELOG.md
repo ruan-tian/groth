@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-23 Journal transaction stabilization
+
+- Moved journal create/update asset and exp-log writes behind `JournalRepository` transactions and removed direct database counting from journal stats providers.
+
 ## 2026-06-23 Health record transaction stabilization
 
 - Moved fitness, diet, and sleep record save flows into repository-level transactions that write records, related rows, and exp logs together instead of opening database transactions from UI pages.

@@ -1,9 +1,7 @@
-import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/utils/date_utils.dart';
-import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 
 final journalStreakProvider = FutureProvider<int>((ref) async {
@@ -33,11 +31,8 @@ final onThisDayProvider = FutureProvider<List<DailyJournal>>((ref) async {
 });
 
 final totalJournalCountProvider = FutureProvider<int>((ref) async {
-  final db = ref.watch(databaseProvider);
-  final count = db.dailyJournals.id.count();
-  final query = db.selectOnly(db.dailyJournals)..addColumns([count]);
-  final result = await query.getSingle();
-  return result.read(count) ?? 0;
+  final repo = ref.watch(journalRepositoryProvider);
+  return repo.getTotalJournalCount();
 });
 
 final monthlyJournalCountProvider = FutureProvider<int>((ref) async {
