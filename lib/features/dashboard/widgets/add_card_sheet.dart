@@ -16,7 +16,7 @@ class AddCardSheet extends StatefulWidget {
   final List<String> currentCardIds;
 
   /// 卡片添加回调
-  final void Function(String cardId) onCardAdded;
+  final Future<void> Function(String cardId) onCardAdded;
 
   @override
   State<AddCardSheet> createState() => _AddCardSheetState();
@@ -199,10 +199,10 @@ class _AddCardSheetState extends State<AddCardSheet>
           return _AddableCardItem(
             config: card,
             animationDelay: index * 60,
-            onTap: () {
+            onTap: () async {
               HapticFeedback.lightImpact();
-              widget.onCardAdded(card.id);
-              Navigator.pop(context);
+              await widget.onCardAdded(card.id);
+              if (context.mounted) Navigator.pop(context);
             },
           );
         },
@@ -221,7 +221,7 @@ class _AddableCardItem extends StatefulWidget {
 
   final DashboardCardConfig config;
   final int animationDelay;
-  final VoidCallback onTap;
+  final Future<void> Function() onTap;
 
   @override
   State<_AddableCardItem> createState() => _AddableCardItemState();

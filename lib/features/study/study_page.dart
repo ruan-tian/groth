@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -11,6 +9,7 @@ import '../../core/services/statistics_service.dart';
 import '../../core/utils/chart_scale_utils.dart';
 import '../../shared/providers/dashboard_provider.dart';
 import '../../shared/providers/knowledge_v3_provider.dart';
+import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/providers/study_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
@@ -140,7 +139,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 _buildKnowledgeReviewEntry(context, knowledgeOverview),
                 const SizedBox(height: AppSpacing.lg),
 
-                //  顶部数据卡片 
+                //  顶部数据卡片
                 _buildStatsCards(
                   context,
                   ref,
@@ -150,12 +149,12 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                 ),
                 const SizedBox(height: AppSpacing.xl),
 
-                //  学习趋势 
-                //  忍操作 
+                //  学习趋势
+                //  忍操作
                 _buildQuickActions(context),
                 const SizedBox(height: AppSpacing.xl),
 
-                //  科目分布 
+                //  科目分布
                 //  近?
                 _buildRecentRecords(context, ref, recentRecords),
                 const SizedBox(height: AppSpacing.xl),
@@ -476,7 +475,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  //  盠编辑弹窗 
+  //  盠编辑弹窗
   void _showGoalEditSheet(
     BuildContext context,
     WidgetRef ref,
@@ -494,22 +493,15 @@ class _StudyPageState extends ConsumerState<StudyPage> {
       suggestion: '建议每天学习 60~180 分钟',
       color: colors.study,
       onSave: (value) async {
-        final goals = ref.read(dailyGoalsProvider);
-        final newGoals = goals.map((g) {
-          if (g.name == '学习') {
-            return DailyGoal(name: '学习', target: value, unit: '分钟');
-          }
-          return g;
-        }).toList();
-        ref.read(dailyGoalsProvider.notifier).state = newGoals;
-        final repo = ref.read(settingRepositoryProvider);
-        await repo.setSetting('daily_goals', _encodeGoals(newGoals));
+        await ref
+            .read(settingsFacadeProvider)
+            .updateDailyGoal(
+              name: currentGoal.name,
+              target: value,
+              unit: currentGoal.unit,
+            );
       },
     );
-  }
-
-  String _encodeGoals(List<DailyGoal> goals) {
-    return jsonEncode(goals.map((g) => g.toJson()).toList());
   }
 
   //  学习趋势区域（带时间范围选择噼
@@ -532,7 +524,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         //  时间范围选择?
         _buildRangeSelector(context),
         const SizedBox(height: AppSpacing.md),
-        //  图表 
+        //  图表
         _buildChartForRange(),
       ],
     );
@@ -598,7 +590,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  //  根据范围构建图表 
+  //  根据范围构建图表
   Widget _buildChartForRange() {
     switch (_selectedRange) {
       case 'week':
@@ -783,7 +775,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     return names[date.weekday - 1];
   }
 
-  //  忍操作 
+  //  忍操作
   Widget _buildQuickActions(BuildContext context) {
     final colors = context.growthColors;
     return Row(
@@ -818,7 +810,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  //  科目分布 
+  //  科目分布
   Widget _buildSubjectDistribution(
     BuildContext context,
     AsyncValue<Map<String, int>> subjectDist,
@@ -985,7 +977,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     );
   }
 
-  //  记录详情弹窗 
+  //  记录详情弹窗
 
   void _showStudyRecordDetail(BuildContext context, StudyRecord record) {
     final colors = context.growthColors;

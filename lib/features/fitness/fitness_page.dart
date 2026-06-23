@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,10 +8,9 @@ import '../../core/constants/fitness_constants.dart';
 import '../../core/database/app_database.dart';
 import '../../core/utils/chart_scale_utils.dart';
 import '../../core/utils/date_utils.dart';
-import '../../shared/providers/dashboard_provider.dart'
-    hide fitnessRepositoryProvider, settingRepositoryProvider;
+import '../../shared/providers/dashboard_provider.dart';
 import '../../shared/providers/fitness_provider.dart';
-import '../../shared/providers/repository_providers.dart';
+import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
@@ -295,9 +292,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
       suggestion: '建议每周训练 3~5 次',
       color: colors.fitness,
       onSave: (value) async {
-        ref.read(weeklyFitnessGoalProvider.notifier).state = value;
-        final repo = ref.read(settingRepositoryProvider);
-        await repo.setSetting('weekly_fitness_goal', value.toString());
+        await ref.read(settingsFacadeProvider).setWeeklyFitnessGoal(value);
       },
     );
   }
@@ -653,24 +648,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
   }
 
   Future<void> _saveDailyGoal(int minutes) async {
-    final goals = ref.read(dailyGoalsProvider);
-    var found = false;
-    final newGoals = goals.map((goal) {
-      if (goal.name == '健身') {
-        found = true;
-        return DailyGoal(name: '健身', target: minutes, unit: '分钟');
-      }
-      return goal;
-    }).toList();
-    if (!found) {
-      newGoals.add(DailyGoal(name: '健身', target: minutes, unit: '分钟'));
-    }
-
-    ref.read(dailyGoalsProvider.notifier).state = newGoals;
-
-    final repo = ref.read(settingRepositoryProvider);
-    final jsonStr = newGoals.map((goal) => goal.toJson()).toList();
-    await repo.setSetting('daily_goals', jsonEncode(jsonStr));
+    await ref
+        .read(settingsFacadeProvider)
+        .updateDailyGoal(name: '健身', target: minutes, unit: '分钟');
   }
 
   void _showAddRecordMenu(BuildContext context) {

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -6,6 +6,8 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
+import '../../../shared/providers/settings_facade.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
 
@@ -20,35 +22,14 @@ class WeeklyFitnessPage extends ConsumerStatefulWidget {
 }
 
 class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
-  int _weeklyGoal = 5;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadWeeklyGoal();
-  }
-
-  Future<void> _loadWeeklyGoal() async {
-    final repo = ref.read(settingRepositoryProvider);
-    final value = await repo.getSetting('weekly_fitness_goal');
-    if (value != null && mounted) {
-      setState(() {
-        _weeklyGoal = int.tryParse(value) ?? 5;
-      });
-    }
-  }
-
   Future<void> _saveWeeklyGoal(int goal) async {
-    final repo = ref.read(settingRepositoryProvider);
-    await repo.setSetting('weekly_fitness_goal', goal.toString());
-    setState(() {
-      _weeklyGoal = goal;
-    });
+    await ref.read(settingsFacadeProvider).setWeeklyFitnessGoal(goal);
   }
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
+    final weeklyGoal = ref.watch(weeklyFitnessGoalProvider);
     final weeklyCount = ref.watch(weeklyFitnessCountProvider);
     final recentRecords = ref.watch(sortedRecentFitnessRecordsProvider);
 
@@ -75,7 +56,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
           padding: const EdgeInsets.all(AppSpacing.lg),
           children: [
             // ── 周进度概览 ──
-            _buildWeeklyProgressCard(weeklyCount),
+            _buildWeeklyProgressCard(weeklyCount, weeklyGoal),
             const SizedBox(height: AppSpacing.lg),
 
             // ── 7天详情 ──
@@ -90,12 +71,12 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
     );
   }
 
-  Widget _buildWeeklyProgressCard(AsyncValue<int> weeklyCount) {
+  Widget _buildWeeklyProgressCard(AsyncValue<int> weeklyCount, int weeklyGoal) {
     final colors = context.growthColors;
     return weeklyCount.when(
       data: (count) {
-        final progress = _weeklyGoal > 0
-            ? (count / _weeklyGoal).clamp(0.0, 1.0)
+        final progress = weeklyGoal > 0
+            ? (count / weeklyGoal).clamp(0.0, 1.0)
             : 0.0;
         return Container(
           padding: const EdgeInsets.all(20),
@@ -131,7 +112,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$count / $_weeklyGoal 次',
+                        '$count / $weeklyGoal 次',
                         style: TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.w700,
@@ -289,7 +270,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
 
   void _showWeeklyGoalSheet(BuildContext context) {
     final colors = context.growthColors;
-    int tempGoal = _weeklyGoal;
+    int tempGoal = ref.read(weeklyFitnessGoalProvider);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,

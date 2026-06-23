@@ -4,9 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart'
-    hide settingRepositoryProvider;
-import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
@@ -708,9 +707,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
       suggestion: '建议每天睡眠 7~9 小时',
       color: _lavender,
       onSave: (value) async {
-        ref.read(sleepGoalProvider.notifier).state = value;
-        final repo = ref.read(settingRepositoryProvider);
-        await repo.setSetting('sleep_goal_hours', value.toString());
+        await ref.read(settingsFacadeProvider).setSleepGoalHours(value);
       },
     );
   }

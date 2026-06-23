@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../features/focus/models/study_mode.dart';
 import '../../core/repositories/setting_repository.dart';
 import 'repository_providers.dart';
 import 'settings_provider.dart';
@@ -28,11 +29,9 @@ class SettingsFacade {
     switch (key) {
       case 'nickname':
         _ref.read(userNicknameProvider.notifier).state = value;
-        _ref.invalidate(userNicknameInitProvider);
         break;
       case 'height':
         _ref.read(userHeightProvider.notifier).state = double.tryParse(value);
-        _ref.invalidate(userHeightInitProvider);
         break;
     }
     _ref.invalidate(settingsProvider);
@@ -44,7 +43,6 @@ class SettingsFacade {
     await _settings.setSetting('theme_mode', mode.name);
     _ref.invalidate(settingsProvider);
     _ref.invalidate(settingProvider('theme_mode'));
-    _ref.invalidate(themeInitProvider);
   }
 
   Future<void> setUserAvatarPath(String? path) async {
@@ -53,7 +51,6 @@ class SettingsFacade {
     await _settings.setSetting('avatar_path', normalized ?? '');
     _ref.invalidate(settingsProvider);
     _ref.invalidate(settingProvider('avatar_path'));
-    _ref.invalidate(userAvatarInitProvider);
   }
 
   Future<void> setAutoAiAnalysisEnabled(bool enabled) async {
@@ -61,7 +58,6 @@ class SettingsFacade {
     await _settings.setSetting('auto_ai_analysis', enabled.toString());
     _ref.invalidate(settingsProvider);
     _ref.invalidate(settingProvider('auto_ai_analysis'));
-    _ref.invalidate(autoAiAnalysisInitProvider);
 
     if (!enabled) {
       await setJournalUploadEnabled(false);
@@ -73,7 +69,74 @@ class SettingsFacade {
     await _settings.setSetting('journal_upload', enabled.toString());
     _ref.invalidate(settingsProvider);
     _ref.invalidate(settingProvider('journal_upload'));
-    _ref.invalidate(journalUploadInitProvider);
+  }
+
+  Future<void> saveDashboardCardIds(List<String> ids) async {
+    final normalized = ids.toList(growable: false);
+    _ref.read(dashboardCardIdsProvider.notifier).state = normalized;
+    await _settings.setSetting('dashboard_cards', jsonEncode(normalized));
+    _ref.invalidate(settingsProvider);
+    _ref.invalidate(settingProvider('dashboard_cards'));
+  }
+
+  Future<void> setDailyGoals(List<DailyGoal> goals) async {
+    final normalized = goals.toList(growable: false);
+    _ref.read(dailyGoalsProvider.notifier).state = normalized;
+    await _settings.setSetting(
+      'daily_goals',
+      jsonEncode(normalized.map((goal) => goal.toJson()).toList()),
+    );
+    _ref.invalidate(settingsProvider);
+    _ref.invalidate(settingProvider('daily_goals'));
+  }
+
+  Future<void> updateDailyGoal({
+    required String name,
+    required int target,
+    required String unit,
+  }) async {
+    final goals = _ref.read(dailyGoalsProvider);
+    var found = false;
+    final next = goals.map((goal) {
+      if (goal.name == name) {
+        found = true;
+        return DailyGoal(name: name, target: target, unit: unit);
+      }
+      return goal;
+    }).toList();
+    if (!found) {
+      next.add(DailyGoal(name: name, target: target, unit: unit));
+    }
+
+    await setDailyGoals(next);
+  }
+
+  Future<void> setDailyCalorieGoal(int value) async {
+    _ref.read(dailyCalorieGoalProvider.notifier).state = value;
+    await _settings.setSetting('daily_calorie_goal', value.toString());
+    _ref.invalidate(settingsProvider);
+    _ref.invalidate(settingProvider('daily_calorie_goal'));
+  }
+
+  Future<void> setSleepGoalHours(int value) async {
+    _ref.read(sleepGoalProvider.notifier).state = value;
+    await _settings.setSetting('sleep_goal_hours', value.toString());
+    _ref.invalidate(settingsProvider);
+    _ref.invalidate(settingProvider('sleep_goal_hours'));
+  }
+
+  Future<void> setWeeklyFitnessGoal(int value) async {
+    _ref.read(weeklyFitnessGoalProvider.notifier).state = value;
+    await _settings.setSetting('weekly_fitness_goal', value.toString());
+    _ref.invalidate(settingsProvider);
+    _ref.invalidate(settingProvider('weekly_fitness_goal'));
+  }
+
+  Future<void> setFocusStudyMode(StudyMode mode) async {
+    _ref.read(focusStudyModeProvider.notifier).state = mode;
+    await _settings.setSetting('focus_study_mode', mode.name);
+    _ref.invalidate(settingsProvider);
+    _ref.invalidate(settingProvider('focus_study_mode'));
   }
 
   Future<void> saveGoals(SettingsGoalSnapshot goals) async {
@@ -103,13 +166,6 @@ class SettingsFacade {
       _ref.invalidate(settingProvider(entry.key));
     }
     _ref.invalidate(settingsProvider);
-    _ref.invalidate(dailyGoalsInitProvider);
-    _ref.invalidate(weeklyFitnessGoalInitProvider);
-    _ref.invalidate(sleepGoalInitProvider);
-    _ref.invalidate(dailyCalorieGoalInitProvider);
-    _ref.invalidate(dailyWaterGoalInitProvider);
-    _ref.invalidate(targetWeightInitProvider);
-    _ref.invalidate(totalStudyHoursInitProvider);
   }
 }
 

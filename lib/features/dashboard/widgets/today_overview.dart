@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
 import 'dashboard_card.dart';
@@ -126,11 +127,13 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       duration: const Duration(milliseconds: 300),
     );
 
-    _deleteController!.forward().then((_) {
+    _deleteController!.forward().then((_) async {
       // 动画完成后移除卡片
       final currentIds = ref.read(dashboardCardIdsProvider);
       final newIds = currentIds.where((id) => id != cardId).toList();
-      saveDashboardCardIds(ref, newIds);
+      await ref.read(settingsFacadeProvider).saveDashboardCardIds(newIds);
+
+      if (!mounted) return;
 
       setState(() {
         _deletingCardId = null;
@@ -203,10 +206,10 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       isScrollControlled: true,
       builder: (context) => AddCardSheet(
         currentCardIds: ref.read(dashboardCardIdsProvider),
-        onCardAdded: (cardId) {
+        onCardAdded: (cardId) async {
           final currentIds = ref.read(dashboardCardIdsProvider);
           final newIds = [...currentIds, cardId];
-          saveDashboardCardIds(ref, newIds);
+          await ref.read(settingsFacadeProvider).saveDashboardCardIds(newIds);
         },
       ),
     );

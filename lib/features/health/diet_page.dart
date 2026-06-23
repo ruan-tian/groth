@@ -11,6 +11,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/utils/date_utils.dart';
 import '../../../shared/providers/diet_provider.dart';
 import '../../../shared/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
@@ -962,9 +963,7 @@ class _DietPageState extends ConsumerState<DietPage> {
       suggestion: '建议每天摄入 1500~2500 kcal',
       color: colors.diet,
       onSave: (value) async {
-        ref.read(dailyCalorieGoalProvider.notifier).state = value;
-        final repo = ref.read(settingRepositoryProvider);
-        await repo.setSetting('daily_calorie_goal', value.toString());
+        await ref.read(settingsFacadeProvider).setDailyCalorieGoal(value);
       },
     );
   }

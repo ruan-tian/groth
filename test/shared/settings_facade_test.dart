@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
+import 'package:growth_os/features/focus/models/study_mode.dart';
 import 'package:growth_os/shared/providers/database_provider.dart';
 import 'package:growth_os/shared/providers/repository_providers.dart';
 import 'package:growth_os/shared/providers/settings_facade.dart';
@@ -98,6 +99,89 @@ void main() {
     expect(
       await container.read(settingRepositoryProvider).getSetting('theme_mode'),
       'dark',
+    );
+  });
+
+  test('single setting setters sync providers and setting rows', () async {
+    final facade = container.read(settingsFacadeProvider);
+
+    await facade.setDailyCalorieGoal(1900);
+    await facade.setSleepGoalHours(7);
+    await facade.setWeeklyFitnessGoal(3);
+    await facade.setFocusStudyMode(StudyMode.college);
+
+    expect(container.read(dailyCalorieGoalProvider), 1900);
+    expect(container.read(sleepGoalProvider), 7);
+    expect(container.read(weeklyFitnessGoalProvider), 3);
+    expect(container.read(focusStudyModeProvider), StudyMode.college);
+    expect(
+      await container
+          .read(settingRepositoryProvider)
+          .getSetting('daily_calorie_goal'),
+      '1900',
+    );
+    expect(
+      await container
+          .read(settingRepositoryProvider)
+          .getSetting('sleep_goal_hours'),
+      '7',
+    );
+    expect(
+      await container
+          .read(settingRepositoryProvider)
+          .getSetting('weekly_fitness_goal'),
+      '3',
+    );
+    expect(
+      await container
+          .read(settingRepositoryProvider)
+          .getSetting('focus_study_mode'),
+      StudyMode.college.name,
+    );
+  });
+
+  test('dashboard card ids are saved through the facade', () async {
+    await container.read(settingsFacadeProvider).saveDashboardCardIds([
+      'study',
+      'sleep',
+      'focus',
+    ]);
+
+    expect(container.read(dashboardCardIdsProvider), [
+      'study',
+      'sleep',
+      'focus',
+    ]);
+    expect(
+      await container
+          .read(settingRepositoryProvider)
+          .getSetting('dashboard_cards'),
+      '["study","sleep","focus"]',
+    );
+  });
+
+  test('updateDailyGoal saves new and existing daily goals', () async {
+    final facade = container.read(settingsFacadeProvider);
+    const stretchName = '\u62c9\u4f38';
+    const stretchUnit = '\u5206\u949f';
+
+    await facade.updateDailyGoal(
+      name: stretchName,
+      target: 10,
+      unit: stretchUnit,
+    );
+    await facade.updateDailyGoal(
+      name: stretchName,
+      target: 15,
+      unit: stretchUnit,
+    );
+
+    final goals = container.read(dailyGoalsProvider);
+    expect(goals.where((goal) => goal.name == stretchName), hasLength(1));
+    expect(goals.firstWhere((goal) => goal.name == stretchName).target, 15);
+    expect(
+      await container.read(settingRepositoryProvider).getSetting('daily_goals'),
+      contains(stretchName),
     );
   });
 
