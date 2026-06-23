@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-23 Settings write facade stabilization
+
+- Centralized dashboard card ids, daily goals, weekly fitness goal, calorie goal, sleep goal, and focus study mode writes through `SettingsFacade`.
+- Removed save-time init-provider invalidation from the facade so user saves do not race with startup hydration and overwrite fresh provider state.
+- Updated dashboard, study, fitness, diet, sleep, and focus mode UI entry points to await facade writes before closing sheets where needed.
+- Added targeted facade tests for single setting setters, dashboard card ids, and daily goal updates.
+
 ## 2026-06-22 设置页目标与主题写入收敛
 
 - `SettingsFacade` 扩展主题模式和成长目标保存能力，统一负责 Provider 状态、KV 写入和初始化 Provider invalidate。
