@@ -21,6 +21,8 @@ typedef PetDiaryAiCaller =
       int maxTokens,
     });
 
+typedef PetDiarySettingWriter = Future<void> Function(String key, String value);
+
 class PetDiaryService {
   PetDiaryService({
     required AppDatabase db,
@@ -30,12 +32,14 @@ class PetDiaryService {
     required AiService aiService,
     PetDiaryPromptBuilder promptBuilder = const PetDiaryPromptBuilder(),
     PetDiaryAiCaller? aiCaller,
+    PetDiarySettingWriter? settingWriter,
   }) : _db = db,
        _diaryRepository = diaryRepository,
        _aiConfigRepository = aiConfigRepository,
        _settingRepository = settingRepository,
        _promptBuilder = promptBuilder,
-       _aiCaller = aiCaller ?? aiService.callApi;
+       _aiCaller = aiCaller ?? aiService.callApi,
+       _settingWriter = settingWriter ?? settingRepository.setSetting;
 
   static const autoEnabledKey = 'pet_diary_auto_enabled';
   static const privacyConfirmedKey = 'pet_diary_privacy_confirmed';
@@ -46,6 +50,7 @@ class PetDiaryService {
   final SettingRepository _settingRepository;
   final PetDiaryPromptBuilder _promptBuilder;
   final PetDiaryAiCaller _aiCaller;
+  final PetDiarySettingWriter _settingWriter;
 
   Future<PetDiary?> ensureTodayDiary({
     DateTime? now,
@@ -107,7 +112,7 @@ class PetDiaryService {
   }
 
   Future<void> setAutoEnabled(bool enabled) async {
-    await _settingRepository.setSetting(autoEnabledKey, enabled.toString());
+    await _settingWriter(autoEnabledKey, enabled.toString());
   }
 
   Future<bool> isPrivacyConfirmed() async {
@@ -115,7 +120,7 @@ class PetDiaryService {
   }
 
   Future<void> markPrivacyConfirmed() async {
-    await _settingRepository.setSetting(privacyConfirmedKey, 'true');
+    await _settingWriter(privacyConfirmedKey, 'true');
   }
 
   Future<Map<String, dynamic>> buildTodaySummary({DateTime? now}) async {

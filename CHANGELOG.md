@@ -9,6 +9,7 @@
 - Removed the obsolete dashboard card save helper and routed pet diary auto-toggle writes through the shared pet diary provider path.
 - Promoted the music settings write queue into a shared `SettingsWriteQueue` and routed water/sleep plan configuration writes through it to reduce SQLite write contention.
 - Centralized knowledge-space preference persistence helpers and routed health reminder schedule-status writes through the shared settings write queue.
+- Routed pet diary setting writes and pet life-session persistence through injectable writers backed by the shared settings write queue in app providers.
 
 ## 2026-06-22 设置页目标与主题写入收敛
 
