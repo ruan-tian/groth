@@ -6,7 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:growth_os/core/database/app_database.dart';
 import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
-import 'package:growth_os/features/study/pages/knowledge_workspace_page.dart';
+import 'package:growth_os/features/knowledge/pages/knowledge_workspace_page.dart';
 import 'package:growth_os/features/study/widgets/tiantian_chat_sheet.dart';
 import 'package:growth_os/shared/providers/database_provider.dart';
 

@@ -8,7 +8,7 @@ import 'package:growth_os/features/pet/repositories/exp_repository.dart';
 import 'package:growth_os/features/pet/repositories/pet_repository.dart';
 import 'package:growth_os/features/health/services/health_reminder_scheduler.dart';
 import 'package:growth_os/features/pet/services/pet_orchestrator.dart';
-import 'package:growth_os/features/study/pages/knowledge_workspace_page.dart';
+import 'package:growth_os/features/knowledge/pages/knowledge_workspace_page.dart';
 import 'package:growth_os/shared/providers/database_provider.dart';
 import 'package:growth_os/features/pet/providers/pet_orchestrator_provider.dart';
 import 'package:growth_os/shared/widgets/common/advanced_bottom_nav.dart';
