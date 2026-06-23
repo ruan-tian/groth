@@ -8,7 +8,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart'
+import '../../dashboard/providers/dashboard_provider.dart'
     hide
         expRepositoryProvider,
         focusRepositoryProvider,
@@ -16,7 +16,7 @@ import '../../../shared/providers/dashboard_provider.dart'
 import '../../../shared/providers/focus_audio_provider.dart';
 import '../../../shared/providers/focus_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
-import '../../../shared/providers/study_provider.dart';
+import '../../study/providers/study_provider.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
 import '../../plan/services/reminder_notification_service.dart';

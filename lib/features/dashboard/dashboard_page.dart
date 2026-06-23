@@ -6,7 +6,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
 import '../health/models/drink_recommendation.dart';
-import '../../shared/providers/dashboard_provider.dart';
+import 'dashboard_providers.dart';
 import '../../shared/widgets/common/growth_calendar_sheet.dart';
 import '../music/widgets/dashboard_music_float.dart';
 import 'widgets/dashboard_pet_widget.dart';

@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/services/exp_service.dart';
-import '../../../shared/providers/dashboard_provider.dart'
+import '../../dashboard/providers/dashboard_provider.dart'
     hide expServiceProvider;
 import '../../../shared/providers/pet_provider.dart';
 import '../../../shared/providers/service_providers.dart';

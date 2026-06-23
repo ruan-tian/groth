@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/utils/chart_scale_utils.dart';
-import '../../../shared/providers/study_provider.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../study/providers/study_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 
 part '../widgets/study_record_detail_widgets.dart';
 part '../widgets/study_record_detail_chart.dart';

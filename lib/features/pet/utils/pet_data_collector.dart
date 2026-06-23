@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/constants/fitness_constants.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 
 /// 宠物数据收集器
 ///

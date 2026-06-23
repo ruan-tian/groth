@@ -4,8 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/sort_button.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';

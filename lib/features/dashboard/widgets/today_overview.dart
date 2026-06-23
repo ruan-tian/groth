@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
 import 'dashboard_card.dart';
 import 'add_card_sheet.dart';
 

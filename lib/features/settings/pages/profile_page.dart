@@ -10,8 +10,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/growth_date_picker.dart';

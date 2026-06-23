@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/services/weather_service.dart';
-import '../../../shared/providers/weather_provider.dart';
+import '../../health/providers/weather_provider.dart';
 import 'weather_pet/weather_pet_sheet.dart';
 
 class DashboardWeatherBadge extends ConsumerWidget {

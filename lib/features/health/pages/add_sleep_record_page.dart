@@ -5,8 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/sleep_provider.dart';
-import '../../../shared/providers/dashboard_provider.dart'
+import '../../health/providers/sleep_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart'
     hide expRepositoryProvider, expServiceProvider, sleepRepositoryProvider;
 import '../../../shared/providers/repository_providers.dart'
     show expRepositoryProvider, sleepRepositoryProvider;

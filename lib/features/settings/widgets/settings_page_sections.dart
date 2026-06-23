@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/error_retry_widget.dart';
 import '../../../features/fitness/utils/fitness_timer_assets.dart';

@@ -7,7 +7,7 @@ import '../../../app/design/design.dart';
 import '../../../core/constants/pet_assets.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/pet_provider.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../core/domain/pet/pet_ai_result.dart';
 import '../../pet/utils/pet_data_collector.dart';
 import '../../pet/widgets/pet_ai_data_preview_sheet.dart';

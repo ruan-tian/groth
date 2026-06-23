@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/diet_provider.dart';
+import '../../health/providers/diet_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';

@@ -8,8 +8,8 @@ import '../../../app/design/design.dart';
 import '../../../core/services/calendar_service.dart';
 import '../../../core/services/statistics_service.dart';
 import 'add_task_dialog.dart';
-import '../../../shared/providers/calendar_provider.dart';
-import '../../../shared/providers/task_provider.dart';
+import '../../dashboard/providers/calendar_provider.dart';
+import '../../plan/providers/task_provider.dart';
 
 Future<void> showGrowthCalendarSheet(
   BuildContext context, {

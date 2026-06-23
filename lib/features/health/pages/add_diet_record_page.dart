@@ -8,9 +8,9 @@ import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
-import '../../../shared/providers/dashboard_provider.dart'
+import '../../dashboard/providers/dashboard_provider.dart'
     show dashboardProvider;
-import '../../../shared/providers/diet_provider.dart';
+import '../../health/providers/diet_provider.dart';
 import '../../../shared/providers/repository_providers.dart'
     show dietRepositoryProvider, expRepositoryProvider;
 import '../../../shared/providers/service_providers.dart'

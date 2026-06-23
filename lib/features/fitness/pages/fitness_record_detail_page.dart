@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 
 /// 健身记录详情页 — 重新设计

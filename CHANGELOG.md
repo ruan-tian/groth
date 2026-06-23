@@ -1,5 +1,21 @@
 # Changelog
 
+## 2026-06-23 Architecture Upgrade Phase B: Repository 归位
+
+- Moved 19 business repositories from core/repositories/ to corresponding features
+- study_repository → features/study/repositories/
+- fitness_repository → features/fitness/repositories/
+- journal_repository → features/journal/repositories/
+- diet/sleep/weather_repository → features/health/repositories/
+- focus_repository → features/focus/repositories/
+- pet/pet_diary/exp_repository → features/pet/repositories/
+- knowledge_card/source/v3_repository → features/knowledge/repositories/
+- music_repository → features/music/repositories/
+- task_repository → features/plan/repositories/
+- ai_chat/config/api_config_repository → features/ai/repositories/
+- Only setting_repository remains in core (global)
+- Created re-exports in core/repositories/ for backward compatibility
+
 ## 2026-06-23 Architecture Upgrade Phase A2: shared → features dependency fix (complete)
 
 - Moved settings_facade to features/settings/providers/

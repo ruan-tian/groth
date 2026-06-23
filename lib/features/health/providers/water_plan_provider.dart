@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/services/settings_write_queue.dart';
 import '../models/health_reminder_schedule_status.dart';

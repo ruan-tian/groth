@@ -4,8 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/sleep_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../../health/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 
 /// 添加睡眠记录弹窗

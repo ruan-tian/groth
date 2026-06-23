@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/study_provider.dart';
+import '../../study/providers/study_provider.dart';
 import '../../../shared/widgets/common/date_group_header.dart';
 
 /// 学习记录排序方式

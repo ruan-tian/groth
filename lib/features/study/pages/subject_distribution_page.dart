@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/study_provider.dart';
+import '../../study/providers/study_provider.dart';
 
 // =============================================================================
 // 科目调色板（按排序 index 分配颜色，最多 15 色）

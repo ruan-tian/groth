@@ -4,10 +4,10 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart'
+import '../../dashboard/providers/dashboard_provider.dart'
     show dashboardProvider;
 import '../../../shared/providers/repository_providers.dart';
-import '../../../shared/providers/sleep_provider.dart';
+import '../../health/providers/sleep_provider.dart';
 import '../../../shared/services/settings_write_queue.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';

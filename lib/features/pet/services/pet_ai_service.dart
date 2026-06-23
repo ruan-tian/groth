@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../core/domain/pet/pet_ai_result.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../utils/pet_data_collector.dart';

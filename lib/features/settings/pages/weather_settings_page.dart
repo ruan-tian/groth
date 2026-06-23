@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/weather_provider.dart';
+import '../../health/providers/weather_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../widgets/weather_settings_widgets.dart';
 import '../../../shared/widgets/common/error_retry_widget.dart';
