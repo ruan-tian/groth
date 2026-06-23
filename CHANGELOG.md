@@ -1,5 +1,27 @@
 # Changelog
 
+## 2026-06-23 Architecture Upgrade Phase A2: shared → features dependency fix (partial)
+
+- Moved knowledge_context_service to features/knowledge/services/
+- Created knowledge_context_providers.dart in features/knowledge/providers/
+- Created ai_analysis_card_providers.dart in features/ai/providers/
+- Created focus_study_mode_providers.dart in features/focus/providers/
+- Updated service_providers.dart and settings_provider.dart with re-exports
+
+## 2026-06-23 Architecture Upgrade Phase A1: core → features dependency fix
+
+- Moved knowledge_source_chunker, knowledge_tfidf_index, knowledge_synonyms to core/text_processing/
+- Moved default_music_seed to features/music/constants/
+- Fixed 4 core → features dependency violations
+
+## 2026-06-23 Architecture Upgrade Phase 0: Baseline
+
+- Created refactor/architecture-upgrade branch
+- Recorded baseline: 2 dart analyze errors, 28 flutter test failures
+- Documented 14 dependency violations (core→features: 4, shared→features: 10)
+- Documented 34 pages with direct database access
+- Created docs/architecture/phase0-baseline.md
+
 ## 2026-06-23 Journal transaction stabilization
 
 - Moved journal create/update asset and exp-log writes behind `JournalRepository` transactions and removed direct database counting from journal stats providers.
