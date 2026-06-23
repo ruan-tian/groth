@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/health_data.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../../plan/widgets/notification_permission_dialog.dart';
 import '../models/health_reminder_schedule_status.dart';

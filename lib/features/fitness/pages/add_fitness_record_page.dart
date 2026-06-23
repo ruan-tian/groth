@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:growth_os/app/design/design.dart';
-import 'package:growth_os/core/database/app_database.dart';
+import '../models/fitness_data.dart';
 import 'package:growth_os/core/domain/pet/pet_event.dart';
 import 'package:growth_os/core/services/pet_event_bus.dart';
 import 'package:growth_os/features/fitness/models/activity_type.dart';

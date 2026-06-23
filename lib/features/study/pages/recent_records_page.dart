@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/study_data.dart';
 import '../../study/providers/study_provider.dart';
 import '../../../shared/widgets/common/date_group_header.dart';
 

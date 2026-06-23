@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/health_data.dart';
 import '../../health/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 

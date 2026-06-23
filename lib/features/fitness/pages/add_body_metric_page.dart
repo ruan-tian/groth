@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/fitness_data.dart';
 import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/providers/repository_providers.dart'
     show fitnessRepositoryProvider;

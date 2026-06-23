@@ -9,7 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/settings_data.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/providers/settings_facade.dart';

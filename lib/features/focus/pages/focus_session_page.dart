@@ -7,7 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/focus_data.dart';
 import '../../dashboard/providers/dashboard_provider.dart'
     hide
         expRepositoryProvider,

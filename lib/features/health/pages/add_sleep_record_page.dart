@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/health_data.dart';
 import '../../health/providers/sleep_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart'
     hide expRepositoryProvider, expServiceProvider, sleepRepositoryProvider;

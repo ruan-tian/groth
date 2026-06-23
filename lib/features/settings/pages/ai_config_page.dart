@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/settings_data.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/services/encryption_service.dart';
 import '../../../shared/providers/repository_providers.dart';

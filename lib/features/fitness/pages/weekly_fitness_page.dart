@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/fitness_data.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/providers/settings_facade.dart';
