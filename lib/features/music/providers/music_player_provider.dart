@@ -9,7 +9,7 @@ import 'package:just_audio/just_audio.dart' as audio;
 import 'package:path/path.dart' as p;
 
 import '../../../core/database/app_database.dart';
-import '../../../core/repositories/music_repository.dart';
+import '../repositories/music_repository.dart';
 import '../../../core/repositories/setting_repository.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../models/music_player_state.dart';

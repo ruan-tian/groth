@@ -1,5 +1,5 @@
 import '../../../core/database/app_database.dart';
-import '../../../core/repositories/knowledge_v3_repository.dart';
+import '../repositories/knowledge_v3_repository.dart';
 
 class KnowledgeContextServiceV3 {
   KnowledgeContextServiceV3(this._repository);

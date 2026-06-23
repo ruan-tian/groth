@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import '../../../core/repositories/ai_config_repository.dart';
-import '../../../core/repositories/knowledge_v3_repository.dart';
+import '../../ai/repositories/ai_config_repository.dart';
+import '../repositories/knowledge_v3_repository.dart';
 import '../../../core/services/ai_service.dart';
 
 enum TiantianAnswerMode { grounded, general, hybrid }

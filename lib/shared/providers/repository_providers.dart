@@ -1,23 +1,23 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../core/repositories/ai_config_repository.dart';
-import '../../core/repositories/ai_chat_repository.dart';
-import '../../core/repositories/api_config_repository.dart';
-import '../../core/repositories/diet_repository.dart';
-import '../../core/repositories/exp_repository.dart';
-import '../../core/repositories/fitness_repository.dart';
-import '../../core/repositories/focus_repository.dart';
-import '../../core/repositories/journal_repository.dart';
-import '../../core/repositories/knowledge_card_repository.dart';
-import '../../core/repositories/knowledge_source_repository.dart';
-import '../../core/repositories/knowledge_v3_repository.dart';
-import '../../core/repositories/music_repository.dart';
-import '../../core/repositories/pet_diary_repository.dart';
+import '../../features/ai/repositories/ai_config_repository.dart';
+import '../../features/ai/repositories/ai_chat_repository.dart';
+import '../../features/ai/repositories/api_config_repository.dart';
+import '../../features/health/repositories/diet_repository.dart';
+import '../../features/pet/repositories/exp_repository.dart';
+import '../../features/fitness/repositories/fitness_repository.dart';
+import '../../features/focus/repositories/focus_repository.dart';
+import '../../features/journal/repositories/journal_repository.dart';
+import '../../features/knowledge/repositories/knowledge_card_repository.dart';
+import '../../features/knowledge/repositories/knowledge_source_repository.dart';
+import '../../features/knowledge/repositories/knowledge_v3_repository.dart';
+import '../../features/music/repositories/music_repository.dart';
+import '../../features/pet/repositories/pet_diary_repository.dart';
 import '../../core/repositories/setting_repository.dart';
-import '../../core/repositories/sleep_repository.dart';
-import '../../core/repositories/study_repository.dart';
-import '../../core/repositories/weather_repository.dart';
-import '../../core/repositories/weather_search_history_repository.dart';
+import '../../features/health/repositories/sleep_repository.dart';
+import '../../features/study/repositories/study_repository.dart';
+import '../../features/health/repositories/weather_repository.dart';
+import '../../features/health/repositories/weather_search_history_repository.dart';
 import 'database_provider.dart';
 
 /// 学习记录仓库 Provider。

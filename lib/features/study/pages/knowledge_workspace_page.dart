@@ -7,7 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/repositories/knowledge_v3_repository.dart';
+import '../../knowledge/repositories/knowledge_v3_repository.dart';
 import '../../../shared/providers/knowledge_card_ai_provider.dart';
 import '../../../shared/providers/knowledge_v3_provider.dart';
 import '../../../shared/providers/repository_providers.dart';

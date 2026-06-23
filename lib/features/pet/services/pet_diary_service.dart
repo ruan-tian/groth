@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'package:drift/drift.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../core/repositories/ai_config_repository.dart';
-import '../../../core/repositories/pet_diary_repository.dart';
+import '../../ai/repositories/ai_config_repository.dart';
+import '../repositories/pet_diary_repository.dart';
 import '../../../core/repositories/setting_repository.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/domain/pet/pet_diary_draft.dart';

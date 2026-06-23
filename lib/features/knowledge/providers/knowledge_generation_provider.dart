@@ -1,6 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/repositories/knowledge_v3_repository.dart';
+import '../repositories/knowledge_v3_repository.dart';
 import 'knowledge_card_ai_provider.dart';
 import '../services/knowledge_v3_ai_service.dart';
 

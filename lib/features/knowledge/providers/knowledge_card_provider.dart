@@ -2,8 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/database/app_database.dart';
-import '../../../core/repositories/knowledge_card_repository.dart';
-import '../../../core/repositories/knowledge_source_repository.dart';
+import '../repositories/knowledge_card_repository.dart';
+import '../repositories/knowledge_source_repository.dart';
 import '../constants/knowledge_card_assets.dart';
 import 'knowledge_source_provider.dart';
 import '../../../shared/providers/repository_providers.dart';

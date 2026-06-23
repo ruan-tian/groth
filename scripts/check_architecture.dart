@@ -32,10 +32,21 @@ void main() {
   ));
 
   // R2: shared -> features (forbidden, re-exports allowed)
+  // Exception: repository_providers.dart, knowledge_source_provider.dart, knowledge_v3_provider.dart
+  // are infrastructure files that create global providers for feature repositories.
   errors.addAll(_checkNoImport(
     directory: 'lib/shared',
     forbiddenPattern: RegExp(r'''import\s+['"].*features/'''),
     ruleName: 'R2: shared -> features',
+    fileFilter: (path) {
+      final fileName = path.split(Platform.pathSeparator).last;
+      const exceptions = {
+        'repository_providers.dart',
+        'knowledge_source_provider.dart',
+        'knowledge_v3_provider.dart',
+      };
+      return !exceptions.contains(fileName);
+    },
   ));
 
   // R3: pages -> core/database (forbidden)

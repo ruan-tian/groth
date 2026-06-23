@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/database/app_database.dart';
-import '../../core/repositories/knowledge_source_repository.dart';
+import '../../features/knowledge/repositories/knowledge_source_repository.dart';
 import 'knowledge_card_provider.dart';
 import 'repository_providers.dart';
 
