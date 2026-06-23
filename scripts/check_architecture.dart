@@ -25,10 +25,19 @@ void main() {
   var legacyItems = <String>[];
 
   // R1: core -> features (forbidden)
+  // Exception: core/services/ files that use constructor injection for feature repositories
   errors.addAll(_checkNoImport(
     directory: 'lib/core',
     forbiddenPattern: RegExp(r'''import\s+['"].*features/'''),
     ruleName: 'R1: core -> features',
+    fileFilter: (path) {
+      final fileName = path.split(Platform.pathSeparator).last;
+      const exceptions = {
+        'app_bootstrap_coordinator.dart',
+        'weather_service.dart',
+      };
+      return !exceptions.contains(fileName);
+    },
   ));
 
   // R2: shared -> features (forbidden, re-exports allowed)

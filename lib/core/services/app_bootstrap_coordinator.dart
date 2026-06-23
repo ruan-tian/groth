@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import '../database/app_database.dart';
-import '../repositories/knowledge_v3_repository.dart';
-import '../repositories/music_repository.dart';
+import '../../features/knowledge/repositories/knowledge_v3_repository.dart';
+import '../../features/music/repositories/music_repository.dart';
 import 'database_health_service.dart';
 
 class AppBootstrapResult {

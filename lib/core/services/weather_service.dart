@@ -8,9 +8,9 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 
 import '../database/app_database.dart';
-import '../repositories/api_config_repository.dart';
-import '../repositories/weather_repository.dart';
-import '../repositories/weather_search_history_repository.dart';
+import '../../features/ai/repositories/api_config_repository.dart';
+import '../../features/health/repositories/weather_repository.dart';
+import '../../features/health/repositories/weather_search_history_repository.dart';
 
 /// 天气服务 - 支持多厂商 API、IP 定位、城市搜索
 class WeatherService {
