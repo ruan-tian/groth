@@ -86,8 +86,12 @@ features/xxx/
 
 1. 30 个页面仍 import `app_database.dart`（仅用于 Drift 类型定义，非直接 DB 操作，作为 warning inventory）
 2. 5 个 provider 直接使用 `databaseProvider` 创建 Repository 实例（作为 warning inventory）
-3. 知识空间页面仍在 `features/study/pages/`，后续迁移到 `features/knowledge/pages/`
-4. `features/ai/pages/ai_analysis_page.dart` 依赖 5 个模块 provider，后续改为 `AiAnalysisInputFacade`
+3. 知识空间页面仍在 `features/study/pages/`（10 个文件），后续迁移到 `features/knowledge/pages/`
+   - 当前由 study route 承载 knowledge workspace
+   - 迁移时必须保持路由兼容
+   - 需要同时移动 9 个 part 文件
+4. `features/ai/pages/ai_analysis_page.dart` 依赖 5 个模块 provider，后续改为 `AiAnalysisInputFacade`（facade 已创建）
+5. 跨 feature 白名单：ai→knowledge, focus→music, dashboard→fitness/health, settings→fitness
 
 ---
 
