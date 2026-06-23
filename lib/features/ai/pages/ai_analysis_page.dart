@@ -12,7 +12,7 @@ import '../../../shared/providers/diet_provider.dart';
 import '../../../shared/providers/sleep_provider.dart';
 import '../../../shared/providers/knowledge_card_ai_provider.dart';
 import '../../../shared/providers/knowledge_card_provider.dart';
-import '../services/knowledge_context_service.dart';
+import '../../knowledge/services/knowledge_context_service.dart';
 import '../../study/services/knowledge_card_ai_service.dart';
 
 part '../widgets/ai_analysis_tabs.dart';

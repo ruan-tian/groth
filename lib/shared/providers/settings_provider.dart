@@ -4,8 +4,12 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/focus/models/study_mode.dart';
 import 'repository_providers.dart';
+
+// Re-export focusStudyModeProvider for backward compatibility.
+// New code should import from features/focus/providers/focus_study_mode_providers.dart.
+export '../../features/focus/providers/focus_study_mode_providers.dart'
+    show focusStudyModeProvider, focusStudyModeInitProvider;
 
 // =============================================================================
 // 设置 Provider
@@ -608,19 +612,5 @@ final journalUploadInitProvider = FutureProvider<void>((ref) async {
   final value = await repo.getSetting('journal_upload');
   if (value != null) {
     ref.read(journalUploadProvider.notifier).state = value == 'true';
-  }
-});
-
-/// 番茄钟学习模式（默认高中生）
-final focusStudyModeProvider = StateProvider<StudyMode>(
-  (ref) => StudyMode.highSchool,
-);
-
-/// 从数据库初始化番茄钟学习模式
-final focusStudyModeInitProvider = FutureProvider<void>((ref) async {
-  final repo = ref.watch(settingRepositoryProvider);
-  final value = await repo.getSetting('focus_study_mode');
-  if (value != null) {
-    ref.read(focusStudyModeProvider.notifier).state = StudyMode.fromName(value);
   }
 });

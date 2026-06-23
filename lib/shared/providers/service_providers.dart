@@ -6,8 +6,6 @@ import '../../core/services/backup_service.dart';
 import '../../core/services/database_health_service.dart';
 import '../../core/services/exp_service.dart';
 import '../../core/services/statistics_service.dart';
-import '../../features/ai/services/ai_analysis_card_service.dart';
-import '../../features/ai/services/knowledge_context_service.dart';
 import 'database_provider.dart';
 import 'repository_providers.dart';
 
@@ -16,21 +14,19 @@ import 'repository_providers.dart';
 export '../../features/pet/providers/pet_service_providers.dart'
     show petDiaryServiceProvider;
 
+// Re-export knowledgeContextServiceProvider for backward compatibility.
+// New code should import from features/knowledge/providers/knowledge_context_providers.dart.
+export '../../features/knowledge/providers/knowledge_context_providers.dart'
+    show knowledgeContextServiceProvider;
+
+// Re-export aiAnalysisCardServiceProvider for backward compatibility.
+// New code should import from features/ai/providers/ai_analysis_card_providers.dart.
+export '../../features/ai/providers/ai_analysis_card_providers.dart'
+    show aiAnalysisCardServiceProvider;
+
 /// AI 服务 Provider。
 final aiServiceProvider = Provider<AiService>((ref) {
   return AiService();
-});
-
-/// 本地知识库上下文 Provider。
-final knowledgeContextServiceProvider = Provider<KnowledgeContextService>((
-  ref,
-) {
-  return KnowledgeContextService(ref.watch(knowledgeSourceRepositoryProvider));
-});
-
-/// AI 分析结果转知识卡服务 Provider。
-final aiAnalysisCardServiceProvider = Provider<AiAnalysisCardService>((ref) {
-  return const AiAnalysisCardService();
 });
 
 /// 经验值计算服务 Provider。
