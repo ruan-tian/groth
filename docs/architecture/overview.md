@@ -84,14 +84,34 @@ features/xxx/
 
 ## 五、剩余待处理项
 
-1. 30 个页面仍 import `app_database.dart`（仅用于 Drift 类型定义，非直接 DB 操作，作为 warning inventory）
-2. 5 个 provider 直接使用 `databaseProvider` 创建 Repository 实例（作为 warning inventory）
-3. 知识空间页面仍在 `features/study/pages/`（10 个文件），后续迁移到 `features/knowledge/pages/`
-   - 当前由 study route 承载 knowledge workspace
-   - 迁移时必须保持路由兼容
-   - 需要同时移动 9 个 part 文件
-4. `features/ai/pages/ai_analysis_page.dart` 依赖 5 个模块 provider，后续改为 `AiAnalysisInputFacade`（facade 已创建）
-5. 跨 feature 白名单：ai→knowledge, focus→music, dashboard→fitness/health, settings→fitness
+1. **Drift 类型 import（30 个页面）**：页面 import `app_database.dart` 仅用于 Drift 类型定义（如 `DailyTask`、`StudyRecord`、`FitnessRecordsCompanion`），非直接 DB 操作。作为 warning inventory，后续通过 DTO/feature models 消除。
+2. **Provider DB access（5 个 provider）**：provider 创建 Repository 实例时使用 `databaseProvider`，这是正常模式，作为 warning inventory。
+3. **知识空间页面迁移**：✅ 已完成（10 个文件从 `study/pages/` → `knowledge/pages/`）
+4. **AI 分析页 Facade**：✅ 已创建 `AiAnalysisInputFacade`，part 文件仍使用直接 import（legacy exception）
+5. **跨 feature 白名单**：ai→knowledge, focus→music, dashboard→fitness/health, settings→fitness
+
+### Drift 类型 import 清单（30 个页面）
+
+| 模块 | 页面数 | 主要使用类型 |
+|------|--------|--------------|
+| fitness | 7 | `FitnessRecord`, `FitnessExercisesCompanion`, `BodyMetric` |
+| health | 6 | `DietRecord`, `SleepRecord`, `SleepReminderScheduleStatus` |
+| study | 3 | `StudyRecord`, `StudyRecordsCompanion` |
+| journal | 3 | `DailyJournal`, `JournalFolder`, `JournalAsset` |
+| settings | 3 | `AiConfig`, `BackupRecord` |
+| music | 2 | `MusicTrack`, `MusicPlaylist` |
+| pet | 2 | `PetMessage`, `PetProfile`, `PetState` |
+| focus | 1 | `FocusSession` |
+| dashboard | 1 | `DailyTask` |
+| ai | 1 | `KnowledgeChunkSearchResult` |
+| knowledge | 1 | `KnowledgeSpaceV3`, `KnowledgeMaterial` |
+
+### 后续优化路径
+
+1. **Phase 1**：为每个 feature 创建 `models/` 目录，定义 feature-specific DTOs
+2. **Phase 2**：在 Repository 层添加 `toDTO()` / `fromDTO()` 转换方法
+3. **Phase 3**：逐步替换页面中的 Drift 类型为 feature DTOs
+4. **Phase 4**：移除页面对 `app_database.dart` 的 import
 
 ---
 
