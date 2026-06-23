@@ -84,34 +84,18 @@ features/xxx/
 
 ## 五、剩余待处理项
 
-1. **Drift 类型 import（30 个页面）**：页面 import `app_database.dart` 仅用于 Drift 类型定义（如 `DailyTask`、`StudyRecord`、`FitnessRecordsCompanion`），非直接 DB 操作。作为 warning inventory，后续通过 DTO/feature models 消除。
-2. **Provider DB access（5 个 provider）**：provider 创建 Repository 实例时使用 `databaseProvider`，这是正常模式，作为 warning inventory。
-3. **知识空间页面迁移**：✅ 已完成（10 个文件从 `study/pages/` → `knowledge/pages/`）
-4. **AI 分析页 Facade**：✅ 已创建 `AiAnalysisInputFacade`，part 文件仍使用直接 import（legacy exception）
-5. **跨 feature 白名单**：ai→knowledge, focus→music, dashboard→fitness/health, settings→fitness
+1. **Provider DB access（1 个 provider）**：`pet_service_providers.dart` 直接使用 `appDatabaseProvider` 传递 DB 实例给 `PetDiaryService`，这是正常模式（Service 需要 DB），作为 warning inventory。
+2. **跨 feature 白名单**：ai→knowledge, focus→music, dashboard→fitness/health, settings→fitness
+3. **AI 分析页 Facade**：✅ 已创建 `AiAnalysisInputFacade`，part 文件仍使用直接 import（legacy exception）
 
-### Drift 类型 import 清单（30 个页面）
+### Drift 类型 import 清单
 
-| 模块 | 页面数 | 主要使用类型 |
-|------|--------|--------------|
-| fitness | 7 | `FitnessRecord`, `FitnessExercisesCompanion`, `BodyMetric` |
-| health | 6 | `DietRecord`, `SleepRecord`, `SleepReminderScheduleStatus` |
-| study | 3 | `StudyRecord`, `StudyRecordsCompanion` |
-| journal | 3 | `DailyJournal`, `JournalFolder`, `JournalAsset` |
-| settings | 3 | `AiConfig`, `BackupRecord` |
-| music | 2 | `MusicTrack`, `MusicPlaylist` |
-| pet | 2 | `PetMessage`, `PetProfile`, `PetState` |
-| focus | 1 | `FocusSession` |
-| dashboard | 1 | `DailyTask` |
-| ai | 1 | `KnowledgeChunkSearchResult` |
-| knowledge | 1 | `KnowledgeSpaceV3`, `KnowledgeMaterial` |
+✅ **已完成**：29/30 页面已迁移至 feature data files，仅 `ai_analysis_page` 保留（需跨模块 types）
 
-### 后续优化路径
+### 后续优化项（不阻塞）
 
-1. **Phase 1**：为每个 feature 创建 `models/` 目录，定义 feature-specific DTOs
-2. **Phase 2**：在 Repository 层添加 `toDTO()` / `fromDTO()` 转换方法
-3. **Phase 3**：逐步替换页面中的 Drift 类型为 feature DTOs
-4. **Phase 4**：移除页面对 `app_database.dart` 的 import
+1. **AI 分析页接入 Facade**：`AiAnalysisInputFacade` 已创建，part 文件待接入
+2. **跨 feature 依赖优化**：当前 5 组白名单，后续可通过 facade/domain event 解耦
 
 ---
 
