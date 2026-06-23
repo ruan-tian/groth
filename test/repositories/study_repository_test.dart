@@ -60,16 +60,16 @@ void main() {
     });
 
     test('inserted record can be retrieved by id', () async {
-      final companion = _buildCompanion(title: 'Dart 进阶', durationMinutes: 45);
+      final companion = _buildCompanion(
+        title: 'Dart advanced',
+        durationMinutes: 45,
+      );
       final id = await repo.insertStudyRecord(companion);
 
-      final records = await (db.select(
-        db.studyRecords,
-      )..where((t) => t.id.equals(id))).get();
+      final record = await repo.getStudyRecordById(id);
 
-      expect(records, hasLength(1));
-      expect(records.first.title, equals('Dart 进阶'));
-      expect(records.first.durationMinutes, equals(45));
+      expect(record.title, equals('Dart advanced'));
+      expect(record.durationMinutes, equals(45));
     });
 
     test('inserts multiple records with auto-increment ids', () async {

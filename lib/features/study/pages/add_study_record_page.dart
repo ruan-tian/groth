@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../../../core/database/app_database.dart' show StudyRecordsCompanion;
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/study_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
@@ -179,28 +179,18 @@ class _AddStudyRecordPageState extends ConsumerState<AddStudyRecordPage> {
       );
 
       // 原子操作：插入记录 + 更新EXP + 写入经验日志
-      final db = ref.read(databaseProvider);
       final oldTotal = await ref.read(expRepositoryProvider).getTotalExp();
       final oldLevel = expService.calculateLevel(oldTotal);
-      late final int recordId;
-      await db.transaction(() async {
-        final studyRepo = ref.read(studyRepositoryProvider);
-        recordId = await studyRepo.insertStudyRecord(companion);
-        await studyRepo.updateStudyRecordExp(recordId, exp);
-        await ref
-            .read(expRepositoryProvider)
-            .insertExpLog(
-              GrowthExpLogsCompanion.insert(
-                sourceType: 'study',
-                sourceId: recordId,
-                expValue: exp,
-                reason: '学习: ${_titleController.text.trim()} ($duration min)',
-                createdAt: now,
-              ),
-            );
-      });
+      await ref
+          .read(studyRepositoryProvider)
+          .saveStudyRecordWithExp(
+            record: companion,
+            exp: exp,
+            reason:
+                '\u5b66\u4e60: ${_titleController.text.trim()} ($duration min)',
+            createdAt: now,
+          );
 
-      // 等级提升检测
       final newTotal = oldTotal + exp;
       final newLevel = expService.calculateLevel(newTotal);
       if (newLevel > oldLevel) {

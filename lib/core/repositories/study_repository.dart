@@ -20,6 +20,28 @@ class StudyRepository {
     return _db.into(_db.studyRecords).insert(record);
   }
 
+  Future<int> saveStudyRecordWithExp({
+    required StudyRecordsCompanion record,
+    required int exp,
+    required String reason,
+    required int createdAt,
+  }) async {
+    return _db.transaction(() async {
+      final recordId = await insertStudyRecord(record);
+      await updateStudyRecordExp(recordId, exp);
+      await ExpRepository(_db).insertExpLog(
+        GrowthExpLogsCompanion.insert(
+          sourceType: 'study',
+          sourceId: recordId,
+          expValue: exp,
+          reason: reason,
+          createdAt: createdAt,
+        ),
+      );
+      return recordId;
+    });
+  }
+
   /// 更新一条学习记录（以 companion 中的 id 为准）。
   Future<void> updateStudyRecord(StudyRecordsCompanion record) {
     return _db.update(_db.studyRecords).replace(record);
@@ -35,6 +57,12 @@ class StudyRepository {
   /// 根据 ID 删除一条学习记录。
   Future<void> deleteStudyRecord(int id) async {
     await _db.transaction(() async {
+      await (_db.update(_db.focusSessions)
+            ..where((t) => t.relatedStudyId.equals(id)))
+          .write(const FocusSessionsCompanion(relatedStudyId: Value(null)));
+      await (_db.update(_db.knowledgeCards)
+            ..where((t) => t.sourceStudyId.equals(id)))
+          .write(const KnowledgeCardsCompanion(sourceStudyId: Value(null)));
       await (_db.delete(_db.studyRecords)..where((t) => t.id.equals(id))).go();
       await ExpRepository(_db).deleteExpLogsForSource('study', id);
     });
@@ -45,6 +73,12 @@ class StudyRepository {
   // ---------------------------------------------------------------------------
 
   /// 获取指定日期的学习记录（按实际学习开始时间归属日期）。
+  Future<StudyRecord> getStudyRecordById(int id) {
+    return (_db.select(
+      _db.studyRecords,
+    )..where((t) => t.id.equals(id))).getSingle();
+  }
+
   Future<List<StudyRecord>> getStudyRecordsByDate(DateTime date) {
     final range = _dayRange(date);
     return (_db.select(_db.studyRecords)

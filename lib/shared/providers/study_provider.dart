@@ -13,6 +13,14 @@ import 'service_providers.dart';
 /// 按日期获取学习记录（FutureProvider.family）
 ///
 /// 用法：`ref.watch(studyRecordsProvider(date))`
+final studyRecordByIdProvider = FutureProvider.family<StudyRecord, int>((
+  ref,
+  id,
+) {
+  final repo = ref.watch(studyRepositoryProvider);
+  return repo.getStudyRecordById(id);
+});
+
 final studyRecordsProvider = FutureProvider.family<List<StudyRecord>, DateTime>(
   (ref, date) async {
     final repo = ref.watch(studyRepositoryProvider);

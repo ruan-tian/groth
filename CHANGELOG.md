@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-23 Feature database boundary stabilization
+
+- Moved study-record detail lookup behind `StudyRepository` and shared study providers, then added an architecture guard preventing feature pages/widgets from reading `appDatabaseProvider` directly.
+
 ## 2026-06-23 Backup boundary stabilization
 
 - Moved backup record listing, overview calculation, and deletion behind `BackupService` and shared providers so settings backup/restore pages no longer access the database provider directly.

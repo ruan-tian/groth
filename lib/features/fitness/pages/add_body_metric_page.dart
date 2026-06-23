@@ -6,8 +6,9 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
+import '../../../shared/providers/repository_providers.dart'
+    show fitnessRepositoryProvider;
 
 /// 记录身体数据页面（褐色渐变风格）
 class AddBodyMetricPage extends ConsumerStatefulWidget {
@@ -86,8 +87,7 @@ class _AddBodyMetricPageState extends ConsumerState<AddBodyMetricPage> {
         createdAt: Value(now.millisecondsSinceEpoch),
       );
 
-      final db = ref.read(databaseProvider);
-      await db.into(db.bodyMetrics).insert(companion);
+      await ref.read(fitnessRepositoryProvider).insertBodyMetric(companion);
 
       // 刷新数据
       ref.invalidate(allBodyMetricsProvider);

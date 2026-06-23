@@ -79,4 +79,29 @@ void main() {
           'instead of coupling page lifecycle directly to the SQLite database.',
     );
   });
+
+  test('feature UI files do not access the database provider directly', () {
+    final root = Directory('lib/features');
+    final offenders = <String>[];
+
+    for (final file in root.listSync(recursive: true).whereType<File>()) {
+      final path = file.path.replaceAll('\\', '/');
+      if (!path.endsWith('.dart')) continue;
+      if (!path.contains('/pages/') && !path.contains('/widgets/')) continue;
+
+      final text = file.readAsStringSync();
+      if (text.contains("providers/database_provider.dart") ||
+          text.contains('appDatabaseProvider')) {
+        offenders.add(path);
+      }
+    }
+
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'Feature UI should depend on repositories, services, or shared '
+          'providers instead of binding widget lifecycle directly to SQLite.',
+    );
+  });
 }
