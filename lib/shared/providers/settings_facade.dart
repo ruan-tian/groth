@@ -36,6 +36,7 @@ class SettingsFacade {
     }
     _ref.invalidate(settingsProvider);
     _ref.invalidate(settingProvider(key));
+    _ref.invalidate(userProfileSnapshotProvider);
   }
 
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -51,6 +52,7 @@ class SettingsFacade {
     await _settings.setSetting('avatar_path', normalized ?? '');
     _ref.invalidate(settingsProvider);
     _ref.invalidate(settingProvider('avatar_path'));
+    _ref.invalidate(userProfileSnapshotProvider);
   }
 
   Future<void> setAutoAiAnalysisEnabled(bool enabled) async {

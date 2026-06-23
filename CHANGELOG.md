@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-06-23 Settings read boundary stabilization
+
+- Moved settings profile, AI connection, and last-backup status reads into shared providers so settings subpages no longer import provider state from `SettingsPage`.
+
 ## 2026-06-23 Settings write facade stabilization
 
 - Centralized dashboard card ids, daily goals, weekly fitness goal, calorie goal, sleep goal, and focus study mode writes through `SettingsFacade`.

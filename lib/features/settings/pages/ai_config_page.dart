@@ -9,7 +9,8 @@ import '../../../core/database/app_database.dart';
 import '../../../core/services/ai_service.dart';
 import '../../../core/services/encryption_service.dart';
 import '../../../shared/providers/repository_providers.dart';
-import '../settings_page.dart' show aiConnectionStatusProvider;
+import '../../../shared/providers/settings_provider.dart'
+    show aiConnectionStatusProvider;
 
 /// AI 服务提供商模型
 class AIProvider {

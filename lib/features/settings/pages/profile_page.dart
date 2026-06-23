@@ -10,10 +10,8 @@ import 'package:path_provider/path_provider.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart'
-    hide settingRepositoryProvider;
+import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/fitness_provider.dart';
-import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/growth_date_picker.dart';
@@ -37,13 +35,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   DateTime _birthday = DateTime(2000, 6, 15);
   String _gender = 'male';
   String? _avatarPath;
+  String? _profileSnapshotKey;
 
   late AnimationController _saveAnimController;
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
     _saveAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -60,27 +58,15 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
   // ── 数据持久化 ──────────────────────────────────────────────────────────────
 
-  Future<void> _loadProfile() async {
-    final repo = ref.read(settingRepositoryProvider);
-    final nickname = await repo.getSetting('nickname');
-    final birthday = await repo.getSetting('birthday');
-    final gender = await repo.getSetting('gender');
-    final height = await repo.getSetting('height');
-    final avatarPath = await repo.getSetting('avatar_path');
-    final normalizedAvatarPath = normalizeUserAvatarPath(avatarPath);
-    ref.read(userAvatarPathProvider.notifier).state = normalizedAvatarPath;
-
-    if (mounted) {
-      setState(() {
-        if (nickname != null) _nicknameController.text = nickname;
-        if (birthday != null) {
-          _birthday = DateTime.tryParse(birthday) ?? _birthday;
-        }
-        if (gender != null) _gender = gender;
-        if (height != null) _heightController.text = height;
-        _avatarPath = normalizedAvatarPath;
-      });
-    }
+  void _applyProfileSnapshot(UserProfileSnapshot snapshot) {
+    final nextKey = snapshot.cacheKey;
+    if (_profileSnapshotKey == nextKey) return;
+    _profileSnapshotKey = nextKey;
+    _nicknameController.text = snapshot.nickname;
+    _heightController.text = snapshot.heightText;
+    _birthday = snapshot.birthday;
+    _gender = snapshot.gender;
+    _avatarPath = snapshot.avatarPath;
   }
 
   Future<void> _saveField(String key, String value) async {
@@ -330,9 +316,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(userProfileSnapshotProvider);
     final latestWeight = ref.watch(latestBodyMetricProvider);
     final dashboard = ref.watch(dashboardProvider);
     final colors = context.growthColors;
+
+    profile.whenData(_applyProfileSnapshot);
 
     return Scaffold(
       backgroundColor: colors.background,

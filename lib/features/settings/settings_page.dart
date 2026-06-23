@@ -5,9 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
 import '../../core/services/exp_service.dart';
-import '../../shared/providers/dashboard_provider.dart'
-    hide settingRepositoryProvider;
-import '../../shared/providers/repository_providers.dart';
+import '../../shared/providers/dashboard_provider.dart';
 import '../../shared/providers/pet_diary_provider.dart';
 import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
@@ -20,27 +18,9 @@ part 'widgets/settings_page_sheets.dart';
 // AI 连接状态 Provider
 // =============================================================================
 
-final aiConnectionStatusProvider = FutureProvider<bool>((ref) async {
-  final repo = ref.watch(aiConfigRepositoryProvider);
-  final config = await repo.getEnabledAiConfig();
-  return config != null;
-});
-
 // =============================================================================
 // 最后备份时间 Provider
 // =============================================================================
-
-final lastBackupTimeProvider = FutureProvider<DateTime?>((ref) async {
-  final repo = ref.watch(settingRepositoryProvider);
-  final value = await repo.getSetting('last_backup_time');
-  if (value != null) {
-    final timestamp = int.tryParse(value);
-    if (timestamp != null) {
-      return DateTime.fromMillisecondsSinceEpoch(timestamp);
-    }
-  }
-  return null;
-});
 
 // =============================================================================
 // SettingsPage（褐色渐变风格）

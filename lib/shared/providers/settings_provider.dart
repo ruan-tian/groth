@@ -29,6 +29,22 @@ final settingProvider = FutureProvider.family<String?, String>((
   return repo.getSetting(key);
 });
 
+final aiConnectionStatusProvider = FutureProvider<bool>((ref) async {
+  final repo = ref.watch(aiConfigRepositoryProvider);
+  final config = await repo.getEnabledAiConfig();
+  return config != null;
+});
+
+final lastBackupTimeProvider = FutureProvider<DateTime?>((ref) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final value = await repo.getSetting('last_backup_time');
+  if (value == null) return null;
+
+  final timestamp = int.tryParse(value);
+  if (timestamp == null) return null;
+  return DateTime.fromMillisecondsSinceEpoch(timestamp);
+});
+
 /// 主题模式 StateProvider
 ///
 /// 默认跟随系统，可通过 `ref.read(themeModeProvider.notifier).state = ...` 切换。
@@ -446,6 +462,65 @@ String? normalizeUserAvatarPath(String? value) {
   if (path == null || path.isEmpty) return null;
   return File(path).existsSync() ? path : null;
 }
+
+class UserProfileSnapshot {
+  const UserProfileSnapshot({
+    required this.nickname,
+    required this.birthday,
+    required this.gender,
+    required this.heightText,
+    required this.avatarPath,
+  });
+
+  final String nickname;
+  final DateTime birthday;
+  final String gender;
+  final String heightText;
+  final String? avatarPath;
+
+  String get cacheKey {
+    return [
+      nickname,
+      birthday.toIso8601String(),
+      gender,
+      heightText,
+      avatarPath ?? '',
+    ].join('|');
+  }
+}
+
+final userProfileSnapshotProvider = FutureProvider<UserProfileSnapshot>((
+  ref,
+) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final nickname = await repo.getSetting('nickname');
+  final birthday = await repo.getSetting('birthday');
+  final gender = await repo.getSetting('gender');
+  final height = await repo.getSetting('height');
+  final avatarPath = normalizeUserAvatarPath(
+    await repo.getSetting('avatar_path'),
+  );
+
+  final resolvedNickname = (nickname == null || nickname.isEmpty)
+      ? '甜甜'
+      : nickname;
+  final resolvedBirthday = birthday == null
+      ? null
+      : DateTime.tryParse(birthday);
+  final resolvedHeight = double.tryParse(height ?? '');
+
+  ref.read(userNicknameProvider.notifier).state = resolvedNickname;
+  ref.read(userAvatarPathProvider.notifier).state = avatarPath;
+  ref.read(userHeightProvider.notifier).state = resolvedHeight;
+
+  return UserProfileSnapshot(
+    nickname: resolvedNickname,
+    birthday: resolvedBirthday ?? DateTime(2000, 6, 15),
+    gender: (gender == null || gender.isEmpty) ? 'male' : gender,
+    heightText: height ?? '',
+    avatarPath: avatarPath,
+  );
+});
 
 /// 从数据库初始化用户昵称的 Provider
 final userNicknameInitProvider = FutureProvider<void>((ref) async {

@@ -27,4 +27,29 @@ void main() {
           'serialized and synchronized.',
     );
   });
+
+  test('settings subpages do not import providers from settings page', () {
+    final root = Directory('lib/features/settings');
+    final offenders = <String>[];
+
+    for (final file in root.listSync(recursive: true).whereType<File>()) {
+      final path = file.path.replaceAll('\\', '/');
+      if (!path.endsWith('.dart')) continue;
+      if (path.endsWith('/settings_page.dart')) continue;
+
+      final text = file.readAsStringSync();
+      if (text.contains("settings_page.dart' show") ||
+          text.contains('settings_page.dart" show')) {
+        offenders.add(path);
+      }
+    }
+
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'Settings subpages should read shared providers directly instead of '
+          'importing provider declarations from the parent SettingsPage widget.',
+    );
+  });
 }
