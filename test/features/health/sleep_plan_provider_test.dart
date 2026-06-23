@@ -1,4 +1,4 @@
-import 'package:drift/native.dart';
+﻿import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:growth_os/core/database/app_database.dart';
@@ -96,3 +96,4 @@ void main() {
     },
   );
 }
+

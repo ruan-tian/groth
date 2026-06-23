@@ -1,10 +1,10 @@
-import 'package:drift/drift.dart';
+﻿import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/diet_repository.dart';
-import 'package:growth_os/core/repositories/fitness_repository.dart';
-import 'package:growth_os/core/repositories/sleep_repository.dart';
+import 'package:growth_os/features/health/repositories/diet_repository.dart';
+import 'package:growth_os/features/fitness/repositories/fitness_repository.dart';
+import 'package:growth_os/features/health/repositories/sleep_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -123,3 +123,4 @@ void main() {
     expect(logs.single.expValue, 8);
   });
 }
+

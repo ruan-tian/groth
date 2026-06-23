@@ -1,13 +1,13 @@
-import 'package:drift/drift.dart';
+﻿import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/study_repository.dart';
+import 'package:growth_os/features/study/repositories/study_repository.dart';
 
 /// Helper: build a [StudyRecordsCompanion] for insertion.
 StudyRecordsCompanion _buildCompanion({
   String mode = 'simple',
-  String title = 'Flutter 学习',
+  String title = 'Flutter 瀛︿範',
   String? subject,
   int? startTimeMs,
   int? endTimeMs,
@@ -85,9 +85,9 @@ void main() {
       'saves record exp and exp log in one repository transaction',
       () async {
         final id = await repo.saveStudyRecordWithExp(
-          record: _buildCompanion(title: '事务保存'),
+          record: _buildCompanion(title: '浜嬪姟淇濆瓨'),
           exp: 16,
-          reason: '学习: 事务保存 (60 min)',
+          reason: '瀛︿範: 浜嬪姟淇濆瓨 (60 min)',
           createdAt: DateTime.now().millisecondsSinceEpoch,
         );
 
@@ -114,13 +114,13 @@ void main() {
   group('updateStudyRecord', () {
     test('updates an existing record title and duration', () async {
       final id = await repo.insertStudyRecord(
-        _buildCompanion(title: '原始标题', durationMinutes: 30),
+        _buildCompanion(title: '鍘熷鏍囬', durationMinutes: 30),
       );
 
       final updated = StudyRecordsCompanion(
         id: Value(id),
         mode: const Value('professional'),
-        title: const Value('更新后标题'),
+        title: const Value('鏇存柊鍚庢爣棰?),
         startTime: Value(
           DateTime.now().millisecondsSinceEpoch - 60 * 60 * 1000,
         ),
@@ -135,7 +135,7 @@ void main() {
         db.studyRecords,
       )..where((t) => t.id.equals(id))).getSingle();
 
-      expect(record.title, equals('更新后标题'));
+      expect(record.title, equals('鏇存柊鍚庢爣棰?));
       expect(record.durationMinutes, equals(60));
       expect(record.mode, equals('professional'));
     });
@@ -157,7 +157,7 @@ void main() {
 
       expect(record.expGained, equals(15));
       // Title should remain unchanged
-      expect(record.title, equals('Flutter 学习'));
+      expect(record.title, equals('Flutter 瀛︿範'));
     });
   });
 
@@ -271,7 +271,7 @@ void main() {
 
       await repo.insertStudyRecord(
         _buildCompanion(
-          title: '今日学习',
+          title: '浠婃棩瀛︿範',
           createdAtMs: todayMs,
           startTimeMs: todayMs - 3600000,
           endTimeMs: todayMs,
@@ -280,7 +280,7 @@ void main() {
 
       final records = await repo.getStudyRecordsByDate(now);
       expect(records, hasLength(1));
-      expect(records.first.title, equals('今日学习'));
+      expect(records.first.title, equals('浠婃棩瀛︿範'));
     });
 
     test('excludes records from other dates', () async {
@@ -289,7 +289,7 @@ void main() {
 
       await repo.insertStudyRecord(
         _buildCompanion(
-          title: '今日',
+          title: '浠婃棩',
           createdAtMs: today.millisecondsSinceEpoch,
           startTimeMs: today.millisecondsSinceEpoch - 3600000,
           endTimeMs: today.millisecondsSinceEpoch,
@@ -297,7 +297,7 @@ void main() {
       );
       await repo.insertStudyRecord(
         _buildCompanion(
-          title: '昨日',
+          title: '鏄ㄦ棩',
           createdAtMs: yesterday.millisecondsSinceEpoch,
           startTimeMs: yesterday.millisecondsSinceEpoch - 3600000,
           endTimeMs: yesterday.millisecondsSinceEpoch,
@@ -306,7 +306,7 @@ void main() {
 
       final records = await repo.getStudyRecordsByDate(today);
       expect(records, hasLength(1));
-      expect(records.first.title, equals('今日'));
+      expect(records.first.title, equals('浠婃棩'));
     });
 
     test('returns empty list when no records for the date', () async {
@@ -321,7 +321,7 @@ void main() {
 
       await repo.insertStudyRecord(
         _buildCompanion(
-          title: '较早',
+          title: '杈冩棭',
           createdAtMs: baseMs + 3600000, // 01:00
           startTimeMs: baseMs,
           endTimeMs: baseMs + 3600000,
@@ -329,7 +329,7 @@ void main() {
       );
       await repo.insertStudyRecord(
         _buildCompanion(
-          title: '较晚',
+          title: '杈冩櫄',
           createdAtMs: baseMs + 7200000, // 02:00
           startTimeMs: baseMs + 3600000,
           endTimeMs: baseMs + 7200000,
@@ -338,8 +338,8 @@ void main() {
 
       final records = await repo.getStudyRecordsByDate(date);
       expect(records, hasLength(2));
-      expect(records.first.title, equals('较晚'));
-      expect(records.last.title, equals('较早'));
+      expect(records.first.title, equals('杈冩櫄'));
+      expect(records.last.title, equals('杈冩棭'));
     });
   });
 
@@ -514,3 +514,4 @@ void main() {
     });
   });
 }
+

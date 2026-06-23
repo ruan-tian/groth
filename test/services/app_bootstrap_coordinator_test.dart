@@ -1,8 +1,8 @@
-import 'package:drift/native.dart';
+﻿import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_v3_repository.dart';
-import 'package:growth_os/core/repositories/music_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
+import 'package:growth_os/features/music/repositories/music_repository.dart';
 import 'package:growth_os/core/services/app_bootstrap_coordinator.dart';
 import 'package:growth_os/core/services/database_health_service.dart';
 import 'package:growth_os/features/music/utils/default_music_seed.dart';
@@ -48,3 +48,4 @@ void main() {
     );
   });
 }
+

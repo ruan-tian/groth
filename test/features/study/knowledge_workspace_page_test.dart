@@ -1,11 +1,11 @@
-import 'package:drift/drift.dart' show Variable;
+﻿import 'package:drift/drift.dart' show Variable;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_v3_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
 import 'package:growth_os/features/study/pages/knowledge_workspace_page.dart';
 import 'package:growth_os/features/study/widgets/tiantian_chat_sheet.dart';
 import 'package:growth_os/shared/providers/database_provider.dart';
@@ -43,7 +43,7 @@ Widget _buildPage(
       ),
       GoRoute(
         path: '/ai-config',
-        builder: (context, state) => const Scaffold(body: Text('AI 配置')),
+        builder: (context, state) => const Scaffold(body: Text('AI 閰嶇疆')),
       ),
     ],
   );
@@ -88,24 +88,24 @@ void main() {
   ) async {
     await _pump(tester, db);
 
-    expect(find.text('知识空间'), findsOneWidget);
-    expect(find.text('选择一个空间，开始你的学习之旅'), findsOneWidget);
-    expect(find.text('默认知识空间'), findsWidgets);
-    expect(find.text('AI 导入'), findsNothing);
-    expect(find.text('全部复习'), findsNothing);
-    expect(find.text('目标模板'), findsNothing);
+    expect(find.text('鐭ヨ瘑绌洪棿'), findsOneWidget);
+    expect(find.text('閫夋嫨涓€涓┖闂达紝寮€濮嬩綘鐨勫涔犱箣鏃?), findsOneWidget);
+    expect(find.text('榛樿鐭ヨ瘑绌洪棿'), findsWidgets);
+    expect(find.text('AI 瀵煎叆'), findsNothing);
+    expect(find.text('鍏ㄩ儴澶嶄範'), findsNothing);
+    expect(find.text('鐩爣妯℃澘'), findsNothing);
   });
 
   testWidgets('space card enters the new workspace', (tester) async {
     await _pump(tester, db);
 
-    await tester.tap(find.text('默认知识空间').first);
+    await tester.tap(find.text('榛樿鐭ヨ瘑绌洪棿').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('你好，我是甜甜'), findsOneWidget);
-    expect(find.text('搜索或问甜甜这个空间里的资料...'), findsOneWidget);
-    expect(find.text('问甜甜'), findsWidgets);
-    expect(find.text('先放进一份学习资料'), findsOneWidget);
+    expect(find.text('浣犲ソ锛屾垜鏄敎鐢?), findsOneWidget);
+    expect(find.text('鎼滅储鎴栭棶鐢滅敎杩欎釜绌洪棿閲岀殑璧勬枡...'), findsOneWidget);
+    expect(find.text('闂敎鐢?), findsWidgets);
+    expect(find.text('鍏堟斁杩涗竴浠藉涔犺祫鏂?), findsOneWidget);
   });
 
   testWidgets('space card actions use the system bottom action menu', (
@@ -113,14 +113,14 @@ void main() {
   ) async {
     await _pump(tester, db);
 
-    await tester.tap(find.byTooltip('空间操作').first);
+    await tester.tap(find.byTooltip('绌洪棿鎿嶄綔').first);
     await tester.pumpAndSettle();
 
     expect(find.byType(PopupMenuButton), findsNothing);
-    expect(find.text('默认知识空间'), findsWidgets);
-    expect(find.text('重命名'), findsOneWidget);
-    expect(find.text('归档'), findsOneWidget);
-    expect(find.text('取消'), findsOneWidget);
+    expect(find.text('榛樿鐭ヨ瘑绌洪棿'), findsWidgets);
+    expect(find.text('閲嶅懡鍚?), findsOneWidget);
+    expect(find.text('褰掓。'), findsOneWidget);
+    expect(find.text('鍙栨秷'), findsOneWidget);
   });
 
   testWidgets('creating a space from selector enters it immediately', (
@@ -128,37 +128,37 @@ void main() {
   ) async {
     await _pump(tester, db);
 
-    await tester.tap(find.widgetWithText(FilledButton, '新建空间'));
+    await tester.tap(find.widgetWithText(FilledButton, '鏂板缓绌洪棿'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.widgetWithText(TextField, '空间名称'), '法考');
-    await tester.tap(find.widgetWithText(FilledButton, '创建并进入'));
+    await tester.enterText(find.widgetWithText(TextField, '绌洪棿鍚嶇О'), '娉曡€?);
+    await tester.tap(find.widgetWithText(FilledButton, '鍒涘缓骞惰繘鍏?));
     await tester.pumpAndSettle();
 
-    expect(find.text('你好，我是甜甜'), findsOneWidget);
-    expect(find.text('法考'), findsWidgets);
-    expect(find.text('选择一个空间，开始你的学习之旅'), findsNothing);
+    expect(find.text('浣犲ソ锛屾垜鏄敎鐢?), findsOneWidget);
+    expect(find.text('娉曡€?), findsWidgets);
+    expect(find.text('閫夋嫨涓€涓┖闂达紝寮€濮嬩綘鐨勫涔犱箣鏃?), findsNothing);
   });
 
   testWidgets('import flow is one simple composer', (tester) async {
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.widgetWithText(FilledButton, '导入资料').first);
+    await tester.tap(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('导入资料'), findsWidgets);
-    expect(find.text('导入到空间'), findsOneWidget);
-    expect(find.text('粘贴文本或内容'), findsOneWidget);
-    expect(find.text('更多设置'), findsNothing);
-    expect(find.text('资料标题（可选）'), findsNothing);
-    expect(find.text('文件'), findsOneWidget);
-    expect(find.text('网页'), findsOneWidget);
-    expect(find.text('图片'), findsOneWidget);
+    expect(find.text('瀵煎叆璧勬枡'), findsWidgets);
+    expect(find.text('瀵煎叆鍒扮┖闂?), findsOneWidget);
+    expect(find.text('绮樿创鏂囨湰鎴栧唴瀹?), findsOneWidget);
+    expect(find.text('鏇村璁剧疆'), findsNothing);
+    expect(find.text('璧勬枡鏍囬锛堝彲閫夛級'), findsNothing);
+    expect(find.text('鏂囦欢'), findsOneWidget);
+    expect(find.text('缃戦〉'), findsOneWidget);
+    expect(find.text('鍥剧墖'), findsOneWidget);
     expect(find.textContaining('token'), findsNothing);
-    expect(find.textContaining('切片'), findsNothing);
-    expect(find.text('稍后处理'), findsNothing);
+    expect(find.textContaining('鍒囩墖'), findsNothing);
+    expect(find.text('绋嶅悗澶勭悊'), findsNothing);
 
     final importButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, '开始导入'),
+      find.widgetWithText(FilledButton, '寮€濮嬪鍏?),
     );
     expect(importButton.onPressed, isNull);
   });
@@ -166,13 +166,13 @@ void main() {
   testWidgets('web import uses the unified sheet style', (tester) async {
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.widgetWithText(FilledButton, '导入资料').first);
+    await tester.tap(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('网页'));
+    await tester.tap(find.text('缃戦〉'));
     await tester.pumpAndSettle();
 
-    expect(find.text('导入网页'), findsOneWidget);
-    expect(find.text('抓取网页'), findsOneWidget);
+    expect(find.text('瀵煎叆缃戦〉'), findsOneWidget);
+    expect(find.text('鎶撳彇缃戦〉'), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
     expect(tester.takeException(), isNull);
   });
@@ -184,24 +184,24 @@ void main() {
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.widgetWithText(FilledButton, '导入资料').first);
+    await tester.tap(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡').first);
     await tester.pumpAndSettle();
     await tester.enterText(
-      find.widgetWithText(TextField, '粘贴文本或内容'),
-      '行政处罚追诉时效\n通常从违法行为发生之日起计算。',
+      find.widgetWithText(TextField, '绮樿创鏂囨湰鎴栧唴瀹?),
+      '琛屾斂澶勭綒杩借瘔鏃舵晥\n閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
     await tester.pump();
     final importButton = tester.widget<FilledButton>(
-      find.widgetWithText(FilledButton, '开始导入'),
+      find.widgetWithText(FilledButton, '寮€濮嬪鍏?),
     );
     expect(importButton.onPressed, isNotNull);
-    await tester.tap(find.widgetWithText(FilledButton, '开始导入'));
+    await tester.tap(find.widgetWithText(FilledButton, '寮€濮嬪鍏?));
     await tester.pumpAndSettle();
 
-    expect(find.text('资料已导入，可生成知识卡'), findsOneWidget);
+    expect(find.text('璧勬枡宸插鍏ワ紝鍙敓鎴愮煡璇嗗崱'), findsOneWidget);
     final materials = await repo.getMaterials(space.id);
     expect(materials, hasLength(1));
-    expect(materials.single.title, '行政处罚追诉时效');
+    expect(materials.single.title, '琛屾斂澶勭綒杩借瘔鏃舵晥');
   });
 
   testWidgets('review page shows actionable empty state without crashing', (
@@ -211,10 +211,10 @@ void main() {
 
     await _pump(tester, db, location: '/plan/study/knowledge/review?spaceId=1');
 
-    expect(find.text('还没有可复习的知识卡'), findsOneWidget);
-    expect(find.text('导入资料'), findsWidgets);
-    expect(find.text('生成知识卡'), findsWidgets);
-    expect(find.textContaining('渲染失败'), findsNothing);
+    expect(find.text('杩樻病鏈夊彲澶嶄範鐨勭煡璇嗗崱'), findsOneWidget);
+    expect(find.text('瀵煎叆璧勬枡'), findsWidgets);
+    expect(find.text('鐢熸垚鐭ヨ瘑鍗?), findsWidgets);
+    expect(find.textContaining('娓叉煋澶辫触'), findsNothing);
   });
 
   testWidgets('review mode hides weak option when there are no weak cards', (
@@ -249,21 +249,21 @@ void main() {
       location: '/plan/study/knowledge/review?spaceId=${space.id}',
     );
 
-    await tester.tap(find.widgetWithText(FilledButton, '开始抽卡').first);
+    await tester.tap(find.widgetWithText(FilledButton, '寮€濮嬫娊鍗?).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('选择复习方式'), findsOneWidget);
-    expect(find.text('今日到期'), findsOneWidget);
-    expect(find.text('全部随机'), findsOneWidget);
-    expect(find.text('薄弱优先'), findsNothing);
+    expect(find.text('閫夋嫨澶嶄範鏂瑰紡'), findsOneWidget);
+    expect(find.text('浠婃棩鍒版湡'), findsOneWidget);
+    expect(find.text('鍏ㄩ儴闅忔満'), findsOneWidget);
+    expect(find.text('钖勫急浼樺厛'), findsNothing);
   });
 
   testWidgets('review completion shows a clear finish card', (tester) async {
     final space = await repo.ensureDefaultSpace();
     await repo.createCard(
       spaceId: space.id,
-      question: '行政处罚追诉时效从什么时候起算？',
-      answer: '通常从违法行为发生之日起计算。',
+      question: '琛屾斂澶勭綒杩借瘔鏃舵晥浠庝粈涔堟椂鍊欒捣绠楋紵',
+      answer: '閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(
@@ -272,28 +272,28 @@ void main() {
       location: '/plan/study/knowledge/review?spaceId=${space.id}',
     );
 
-    await tester.tap(find.widgetWithText(FilledButton, '开始抽卡').first);
+    await tester.tap(find.widgetWithText(FilledButton, '寮€濮嬫娊鍗?).first);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '翻开答案'));
+    await tester.tap(find.widgetWithText(FilledButton, '缈诲紑绛旀'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('基本记得'));
+    await tester.tap(find.text('鍩烘湰璁板緱'));
     await tester.pumpAndSettle();
 
-    expect(find.text('本组抽卡完成'), findsOneWidget);
-    expect(find.text('刚刚复习了 1 张卡。甜甜已经根据你的反馈安排下次出现时间。'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, '再抽一组'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, '回到空间'), findsOneWidget);
+    expect(find.text('鏈粍鎶藉崱瀹屾垚'), findsOneWidget);
+    expect(find.text('鍒氬垰澶嶄範浜?1 寮犲崱銆傜敎鐢滃凡缁忔牴鎹綘鐨勫弽棣堝畨鎺掍笅娆″嚭鐜版椂闂淬€?), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '鍐嶆娊涓€缁?), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '鍥炲埌绌洪棿'), findsOneWidget);
   });
 
   testWidgets('review back returns to the same space when opened directly', (
     tester,
   ) async {
     await repo.ensureDefaultSpace();
-    final spaceId = await repo.createSpace(name: '考公', type: 'exam');
+    final spaceId = await repo.createSpace(name: '鑰冨叕', type: 'exam');
     await repo.createCard(
       spaceId: spaceId,
-      question: '行政处罚追诉时效从什么时候起算？',
-      answer: '通常从违法行为发生之日起计算。',
+      question: '琛屾斂澶勭綒杩借瘔鏃舵晥浠庝粈涔堟椂鍊欒捣绠楋紵',
+      answer: '閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(
@@ -305,8 +305,8 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_rounded));
     await tester.pumpAndSettle();
 
-    expect(find.text('你好，我是甜甜'), findsOneWidget);
-    expect(find.text('考公'), findsWidgets);
+    expect(find.text('浣犲ソ锛屾垜鏄敎鐢?), findsOneWidget);
+    expect(find.text('鑰冨叕'), findsWidgets);
   });
 
   testWidgets('review settings opens the scheduling rule sheet', (
@@ -320,13 +320,13 @@ void main() {
       location: '/plan/study/knowledge/review?spaceId=${space.id}',
     );
 
-    await tester.tap(find.byTooltip('复习规则'));
+    await tester.tap(find.byTooltip('澶嶄範瑙勫垯'));
     await tester.pumpAndSettle();
 
-    expect(find.text('复习规则'), findsWidgets);
-    expect(find.text('默认排序'), findsOneWidget);
-    expect(find.text('完全忘了'), findsOneWidget);
-    expect(find.text('很熟练'), findsOneWidget);
+    expect(find.text('澶嶄範瑙勫垯'), findsWidgets);
+    expect(find.text('榛樿鎺掑簭'), findsOneWidget);
+    expect(find.text('瀹屽叏蹇樹簡'), findsOneWidget);
+    expect(find.text('寰堢啛缁?), findsOneWidget);
   });
 
   testWidgets(
@@ -335,27 +335,27 @@ void main() {
       final space = await repo.ensureDefaultSpace();
       await repo.importMaterial(
         spaceId: space.id,
-        title: '操作系统笔记',
-        content: '进程是资源分配的基本单位，线程是 CPU 调度的基本单位。',
+        title: '鎿嶄綔绯荤粺绗旇',
+        content: '杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?,
       );
 
       await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-      await tester.tap(find.text('问甜甜').last);
+      await tester.tap(find.text('闂敎鐢?).last);
       await tester.pumpAndSettle();
 
       expect(find.byType(TiantianChatSheet), findsOneWidget);
-      expect(find.text('有什么想问甜甜的？'), findsOneWidget);
-      expect(find.text('可以直接提问，也可以点击右上角选择参考资料'), findsOneWidget);
-      expect(find.text('你想问什么？'), findsNothing);
-      expect(find.text('确认并提问'), findsNothing);
+      expect(find.text('鏈変粈涔堟兂闂敎鐢滅殑锛?), findsOneWidget);
+      expect(find.text('鍙互鐩存帴鎻愰棶锛屼篃鍙互鐐瑰嚮鍙充笂瑙掗€夋嫨鍙傝€冭祫鏂?), findsOneWidget);
+      expect(find.text('浣犳兂闂粈涔堬紵'), findsNothing);
+      expect(find.text('纭骞舵彁闂?), findsNothing);
 
       await tester.tap(find.byIcon(Icons.library_books_rounded).last);
       await tester.pumpAndSettle();
 
-      expect(find.text('选择参考资料'), findsOneWidget);
-      expect(find.text('操作系统笔记'), findsWidgets);
-      expect(find.text('确认'), findsOneWidget);
+      expect(find.text('閫夋嫨鍙傝€冭祫鏂?), findsOneWidget);
+      expect(find.text('鎿嶄綔绯荤粺绗旇'), findsWidgets);
+      expect(find.text('纭'), findsOneWidget);
     },
   );
 
@@ -365,20 +365,20 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '行政法笔记',
-      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+      title: '琛屾斂娉曠瑪璁?,
+      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.enterText(find.byType(TextField).first, '行政处罚追诉时效从什么时候起算？');
+    await tester.enterText(find.byType(TextField).first, '琛屾斂澶勭綒杩借瘔鏃舵晥浠庝粈涔堟椂鍊欒捣绠楋紵');
     await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pumpAndSettle();
 
     expect(find.byType(TiantianChatSheet), findsOneWidget);
-    expect(find.text('行政处罚追诉时效从什么时候起算？'), findsOneWidget);
-    expect(find.text('你想问什么？'), findsNothing);
-    expect(find.text('确认并提问'), findsNothing);
+    expect(find.text('琛屾斂澶勭綒杩借瘔鏃舵晥浠庝粈涔堟椂鍊欒捣绠楋紵'), findsOneWidget);
+    expect(find.text('浣犳兂闂粈涔堬紵'), findsNothing);
+    expect(find.text('纭骞舵彁闂?), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -387,12 +387,12 @@ void main() {
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.text('问甜甜').last);
+    await tester.tap(find.text('闂敎鐢?).last);
     await tester.pumpAndSettle();
 
     expect(find.byType(TiantianChatSheet), findsOneWidget);
-    expect(find.text('有什么想问甜甜的？'), findsOneWidget);
-    expect(find.widgetWithText(TextField, '问甜甜任何问题...'), findsOneWidget);
+    expect(find.text('鏈変粈涔堟兂闂敎鐢滅殑锛?), findsOneWidget);
+    expect(find.widgetWithText(TextField, '闂敎鐢滀换浣曢棶棰?..'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -400,22 +400,22 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '行政法资料',
-      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+      title: '琛屾斂娉曡祫鏂?,
+      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.enterText(find.byType(TextField).first, '追诉时效');
+    await tester.enterText(find.byType(TextField).first, '杩借瘔鏃舵晥');
     await tester.pumpAndSettle();
 
-    expect(find.text('搜索结果'), findsOneWidget);
-    expect(find.text('行政法资料'), findsWidgets);
-    await tester.tap(find.text('行政法资料').last);
+    expect(find.text('鎼滅储缁撴灉'), findsOneWidget);
+    expect(find.text('琛屾斂娉曡祫鏂?), findsWidgets);
+    await tester.tap(find.text('琛屾斂娉曡祫鏂?).last);
     await tester.pumpAndSettle();
 
-    expect(find.text('资料详情'), findsOneWidget);
-    expect(find.text('行政处罚追诉时效通常从违法行为发生之日起计算。'), findsOneWidget);
+    expect(find.text('璧勬枡璇︽儏'), findsOneWidget);
+    expect(find.text('琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?), findsOneWidget);
   });
 
   testWidgets('summary quick action confirms references in one sheet', (
@@ -424,21 +424,21 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '行政法资料',
-      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+      title: '琛屾斂娉曡祫鏂?,
+      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.ensureVisible(find.text('总结资料').first);
-    await tester.tap(find.text('总结资料'));
+    await tester.ensureVisible(find.text('鎬荤粨璧勬枡').first);
+    await tester.tap(find.text('鎬荤粨璧勬枡'));
     await tester.pumpAndSettle();
 
-    expect(find.text('选择要总结的资料'), findsOneWidget);
-    expect(find.text('发送前确认参考资料，甜甜只会使用勾选内容。'), findsOneWidget);
-    expect(find.text('行政法资料'), findsWidgets);
-    expect(find.widgetWithText(FilledButton, '确认总结 · 1 份资料'), findsOneWidget);
-    expect(find.text('确认总结资料'), findsNothing);
+    expect(find.text('閫夋嫨瑕佹€荤粨鐨勮祫鏂?), findsOneWidget);
+    expect(find.text('鍙戦€佸墠纭鍙傝€冭祫鏂欙紝鐢滅敎鍙細浣跨敤鍕鹃€夊唴瀹广€?), findsOneWidget);
+    expect(find.text('琛屾斂娉曡祫鏂?), findsWidgets);
+    expect(find.widgetWithText(FilledButton, '纭鎬荤粨 路 1 浠借祫鏂?), findsOneWidget);
+    expect(find.text('纭鎬荤粨璧勬枡'), findsNothing);
   });
 
   testWidgets(
@@ -447,14 +447,14 @@ void main() {
       final space = await repo.ensureDefaultSpace();
       await repo.importMaterial(
         spaceId: space.id,
-        title: '刑法资料',
-        content: '犯罪构成包含主体、主观方面、客体和客观方面。',
+        title: '鍒戞硶璧勬枡',
+        content: '鐘姜鏋勬垚鍖呭惈涓讳綋銆佷富瑙傛柟闈€佸浣撳拰瀹㈣鏂归潰銆?,
       );
 
       await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-      expect(find.widgetWithText(FilledButton, '生成知识卡'), findsOneWidget);
-      expect(find.text('补充知识卡'), findsNothing);
+      expect(find.widgetWithText(FilledButton, '鐢熸垚鐭ヨ瘑鍗?), findsOneWidget);
+      expect(find.text('琛ュ厖鐭ヨ瘑鍗?), findsNothing);
     },
   );
 
@@ -464,24 +464,24 @@ void main() {
       final space = await repo.ensureDefaultSpace();
       await repo.importMaterial(
         spaceId: space.id,
-        title: '行政法资料',
-        content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+        title: '琛屾斂娉曡祫鏂?,
+        content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
       );
 
       await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-      await tester.tap(find.widgetWithText(FilledButton, '生成知识卡'));
+      await tester.tap(find.widgetWithText(FilledButton, '鐢熸垚鐭ヨ瘑鍗?));
       await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(FilledButton, '确认生成 · 1 份资料'));
-      await tester.pumpAndSettle();
-
-      expect(find.text('还没有配置 AI，请先在设置里添加 API Key。'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, '去配置 AI'), findsOneWidget);
-
-      await tester.tap(find.widgetWithText(FilledButton, '去配置 AI'));
+      await tester.tap(find.widgetWithText(FilledButton, '纭鐢熸垚 路 1 浠借祫鏂?));
       await tester.pumpAndSettle();
 
-      expect(find.text('AI 配置'), findsOneWidget);
+      expect(find.text('杩樻病鏈夐厤缃?AI锛岃鍏堝湪璁剧疆閲屾坊鍔?API Key銆?), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, '鍘婚厤缃?AI'), findsOneWidget);
+
+      await tester.tap(find.widgetWithText(FilledButton, '鍘婚厤缃?AI'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('AI 閰嶇疆'), findsOneWidget);
     },
   );
 
@@ -491,53 +491,53 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '刑法资料',
-      content: '犯罪构成包含主体、主观方面、客体和客观方面。',
+      title: '鍒戞硶璧勬枡',
+      content: '鐘姜鏋勬垚鍖呭惈涓讳綋銆佷富瑙傛柟闈€佸浣撳拰瀹㈣鏂归潰銆?,
     );
     await repo.createCard(
       spaceId: space.id,
-      question: '犯罪构成包括哪些方面？',
-      answer: '主体、主观方面、客体和客观方面。',
+      question: '鐘姜鏋勬垚鍖呮嫭鍝簺鏂归潰锛?,
+      answer: '涓讳綋銆佷富瑙傛柟闈€佸浣撳拰瀹㈣鏂归潰銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    expect(find.text('生成知识卡'), findsWidgets);
-    expect(find.text('总结资料'), findsOneWidget);
+    expect(find.text('鐢熸垚鐭ヨ瘑鍗?), findsWidgets);
+    expect(find.text('鎬荤粨璧勬枡'), findsOneWidget);
   });
 
   testWidgets('importing into another space switches workspace to that space', (
     tester,
   ) async {
     await repo.ensureDefaultSpace();
-    await repo.createSpace(name: '考公', type: 'exam', note: '公务员考试备考');
+    await repo.createSpace(name: '鑰冨叕', type: 'exam', note: '鍏姟鍛樿€冭瘯澶囪€?);
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.widgetWithText(FilledButton, '导入资料').first);
+    await tester.tap(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡').first);
     await tester.pumpAndSettle();
 
     await tester.tap(find.byType(DropdownButtonFormField<int>));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('考公').last);
+    await tester.tap(find.text('鑰冨叕').last);
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.widgetWithText(TextField, '粘贴文本或内容'),
-      '行测言语理解需要先找主题句，再分析转折和递进关系。',
+      find.widgetWithText(TextField, '绮樿创鏂囨湰鎴栧唴瀹?),
+      '琛屾祴瑷€璇悊瑙ｉ渶瑕佸厛鎵句富棰樺彞锛屽啀鍒嗘瀽杞姌鍜岄€掕繘鍏崇郴銆?,
     );
     await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, '开始导入'));
+    await tester.tap(find.widgetWithText(FilledButton, '寮€濮嬪鍏?));
     await tester.pumpAndSettle();
 
-    expect(find.text('资料已导入，可生成知识卡'), findsOneWidget);
-    await tester.tap(find.widgetWithText(OutlinedButton, '回到空间'));
+    expect(find.text('璧勬枡宸插鍏ワ紝鍙敓鎴愮煡璇嗗崱'), findsOneWidget);
+    await tester.tap(find.widgetWithText(OutlinedButton, '鍥炲埌绌洪棿'));
     await tester.pumpAndSettle();
 
-    expect(find.text('考公'), findsWidgets);
+    expect(find.text('鑰冨叕'), findsWidgets);
     final materials = await repo.getMaterials(2);
     expect(materials, hasLength(1));
-    expect(materials.single.title, contains('行测言语理解'));
+    expect(materials.single.title, contains('琛屾祴瑷€璇悊瑙?));
   });
 
   testWidgets('import sheet can create a space without leaving the flow', (
@@ -547,29 +547,29 @@ void main() {
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.widgetWithText(FilledButton, '导入资料').first);
+    await tester.tap(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡').first);
     await tester.pumpAndSettle();
 
     await tester.enterText(
-      find.widgetWithText(TextField, '粘贴文本或内容'),
-      '资料内容会保留，创建空间后继续导入。',
+      find.widgetWithText(TextField, '绮樿创鏂囨湰鎴栧唴瀹?),
+      '璧勬枡鍐呭浼氫繚鐣欙紝鍒涘缓绌洪棿鍚庣户缁鍏ャ€?,
     );
-    await tester.tap(find.widgetWithText(TextButton, '新建空间'));
+    await tester.tap(find.widgetWithText(TextButton, '鏂板缓绌洪棿'));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.widgetWithText(TextField, '空间名称'), '法考');
-    await tester.tap(find.widgetWithText(FilledButton, '创建并进入'));
+    await tester.enterText(find.widgetWithText(TextField, '绌洪棿鍚嶇О'), '娉曡€?);
+    await tester.tap(find.widgetWithText(FilledButton, '鍒涘缓骞惰繘鍏?));
     await tester.pumpAndSettle();
 
-    expect(find.text('导入资料'), findsWidgets);
-    expect(find.text('法考'), findsWidgets);
-    await tester.tap(find.widgetWithText(FilledButton, '开始导入'));
+    expect(find.text('瀵煎叆璧勬枡'), findsWidgets);
+    expect(find.text('娉曡€?), findsWidgets);
+    await tester.tap(find.widgetWithText(FilledButton, '寮€濮嬪鍏?));
     await tester.pumpAndSettle();
 
-    expect(find.text('资料已导入，可生成知识卡'), findsOneWidget);
+    expect(find.text('璧勬枡宸插鍏ワ紝鍙敓鎴愮煡璇嗗崱'), findsOneWidget);
     final materials = await repo.getMaterials(2);
     expect(materials, hasLength(1));
-    expect(materials.single.content, contains('资料内容会保留'));
+    expect(materials.single.content, contains('璧勬枡鍐呭浼氫繚鐣?));
   });
 
   testWidgets('recent material row opens material detail directly', (
@@ -578,18 +578,18 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '行政法资料',
-      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+      title: '琛屾斂娉曡祫鏂?,
+      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.ensureVisible(find.text('行政法资料').first);
-    await tester.tap(find.text('行政法资料').first);
+    await tester.ensureVisible(find.text('琛屾斂娉曡祫鏂?).first);
+    await tester.tap(find.text('琛屾斂娉曡祫鏂?).first);
     await tester.pumpAndSettle();
 
-    expect(find.text('资料详情'), findsOneWidget);
-    expect(find.text('行政处罚追诉时效通常从违法行为发生之日起计算。'), findsOneWidget);
+    expect(find.text('璧勬枡璇︽儏'), findsOneWidget);
+    expect(find.text('琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?), findsOneWidget);
   });
 
   testWidgets('recent card row opens paper-style card detail sheet', (
@@ -598,28 +598,28 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.createCard(
       spaceId: space.id,
-      question: '行政处罚追诉时效的一般起算点是什么？',
-      answer: '通常从违法行为发生之日起计算。',
-      explanation: '如果违法行为有连续或继续状态，则从行为终了之日起计算。',
-      sourceTitle: '行政法资料',
-      sourceExcerpt: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+      question: '琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵',
+      answer: '閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
+      explanation: '濡傛灉杩濇硶琛屼负鏈夎繛缁垨缁х画鐘舵€侊紝鍒欎粠琛屼负缁堜簡涔嬫棩璧疯绠椼€?,
+      sourceTitle: '琛屾斂娉曡祫鏂?,
+      sourceExcerpt: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.byTooltip('知识库'));
+    await tester.tap(find.byTooltip('鐭ヨ瘑搴?));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('知识卡'));
+    await tester.tap(find.text('鐭ヨ瘑鍗?));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('行政处罚追诉时效的一般起算点是什么？').first);
+    await tester.tap(find.text('琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('知识卡详情'), findsOneWidget);
-    expect(find.text('答案'), findsOneWidget);
-    expect(find.text('来源摘录'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, '编辑'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, '删除'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, '关闭'), findsOneWidget);
+    expect(find.text('鐭ヨ瘑鍗¤鎯?), findsOneWidget);
+    expect(find.text('绛旀'), findsOneWidget);
+    expect(find.text('鏉ユ簮鎽樺綍'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '缂栬緫'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '鍒犻櫎'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '鍏抽棴'), findsOneWidget);
   });
 
   testWidgets('card detail sheet stays usable on compact screens', (
@@ -632,22 +632,22 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.createCard(
       spaceId: space.id,
-      question: '行政处罚追诉时效的一般起算点是什么？',
-      answer: '通常从违法行为发生之日起计算。',
-      explanation: '如果违法行为有连续或继续状态，则从行为终了之日起计算。',
+      question: '琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵',
+      answer: '閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
+      explanation: '濡傛灉杩濇硶琛屼负鏈夎繛缁垨缁х画鐘舵€侊紝鍒欎粠琛屼负缁堜簡涔嬫棩璧疯绠椼€?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.byTooltip('知识库'));
+    await tester.tap(find.byTooltip('鐭ヨ瘑搴?));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('知识卡'));
+    await tester.tap(find.text('鐭ヨ瘑鍗?));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('行政处罚追诉时效的一般起算点是什么？').first);
+    await tester.tap(find.text('琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('知识卡详情'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, '关闭'), findsOneWidget);
+    expect(find.text('鐭ヨ瘑鍗¤鎯?), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '鍏抽棴'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -657,26 +657,26 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final cardId = await repo.createCard(
       spaceId: space.id,
-      question: '行政处罚追诉时效的一般起算点是什么？',
-      answer: '通常从违法行为发生之日起计算。',
+      question: '琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵',
+      answer: '閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.byTooltip('知识库'));
+    await tester.tap(find.byTooltip('鐭ヨ瘑搴?));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('知识卡'));
+    await tester.tap(find.text('鐭ヨ瘑鍗?));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('行政处罚追诉时效的一般起算点是什么？').first);
+    await tester.tap(find.text('琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(OutlinedButton, '删除'));
+    await tester.tap(find.widgetWithText(OutlinedButton, '鍒犻櫎'));
     await tester.pumpAndSettle();
 
-    expect(find.text('删除知识卡'), findsOneWidget);
-    expect(find.text('这张知识卡会从当前空间移除，复习记录保留在本地日志中。'), findsOneWidget);
+    expect(find.text('鍒犻櫎鐭ヨ瘑鍗?), findsOneWidget);
+    expect(find.text('杩欏紶鐭ヨ瘑鍗′細浠庡綋鍓嶇┖闂寸Щ闄わ紝澶嶄範璁板綍淇濈暀鍦ㄦ湰鍦版棩蹇椾腑銆?), findsOneWidget);
     expect(find.byType(AlertDialog), findsNothing);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, '取消').last);
+    await tester.tap(find.widgetWithText(OutlinedButton, '鍙栨秷').last);
     await tester.pumpAndSettle();
 
     final card = await repo.getCard(cardId);
@@ -690,42 +690,42 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '行政法资料',
-      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+      title: '琛屾斂娉曡祫鏂?,
+      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
     await repo.createCard(
       spaceId: space.id,
-      question: '行政处罚追诉时效的一般起算点是什么？',
-      answer: '通常从违法行为发生之日起计算。',
+      question: '琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵',
+      answer: '閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
-    await tester.tap(find.byTooltip('知识库'));
+    await tester.tap(find.byTooltip('鐭ヨ瘑搴?));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('资料操作').first);
-    await tester.pumpAndSettle();
-
-    expect(find.byType(PopupMenuButton), findsNothing);
-    expect(find.text('查看'), findsOneWidget);
-    expect(find.text('续编'), findsOneWidget);
-    expect(find.text('编辑'), findsOneWidget);
-    expect(find.text('删除'), findsOneWidget);
-    expect(find.text('下移'), findsNothing);
-
-    await tester.tap(find.text('取消'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('知识卡'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('知识卡操作').first);
+    await tester.tap(find.byTooltip('璧勬枡鎿嶄綔').first);
     await tester.pumpAndSettle();
 
     expect(find.byType(PopupMenuButton), findsNothing);
-    expect(find.text('知识卡操作'), findsWidgets);
-    expect(find.text('查看'), findsOneWidget);
-    expect(find.text('编辑'), findsOneWidget);
-    expect(find.text('删除'), findsOneWidget);
-    expect(find.text('下移'), findsNothing);
+    expect(find.text('鏌ョ湅'), findsOneWidget);
+    expect(find.text('缁紪'), findsOneWidget);
+    expect(find.text('缂栬緫'), findsOneWidget);
+    expect(find.text('鍒犻櫎'), findsOneWidget);
+    expect(find.text('涓嬬Щ'), findsNothing);
+
+    await tester.tap(find.text('鍙栨秷'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('鐭ヨ瘑鍗?));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('鐭ヨ瘑鍗℃搷浣?).first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PopupMenuButton), findsNothing);
+    expect(find.text('鐭ヨ瘑鍗℃搷浣?), findsWidgets);
+    expect(find.text('鏌ョ湅'), findsOneWidget);
+    expect(find.text('缂栬緫'), findsOneWidget);
+    expect(find.text('鍒犻櫎'), findsOneWidget);
+    expect(find.text('涓嬬Щ'), findsNothing);
   });
 
   testWidgets('library card tab offers generation instead of adding material', (
@@ -734,22 +734,22 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '行政法资料',
-      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+      title: '琛屾斂娉曡祫鏂?,
+      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.byTooltip('知识库'));
+    await tester.tap(find.byTooltip('鐭ヨ瘑搴?));
     await tester.pumpAndSettle();
-    expect(find.text('知识库'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, '添加资料'), findsOneWidget);
+    expect(find.text('鐭ヨ瘑搴?), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '娣诲姞璧勬枡'), findsOneWidget);
 
-    await tester.tap(find.text('知识卡'));
+    await tester.tap(find.text('鐭ヨ瘑鍗?));
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(FilledButton, '生成知识卡'), findsWidgets);
-    expect(find.widgetWithText(FilledButton, '添加资料'), findsNothing);
+    expect(find.widgetWithText(FilledButton, '鐢熸垚鐭ヨ瘑鍗?), findsWidgets);
+    expect(find.widgetWithText(FilledButton, '娣诲姞璧勬枡'), findsNothing);
   });
 
   testWidgets('workspace primary task adapts on narrow screens', (
@@ -762,10 +762,10 @@ void main() {
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    expect(find.text('先放进一份学习资料'), findsOneWidget);
-    expect(find.widgetWithText(FilledButton, '导入资料'), findsOneWidget);
-    expect(find.byTooltip('知识库'), findsOneWidget);
-    expect(find.text('抽卡'), findsNothing);
+    expect(find.text('鍏堟斁杩涗竴浠藉涔犺祫鏂?), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡'), findsOneWidget);
+    expect(find.byTooltip('鐭ヨ瘑搴?), findsOneWidget);
+    expect(find.text('鎶藉崱'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
@@ -774,11 +774,11 @@ void main() {
   ) async {
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    expect(find.widgetWithText(FilledButton, '导入资料'), findsOneWidget);
-    expect(find.widgetWithText(OutlinedButton, '导入资料'), findsNothing);
-    expect(find.widgetWithText(FilledButton, '开始抽卡'), findsNothing);
-    expect(find.byTooltip('知识库'), findsOneWidget);
-    expect(find.byTooltip('管理空间'), findsOneWidget);
+    expect(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡'), findsOneWidget);
+    expect(find.widgetWithText(OutlinedButton, '瀵煎叆璧勬枡'), findsNothing);
+    expect(find.widgetWithText(FilledButton, '寮€濮嬫娊鍗?), findsNothing);
+    expect(find.byTooltip('鐭ヨ瘑搴?), findsOneWidget);
+    expect(find.byTooltip('绠＄悊绌洪棿'), findsOneWidget);
   });
 
   testWidgets('import sheet stays usable on compact screens', (tester) async {
@@ -789,12 +789,12 @@ void main() {
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.widgetWithText(FilledButton, '导入资料').first);
+    await tester.tap(find.widgetWithText(FilledButton, '瀵煎叆璧勬枡').first);
     await tester.pumpAndSettle();
 
-    expect(find.text('导入资料'), findsWidgets);
-    expect(find.text('粘贴文本或内容'), findsOneWidget);
-    expect(find.text('开始导入'), findsOneWidget);
+    expect(find.text('瀵煎叆璧勬枡'), findsWidgets);
+    expect(find.text('绮樿创鏂囨湰鎴栧唴瀹?), findsOneWidget);
+    expect(find.text('寮€濮嬪鍏?), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -809,28 +809,28 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.importMaterial(
       spaceId: space.id,
-      title: '行政法资料',
-      content: '行政处罚追诉时效通常从违法行为发生之日起计算。连续状态从行为终了之日起计算。',
+      title: '琛屾斂娉曡祫鏂?,
+      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆傝繛缁姸鎬佷粠琛屼负缁堜簡涔嬫棩璧疯绠椼€?,
     );
     await repo.createCard(
       spaceId: space.id,
-      question: '行政处罚追诉时效的一般起算点是什么？',
-      answer: '通常从违法行为发生之日起计算。',
-      sourceTitle: '行政法资料',
+      question: '琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵',
+      answer: '閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
+      sourceTitle: '琛屾斂娉曡祫鏂?,
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    expect(find.text('你好，我是甜甜'), findsOneWidget);
-    expect(find.text('最近资料'), findsOneWidget);
-    expect(find.text('最近知识卡'), findsOneWidget);
+    expect(find.text('浣犲ソ锛屾垜鏄敎鐢?), findsOneWidget);
+    expect(find.text('鏈€杩戣祫鏂?), findsOneWidget);
+    expect(find.text('鏈€杩戠煡璇嗗崱'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.byTooltip('知识库'));
+    await tester.tap(find.byTooltip('鐭ヨ瘑搴?));
     await tester.pumpAndSettle();
 
-    expect(find.text('知识库'), findsOneWidget);
-    expect(find.text('行政法资料'), findsWidgets);
+    expect(find.text('鐭ヨ瘑搴?), findsOneWidget);
+    expect(find.text('琛屾斂娉曡祫鏂?), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -845,13 +845,13 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     await repo.createCard(
       spaceId: space.id,
-      question: List.filled(8, '行政处罚追诉时效在连续违法、继续违法和一般违法之间应如何判断起算点？').join(' '),
-      answer: List.filled(8, '一般违法从违法行为发生之日起算；连续或继续状态从行为终了之日起算。').join(' '),
+      question: List.filled(8, '琛屾斂澶勭綒杩借瘔鏃舵晥鍦ㄨ繛缁繚娉曘€佺户缁繚娉曞拰涓€鑸繚娉曚箣闂村簲濡備綍鍒ゆ柇璧风畻鐐癸紵').join(' '),
+      answer: List.filled(8, '涓€鑸繚娉曚粠杩濇硶琛屼负鍙戠敓涔嬫棩璧风畻锛涜繛缁垨缁х画鐘舵€佷粠琛屼负缁堜簡涔嬫棩璧风畻銆?).join(' '),
       explanation: List.filled(
         8,
-        '复习时先判断违法行为是否已经终了，再判断是否存在连续或继续状态，避免机械套用发生日。',
+        '澶嶄範鏃跺厛鍒ゆ柇杩濇硶琛屼负鏄惁宸茬粡缁堜簡锛屽啀鍒ゆ柇鏄惁瀛樺湪杩炵画鎴栫户缁姸鎬侊紝閬垮厤鏈烘濂楃敤鍙戠敓鏃ャ€?,
       ).join(' '),
-      sourceTitle: '行政法资料',
+      sourceTitle: '琛屾斂娉曡祫鏂?,
     );
 
     await _pump(
@@ -860,19 +860,21 @@ void main() {
       location: '/plan/study/knowledge/review?spaceId=${space.id}',
     );
 
-    await tester.tap(find.widgetWithText(FilledButton, '开始抽卡').first);
+    await tester.tap(find.widgetWithText(FilledButton, '寮€濮嬫娊鍗?).first);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('行政处罚追诉时效'), findsWidgets);
-    expect(find.widgetWithText(FilledButton, '翻开答案'), findsOneWidget);
+    expect(find.textContaining('琛屾斂澶勭綒杩借瘔鏃舵晥'), findsWidgets);
+    expect(find.widgetWithText(FilledButton, '缈诲紑绛旀'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.widgetWithText(FilledButton, '翻开答案'));
+    await tester.tap(find.widgetWithText(FilledButton, '缈诲紑绛旀'));
     await tester.pumpAndSettle();
 
-    expect(find.text('答案'), findsOneWidget);
-    expect(find.text('完全忘了'), findsOneWidget);
-    expect(find.text('很熟练'), findsOneWidget);
+    expect(find.text('绛旀'), findsOneWidget);
+    expect(find.text('瀹屽叏蹇樹簡'), findsOneWidget);
+    expect(find.text('寰堢啛缁?), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
+
+

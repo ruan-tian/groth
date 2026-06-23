@@ -1,8 +1,8 @@
-import 'package:drift/drift.dart' hide isNull, isNotNull;
+﻿import 'package:drift/drift.dart' hide isNull, isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/journal_repository.dart';
+import 'package:growth_os/features/journal/repositories/journal_repository.dart';
 
 DailyJournalsCompanion _journal({
   String title = 'Daily note',
@@ -206,3 +206,4 @@ void main() {
     expect(await repo.getTotalJournalCount(), 2);
   });
 }
+

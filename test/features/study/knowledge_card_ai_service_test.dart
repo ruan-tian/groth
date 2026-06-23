@@ -1,13 +1,13 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'dart:io';
 
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/ai_config_repository.dart';
-import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
-import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
+import 'package:growth_os/features/ai/repositories/ai_config_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_card_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_source_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
 import 'package:growth_os/features/knowledge/services/knowledge_card_ai_service.dart';
@@ -67,79 +67,74 @@ void main() {
 
     test('buildPayload sends only the selected chunk', () async {
       await sourceRepo.importTextSource(
-        title: '操作系统笔记',
+        title: '鎿嶄綔绯荤粺绗旇',
         type: 'markdown',
         content: '''
-# 进程管理
+# 杩涚▼绠＄悊
 
-进程是资源分配单位，线程是 CPU 调度单位。
+杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?
+# 鍐呭瓨绠＄悊
 
-# 内存管理
-
-分页机制把逻辑地址分成页号和页内偏移。
-''',
+鍒嗛〉鏈哄埗鎶婇€昏緫鍦板潃鍒嗘垚椤靛彿鍜岄〉鍐呭亸绉汇€?''',
       );
 
-      final result = (await sourceRepo.searchChunks(query: '线程 调度')).single;
+      final result = (await sourceRepo.searchChunks(query: '绾跨▼ 璋冨害')).single;
       final payload = service.buildPayload(result);
 
-      expect(payload.userPrompt, contains('线程是 CPU 调度单位'));
-      expect(payload.userPrompt, isNot(contains('页号和页内偏移')));
-      expect(payload.userPrompt, contains('返回严格 JSON'));
+      expect(payload.userPrompt, contains('绾跨▼鏄?CPU 璋冨害鍗曚綅'));
+      expect(payload.userPrompt, isNot(contains('椤靛彿鍜岄〉鍐呭亸绉?)));
+      expect(payload.userPrompt, contains('杩斿洖涓ユ牸 JSON'));
     });
 
     test('buildPayloadForResults sends only selected top chunks', () async {
       await sourceRepo.importTextSource(
-        title: '操作系统笔记',
+        title: '鎿嶄綔绯荤粺绗旇',
         type: 'markdown',
         content: '''
-# 进程管理
+# 杩涚▼绠＄悊
 
-进程是资源分配单位，线程是 CPU 调度单位。
+杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?
+# 鍐呭瓨绠＄悊
 
-# 内存管理
+鍒嗛〉鏈哄埗鎶婇€昏緫鍦板潃鍒嗘垚椤靛彿鍜岄〉鍐呭亸绉汇€?
+# 鏂囦欢绠＄悊
 
-分页机制把逻辑地址分成页号和页内偏移。
-
-# 文件管理
-
-目录结构用于组织文件。
-''',
+鐩綍缁撴瀯鐢ㄤ簬缁勭粐鏂囦欢銆?''',
       );
 
-      final results = await sourceRepo.searchChunks(query: '线程 页号');
-      // With dictionary-based tokenizer, both '线程' and '页号' are recognized terms
+      final results = await sourceRepo.searchChunks(query: '绾跨▼ 椤靛彿');
+      // With dictionary-based tokenizer, both '绾跨▼' and '椤靛彿' are recognized terms
       expect(results.length, greaterThanOrEqualTo(2));
       final payload = service.buildPayloadForResults(
         results.take(2).toList(growable: false),
-        topic: '操作系统重点',
+        topic: '鎿嶄綔绯荤粺閲嶇偣',
       );
 
-      expect(payload.userPrompt, contains('操作系统重点'));
-      expect(payload.userPrompt, contains('资料片段 1 开始'));
-      expect(payload.userPrompt, contains('资料片段 2 开始'));
+      expect(payload.userPrompt, contains('鎿嶄綔绯荤粺閲嶇偣'));
+      expect(payload.userPrompt, contains('璧勬枡鐗囨 1 寮€濮?));
+      expect(payload.userPrompt, contains('璧勬枡鐗囨 2 寮€濮?));
       // Both chunks should be about process/thread and memory management
-      expect(payload.userPrompt, isNot(contains('目录结构用于组织文件')));
+      expect(payload.userPrompt, isNot(contains('鐩綍缁撴瀯鐢ㄤ簬缁勭粐鏂囦欢')));
     });
 
     test('saveDrafts inserts local cards and source links', () async {
       final sourceId = await sourceRepo.importTextSource(
-        title: '操作系统笔记',
+        title: '鎿嶄綔绯荤粺绗旇',
         type: 'markdown',
         goalKey: 'kaoyan_computer',
         moduleKey: 'operating_system',
-        content: '进程是资源分配单位，线程是 CPU 调度单位。',
+        content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
       );
-      final result = (await sourceRepo.searchChunks(query: '进程 线程')).single;
+      final result = (await sourceRepo.searchChunks(query: '杩涚▼ 绾跨▼')).single;
 
       final ids = await service.saveDrafts(
         result: result,
         drafts: const [
           KnowledgeCardAiDraft(
-            title: '进程与线程',
-            question: '进程和线程分别是什么单位？',
-            answer: '进程是资源分配单位，线程是 CPU 调度单位。',
-            tags: ['操作系统'],
+            title: '杩涚▼涓庣嚎绋?,
+            question: '杩涚▼鍜岀嚎绋嬪垎鍒槸浠€涔堝崟浣嶏紵',
+            answer: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
+            tags: ['鎿嶄綔绯荤粺'],
           ),
         ],
       );
@@ -151,37 +146,37 @@ void main() {
       expect(cards.single.id, ids.single);
       expect(cards.single.goalKey, 'kaoyan_computer');
       expect(cards.single.moduleKey, 'operating_system');
-      expect(jsonDecode(cards.single.tags!), ['操作系统']);
+      expect(jsonDecode(cards.single.tags!), ['鎿嶄綔绯荤粺']);
       expect(links.single.cardId, ids.single);
       expect(links.single.sourceId, sourceId);
       expect(links.single.chunkId, result.chunk.id);
-      expect(links.single.quote, contains('进程是资源分配单位'));
+      expect(links.single.quote, contains('杩涚▼鏄祫婧愬垎閰嶅崟浣?));
     });
 
     test('answerSpaceQuestion uses local chunks and returns answer', () async {
       await sourceRepo.importTextSource(
-        title: '操作系统笔记',
+        title: '鎿嶄綔绯荤粺绗旇',
         type: 'markdown',
         goalKey: 'kaoyan_computer',
         moduleKey: 'operating_system',
-        content: '进程是资源分配单位，线程是 CPU 调度单位。',
+        content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
       );
       service = KnowledgeCardAiService(
         aiConfigRepository: AiConfigRepository(db),
         cardRepository: KnowledgeCardRepository(db),
         sourceRepository: sourceRepo,
-        aiService: _StubAiService('进程是资源分配单位，线程是 CPU 调度单位。[片段1]'),
+        aiService: _StubAiService('杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆俒鐗囨1]'),
       );
       await _insertAiConfig(AiConfigRepository(db));
 
-      final result = (await sourceRepo.searchChunks(query: '进程 线程')).single;
+      final result = (await sourceRepo.searchChunks(query: '杩涚▼ 绾跨▼')).single;
       final answer = await service.answerSpaceQuestion(
         results: [result],
-        question: '进程和线程分别是什么？',
+        question: '杩涚▼鍜岀嚎绋嬪垎鍒槸浠€涔堬紵',
       );
 
-      expect(answer.question, '进程和线程分别是什么？');
-      expect(answer.answer, contains('[片段1]'));
+      expect(answer.question, '杩涚▼鍜岀嚎绋嬪垎鍒槸浠€涔堬紵');
+      expect(answer.answer, contains('[鐗囨1]'));
       expect(answer.results, hasLength(1));
       expect(answer.results.single.chunk.id, result.chunk.id);
     });
@@ -198,20 +193,20 @@ void main() {
       ];
       final warnings = KnowledgeCardAiService.checkDraftQuality(drafts);
       expect(warnings, hasLength(1));
-      expect(warnings.first, contains('答案过短'));
+      expect(warnings.first, contains('绛旀杩囩煭'));
     });
 
     test('flags question and answer being the same', () {
       final drafts = [
         KnowledgeCardAiDraft(
           title: 'Test',
-          question: '进程是操作系统中的基本概念',
-          answer: '进程是操作系统中的基本概念',
+          question: '杩涚▼鏄搷浣滅郴缁熶腑鐨勫熀鏈蹇?,
+          answer: '杩涚▼鏄搷浣滅郴缁熶腑鐨勫熀鏈蹇?,
         ),
       ];
       final warnings = KnowledgeCardAiService.checkDraftQuality(drafts);
       expect(warnings, hasLength(1));
-      expect(warnings.first, contains('问题和答案内容相同'));
+      expect(warnings.first, contains('闂鍜岀瓟妗堝唴瀹圭浉鍚?));
     });
 
     test('flags question that is too short', () {
@@ -224,15 +219,15 @@ void main() {
       ];
       final warnings = KnowledgeCardAiService.checkDraftQuality(drafts);
       expect(warnings, hasLength(1));
-      expect(warnings.first, contains('问题过短'));
+      expect(warnings.first, contains('闂杩囩煭'));
     });
 
     test('returns null for good quality drafts', () {
       final drafts = [
         KnowledgeCardAiDraft(
-          title: '进程与线程',
-          question: '进程和线程的主要区别是什么？',
-          answer: '进程是资源分配的基本单位，线程是CPU调度的基本单位。一个进程可以包含多个线程。',
+          title: '杩涚▼涓庣嚎绋?,
+          question: '杩涚▼鍜岀嚎绋嬬殑涓昏鍖哄埆鏄粈涔堬紵',
+          answer: '杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸CPU璋冨害鐨勫熀鏈崟浣嶃€備竴涓繘绋嬪彲浠ュ寘鍚涓嚎绋嬨€?,
         ),
       ];
       final warnings = KnowledgeCardAiService.checkDraftQuality(drafts);
@@ -273,3 +268,4 @@ Future<void> _insertAiConfig(AiConfigRepository repo) {
       )
       .then((_) {});
 }
+

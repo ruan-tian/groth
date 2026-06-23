@@ -2,7 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:growth_os/shared/providers/focus_provider.dart';
+import 'package:growth_os/features/focus/providers/focus_provider.dart';
 
 void main() {
   setUp(() {

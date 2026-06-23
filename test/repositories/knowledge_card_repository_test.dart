@@ -1,8 +1,8 @@
-import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
+﻿import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_card_repository.dart';
 
 KnowledgeCardsCompanion _card({
   String deckKey = 'computer',
@@ -10,9 +10,9 @@ KnowledgeCardsCompanion _card({
   String? goalName,
   String moduleKey = 'operating_system',
   String? moduleName,
-  String title = '进程与线程',
-  String question = '进程和线程有什么区别？',
-  String answer = '进程是资源分配单位，线程是 CPU 调度单位。',
+  String title = '杩涚▼涓庣嚎绋?,
+  String question = '杩涚▼鍜岀嚎绋嬫湁浠€涔堝尯鍒紵',
+  String answer = '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
   int masteryLevel = 0,
   int reviewCount = 0,
   int correctStreak = 0,
@@ -25,7 +25,7 @@ KnowledgeCardsCompanion _card({
     goalName: Value(goalName),
     moduleKey: Value(moduleKey),
     moduleName: Value(moduleName),
-    subject: const Value('操作系统'),
+    subject: const Value('鎿嶄綔绯荤粺'),
     title: title,
     question: question,
     answer: answer,
@@ -68,7 +68,7 @@ void main() {
 
     final queue = await repo.getReviewQueue(deckKey: 'computer');
     expect(queue, hasLength(1));
-    expect(queue.first.title, '进程与线程');
+    expect(queue.first.title, '杩涚▼涓庣嚎绋?);
 
     final goalQueue = await repo.getReviewQueue(
       goalKey: 'kaoyan_computer',
@@ -79,8 +79,8 @@ void main() {
 
   test('insertCards writes multiple cards in one batch', () async {
     await repo.insertCards([
-      _card(title: '进程与线程'),
-      _card(title: '内存分页', question: '分页机制是什么？', answer: '把内存划分为固定大小的页框。'),
+      _card(title: '杩涚▼涓庣嚎绋?),
+      _card(title: '鍐呭瓨鍒嗛〉', question: '鍒嗛〉鏈哄埗鏄粈涔堬紵', answer: '鎶婂唴瀛樺垝鍒嗕负鍥哄畾澶у皬鐨勯〉妗嗐€?),
     ]);
 
     expect(await repo.getTotalCount(), 2);
@@ -123,19 +123,19 @@ void main() {
         deckKey: 'math',
         goalKey: 'college',
         moduleKey: 'advanced_math',
-        subject: '高数',
-        title: '极限',
-        question: '极限的定义是什么？',
-        answer: '描述函数趋近某点时的变化趋势。',
-        explanation: '保留复习进度，只修改内容。',
-        tags: '["数学"]',
+        subject: '楂樻暟',
+        title: '鏋侀檺',
+        question: '鏋侀檺鐨勫畾涔夋槸浠€涔堬紵',
+        answer: '鎻忚堪鍑芥暟瓒嬭繎鏌愮偣鏃剁殑鍙樺寲瓒嬪娍銆?,
+        explanation: '淇濈暀澶嶄範杩涘害锛屽彧淇敼鍐呭銆?,
+        tags: '["鏁板"]',
       );
 
       final updated = await repo.getCardById(id);
       expect(updated!.deckKey, 'math');
       expect(updated.goalKey, 'college');
       expect(updated.moduleKey, 'advanced_math');
-      expect(updated.title, '极限');
+      expect(updated.title, '鏋侀檺');
       expect(updated.reviewCount, reviewed!.reviewCount);
       expect(updated.masteryLevel, reviewed.masteryLevel);
       expect(updated.dueAt, reviewed.dueAt);
@@ -153,12 +153,12 @@ void main() {
   });
 
   test('archived card can be listed and restored', () async {
-    final id = await repo.insertCard(_card(title: '可恢复卡片'));
+    final id = await repo.insertCard(_card(title: '鍙仮澶嶅崱鐗?));
 
     await repo.archiveCard(id);
     var archived = await repo.getArchivedCards();
     expect(archived, hasLength(1));
-    expect(archived.single.title, '可恢复卡片');
+    expect(archived.single.title, '鍙仮澶嶅崱鐗?);
     expect(await repo.getAllCards(), isEmpty);
 
     await repo.restoreCard(id);
@@ -166,13 +166,13 @@ void main() {
     expect(archived, isEmpty);
     final active = await repo.getAllCards();
     expect(active, hasLength(1));
-    expect(active.single.title, '可恢复卡片');
+    expect(active.single.title, '鍙仮澶嶅崱鐗?);
   });
 
   test('archiveCards archives only selected cards', () async {
-    final firstId = await repo.insertCard(_card(title: '批量卡 A'));
-    final secondId = await repo.insertCard(_card(title: '批量卡 B'));
-    final thirdId = await repo.insertCard(_card(title: '保留卡'));
+    final firstId = await repo.insertCard(_card(title: '鎵归噺鍗?A'));
+    final secondId = await repo.insertCard(_card(title: '鎵归噺鍗?B'));
+    final thirdId = await repo.insertCard(_card(title: '淇濈暀鍗?));
 
     await repo.archiveCards([firstId, secondId]);
 
@@ -185,30 +185,30 @@ void main() {
   });
 
   test('updateCardsSubject edits selected cards only', () async {
-    final firstId = await repo.insertCard(_card(title: '章节卡 A'));
-    final secondId = await repo.insertCard(_card(title: '章节卡 B'));
-    final untouchedId = await repo.insertCard(_card(title: '不改卡'));
+    final firstId = await repo.insertCard(_card(title: '绔犺妭鍗?A'));
+    final secondId = await repo.insertCard(_card(title: '绔犺妭鍗?B'));
+    final untouchedId = await repo.insertCard(_card(title: '涓嶆敼鍗?));
 
-    await repo.updateCardsSubject([firstId, secondId], '第 3 章');
+    await repo.updateCardsSubject([firstId, secondId], '绗?3 绔?);
 
     final first = await repo.getCardById(firstId);
     final second = await repo.getCardById(secondId);
     final untouched = await repo.getCardById(untouchedId);
-    expect(first!.subject, '第 3 章');
-    expect(second!.subject, '第 3 章');
-    expect(untouched!.subject, '操作系统');
+    expect(first!.subject, '绗?3 绔?);
+    expect(second!.subject, '绗?3 绔?);
+    expect(untouched!.subject, '鎿嶄綔绯荤粺');
 
     await repo.updateCardsSubject([firstId], null);
     expect((await repo.getCardById(firstId))!.subject, isNull);
-    expect((await repo.getCardById(secondId))!.subject, '第 3 章');
+    expect((await repo.getCardById(secondId))!.subject, '绗?3 绔?);
   });
 
   test(
     'moveCardsToModule updates target fields without resetting review',
     () async {
-      final firstId = await repo.insertCard(_card(title: '移动卡 A'));
-      final secondId = await repo.insertCard(_card(title: '移动卡 B'));
-      final untouchedId = await repo.insertCard(_card(title: '留在原处'));
+      final firstId = await repo.insertCard(_card(title: '绉诲姩鍗?A'));
+      final secondId = await repo.insertCard(_card(title: '绉诲姩鍗?B'));
+      final untouchedId = await repo.insertCard(_card(title: '鐣欏湪鍘熷'));
       final first = await repo.getCardById(firstId);
       await repo.reviewCard(card: first!, quality: 2);
       final reviewed = await repo.getCardById(firstId);
@@ -240,50 +240,50 @@ void main() {
     await repo.insertCard(
       _card(
         goalKey: 'custom',
-        goalName: '软考高级',
+        goalName: '杞€冮珮绾?,
         moduleKey: 'custom',
-        moduleName: '案例分析',
-        title: '案例题方法',
+        moduleName: '妗堜緥鍒嗘瀽',
+        title: '妗堜緥棰樻柟娉?,
       ),
     );
     await repo.insertCard(
       _card(
         goalKey: 'custom',
-        goalName: '软考高级',
+        goalName: '杞€冮珮绾?,
         moduleKey: 'custom',
-        moduleName: '论文写作',
-        title: '论文结构',
+        moduleName: '璁烘枃鍐欎綔',
+        title: '璁烘枃缁撴瀯',
       ),
     );
 
     final queue = await repo.getReviewQueue(
       goalKey: 'custom',
-      goalName: '软考高级',
+      goalName: '杞€冮珮绾?,
       moduleKey: 'custom',
-      moduleName: '案例分析',
+      moduleName: '妗堜緥鍒嗘瀽',
     );
 
     expect(queue, hasLength(1));
-    expect(queue.single.title, '案例题方法');
+    expect(queue.single.title, '妗堜緥棰樻柟娉?);
   });
 
   test(
     'weak cards queue returns low mastery or recently missed cards',
     () async {
       await repo.insertCard(
-        _card(title: '低掌握', masteryLevel: 1, reviewCount: 2),
+        _card(title: '浣庢帉鎻?, masteryLevel: 1, reviewCount: 2),
       );
       await repo.insertCard(
-        _card(title: '最近答错', masteryLevel: 4, reviewCount: 3, correctStreak: 0),
+        _card(title: '鏈€杩戠瓟閿?, masteryLevel: 4, reviewCount: 3, correctStreak: 0),
       );
       await repo.insertCard(
-        _card(title: '已掌握', masteryLevel: 4, reviewCount: 3, correctStreak: 3),
+        _card(title: '宸叉帉鎻?, masteryLevel: 4, reviewCount: 3, correctStreak: 3),
       );
       await repo.insertCard(
         _card(
           goalKey: 'college',
           moduleKey: 'advanced_math',
-          title: '其他目标低掌握',
+          title: '鍏朵粬鐩爣浣庢帉鎻?,
           masteryLevel: 1,
         ),
       );
@@ -293,10 +293,10 @@ void main() {
         moduleKey: 'operating_system',
       );
 
-      expect(weakCards.map((card) => card.title), contains('低掌握'));
-      expect(weakCards.map((card) => card.title), contains('最近答错'));
-      expect(weakCards.map((card) => card.title), isNot(contains('已掌握')));
-      expect(weakCards.map((card) => card.title), isNot(contains('其他目标低掌握')));
+      expect(weakCards.map((card) => card.title), contains('浣庢帉鎻?));
+      expect(weakCards.map((card) => card.title), contains('鏈€杩戠瓟閿?));
+      expect(weakCards.map((card) => card.title), isNot(contains('宸叉帉鎻?)));
+      expect(weakCards.map((card) => card.title), isNot(contains('鍏朵粬鐩爣浣庢帉鎻?)));
     },
   );
 
@@ -304,61 +304,62 @@ void main() {
     await repo.insertCard(
       _card(
         goalKey: 'custom',
-        goalName: '软考高级',
+        goalName: '杞€冮珮绾?,
         moduleKey: 'custom',
-        moduleName: '案例分析',
-        title: '案例题方法',
+        moduleName: '妗堜緥鍒嗘瀽',
+        title: '妗堜緥棰樻柟娉?,
       ),
     );
     await repo.insertCard(
       _card(
         goalKey: 'custom',
-        goalName: '软考高级',
+        goalName: '杞€冮珮绾?,
         moduleKey: 'custom',
-        moduleName: '论文写作',
-        title: '论文结构',
+        moduleName: '璁烘枃鍐欎綔',
+        title: '璁烘枃缁撴瀯',
       ),
     );
 
     final cards = await repo.getCardsForImportScope(
       deckKey: 'computer',
       goalKey: 'custom',
-      goalName: '软考高级',
+      goalName: '杞€冮珮绾?,
       moduleKey: 'custom',
-      moduleName: '案例分析',
+      moduleName: '妗堜緥鍒嗘瀽',
     );
 
     expect(cards, hasLength(1));
-    expect(cards.single.title, '案例题方法');
+    expect(cards.single.title, '妗堜緥棰樻柟娉?);
   });
 
   test('custom templates and modules can be managed', () async {
     final templateId = await repo.createCustomTemplate(
-      name: '软考高级',
-      description: '案例分析和论文复习',
+      name: '杞€冮珮绾?,
+      description: '妗堜緥鍒嗘瀽鍜岃鏂囧涔?,
     );
     final moduleId = await repo.createCustomTemplateModule(
       templateId: templateId,
-      name: '案例分析',
+      name: '妗堜緥鍒嗘瀽',
       deckKey: 'computer',
     );
 
     var bundles = await repo.getCustomTemplatesWithModules();
     expect(bundles, hasLength(1));
-    expect(bundles.first.template.name, '软考高级');
-    expect(bundles.first.modules.single.name, '案例分析');
+    expect(bundles.first.template.name, '杞€冮珮绾?);
+    expect(bundles.first.modules.single.name, '妗堜緥鍒嗘瀽');
     expect(bundles.first.modules.single.deckKey, 'computer');
 
     await repo.updateCustomTemplateModule(
       id: moduleId,
-      name: '论文写作',
+      name: '璁烘枃鍐欎綔',
       deckKey: 'chinese_writing',
     );
     bundles = await repo.getCustomTemplatesWithModules();
-    expect(bundles.first.modules.single.name, '论文写作');
+    expect(bundles.first.modules.single.name, '璁烘枃鍐欎綔');
     expect(bundles.first.modules.single.deckKey, 'chinese_writing');
 
     await repo.archiveCustomTemplate(templateId);
     expect(await repo.getCustomTemplatesWithModules(), isEmpty);
   });
 }
+

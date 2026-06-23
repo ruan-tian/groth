@@ -1,6 +1,6 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/shared/providers/knowledge_card_provider.dart';
+import 'package:growth_os/features/knowledge/providers/knowledge_card_provider.dart';
 
 KnowledgeCard _card({
   required int now,
@@ -17,10 +17,10 @@ KnowledgeCard _card({
     goalName: null,
     moduleKey: 'operating_system',
     moduleName: null,
-    subject: '操作系统',
-    title: '进程与线程',
-    question: '进程和线程有什么区别？',
-    answer: '进程是资源分配单位，线程是 CPU 调度单位。',
+    subject: '鎿嶄綔绯荤粺',
+    title: '杩涚▼涓庣嚎绋?,
+    question: '杩涚▼鍜岀嚎绋嬫湁浠€涔堝尯鍒紵',
+    answer: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
     explanation: null,
     tags: null,
     sourceStudyId: null,
@@ -67,3 +67,4 @@ void main() {
     expect(stats.averageMastery, closeTo(8 / 3, 0.001));
   });
 }
+

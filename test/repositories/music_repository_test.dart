@@ -1,8 +1,8 @@
-import 'package:drift/drift.dart' hide isNotNull;
+﻿import 'package:drift/drift.dart' hide isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/music_repository.dart';
+import 'package:growth_os/features/music/repositories/music_repository.dart';
 import 'package:growth_os/features/music/utils/default_music_seed.dart';
 import 'package:growth_os/features/music/utils/music_assets.dart';
 
@@ -266,3 +266,4 @@ void main() {
     );
   });
 }
+

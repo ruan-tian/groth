@@ -1,11 +1,11 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/ai_config_repository.dart';
-import 'package:growth_os/core/repositories/pet_diary_repository.dart';
+import 'package:growth_os/features/ai/repositories/ai_config_repository.dart';
+import 'package:growth_os/features/pet/repositories/pet_diary_repository.dart';
 import 'package:growth_os/core/repositories/setting_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
@@ -33,15 +33,15 @@ void main() {
     capturedPrompt = userPrompt;
     return '''
 {
-  "title": "爪印小记",
+  "title": "鐖嵃灏忚",
   "mood": "proud",
   "panels": [
-    {"caption": "早安翻页", "bubble": "我把纸页铺平啦"},
-    {"caption": "昨日回想", "bubble": "努力被我收好啦"},
-    {"caption": "今日出发", "bubble": "今天也慢慢来"}
+    {"caption": "鏃╁畨缈婚〉", "bubble": "鎴戞妸绾搁〉閾哄钩鍟?},
+    {"caption": "鏄ㄦ棩鍥炴兂", "bubble": "鍔姏琚垜鏀跺ソ鍟?},
+    {"caption": "浠婃棩鍑哄彂", "bubble": "浠婂ぉ涔熸參鎱㈡潵"}
   ],
-  "diary": "早上我翻开粉色小本本，先看了昨天的摘要。你有一点学习和成长的爪印，我把它们贴在纸页上。没有看到完整日记正文，所以我只写我知道的小事。今天我想继续陪你轻轻开始，把事情一件件放好。",
-  "closing": "今天也被甜甜看好"
+  "diary": "鏃╀笂鎴戠炕寮€绮夎壊灏忔湰鏈紝鍏堢湅浜嗘槰澶╃殑鎽樿銆備綘鏈変竴鐐瑰涔犲拰鎴愰暱鐨勭埅鍗帮紝鎴戞妸瀹冧滑璐村湪绾搁〉涓娿€傛病鏈夌湅鍒板畬鏁存棩璁版鏂囷紝鎵€浠ユ垜鍙啓鎴戠煡閬撶殑灏忎簨銆備粖澶╂垜鎯崇户缁櫔浣犺交杞诲紑濮嬶紝鎶婁簨鎯呬竴浠朵欢鏀惧ソ銆?,
+  "closing": "浠婂ぉ涔熻鐢滅敎鐪嬪ソ"
 }
 ''';
   }
@@ -126,14 +126,14 @@ void main() {
   test('prompt does not include full user journal text', () async {
     await _enableAutoDiary(settingRepo);
     await _insertAiConfig(aiConfigRepo);
-    const privateJournalText = '这是用户完整日记正文，不应该发给甜甜日记 prompt';
+    const privateJournalText = '杩欐槸鐢ㄦ埛瀹屾暣鏃ヨ姝ｆ枃锛屼笉搴旇鍙戠粰鐢滅敎鏃ヨ prompt';
     final nowMs = DateTime(2026, 6, 7, 21).millisecondsSinceEpoch;
     await db
         .into(db.dailyJournals)
         .insert(
           DailyJournalsCompanion.insert(
             journalDate: '2026-06-07',
-            title: '私人复盘',
+            title: '绉佷汉澶嶇洏',
             content: privateJournalText,
             plainText: const Value(privateJournalText),
             markdownContent: const Value(privateJournalText),
@@ -168,3 +168,4 @@ Future<void> _insertAiConfig(AiConfigRepository repo) {
       )
       .then((_) {});
 }
+

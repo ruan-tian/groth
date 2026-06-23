@@ -1,11 +1,11 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
-import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_card_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_source_repository.dart';
 import 'package:growth_os/core/services/backup_service.dart';
 
 void main() {
@@ -326,12 +326,12 @@ void main() {
   test('round-trip preserves custom knowledge templates', () async {
     final repo = KnowledgeCardRepository(sourceDb);
     final templateId = await repo.createCustomTemplate(
-      name: '软考高级',
-      description: '案例分析和论文复习',
+      name: '杞€冮珮绾?,
+      description: '妗堜緥鍒嗘瀽鍜岃鏂囧涔?,
     );
     await repo.createCustomTemplateModule(
       templateId: templateId,
-      name: '案例分析',
+      name: '妗堜緥鍒嗘瀽',
       deckKey: 'computer',
     );
 
@@ -345,9 +345,9 @@ void main() {
         .select(targetDb.knowledgeCustomTemplateModules)
         .get();
     expect(importedTemplates, hasLength(1));
-    expect(importedTemplates.single.name, '软考高级');
+    expect(importedTemplates.single.name, '杞€冮珮绾?);
     expect(importedModules, hasLength(1));
-    expect(importedModules.single.name, '案例分析');
+    expect(importedModules.single.name, '妗堜緥鍒嗘瀽');
     expect(importedModules.single.deckKey, 'computer');
   });
 
@@ -362,27 +362,27 @@ void main() {
           deckKey: const Value('computer'),
           goalKey: const Value('kaoyan_computer'),
           moduleKey: const Value('operating_system'),
-          subject: const Value('进程管理'),
-          title: '进程和线程',
-          question: '进程和线程有什么区别？',
-          answer: '进程是资源分配单位，线程是 CPU 调度单位。',
+          subject: const Value('杩涚▼绠＄悊'),
+          title: '杩涚▼鍜岀嚎绋?,
+          question: '杩涚▼鍜岀嚎绋嬫湁浠€涔堝尯鍒紵',
+          answer: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
           dueAt: now,
           createdAt: now,
           updatedAt: now,
         ),
       );
       final sourceId = await sourceRepo.importTextSource(
-        title: '操作系统笔记',
+        title: '鎿嶄綔绯荤粺绗旇',
         goalKey: 'kaoyan_computer',
         moduleKey: 'operating_system',
-        content: '进程是资源分配单位，线程是 CPU 调度单位。',
+        content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
       );
       final chunk = (await sourceRepo.getChunksForSource(sourceId)).single;
       await sourceRepo.linkCardToChunk(
         cardId: cardId,
         sourceId: sourceId,
         chunkId: chunk.id,
-        quote: '线程是 CPU 调度单位',
+        quote: '绾跨▼鏄?CPU 璋冨害鍗曚綅',
       );
 
       final json = await BackupService(sourceDb).exportToJson();
@@ -398,11 +398,11 @@ void main() {
           .select(targetDb.knowledgeCardSourceLinks)
           .get();
       expect(importedSources, hasLength(1));
-      expect(importedSources.single.title, '操作系统笔记');
+      expect(importedSources.single.title, '鎿嶄綔绯荤粺绗旇');
       expect(importedChunks, hasLength(1));
-      expect(importedChunks.single.content, contains('线程'));
+      expect(importedChunks.single.content, contains('绾跨▼'));
       expect(importedLinks, hasLength(1));
-      expect(importedLinks.single.quote, '线程是 CPU 调度单位');
+      expect(importedLinks.single.quote, '绾跨▼鏄?CPU 璋冨害鍗曚綅');
     },
   );
 
@@ -418,10 +418,10 @@ void main() {
         {
           'id': 1,
           'deckKey': 'computer',
-          'subject': '操作系统',
-          'title': '进程与线程',
-          'question': '进程和线程有什么区别？',
-          'answer': '进程是资源分配单位，线程是 CPU 调度单位。',
+          'subject': '鎿嶄綔绯荤粺',
+          'title': '杩涚▼涓庣嚎绋?,
+          'question': '杩涚▼鍜岀嚎绋嬫湁浠€涔堝尯鍒紵',
+          'answer': '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
           'explanation': null,
           'tags': null,
           'sourceStudyId': null,
@@ -553,7 +553,7 @@ void main() {
 
     // Insert V3 data into source
     await sourceDb.customInsert(
-      "INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES ('测试空间', 'custom', '备注', 0, 0, 1000, 1000)",
+      "INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES ('娴嬭瘯绌洪棿', 'custom', '澶囨敞', 0, 0, 1000, 1000)",
     );
     final spaces = await sourceDb.customSelect('SELECT * FROM knowledge_spaces_v3').get();
     expect(spaces, hasLength(1));
@@ -561,7 +561,7 @@ void main() {
     final spaceId = spaces.first.data['id'];
 
     await sourceDb.customInsert(
-      "INSERT INTO knowledge_materials (space_id, title, content, source_type, status, is_archived, order_index, created_at, updated_at) VALUES ($spaceId, '资料', '内容', 'text', 'ready', 0, 0, 1000, 1000)",
+      "INSERT INTO knowledge_materials (space_id, title, content, source_type, status, is_archived, order_index, created_at, updated_at) VALUES ($spaceId, '璧勬枡', '鍐呭', 'text', 'ready', 0, 0, 1000, 1000)",
     );
 
     // Export
@@ -661,11 +661,11 @@ void main() {
     // Verify V3 data in target
     final restoredSpaces = await targetDb.customSelect('SELECT * FROM knowledge_spaces_v3').get();
     expect(restoredSpaces, hasLength(1));
-    expect(restoredSpaces.first.data['name'], '测试空间');
+    expect(restoredSpaces.first.data['name'], '娴嬭瘯绌洪棿');
 
     final restoredMaterials = await targetDb.customSelect('SELECT * FROM knowledge_materials').get();
     expect(restoredMaterials, hasLength(1));
-    expect(restoredMaterials.first.data['title'], '资料');
+    expect(restoredMaterials.first.data['title'], '璧勬枡');
   });
 
   test('restore throws when V3 table operations fail', () async {
@@ -755,7 +755,7 @@ void main() {
 
     // Insert valid V3 data
     await sourceDb.customInsert(
-      "INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES ('空间', 'custom', '', 0, 0, 1000, 1000)",
+      "INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES ('绌洪棿', 'custom', '', 0, 0, 1000, 1000)",
     );
 
     final json = await BackupService(sourceDb).exportToJson();
@@ -859,3 +859,4 @@ void main() {
     );
   });
 }
+

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -8,7 +8,7 @@ import 'package:growth_os/features/focus/focus_page.dart';
 import 'package:growth_os/features/focus/pages/focus_session_page.dart';
 import 'package:growth_os/features/plan/services/reminder_notification_service.dart';
 import 'package:growth_os/shared/providers/focus_audio_provider.dart';
-import 'package:growth_os/shared/providers/focus_provider.dart';
+import 'package:growth_os/features/focus/providers/focus_provider.dart';
 
 FocusSession _focusSession({
   int id = 1,
@@ -221,3 +221,4 @@ void main() {
     });
   });
 }
+

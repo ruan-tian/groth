@@ -1,8 +1,8 @@
-import 'package:drift/drift.dart' show driftRuntimeOptions;
+﻿import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_source_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -27,83 +27,79 @@ void main() {
 
   test('importTextSource creates source and searchable chunks', () async {
     final sourceId = await repo.importTextSource(
-      title: '操作系统笔记',
+      title: '鎿嶄綔绯荤粺绗旇',
       type: 'markdown',
       goalKey: 'kaoyan_computer',
       moduleKey: 'operating_system',
       content: '''
-# 进程管理
+# 杩涚▼绠＄悊
 
-进程是资源分配的基本单位，线程是 CPU 调度的基本单位。
+杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?
+# 鍐呭瓨绠＄悊
 
-# 内存管理
-
-分页机制把逻辑地址分成页号和页内偏移。
-''',
+鍒嗛〉鏈哄埗鎶婇€昏緫鍦板潃鍒嗘垚椤靛彿鍜岄〉鍐呭亸绉汇€?''',
     );
 
     final sources = await repo.getSources();
     final chunks = await repo.getChunksForSource(sourceId);
     expect(sources, hasLength(1));
-    expect(sources.single.title, '操作系统笔记');
+    expect(sources.single.title, '鎿嶄綔绯荤粺绗旇');
     expect(chunks, hasLength(2));
-    expect(chunks.first.heading, '进程管理');
+    expect(chunks.first.heading, '杩涚▼绠＄悊');
 
     final results = await repo.searchChunks(
-      query: '线程 CPU 调度',
+      query: '绾跨▼ CPU 璋冨害',
       goalKey: 'kaoyan_computer',
       moduleKey: 'operating_system',
     );
     expect(results, isNotEmpty);
     expect(results.first.source.id, sourceId);
-    expect(results.first.chunk.content, contains('线程'));
+    expect(results.first.chunk.content, contains('绾跨▼'));
   });
 
   test('searchChunks respects scope and hides archived sources', () async {
     final osSourceId = await repo.importTextSource(
-      title: '操作系统',
+      title: '鎿嶄綔绯荤粺',
       goalKey: 'kaoyan_computer',
       moduleKey: 'operating_system',
-      content: '进程和线程都属于操作系统重点。',
+      content: '杩涚▼鍜岀嚎绋嬮兘灞炰簬鎿嶄綔绯荤粺閲嶇偣銆?,
     );
     await repo.importTextSource(
-      title: '数学',
+      title: '鏁板',
       goalKey: 'college',
       moduleKey: 'advanced_math',
-      content: '极限和连续属于高数重点。',
+      content: '鏋侀檺鍜岃繛缁睘浜庨珮鏁伴噸鐐广€?,
     );
 
     final scoped = await repo.searchChunks(
-      query: '重点',
+      query: '閲嶇偣',
       goalKey: 'college',
       moduleKey: 'advanced_math',
     );
     expect(scoped, hasLength(1));
-    expect(scoped.single.source.title, '数学');
+    expect(scoped.single.source.title, '鏁板');
 
     await repo.archiveSource(osSourceId);
-    final hidden = await repo.searchChunks(query: '进程');
+    final hidden = await repo.searchChunks(query: '杩涚▼');
     expect(hidden, isEmpty);
   });
 
   test('searchChunks ranks heading matches before body-only matches', () async {
     await repo.importTextSource(
-      title: '操作系统笔记',
+      title: '鎿嶄綔绯荤粺绗旇',
       content: '''
-# 文件管理
+# 鏂囦欢绠＄悊
 
-这里提到线程调度，线程调度，线程调度，但主题不是这一节。
+杩欓噷鎻愬埌绾跨▼璋冨害锛岀嚎绋嬭皟搴︼紝绾跨▼璋冨害锛屼絾涓婚涓嶆槸杩欎竴鑺傘€?
+# 绾跨▼璋冨害
 
-# 线程调度
-
-时间片轮转用于说明调度策略。
-''',
+鏃堕棿鐗囪疆杞敤浜庤鏄庤皟搴︾瓥鐣ャ€?''',
     );
 
-    final results = await repo.searchChunks(query: '线程调度');
+    final results = await repo.searchChunks(query: '绾跨▼璋冨害');
 
     expect(results, isNotEmpty);
-    expect(results.first.chunk.heading, '线程调度');
+    expect(results.first.chunk.heading, '绾跨▼璋冨害');
     expect(results.first.score, greaterThan(results.last.score));
   });
 
@@ -408,8 +404,8 @@ A thread is scheduled by the CPU.
 
   test('getReferencesForCard returns linked source and chunk', () async {
     final sourceId = await repo.importTextSource(
-      title: '操作系统笔记',
-      content: '进程是资源分配单位，线程是 CPU 调度单位。',
+      title: '鎿嶄綔绯荤粺绗旇',
+      content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
     );
     final chunk = (await repo.getChunksForSource(sourceId)).single;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -417,9 +413,9 @@ A thread is scheduled by the CPU.
         .into(db.knowledgeCards)
         .insert(
           KnowledgeCardsCompanion.insert(
-            title: '进程与线程',
-            question: '进程和线程分别是什么单位？',
-            answer: '进程是资源分配单位，线程是 CPU 调度单位。',
+            title: '杩涚▼涓庣嚎绋?,
+            question: '杩涚▼鍜岀嚎绋嬪垎鍒槸浠€涔堝崟浣嶏紵',
+            answer: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
             dueAt: now,
             createdAt: now,
             updatedAt: now,
@@ -430,18 +426,18 @@ A thread is scheduled by the CPU.
       cardId: cardId,
       sourceId: sourceId,
       chunkId: chunk.id,
-      quote: '进程是资源分配单位',
+      quote: '杩涚▼鏄祫婧愬垎閰嶅崟浣?,
     );
 
     final references = await repo.getReferencesForCard(cardId);
     expect(references, hasLength(1));
-    expect(references.single.source.title, '操作系统笔记');
+    expect(references.single.source.title, '鎿嶄綔绯荤粺绗旇');
     expect(references.single.chunk.id, chunk.id);
-    expect(references.single.link.quote, '进程是资源分配单位');
+    expect(references.single.link.quote, '杩涚▼鏄祫婧愬垎閰嶅崟浣?);
 
     final source = await repo.getSourceById(sourceId);
     final sourceReferences = await repo.getCardReferencesForSource(sourceId);
-    expect(source?.title, '操作系统笔记');
+    expect(source?.title, '鎿嶄綔绯荤粺绗旇');
     expect(sourceReferences, hasLength(1));
     expect(sourceReferences.single.card.id, cardId);
     expect(sourceReferences.single.chunk.id, chunk.id);
@@ -469,8 +465,9 @@ A thread is scheduled by the CPU.
         content: 'Second version.',
       );
       final issues = await repo.checkHealth();
-      expect(issues, anyElement(contains('同名资料')));
+      expect(issues, anyElement(contains('鍚屽悕璧勬枡')));
     });
   });
 
 }
+

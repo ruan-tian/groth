@@ -1,8 +1,8 @@
-import 'package:drift/native.dart';
+﻿import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
 import 'package:growth_os/core/database/knowledge_v3_schema.dart';
-import 'package:growth_os/core/repositories/knowledge_v3_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -85,3 +85,4 @@ void main() {
     expect(defaultSpace.name, '\u9ed8\u8ba4\u77e5\u8bc6\u7a7a\u95f4');
   });
 }
+

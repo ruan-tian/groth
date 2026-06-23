@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:growth_os/core/services/statistics_service.dart';
-import 'package:growth_os/shared/providers/calendar_provider.dart';
+import 'package:growth_os/features/dashboard/providers/calendar_provider.dart';
 import 'package:growth_os/shared/widgets/common/growth_calendar_sheet.dart';
 
 void main() {
@@ -45,3 +45,4 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 }
+
