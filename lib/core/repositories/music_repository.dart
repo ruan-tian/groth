@@ -1,7 +1,7 @@
 import 'package:drift/drift.dart';
 
 import '../database/app_database.dart';
-import '../../features/music/utils/default_music_seed.dart';
+import '../../features/music/constants/default_music_seed.dart';
 
 class MusicRepository {
   MusicRepository(this._db);

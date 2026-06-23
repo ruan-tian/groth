@@ -2,9 +2,9 @@ import 'dart:convert';
 
 import 'package:drift/drift.dart';
 
-import '../../features/study/utils/knowledge_source_chunker.dart';
-import '../../features/study/utils/knowledge_tfidf_index.dart';
-import '../../features/study/utils/knowledge_synonyms.dart';
+import '../text_processing/source_chunker.dart';
+import '../text_processing/tfidf_index.dart';
+import '../text_processing/synonyms.dart';
 import '../database/app_database.dart';
 
 class KnowledgeSourceRepository {
