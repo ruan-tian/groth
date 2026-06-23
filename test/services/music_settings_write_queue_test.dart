@@ -55,4 +55,18 @@ void main() {
 
     expect(writes, {'position': '1200'});
   });
+
+  test('writeNow flushes the key immediately', () async {
+    final writes = <String, String>{};
+    final queue = MusicSettingsWriteQueue(
+      writeDelay: const Duration(days: 1),
+      write: (key, value) async {
+        writes[key] = value;
+      },
+    );
+
+    await queue.writeNow('sleep_timer', '30');
+
+    expect(writes, {'sleep_timer': '30'});
+  });
 }

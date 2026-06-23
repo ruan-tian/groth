@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
@@ -6,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/providers/dashboard_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
+import '../../../shared/services/settings_write_queue.dart';
 import '../models/health_reminder_schedule_status.dart';
 import '../models/water_plan_state.dart';
 
@@ -17,7 +19,11 @@ final waterPlanProvider =
     });
 
 class WaterPlanController extends StateNotifier<WaterPlanState> {
-  WaterPlanController(this._ref) : super(const WaterPlanState());
+  WaterPlanController(this._ref) : super(const WaterPlanState()) {
+    _ref.onDispose(() {
+      unawaited(_settingsWriter.dispose());
+    });
+  }
 
   static const _dailyRecordsKey = 'daily_water_records';
   static const _amountKey = 'water_reminder_amount_ml';
@@ -27,6 +33,9 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
   static const _endHourKey = 'water_reminder_end_hour';
 
   final Ref _ref;
+  late final SettingsWriteQueue _settingsWriter = SettingsWriteQueue(
+    write: _ref.read(settingRepositoryProvider).setSetting,
+  );
 
   Future<void> initialize() async {
     final repo = _ref.read(settingRepositoryProvider);
@@ -90,23 +99,19 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
       message: _messageFor(state.currentWaterMl, next),
     );
     _ref.read(dailyWaterGoalProvider.notifier).state = next;
-    await _ref
-        .read(settingRepositoryProvider)
-        .setSetting('daily_water_goal', '$next');
+    await _settingsWriter.writeNow('daily_water_goal', '$next');
   }
 
   Future<void> setDefaultAmount(int amountMl) async {
     final next = _sanitizeAmount(amountMl);
     state = state.copyWith(defaultAmountMl: next, selectedAmountMl: next);
-    await _ref.read(settingRepositoryProvider).setSetting(_amountKey, '$next');
+    await _settingsWriter.writeNow(_amountKey, '$next');
   }
 
   Future<void> setInterval(int minutes) async {
     final next = minutes.clamp(5, 720);
     state = state.copyWith(intervalMinutes: next);
-    await _ref
-        .read(settingRepositoryProvider)
-        .setSetting(_intervalKey, '$next');
+    await _settingsWriter.writeNow(_intervalKey, '$next');
   }
 
   Future<void> setReminderEnabled(bool enabled) async {
@@ -116,9 +121,7 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
           ? state.reminderScheduleStatus
           : const HealthReminderScheduleStatus.off(),
     );
-    await _ref
-        .read(settingRepositoryProvider)
-        .setSetting(_enabledKey, enabled ? 'true' : 'false');
+    await _settingsWriter.writeNow(_enabledKey, enabled ? 'true' : 'false');
   }
 
   void setReminderScheduleStatus(HealthReminderScheduleStatus status) {
@@ -135,12 +138,8 @@ class WaterPlanController extends StateNotifier<WaterPlanState> {
       startHour: start,
       endHour: end <= start ? start + 1 : end,
     );
-    await _ref
-        .read(settingRepositoryProvider)
-        .setSetting(_startHourKey, '${state.startHour}');
-    await _ref
-        .read(settingRepositoryProvider)
-        .setSetting(_endHourKey, '${state.endHour}');
+    _settingsWriter.schedule(_startHourKey, '${state.startHour}');
+    await _settingsWriter.writeNow(_endHourKey, '${state.endHour}');
   }
 
   Future<void> recordDrink({DateTime? recordedAt}) {

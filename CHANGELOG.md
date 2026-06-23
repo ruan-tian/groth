@@ -7,6 +7,7 @@
 - Updated dashboard, study, fitness, diet, sleep, and focus mode UI entry points to await facade writes before closing sheets where needed.
 - Added targeted facade tests for single setting setters, dashboard card ids, and daily goal updates.
 - Removed the obsolete dashboard card save helper and routed pet diary auto-toggle writes through the shared pet diary provider path.
+- Promoted the music settings write queue into a shared `SettingsWriteQueue` and routed water/sleep plan configuration writes through it to reduce SQLite write contention.
 
 ## 2026-06-22 设置页目标与主题写入收敛
 

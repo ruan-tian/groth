@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -6,6 +8,7 @@ import '../../../shared/providers/dashboard_provider.dart'
     show dashboardProvider;
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/sleep_provider.dart';
+import '../../../shared/services/settings_write_queue.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
 import '../models/health_reminder_schedule_status.dart';
@@ -19,7 +22,11 @@ final sleepPlanProvider =
     });
 
 class SleepPlanController extends StateNotifier<SleepPlanState> {
-  SleepPlanController(this._ref) : super(const SleepPlanState());
+  SleepPlanController(this._ref) : super(const SleepPlanState()) {
+    _ref.onDispose(() {
+      unawaited(_settingsWriter.dispose());
+    });
+  }
 
   static const _sleepTimeKey = 'sleep_reminder_time';
   static const _wakeTimeKey = 'sleep_wake_time';
@@ -29,6 +36,9 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
   static const _wokeAtKey = 'sleep_wakeup_check_in_at';
 
   final Ref _ref;
+  late final SettingsWriteQueue _settingsWriter = SettingsWriteQueue(
+    write: _ref.read(settingRepositoryProvider).setSetting,
+  );
 
   Future<void> initialize() async {
     final settings = _ref.read(settingRepositoryProvider);
@@ -89,21 +99,19 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
   Future<void> setSleepTime(String value) async {
     final next = _sanitizeTime(value, state.sleepTime);
     state = state.copyWith(sleepTime: next);
-    await _ref.read(settingRepositoryProvider).setSetting(_sleepTimeKey, next);
+    await _settingsWriter.writeNow(_sleepTimeKey, next);
   }
 
   Future<void> setWakeTime(String value) async {
     final next = _sanitizeTime(value, state.wakeTime);
     state = state.copyWith(wakeTime: next);
-    await _ref.read(settingRepositoryProvider).setSetting(_wakeTimeKey, next);
+    await _settingsWriter.writeNow(_wakeTimeKey, next);
   }
 
   Future<void> setLeadMinutes(int minutes) async {
     final next = _sanitizeLeadMinutes(minutes);
     state = state.copyWith(leadMinutes: next);
-    await _ref
-        .read(settingRepositoryProvider)
-        .setSetting(_leadMinutesKey, '$next');
+    await _settingsWriter.writeNow(_leadMinutesKey, '$next');
   }
 
   Future<void> setReminderEnabled(bool enabled) async {
@@ -113,9 +121,7 @@ class SleepPlanController extends StateNotifier<SleepPlanState> {
           ? state.reminderScheduleStatus
           : const HealthReminderScheduleStatus.off(),
     );
-    await _ref
-        .read(settingRepositoryProvider)
-        .setSetting(_enabledKey, enabled ? 'true' : 'false');
+    await _settingsWriter.writeNow(_enabledKey, enabled ? 'true' : 'false');
   }
 
   void setReminderScheduleStatus(HealthReminderScheduleStatus status) {
