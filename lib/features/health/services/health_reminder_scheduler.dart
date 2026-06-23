@@ -1,18 +1,26 @@
+import 'dart:async';
+
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/services/settings_write_queue.dart';
 import '../models/health_reminder_schedule_status.dart';
 import '../../plan/services/reminder_notification_service.dart';
 
 final healthReminderSchedulerProvider = Provider<HealthReminderScheduler>((
   ref,
 ) {
+  final writer = SettingsWriteQueue(
+    write: ref.read(settingRepositoryProvider).setSetting,
+  );
+  ref.onDispose(() {
+    unawaited(writer.dispose());
+  });
   return HealthReminderScheduler(
     notificationService: ref.watch(reminderNotificationServiceProvider),
     readSetting: (key) => ref.read(settingRepositoryProvider).getSetting(key),
-    writeSetting: (key, value) =>
-        ref.read(settingRepositoryProvider).setSetting(key, value),
+    writeSetting: writer.writeNow,
   );
 });
 
@@ -329,18 +337,22 @@ class HealthReminderScheduler {
   }
 
   Future<void> _persistWaterStatus(HealthReminderScheduleStatus status) async {
-    await _writeSetting?.call(waterScheduleStatusKey, status.storageValue);
-    await _writeSetting?.call(waterPendingCountKey, '${status.pendingCount}');
-    await _writeSetting?.call(
+    final write = _writeSetting;
+    if (write == null) return;
+    await write(waterScheduleStatusKey, status.storageValue);
+    await write(waterPendingCountKey, '${status.pendingCount}');
+    await write(
       waterUsesExactAlarmKey,
       status.usesExactAlarm ? 'true' : 'false',
     );
   }
 
   Future<void> _persistSleepStatus(HealthReminderScheduleStatus status) async {
-    await _writeSetting?.call(sleepScheduleStatusKey, status.storageValue);
-    await _writeSetting?.call(sleepPendingCountKey, '${status.pendingCount}');
-    await _writeSetting?.call(
+    final write = _writeSetting;
+    if (write == null) return;
+    await write(sleepScheduleStatusKey, status.storageValue);
+    await write(sleepPendingCountKey, '${status.pendingCount}');
+    await write(
       sleepUsesExactAlarmKey,
       status.usesExactAlarm ? 'true' : 'false',
     );

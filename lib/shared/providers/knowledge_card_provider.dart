@@ -417,7 +417,9 @@ final archivedKnowledgeSpacesProvider = FutureProvider<Set<String>>((
           .where((item) => item.isNotEmpty)
           .toSet();
     }
-  } catch (e) { debugPrint('knowledge spaces parse failed: $e'); }
+  } catch (e) {
+    debugPrint('knowledge spaces parse failed: $e');
+  }
   return const <String>{};
 });
 
@@ -437,7 +439,9 @@ final createdKnowledgeSpacesProvider = FutureProvider<List<KnowledgeSpaceSeed>>(
             )
             .toList(growable: false);
       }
-    } catch (e) { debugPrint('knowledge spaces parse failed: $e'); }
+    } catch (e) {
+      debugPrint('knowledge spaces parse failed: $e');
+    }
     return const [];
   },
 );
@@ -540,10 +544,7 @@ final knowledgeSpaceSearchProvider =
 Future<void> rememberRecentKnowledgeSpace(dynamic ref, String spaceKey) async {
   final trimmed = spaceKey.trim();
   if (trimmed.isEmpty) return;
-  await ref
-      .read(settingRepositoryProvider)
-      .setSetting(_recentKnowledgeSpaceKey, trimmed);
-  ref.invalidate(recentKnowledgeSpaceProvider);
+  await _saveRecentKnowledgeSpace(ref, trimmed);
 }
 
 Future<KnowledgeSpaceSeed> createKnowledgeSpace(
@@ -555,7 +556,9 @@ Future<KnowledgeSpaceSeed> createKnowledgeSpace(
     throw ArgumentError.value(spaceName, 'spaceName', '空间名称不能为空');
   }
   final seed = KnowledgeSpaceSeed(spaceKey: 'custom::$name', spaceName: name);
-  final current = [...await ref.read(createdKnowledgeSpacesProvider.future)];
+  final current = <KnowledgeSpaceSeed>[
+    ...await ref.read(createdKnowledgeSpacesProvider.future),
+  ];
   final existingIndex = current.indexWhere(
     (item) => item.spaceKey == seed.spaceKey,
   );
@@ -564,16 +567,8 @@ Future<KnowledgeSpaceSeed> createKnowledgeSpace(
   } else {
     current[existingIndex] = seed;
   }
-  await ref
-      .read(settingRepositoryProvider)
-      .setSetting(
-        _createdKnowledgeSpacesKey,
-        jsonEncode(current.map((item) => item.toJson()).toList()),
-      );
+  await _saveCreatedKnowledgeSpaces(ref, current);
   await rememberRecentKnowledgeSpace(ref, seed.spaceKey);
-  ref.invalidate(createdKnowledgeSpacesProvider);
-  ref.invalidate(knowledgeSpaceSummariesProvider);
-  ref.invalidate(allKnowledgeSpaceSummariesProvider);
   return seed;
 }
 
@@ -594,19 +589,16 @@ Future<KnowledgeSpaceSeed> renameKnowledgeSpace(
     spaceKey: customSpace ? 'custom::$name' : spaceKey,
     spaceName: name,
   );
-  final current = [...await ref.read(createdKnowledgeSpacesProvider.future)];
+  final current = <KnowledgeSpaceSeed>[
+    ...await ref.read(createdKnowledgeSpacesProvider.future),
+  ];
   final existingIndex = current.indexWhere((item) => item.spaceKey == spaceKey);
   if (existingIndex == -1) {
     current.add(next);
   } else {
     current[existingIndex] = next;
   }
-  await ref
-      .read(settingRepositoryProvider)
-      .setSetting(
-        _createdKnowledgeSpacesKey,
-        jsonEncode(current.map((item) => item.toJson()).toList()),
-      );
+  await _saveCreatedKnowledgeSpaces(ref, current);
   if (customSpace) {
     await ref
         .read(knowledgeCardRepositoryProvider)
@@ -616,12 +608,9 @@ Future<KnowledgeSpaceSeed> renameKnowledgeSpace(
         .renameCustomGoal(oldGoalName: oldName, newGoalName: name);
   }
   await rememberRecentKnowledgeSpace(ref, next.spaceKey);
-  ref.invalidate(createdKnowledgeSpacesProvider);
   ref.invalidate(knowledgeCardsProvider);
   ref.invalidate(knowledgeSourcesProvider);
   ref.invalidate(knowledgeSourcesWithProgressProvider);
-  ref.invalidate(knowledgeSpaceSummariesProvider);
-  ref.invalidate(allKnowledgeSpaceSummariesProvider);
   return next;
 }
 
@@ -633,17 +622,11 @@ Future<void> resetKnowledgeSpaceAlias(
   if (trimmed.isEmpty || trimmed == _defaultKnowledgeSpaceKey) return;
   if (trimmed.startsWith('custom::')) return;
 
-  final current = [...await ref.read(createdKnowledgeSpacesProvider.future)];
+  final current = <KnowledgeSpaceSeed>[
+    ...await ref.read(createdKnowledgeSpacesProvider.future),
+  ];
   current.removeWhere((item) => item.spaceKey == trimmed);
-  await ref
-      .read(settingRepositoryProvider)
-      .setSetting(
-        _createdKnowledgeSpacesKey,
-        jsonEncode(current.map((item) => item.toJson()).toList()),
-      );
-  ref.invalidate(createdKnowledgeSpacesProvider);
-  ref.invalidate(knowledgeSpaceSummariesProvider);
-  ref.invalidate(allKnowledgeSpaceSummariesProvider);
+  await _saveCreatedKnowledgeSpaces(ref, current);
 }
 
 Future<void> setKnowledgeSpaceArchived(
@@ -661,9 +644,39 @@ Future<void> setKnowledgeSpaceArchived(
   } else {
     current.remove(trimmed);
   }
+  await _saveArchivedKnowledgeSpaces(ref, current);
+}
+
+Future<void> _saveRecentKnowledgeSpace(dynamic ref, String spaceKey) async {
   await ref
       .read(settingRepositoryProvider)
-      .setSetting(_archivedKnowledgeSpacesKey, jsonEncode(current.toList()));
+      .setSetting(_recentKnowledgeSpaceKey, spaceKey);
+  ref.invalidate(recentKnowledgeSpaceProvider);
+}
+
+Future<void> _saveCreatedKnowledgeSpaces(
+  dynamic ref,
+  List<KnowledgeSpaceSeed> spaces,
+) async {
+  await ref
+      .read(settingRepositoryProvider)
+      .setSetting(
+        _createdKnowledgeSpacesKey,
+        jsonEncode(spaces.map((item) => item.toJson()).toList()),
+      );
+  ref.invalidate(createdKnowledgeSpacesProvider);
+  ref.invalidate(knowledgeSpaceSummariesProvider);
+  ref.invalidate(allKnowledgeSpaceSummariesProvider);
+}
+
+Future<void> _saveArchivedKnowledgeSpaces(
+  dynamic ref,
+  Set<String> spaces,
+) async {
+  final normalized = spaces.toList()..sort();
+  await ref
+      .read(settingRepositoryProvider)
+      .setSetting(_archivedKnowledgeSpacesKey, jsonEncode(normalized));
   ref.invalidate(archivedKnowledgeSpacesProvider);
   ref.invalidate(knowledgeSpaceSummariesProvider);
   ref.invalidate(allKnowledgeSpaceSummariesProvider);
