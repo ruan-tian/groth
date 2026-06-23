@@ -1,4 +1,4 @@
-﻿import 'package:drift/native.dart';
+import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
 import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
@@ -20,24 +20,24 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final sessionId = await repo.createQaSession(
       spaceId: space.id,
-      title: '杩涚▼鍜岀嚎绋嬪尯鍒?,
+      title: '进程和线程区别',
     );
     await repo.addQaMessage(
       sessionId: sessionId,
       role: 'user',
-      content: '绾跨▼鍜岃繘绋嬫湁浠€涔堝尯鍒紵',
+      content: '线程和进程有什么区别？',
     );
     await repo.addQaMessage(
       sessionId: sessionId,
       role: 'assistant',
-      content: '绾跨▼鏄?CPU 璋冨害鐨勫熀鏈崟浣嶏紝杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅銆?,
+      content: '线程是 CPU 调度的基本单位，进程是资源分配的基本单位。',
     );
 
-    final hits = await repo.searchQa(spaceId: space.id, query: '璋冨害');
+    final hits = await repo.searchQa(spaceId: space.id, query: '调度');
 
     expect(hits, hasLength(1));
     expect(hits.single.sessionId, sessionId);
-    expect(hits.single.excerpt, contains('CPU 璋冨害'));
+    expect(hits.single.excerpt, contains('CPU 调度'));
   });
 
   test('getOrCreateSpaceSession reuses the latest space session', () async {
@@ -48,7 +48,7 @@ void main() {
 
     expect(second.id, first.id);
     expect(second.spaceId, space.id);
-    expect(second.title, '鐢滅敎闂瓟');
+    expect(second.title, '甜甜问答');
   });
 
   test(
@@ -57,13 +57,13 @@ void main() {
       final space = await repo.ensureDefaultSpace();
       final firstMaterialId = await repo.importMaterial(
         spaceId: space.id,
-        title: '璧勬枡 A',
-        content: 'A 鍐呭',
+        title: '资料 A',
+        content: 'A 内容',
       );
       final secondMaterialId = await repo.importMaterial(
         spaceId: space.id,
-        title: '璧勬枡 B',
-        content: 'B 鍐呭',
+        title: '资料 B',
+        content: 'B 内容',
       );
       final session = await repo.getOrCreateSpaceSession(space.id);
 
@@ -87,8 +87,8 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final materialId = await repo.importMaterial(
       spaceId: space.id,
-      title: '琛屾斂娉曠瑪璁?,
-      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
+      title: '行政法笔记',
+      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
     );
     final material = await repo.getMaterial(materialId);
     final session = await repo.getOrCreateSpaceSession(space.id);
@@ -96,12 +96,12 @@ void main() {
     await repo.addQaMessage(
       sessionId: session.id,
       role: 'user',
-      content: '涓嶅甫璧勬枡鐨勯棶棰?,
+      content: '不带资料的问题',
     );
     await repo.addQaMessage(
       sessionId: session.id,
       role: 'user',
-      content: '甯﹁祫鏂欑殑闂',
+      content: '带资料的问题',
       sources: [material!],
     );
 
@@ -109,7 +109,7 @@ void main() {
     expect(messages, hasLength(2));
     expect(messages[0].sourcesJson, isNull);
     expect(messages[1].sourcesJson, contains('"id":$materialId'));
-    expect(messages[1].sourcesJson, contains('"title":"琛屾斂娉曠瑪璁?'));
+    expect(messages[1].sourcesJson, contains('"title":"行政法笔记"'));
   });
 
   test('reviewCard ratings create meaningfully different schedules', () async {
@@ -119,8 +119,8 @@ void main() {
       ids.add(
         await repo.createCard(
           spaceId: space.id,
-          question: '闂 $i',
-          answer: '绛旀 $i',
+          question: '问题 $i',
+          answer: '答案 $i',
         ),
       );
     }
@@ -153,18 +153,18 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final first = await repo.createCard(
       spaceId: space.id,
-      question: '绗竴寮犲崱',
-      answer: '绛旀 1',
+      question: '第一张卡',
+      answer: '答案 1',
     );
     final second = await repo.createCard(
       spaceId: space.id,
-      question: '绗簩寮犲崱',
-      answer: '绛旀 2',
+      question: '第二张卡',
+      answer: '答案 2',
     );
     final third = await repo.createCard(
       spaceId: space.id,
-      question: '绗笁寮犲崱',
-      answer: '绛旀 3',
+      question: '第三张卡',
+      answer: '答案 3',
     );
 
     await repo.reorderCard(id: third, direction: -1);
@@ -179,8 +179,8 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final id = await repo.importMaterial(
       spaceId: space.id,
-      title: '缃戦〉璧勬枡',
-      content: '琛屾斂澶勭綒鐨勮拷璇夋椂鏁堜粠杩濇硶琛屼负鍙戠敓涔嬫棩璧疯绠椼€?,
+      title: '网页资料',
+      content: '行政处罚的追诉时效从违法行为发生之日起计算。',
       sourceType: 'web',
       url: 'https://example.com/article',
     );
@@ -193,8 +193,8 @@ void main() {
 
   test('rememberSpace moves a space to the front of the recent list', () async {
     final first = await repo.ensureDefaultSpace();
-    final secondId = await repo.createSpace(name: '鑰冨叕', type: 'exam');
-    final thirdId = await repo.createSpace(name: '鑰冪爺鑻辫', type: 'language');
+    final secondId = await repo.createSpace(name: '考公', type: 'exam');
+    final thirdId = await repo.createSpace(name: '考研英语', type: 'language');
 
     await repo.rememberSpace(secondId);
 
@@ -209,22 +209,22 @@ void main() {
       final space = await repo.ensureDefaultSpace();
       final sessionId = await repo.createQaSession(
         spaceId: space.id,
-        title: '杩涚▼鍜岀嚎绋嬪尯鍒?,
+        title: '进程和线程区别',
       );
       await repo.addQaMessage(
         sessionId: sessionId,
         role: 'assistant',
-        content: '绗竴鏉″洖绛?,
+        content: '第一条回答',
       );
       await repo.addQaMessage(
         sessionId: sessionId,
         role: 'user',
-        content: '缁х画瑙ｉ噴',
+        content: '继续解释',
       );
       await repo.addQaMessage(
         sessionId: sessionId,
         role: 'assistant',
-        content: '绗簩鏉″洖绛?,
+        content: '第二条回答',
       );
 
       await repo.markLatestAssistantMessageSavedAsCard(sessionId);
@@ -239,12 +239,12 @@ void main() {
   test('archiveSpace hides space from default listing', () async {
     final space = await repo.ensureDefaultSpace();
     // Create a second space so getSpaces doesn't auto-create a new default
-    await repo.createSpace(name: '澶囩敤绌洪棿');
+    await repo.createSpace(name: '备用空间');
     await repo.archiveSpace(space.id);
 
     final visible = await repo.getSpaces();
     expect(visible, hasLength(1));
-    expect(visible.first.name, '澶囩敤绌洪棿');
+    expect(visible.first.name, '备用空间');
 
     final all = await repo.getSpaces(includeArchived: true);
     expect(all, hasLength(2));
@@ -255,8 +255,8 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final id = await repo.importMaterial(
       spaceId: space.id,
-      title: '璧勬枡',
-      content: '鍐呭',
+      title: '资料',
+      content: '内容',
     );
 
     await repo.archiveMaterial(id);
@@ -269,8 +269,8 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final id = await repo.createCard(
       spaceId: space.id,
-      question: '闂',
-      answer: '绛旀',
+      question: '问题',
+      answer: '答案',
     );
 
     await repo.archiveCard(id);
@@ -279,4 +279,3 @@ void main() {
     expect(cards, isEmpty);
   });
 }
-

@@ -1,4 +1,4 @@
-﻿import 'package:drift/native.dart';
+import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -88,8 +88,8 @@ List<Override> _pageOverrides(AppDatabase db) {
     ],
     dailyGoalsProvider.overrideWith(
       (_) => const [
-        DailyGoal(name: '瀛︿範', target: 120, unit: '鍒嗛挓'),
-        DailyGoal(name: '鍋ヨ韩', target: 45, unit: '鍒嗛挓'),
+        DailyGoal(name: '学习', target: 120, unit: '分钟'),
+        DailyGoal(name: '健身', target: 45, unit: '分钟'),
       ],
     ),
     todayStudyMinutesProvider.overrideWith((_) async => 60),
@@ -167,7 +167,7 @@ void main() {
         expect(find.byType(PlanModuleVisualHeader), findsOneWidget);
         expect(find.byType(PlanModuleActionImageCard), findsOneWidget);
         if (page is DietPage) {
-          expect(find.text('浠婂ぉ鎯冲枬鐐逛粈涔?), findsOneWidget);
+          expect(find.text('今天想喝点什么'), findsOneWidget);
         }
 
         await tester.pumpWidget(const SizedBox.shrink());
@@ -176,4 +176,3 @@ void main() {
     }
   });
 }
-

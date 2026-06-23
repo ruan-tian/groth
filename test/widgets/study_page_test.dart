@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -142,7 +142,7 @@ List<Override> _studyPageOverrides({
     ),
     latestPetAnalysisProvider('study').overrideWith((_) async => null),
     dailyGoalsProvider.overrideWith(
-      (_) => const [DailyGoal(name: '瀛︿範', target: 120, unit: '鍒嗛挓')],
+      (_) => const [DailyGoal(name: '学习', target: 120, unit: '分钟')],
     ),
     todayStudyMinutesProvider.overrideWith(
       (_) => todayMinutes?.call() ?? Future.value(0),
@@ -188,8 +188,8 @@ void main() {
       expect(find.byType(PlanModuleVisualHeader), findsOneWidget);
       expect(find.byType(PlanModuleActionImageCard), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
-      expect(find.text('鐭ヨ瘑绌洪棿'), findsOneWidget);
-      expect(find.text('瀵煎叆璧勬枡锛岃鐢滅敎甯綘鐢熸垚鐭ヨ瘑鍗?), findsOneWidget);
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('导入资料，让甜甜帮你生成知识卡'), findsOneWidget);
     });
 
     testWidgets('renders today summary without hitting the real database', (
@@ -308,9 +308,9 @@ void main() {
     ) async {
       await _pumpStudyPage(tester, overrides: _studyPageOverrides());
 
-      expect(find.text('鐭ヨ瘑绌洪棿'), findsOneWidget);
-      expect(find.text('瀵煎叆璧勬枡锛岃鐢滅敎甯綘鐢熸垚鐭ヨ瘑鍗?), findsOneWidget);
-      expect(find.text('瀵煎叆璧勬枡'), findsOneWidget);
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('导入资料，让甜甜帮你生成知识卡'), findsOneWidget);
+      expect(find.text('导入资料'), findsOneWidget);
     });
 
     testWidgets('shows generate when materials exist but no cards', (
@@ -329,9 +329,9 @@ void main() {
         ),
       );
 
-      expect(find.text('鐭ヨ瘑绌洪棿'), findsOneWidget);
-      expect(find.text('2 浠借祫鏂欏凡瀵煎叆锛屽彲鐢熸垚鐭ヨ瘑鍗?), findsOneWidget);
-      expect(find.text('鐢熸垚鐭ヨ瘑鍗?), findsOneWidget);
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('2 份资料已导入，可生成知识卡'), findsOneWidget);
+      expect(find.text('生成知识卡'), findsOneWidget);
     });
 
     testWidgets('shows enter space when cards exist but none are due', (
@@ -350,9 +350,9 @@ void main() {
         ),
       );
 
-      expect(find.text('鐭ヨ瘑绌洪棿'), findsOneWidget);
-      expect(find.text('鍏?16 寮犵煡璇嗗崱锛? 寮犺杽寮卞崱'), findsOneWidget);
-      expect(find.text('杩涘叆绌洪棿'), findsOneWidget);
+      expect(find.text('知识空间'), findsOneWidget);
+      expect(find.text('共 16 张知识卡，3 张薄弱卡'), findsOneWidget);
+      expect(find.text('进入空间'), findsOneWidget);
     });
 
     testWidgets('shows start review when cards are due', (tester) async {
@@ -369,10 +369,9 @@ void main() {
         ),
       );
 
-      expect(find.text('缁х画鎶藉崱澶嶄範'), findsOneWidget);
-      expect(find.text('浠婃棩 7 寮犲緟澶嶄範锛屽叡 24 寮犵煡璇嗗崱'), findsOneWidget);
-      expect(find.text('寮€濮嬫娊鍗?), findsOneWidget);
+      expect(find.text('继续抽卡复习'), findsOneWidget);
+      expect(find.text('今日 7 张待复习，共 24 张知识卡'), findsOneWidget);
+      expect(find.text('开始抽卡'), findsOneWidget);
     });
   });
 }
-

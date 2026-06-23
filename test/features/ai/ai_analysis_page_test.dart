@@ -1,4 +1,4 @@
-﻿import 'package:drift/drift.dart' show driftRuntimeOptions;
+import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,13 +35,13 @@ void main() {
 
     final repo = KnowledgeSourceRepository(db);
     await repo.importTextSource(
-      title: '鎿嶄綔绯荤粺绗旇',
+      title: '操作系统笔记',
       type: 'markdown',
-      content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
+      content: '进程是资源分配单位，线程是 CPU 调度单位。',
     );
     final bundle = await KnowledgeContextService(
       repo,
-    ).buildForQuery('鎿嶄綔绯荤粺 杩涚▼ 绾跨▼');
+    ).buildForQuery('操作系统 进程 线程');
 
     await tester.pumpWidget(
       MaterialApp(
@@ -54,7 +54,7 @@ void main() {
                     context: context,
                     bundle: bundle,
                   ),
-                  child: const Text('鎵撳紑纭'),
+                  child: const Text('打开确认'),
                 ),
               ),
             );
@@ -63,32 +63,32 @@ void main() {
       ),
     );
 
-    await tester.tap(find.text('鎵撳紑纭'));
+    await tester.tap(find.text('打开确认'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.text('纭鍙戦€佺煡璇嗗簱鐗囨'), findsOneWidget);
-    expect(find.text('涓嶅彂閫佺煡璇嗗簱鐗囨锛岀户缁垎鏋?), findsOneWidget);
+    expect(find.text('确认发送知识库片段'), findsOneWidget);
+    expect(find.text('不发送知识库片段，继续分析'), findsOneWidget);
     expect(find.byKey(const Key('ai-context-keep-top1')), findsOneWidget);
     expect(find.byKey(const Key('ai-context-keep-top3')), findsOneWidget);
-    expect(find.textContaining('宸查€?), findsOneWidget);
+    expect(find.textContaining('已选'), findsOneWidget);
   });
 
   test('analysis state keeps selected knowledge references after success', () async {
     final repo = KnowledgeSourceRepository(db);
     await repo.importTextSource(
-      title: '鎿嶄綔绯荤粺绗旇',
+      title: '操作系统笔记',
       type: 'markdown',
-      content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
+      content: '进程是资源分配单位，线程是 CPU 调度单位。',
     );
     final bundle = await KnowledgeContextService(
       repo,
-    ).buildForQuery('鎿嶄綔绯荤粺 杩涚▼ 绾跨▼');
+    ).buildForQuery('操作系统 进程 线程');
 
     final notifier = AiAnalysisNotifier();
-    await notifier.runAnalysis(() async => '鍒嗘瀽缁撴灉', referenceContext: bundle);
+    await notifier.runAnalysis(() async => '分析结果', referenceContext: bundle);
 
-    expect(notifier.state.result, '鍒嗘瀽缁撴灉');
+    expect(notifier.state.result, '分析结果');
     expect(notifier.state.referenceContext, isNotNull);
     expect(
       notifier.state.referenceContext!.results,
@@ -101,20 +101,20 @@ void main() {
   ) async {
     final repo = KnowledgeSourceRepository(db);
     await repo.importTextSource(
-      title: '鎿嶄綔绯荤粺绗旇',
+      title: '操作系统笔记',
       type: 'markdown',
-      content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
+      content: '进程是资源分配单位，线程是 CPU 调度单位。',
     );
     final bundle = await KnowledgeContextService(
       repo,
-    ).buildForQuery('鎿嶄綔绯荤粺 杩涚▼ 绾跨▼');
+    ).buildForQuery('操作系统 进程 线程');
 
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
           home: Scaffold(
             body: AiAnalysisResultCard(
-              result: '寤鸿锛氫紭鍏堝涔犺繘绋嬪拰绾跨▼銆?,
+              result: '建议：优先复习进程和线程。',
               referenceContext: bundle,
             ),
           ),
@@ -133,26 +133,28 @@ void main() {
   ) async {
     final repo = KnowledgeSourceRepository(db);
     await repo.importTextSource(
-      title: '鎿嶄綔绯荤粺绗旇',
+      title: '操作系统笔记',
       type: 'markdown',
       content: '''
-# 杩涚▼绠＄悊
+# 进程管理
 
-杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?
-# 鍐呭瓨绠＄悊
+进程是资源分配单位，线程是 CPU 调度单位。
 
-鍒嗛〉鏈哄埗鎶婇€昏緫鍦板潃鍒嗘垚椤靛彿鍜岄〉鍐呭亸绉汇€?''',
+# 内存管理
+
+分页机制把逻辑地址分成页号和页内偏移。
+''',
     );
     final bundle = await KnowledgeContextService(
       repo,
-    ).buildForQuery('鎿嶄綔绯荤粺 杩涚▼ 鍐呭瓨');
+    ).buildForQuery('操作系统 进程 内存');
 
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
           home: Scaffold(
             body: AiAnalysisResultCard(
-              result: '寤鸿浼樺厛澶嶄範杩涚▼鍜岀嚎绋嬪尯鍒€愮墖娈?1銆戙€?,
+              result: '建议优先复习进程和线程区别【片段 1】。',
               referenceContext: bundle,
             ),
           ),
@@ -161,7 +163,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('ai-analysis-citation-status')), findsOneWidget);
-    expect(find.textContaining('宸插紩鐢細鐗囨 1'), findsOneWidget);
+    expect(find.textContaining('已引用：片段 1'), findsOneWidget);
   });
 
   testWidgets('analysis result card warns when no local chunk citation is found', (
@@ -169,20 +171,20 @@ void main() {
   ) async {
     final repo = KnowledgeSourceRepository(db);
     await repo.importTextSource(
-      title: '鎿嶄綔绯荤粺绗旇',
+      title: '操作系统笔记',
       type: 'markdown',
-      content: '杩涚▼鏄祫婧愬垎閰嶅崟浣嶏紝绾跨▼鏄?CPU 璋冨害鍗曚綅銆?,
+      content: '进程是资源分配单位，线程是 CPU 调度单位。',
     );
     final bundle = await KnowledgeContextService(
       repo,
-    ).buildForQuery('鎿嶄綔绯荤粺 杩涚▼ 绾跨▼');
+    ).buildForQuery('操作系统 进程 线程');
 
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
           home: Scaffold(
             body: AiAnalysisResultCard(
-              result: '寤鸿浼樺厛澶嶄範杩涚▼鍜岀嚎绋嬪尯鍒€?,
+              result: '建议优先复习进程和线程区别。',
               referenceContext: bundle,
             ),
           ),
@@ -190,7 +192,6 @@ void main() {
       ),
     );
 
-    expect(find.text('鏈娴嬪埌鐗囨缂栧彿'), findsOneWidget);
+    expect(find.text('未检测到片段编号'), findsOneWidget);
   });
 }
-

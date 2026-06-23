@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 
 import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
@@ -8,7 +8,7 @@ import 'package:growth_os/features/ai/repositories/ai_config_repository.dart';
 import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
-import 'package:growth_os/features/knowledge/services/knowledge_v3_ai_service.dart';
+import 'package:growth_os/features/study/services/knowledge_v3_ai_service.dart';
 
 class _SequenceAiService extends AiService {
   _SequenceAiService(this.responses);
@@ -47,14 +47,14 @@ void main() {
 {
   "cards": [
     {
-      "question": "绾跨▼鍜岃繘绋嬪湪鎿嶄綔绯荤粺涓殑鏍稿績鍖哄埆鏄粈涔堬紵",
-      "answer": "杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?,
-      "explanation": "鍖哄垎浜岃€呮椂鍏堢湅璧勬簮褰掑睘锛屽啀鐪嬭皟搴︽墽琛屻€?,
+      "question": "线程和进程在操作系统中的核心区别是什么？",
+      "answer": "进程是资源分配的基本单位，线程是 CPU 调度的基本单位。",
+      "explanation": "区分二者时先看资源归属，再看调度执行。",
       "cardType": "comparison",
       "importance": 5,
       "difficulty": 3,
-      "sourceExcerpt": "杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?,
-      "tags": ["鎿嶄綔绯荤粺"]
+      "sourceExcerpt": "进程是资源分配的基本单位，线程是 CPU 调度的基本单位。",
+      "tags": ["操作系统"]
     }
   ]
 }
@@ -62,7 +62,7 @@ void main() {
 ''');
 
     expect(drafts, hasLength(1));
-    expect(drafts.single.question, contains('绾跨▼鍜岃繘绋?));
+    expect(drafts.single.question, contains('线程和进程'));
     expect(KnowledgeV3CardDraftParser.isHighQuality(drafts.single), isTrue);
   });
 
@@ -73,7 +73,7 @@ void main() {
         isA<KnowledgeV3AiException>().having(
           (error) => error.message,
           'message',
-          contains('AI 杈撳嚭涓嶅畬鏁?),
+          contains('AI 输出不完整'),
         ),
       ),
     );
@@ -81,13 +81,13 @@ void main() {
 
   test('quality filter rejects prompt-like useless cards', () {
     const draft = KnowledgeV3CardDraft(
-      question: '璇锋€荤粨杩欎釜绌洪棿',
-      answer: '杩欐槸璧勬枡鎬荤粨銆?,
-      explanation: '鏃?,
+      question: '请总结这个空间',
+      answer: '这是资料总结。',
+      explanation: '无',
       cardType: 'recall',
       importance: 1,
       difficulty: 1,
-      sourceExcerpt: '鎬荤粨璧勬枡',
+      sourceExcerpt: '总结资料',
     );
 
     expect(KnowledgeV3CardDraftParser.isHighQuality(draft), isFalse);
@@ -95,9 +95,9 @@ void main() {
 
   test('quality filter rejects cards without grounded source excerpt', () {
     const draft = KnowledgeV3CardDraft(
-      question: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庝粈涔堟椂鍊欒捣绠楋紵',
-      answer: '浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻锛涜繚娉曡涓烘湁杩炵画鎴栬€呯户缁姸鎬佺殑锛屼粠琛屼负缁堜簡涔嬫棩璧疯绠椼€?,
-      explanation: '杩欑被鍗＄墖瑕佽兘鍥炲繂璧疯捣绠楃偣鍜岃繛缁姸鎬佷緥澶栥€?,
+      question: '行政处罚追诉时效通常从什么时候起算？',
+      answer: '从违法行为发生之日起计算；违法行为有连续或者继续状态的，从行为终了之日起计算。',
+      explanation: '这类卡片要能回忆起起算点和连续状态例外。',
       cardType: 'recall',
       importance: 4,
       difficulty: 3,
@@ -110,22 +110,22 @@ void main() {
     'quality filter rejects outline headings and answers too short to review',
     () {
       const headingDraft = KnowledgeV3CardDraft(
-        question: '涓€銆佽鏀垮缃氳拷璇夋椂鏁?,
-        answer: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
-        explanation: '鏍囬涓嶈兘鐩存帴浣滀负鎶藉崱闂銆?,
+        question: '一、行政处罚追诉时效',
+        answer: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+        explanation: '标题不能直接作为抽卡问题。',
         cardType: 'recall',
         importance: 4,
         difficulty: 2,
-        sourceExcerpt: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
+        sourceExcerpt: '行政处罚追诉时效通常从违法行为发生之日起计算。',
       );
       const shortAnswerDraft = KnowledgeV3CardDraft(
-        question: '琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵',
-        answer: '鍙戠敓鏃?,
-        explanation: '绛旀澶煭锛岀己灏戝彲鐙珛澶嶄範鐨勪俊鎭€?,
+        question: '行政处罚追诉时效的一般起算点是什么？',
+        answer: '发生日',
+        explanation: '答案太短，缺少可独立复习的信息。',
         cardType: 'recall',
         importance: 4,
         difficulty: 2,
-        sourceExcerpt: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
+        sourceExcerpt: '行政处罚追诉时效通常从违法行为发生之日起计算。',
       );
 
       expect(KnowledgeV3CardDraftParser.isHighQuality(headingDraft), isFalse);
@@ -140,8 +140,8 @@ void main() {
     const sparse = KnowledgeMaterial(
       id: 1,
       spaceId: 1,
-      title: '鐭祫鏂?,
-      content: '杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅銆?,
+      title: '短资料',
+      content: '进程是资源分配的基本单位。',
       sourceType: 'text',
       orderIndex: 0,
       status: 'ready',
@@ -151,12 +151,12 @@ void main() {
     );
     final denseText = List.generate(
       30,
-      (index) => '${index + 1}. 琛屾斂澶勭綒瑙勫垯 $index锛氬寘鍚潯浠躲€佷緥澶栧拰鏄撻敊鐐癸紵',
+      (index) => '${index + 1}. 行政处罚规则 $index：包含条件、例外和易错点？',
     ).join('\n');
     final dense = KnowledgeMaterial(
       id: 2,
       spaceId: 1,
-      title: '瀵嗛泦璧勬枡',
+      title: '密集资料',
       content: denseText,
       sourceType: 'text',
       orderIndex: 1,
@@ -179,12 +179,12 @@ void main() {
     () {
       final denseText = List.generate(
         100,
-        (index) => '${index + 1}. 楂橀鑰冪偣 $index锛氬寘鍚€傜敤鏉′欢銆佷緥澶栥€佸垽鏂緷鎹拰甯歌璇尯锛?,
+        (index) => '${index + 1}. 高频考点 $index：包含适用条件、例外、判断依据和常见误区？',
       ).join('\n');
       final material = KnowledgeMaterial(
         id: 3,
         spaceId: 1,
-        title: '鐧鹃鑰冪偣娓呭崟',
+        title: '百题考点清单',
         content: denseText,
         sourceType: 'text',
         orderIndex: 1,
@@ -206,7 +206,7 @@ void main() {
   test('Tiantian answer prompt includes recent conversation history', () {
     const space = KnowledgeSpaceV3(
       id: 1,
-      name: '鎿嶄綔绯荤粺',
+      name: '操作系统',
       type: 'exam',
       sortOrder: 0,
       isArchived: false,
@@ -216,8 +216,8 @@ void main() {
     const material = KnowledgeMaterial(
       id: 7,
       spaceId: 1,
-      title: '杩涚▼绾跨▼绗旇',
-      content: '杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?,
+      title: '进程线程笔记',
+      content: '进程是资源分配的基本单位，线程是 CPU 调度的基本单位。',
       sourceType: 'text',
       orderIndex: 0,
       status: 'ready',
@@ -230,7 +230,7 @@ void main() {
         id: 1,
         sessionId: 3,
         role: 'user',
-        content: '杩涚▼鍜岀嚎绋嬫湁浠€涔堝尯鍒紵',
+        content: '进程和线程有什么区别？',
         savedAsCard: false,
         createdAt: 1,
       ),
@@ -238,7 +238,7 @@ void main() {
         id: 2,
         sessionId: 3,
         role: 'assistant',
-        content: '杩涚▼鍋忚祫婧愶紝绾跨▼鍋忚皟搴︺€?,
+        content: '进程偏资源，线程偏调度。',
         savedAsCard: false,
         createdAt: 2,
       ),
@@ -246,15 +246,15 @@ void main() {
 
     final payload = KnowledgeV3PromptBuilder.buildTiantianAnswerPrompt(
       space: space,
-      question: '鑳戒妇涓垽鏂緥瀛愬悧锛?,
+      question: '能举个判断例子吗？',
       materials: const [material],
       history: history,
     );
 
-    expect(payload.userPrompt, contains('鏈瀵硅瘽鍘嗗彶'));
-    expect(payload.userPrompt, contains('[鐢ㄦ埛] 杩涚▼鍜岀嚎绋嬫湁浠€涔堝尯鍒紵'));
-    expect(payload.userPrompt, contains('[鐢滅敎] 杩涚▼鍋忚祫婧愶紝绾跨▼鍋忚皟搴︺€?));
-    expect(payload.userPrompt, contains('杩涚▼绾跨▼绗旇'));
+    expect(payload.userPrompt, contains('本次对话历史'));
+    expect(payload.userPrompt, contains('[用户] 进程和线程有什么区别？'));
+    expect(payload.userPrompt, contains('[甜甜] 进程偏资源，线程偏调度。'));
+    expect(payload.userPrompt, contains('进程线程笔记'));
   });
 
   test(
@@ -262,7 +262,7 @@ void main() {
     () {
       const space = KnowledgeSpaceV3(
         id: 1,
-        name: '琛屾斂娉?,
+        name: '行政法',
         type: 'exam',
         sortOrder: 0,
         isArchived: false,
@@ -271,13 +271,13 @@ void main() {
       );
       final filler = List.generate(
         260,
-        (index) => '鏅€氳儗鏅潗鏂?$index锛氳繖閲岃璁轰竴鑸涔犲畨鎺掑拰鏃犲叧璇存槑銆?,
+        (index) => '普通背景材料 $index：这里讨论一般学习安排和无关说明。',
       ).join('\n\n');
       final material = KnowledgeMaterial(
         id: 8,
         spaceId: 1,
-        title: '琛屾斂澶勭綒绗旇',
-        content: '$filler\n\n琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻锛涜繚娉曡涓烘湁杩炵画鎴栬€呯户缁姸鎬佺殑锛屼粠琛屼负缁堜簡涔嬫棩璧疯绠椼€?,
+        title: '行政处罚笔记',
+        content: '$filler\n\n行政处罚追诉时效通常从违法行为发生之日起计算；违法行为有连续或者继续状态的，从行为终了之日起计算。',
         sourceType: 'text',
         orderIndex: 0,
         status: 'ready',
@@ -288,13 +288,13 @@ void main() {
 
       final payload = KnowledgeV3PromptBuilder.buildTiantianAnswerPrompt(
         space: space,
-        question: '琛屾斂澶勭綒杩借瘔鏃舵晥浠庝粈涔堟椂鍊欒捣绠楋紵',
+        question: '行政处罚追诉时效从什么时候起算？',
         materials: [material],
       );
 
-      expect(payload.userPrompt, contains('浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻'));
+      expect(payload.userPrompt, contains('从违法行为发生之日起计算'));
       expect(payload.userPrompt, isNot(contains('token')));
-      expect(payload.userPrompt, isNot(contains('鍒囩墖')));
+      expect(payload.userPrompt, isNot(contains('切片')));
     },
   );
 
@@ -327,42 +327,42 @@ void main() {
       );
       final space = await repo.ensureDefaultSpace();
       final content = [
-        '杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?,
+        '进程是资源分配的基本单位，线程是 CPU 调度的基本单位。',
         List.generate(
           520,
-          (index) => '鍐呭瓨绠＄悊琛ュ厖鏉愭枡 $index锛氬垎椤点€佸垎娈靛拰缃崲绠楁硶璇存槑銆?,
+          (index) => '内存管理补充材料 $index：分页、分段和置换算法说明。',
         ).join('\n'),
       ].join('\n\n');
       final materialId = await repo.importMaterial(
         spaceId: space.id,
-        title: '鎿嶄綔绯荤粺闀胯祫鏂?,
+        title: '操作系统长资料',
         content: content,
       );
       final material = (await repo.getMaterial(materialId))!;
       final ai = _SequenceAiService([
         '''
-{"summary":"鎿嶄綔绯荤粺鍩虹","coreConcepts":["杩涚▼","绾跨▼"],"rules":[],"mistakes":[],"procedures":[],"comparisons":["杩涚▼鍜岀嚎绋?],"examPoints":[],"cardablePoints":[{"concept":"杩涚▼涓庣嚎绋?,"knowledgePoint":"杩涚▼鍜岀嚎绋嬬殑鏍稿績鍖哄埆","reason":"楂橀鍩虹姒傚康","sourceChunkIds":["m$materialId-c1"]}]}
+{"summary":"操作系统基础","coreConcepts":["进程","线程"],"rules":[],"mistakes":[],"procedures":[],"comparisons":["进程和线程"],"examPoints":[],"cardablePoints":[{"concept":"进程与线程","knowledgePoint":"进程和线程的核心区别","reason":"高频基础概念","sourceChunkIds":["m$materialId-c1"]}]}
 ''',
         '''
-{"cardPlan":[{"concept":"杩涚▼涓庣嚎绋?,"knowledgePoint":"杩涚▼鍜岀嚎绋嬬殑鏍稿績鍖哄埆","reason":"楂橀鍩虹姒傚康","cardType":"comparison","targetCount":1,"evidenceChunkIds":["m$materialId-c1"],"examScene":"鎿嶄綔绯荤粺澶嶄範","commonMistake":"鎶婅祫婧愬垎閰嶅拰璋冨害鍗曚綅娣蜂负涓€璋?}]}
+{"cardPlan":[{"concept":"进程与线程","knowledgePoint":"进程和线程的核心区别","reason":"高频基础概念","cardType":"comparison","targetCount":1,"evidenceChunkIds":["m$materialId-c1"],"examScene":"操作系统复习","commonMistake":"把资源分配和调度单位混为一谈"}]}
 ''',
         '''
 {
   "cards": [
     {
-      "question": "杩涚▼鍜岀嚎绋嬪湪鎿嶄綔绯荤粺涓殑鏍稿績鍖哄埆鏄粈涔堬紵",
-      "answer": "杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?,
-      "explanation": "鍖哄垎浜岃€呮椂鍏堢湅璧勬簮褰掑睘锛屽啀鐪?CPU 璋冨害鎵ц銆?,
+      "question": "进程和线程在操作系统中的核心区别是什么？",
+      "answer": "进程是资源分配的基本单位，线程是 CPU 调度的基本单位。",
+      "explanation": "区分二者时先看资源归属，再看 CPU 调度执行。",
       "cardType": "comparison",
       "importance": 5,
       "difficulty": 3,
-      "sourceExcerpt": "杩涚▼鏄祫婧愬垎閰嶇殑鍩烘湰鍗曚綅锛岀嚎绋嬫槸 CPU 璋冨害鐨勫熀鏈崟浣嶃€?,
+      "sourceExcerpt": "进程是资源分配的基本单位，线程是 CPU 调度的基本单位。",
       "sourceChunkId": "m$materialId-c1",
-      "concept": "杩涚▼涓庣嚎绋?,
-      "knowledgePoint": "杩涚▼鍜岀嚎绋嬬殑鏍稿績鍖哄埆",
+      "concept": "进程与线程",
+      "knowledgePoint": "进程和线程的核心区别",
       "grounded": true,
       "status": "auto_approved",
-      "tags": ["鎿嶄綔绯荤粺"]
+      "tags": ["操作系统"]
     }
   ]
 }
@@ -382,7 +382,7 @@ void main() {
 
       expect(ids, hasLength(1));
       expect(cards, hasLength(1));
-      expect(cards.single.question, contains('杩涚▼鍜岀嚎绋?));
+      expect(cards.single.question, contains('进程和线程'));
       expect(cards.single.sourceChunkId, 'm$materialId-c1');
       expect(cards.single.grounded, isTrue);
       expect(cards.single.status, 'auto_approved');
@@ -392,8 +392,8 @@ void main() {
       );
       expect(reviewQueue.map((card) => card.id), contains(cards.single.id));
       expect(ai.calls, 3);
-      expect(ai.prompts[0], contains('璇峰厛鍒嗘瀽璧勬枡缁撴瀯'));
-      expect(ai.prompts[1], contains('璧勬枡 outline JSON'));
+      expect(ai.prompts[0], contains('请先分析资料结构'));
+      expect(ai.prompts[1], contains('资料 outline JSON'));
       expect(ai.prompts[2], contains('cardPlan JSON'));
     },
   );
@@ -428,11 +428,11 @@ void main() {
       final space = await repo.ensureDefaultSpace();
       final denseRules = List.generate(
         36,
-        (index) => '${index + 1}. 琛屾斂澶勭綒瑙勫垯$index锛氳繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻锛岃繛缁姸鎬佷粠缁堜簡涔嬫棩璧疯绠楋紝娉ㄦ剰渚嬪銆?,
+        (index) => '${index + 1}. 行政处罚规则$index：违法行为发生之日起计算，连续状态从终了之日起计算，注意例外。',
       ).join('\n');
       final materialId = await repo.importMaterial(
         spaceId: space.id,
-        title: '琛屾斂澶勭綒瀵嗛泦璧勬枡',
+        title: '行政处罚密集资料',
         content: denseRules,
       );
       final material = (await repo.getMaterial(materialId))!;
@@ -442,14 +442,14 @@ void main() {
 {
   "cards": [
     {
-      "question": "琛屾斂澶勭綒杩借瘔鏃舵晥鐨勪竴鑸捣绠楃偣鏄粈涔堬紵",
-      "answer": "閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻銆?,
-      "explanation": "鍏堝垽鏂繚娉曡涓烘槸鍚﹀凡缁忓彂鐢燂紝鏅€氭儏褰㈡寜鍙戠敓鏃ュ紑濮嬭绠椼€?,
+      "question": "行政处罚追诉时效的一般起算点是什么？",
+      "answer": "通常从违法行为发生之日起计算。",
+      "explanation": "先判断违法行为是否已经发生，普通情形按发生日开始计算。",
       "cardType": "recall",
       "importance": 5,
       "difficulty": 2,
-      "sourceExcerpt": "杩濇硶琛屼负鍙戠敓涔嬫棩璧疯绠?,
-      "tags": ["琛屾斂澶勭綒"]
+      "sourceExcerpt": "违法行为发生之日起计算",
+      "tags": ["行政处罚"]
     }
   ]
 }
@@ -458,14 +458,14 @@ void main() {
 {
   "cards": [
     {
-      "question": "杩濇硶琛屼负瀛樺湪杩炵画鐘舵€佹椂杩借瘔鏃舵晥浠庝粈涔堟椂鍊欒捣绠楋紵",
-      "answer": "浠庤繛缁姸鎬佺粓浜嗕箣鏃ヨ捣璁＄畻銆?,
-      "explanation": "杩炵画鐘舵€佷笉鏄寜鏈€鍒濆彂鐢熸棩锛岃€屾槸鎸夎涓虹粓浜嗘棩浣滀负璧风畻鐐广€?,
+      "question": "违法行为存在连续状态时追诉时效从什么时候起算？",
+      "answer": "从连续状态终了之日起计算。",
+      "explanation": "连续状态不是按最初发生日，而是按行为终了日作为起算点。",
       "cardType": "trap",
       "importance": 5,
       "difficulty": 3,
-      "sourceExcerpt": "杩炵画鐘舵€佷粠缁堜簡涔嬫棩璧疯绠?,
-      "tags": ["琛屾斂澶勭綒", "鏄撻敊鐐?]
+      "sourceExcerpt": "连续状态从终了之日起计算",
+      "tags": ["行政处罚", "易错点"]
     }
   ]
 }
@@ -484,9 +484,9 @@ void main() {
 
       expect(ids, hasLength(2));
       expect(ai.calls, 3);
-      expect(ai.prompts.last, contains('鏌ユ紡琛ュ崱璇锋眰'));
+      expect(ai.prompts.last, contains('查漏补卡请求'));
       final cards = await repo.getCards(space.id);
-      expect(cards.map((card) => card.question), contains(contains('杩炵画鐘舵€?)));
+      expect(cards.map((card) => card.question), contains(contains('连续状态')));
     },
   );
 
@@ -571,24 +571,24 @@ void main() {
     final space = await repo.ensureDefaultSpace();
     final materialId = await repo.importMaterial(
       spaceId: space.id,
-      title: '琛屾斂澶勭綒璧勬枡',
-      content: '琛屾斂澶勭綒杩借瘔鏃舵晥閫氬父浠庤繚娉曡涓哄彂鐢熶箣鏃ヨ捣璁＄畻锛涜繚娉曡涓烘湁杩炵画鎴栬€呯户缁姸鎬佺殑锛屼粠琛屼负缁堜簡涔嬫棩璧疯绠椼€?,
+      title: '行政处罚资料',
+      content: '行政处罚追诉时效通常从违法行为发生之日起计算；违法行为有连续或者继续状态的，从行为终了之日起计算。',
     );
     final material = (await repo.getMaterial(materialId))!;
     final sessionId = await repo.createQaSession(
       spaceId: space.id,
-      title: '杩借瘔鏃舵晥',
+      title: '追诉时效',
       referencedMaterialIds: [material.id],
     );
     await repo.addQaMessage(
       sessionId: sessionId,
       role: 'assistant',
-      content: '闀垮洖绛?,
+      content: '长回答',
       sources: [material],
     );
     final longAnswer = List.generate(
       16,
-      (index) => '绗?index鐐癸細琛屾斂澶勭綒杩借瘔鏃舵晥瑕佸厛鐪嬭繚娉曡涓哄彂鐢熸棩锛屽啀鍒ゆ柇鏄惁瀛樺湪杩炵画鎴栬€呯户缁姸鎬併€?,
+      (index) => '第$index点：行政处罚追诉时效要先看违法行为发生日，再判断是否存在连续或者继续状态。',
     ).join(' ');
     final service = KnowledgeV3AiService(
       aiConfigRepository: aiConfigRepository,
@@ -600,7 +600,7 @@ void main() {
       space: space,
       answer: TiantianAnswer(
         sessionId: sessionId,
-        question: '琛屾斂澶勭綒杩借瘔鏃舵晥鎬庝箞璧风畻锛?,
+        question: '行政处罚追诉时效怎么起算？',
         answer: longAnswer,
         sources: [material],
       ),
@@ -611,7 +611,7 @@ void main() {
     expect(card, isNotNull);
     expect(card!.answer.length, lessThanOrEqualTo(380));
     expect(card.answer, endsWith('...'));
-    expect(card.explanation, contains('瀹屾暣鍥炵瓟浠嶄繚鐣欏湪鐢滅敎闂瓟璁板綍涓?));
+    expect(card.explanation, contains('完整回答仍保留在甜甜问答记录中'));
   });
 
   test('saveAnswerAsCard uses first source only when multiple exist', () async {
@@ -632,15 +632,15 @@ void main() {
     final material1 = (await repo.getMaterial(
       await repo.importMaterial(
         spaceId: space.id,
-        title: '璧勬枡A',
-        content: '鍐呭A',
+        title: '资料A',
+        content: '内容A',
       ),
     ))!;
     final material2 = (await repo.getMaterial(
       await repo.importMaterial(
         spaceId: space.id,
-        title: '璧勬枡B',
-        content: '鍐呭B',
+        title: '资料B',
+        content: '内容B',
       ),
     ))!;
 
@@ -654,8 +654,8 @@ void main() {
       space: space,
       answer: TiantianAnswer(
         sessionId: 0,
-        question: '闂',
-        answer: '绛旀',
+        question: '问题',
+        answer: '答案',
         sources: [material1, material2],
       ),
     );
@@ -663,7 +663,7 @@ void main() {
     final card = await repo.getCard(id);
     expect(card, isNotNull);
     expect(card!.materialId, material1.id);
-    expect(card.sourceTitle, '璧勬枡A');
+    expect(card.sourceTitle, '资料A');
   });
 
   test('saveAnswerAsCard writes fixed cardType and tags', () async {
@@ -692,8 +692,8 @@ void main() {
       space: space,
       answer: TiantianAnswer(
         sessionId: 0,
-        question: '闂',
-        answer: '绛旀',
+        question: '问题',
+        answer: '答案',
         sources: [],
       ),
     );
@@ -703,7 +703,6 @@ void main() {
     expect(card!.cardType, 'qa');
     expect(card.importance, 3);
     expect(card.difficulty, 3);
-    expect(card.tagsJson, contains('鐢滅敎闂瓟'));
+    expect(card.tagsJson, contains('甜甜问答'));
   });
 }
-

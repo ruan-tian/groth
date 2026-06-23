@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,14 +60,14 @@ Widget _buildTestableWidget({required List<Override> overrides}) {
           type: 'life_session',
           priority: PetPriority.life,
           imagePath: PetAssets.commonHappy,
-          messages: const ['鐢滅敎鍦ㄨ繖閲岄櫔浣狅綖'],
+          messages: const ['甜甜在这里陪你～'],
           startedAt: DateTime(2026, 6, 9),
         ),
       ),
       dashboardPetViewProvider.overrideWithValue(
         const PetViewState(
           imagePath: PetAssets.commonHappy,
-          bubbleText: '鐢滅敎鍦ㄨ繖閲岄櫔浣狅綖',
+          bubbleText: '甜甜在这里陪你～',
           isBubbleVisible: true,
         ),
       ),
@@ -111,11 +111,11 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('浣犵殑鎴愰暱锛岀敱浣犳帉鎺?), findsOneWidget);
+      expect(find.text('你的成长，由你掌控'), findsOneWidget);
       expect(find.textContaining('Lv.5'), findsWidgets);
-      expect(find.text('浠婃棩姒傝'), findsOneWidget);
+      expect(find.text('今日概览'), findsOneWidget);
       // Default cards are now "study" and "focus" in compact mode
-      expect(find.text('90鍒嗛挓'), findsOneWidget);  // study
+      expect(find.text('90分钟'), findsOneWidget);  // study
     });
 
     testWidgets('shows quick action sheet from FAB', (tester) async {
@@ -129,16 +129,16 @@ void main() {
       await tester.pumpAndSettle();
 
       // Find the FAB by its tooltip
-      final fabFinder = find.byTooltip('蹇€熷紑濮?);
+      final fabFinder = find.byTooltip('快速开始');
       await tester.tap(fabFinder);
       await tester.pumpAndSettle();
 
-      expect(find.text('蹇€熷紑濮?), findsOneWidget);
-      expect(find.text('寮€濮嬪涔?), findsOneWidget);
-      expect(find.text('寮€濮嬭繍鍔?), findsOneWidget);
-      expect(find.text('鍠濇按鎵撳崱'), findsOneWidget);
-      expect(find.text('璁板綍鐫＄湢'), findsOneWidget);
-      expect(find.text('寮€濮嬫棩璁?), findsOneWidget);
+      expect(find.text('快速开始'), findsOneWidget);
+      expect(find.text('开始学习'), findsOneWidget);
+      expect(find.text('开始运动'), findsOneWidget);
+      expect(find.text('喝水打卡'), findsOneWidget);
+      expect(find.text('记录睡眠'), findsOneWidget);
+      expect(find.text('开始日记'), findsOneWidget);
     });
 
     testWidgets('shows and expands the music floating capsule', (tester) async {
@@ -160,9 +160,9 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('expanded_music_card')), findsOneWidget);
-      expect(find.text('闊充箰搴?), findsOneWidget);
-      expect(find.text('鎾斁鍒楄〃'), findsOneWidget);
-      expect(find.text('鏀惰棌'), findsOneWidget);
+      expect(find.text('音乐库'), findsOneWidget);
+      expect(find.text('播放列表'), findsOneWidget);
+      expect(find.text('收藏'), findsOneWidget);
     });
 
     testWidgets('music floating card fits common phone widths', (tester) async {
@@ -233,7 +233,7 @@ void main() {
         _buildTestableWidget(
           overrides: [
             dashboardProvider.overrideWith((_) async {
-              throw Exception('缃戠粶寮傚父');
+              throw Exception('网络异常');
             }),
           ],
         ),
@@ -241,7 +241,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byIcon(Icons.error_outline_rounded), findsOneWidget);
-      expect(find.text('鍔犺浇澶辫触'), findsOneWidget);
+      expect(find.text('加载失败'), findsOneWidget);
     });
 
     testWidgets('shows retry button on error', (tester) async {
@@ -249,14 +249,14 @@ void main() {
         _buildTestableWidget(
           overrides: [
             dashboardProvider.overrideWith((_) async {
-              throw Exception('娴嬭瘯閿欒');
+              throw Exception('测试错误');
             }),
           ],
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('閲嶈瘯'), findsOneWidget);
+      expect(find.text('重试'), findsOneWidget);
       expect(find.byType(FilledButton), findsOneWidget);
     });
   });
@@ -292,4 +292,3 @@ void main() {
     });
   });
 }
-
