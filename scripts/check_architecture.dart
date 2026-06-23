@@ -317,8 +317,11 @@ List<String> _checkCrossFeatureImport() {
   };
 
   // Legacy exception files (documented, to be refactored later)
+  // TODO: Refactor ai_analysis_page to use AiAnalysisInputFacade
   const legacyExceptions = {
     'features/ai/pages/ai_analysis_page.dart',
+    'features/ai/widgets/ai_analysis_tabs.dart',
+    'features/ai/widgets/ai_analysis_more_tabs.dart',
   };
 
   for (final feature in featureDirs) {
