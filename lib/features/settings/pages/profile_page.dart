@@ -265,21 +265,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   }
 
   Future<void> _saveBodyMetric({double? weight, double? bodyFat}) async {
-    final db = ref.read(databaseProvider);
+    final repo = ref.read(fitnessRepositoryProvider);
     final now = DateTime.now();
     final recordDate =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    await db
-        .into(db.bodyMetrics)
-        .insert(
-          BodyMetricsCompanion.insert(
-            recordDate: recordDate,
-            weight: Value(weight),
-            bodyFat: Value(bodyFat),
-            createdAt: now.millisecondsSinceEpoch,
-          ),
-        );
+    await repo.insertBodyMetric(
+      BodyMetricsCompanion.insert(
+        recordDate: recordDate,
+        weight: Value(weight),
+        bodyFat: Value(bodyFat),
+        createdAt: now.millisecondsSinceEpoch,
+      ),
+    );
 
     HapticFeedback.lightImpact();
     if (mounted) {

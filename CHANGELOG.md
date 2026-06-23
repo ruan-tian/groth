@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-06-23 Architecture Upgrade Phase E+F: Validation & Documentation
+
+- Phase E: Verified core/shared have no business logic
+  - core→features: 0 violations (fully fixed)
+  - shared→features: 3 violations remaining (knowledge_card_assets)
+- Phase F: Created docs/architecture/overview.md with architecture rules
+- Documented remaining items for future work
+
 ## 2026-06-23 Architecture Upgrade Phase C: Provider 重组 (complete)
 
 - Fixed all provider import paths after migration

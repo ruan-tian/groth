@@ -4,10 +4,10 @@ import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../dashboard/providers/dashboard_provider.dart';
+import '../dashboard/providers/dashboard_provider.dart';
 import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
-import '../../health/providers/sleep_provider.dart';
+import 'providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import 'pages/add_sleep_record_sheet.dart';
 import '../plan/utils/plan_module_assets.dart';
