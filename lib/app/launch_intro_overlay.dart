@@ -104,7 +104,7 @@ class _LaunchIntroOverlayState extends State<LaunchIntroOverlay>
         if (_visible)
           AnimatedBuilder(
             animation: Listenable.merge([_main, _breathe, _particles, _shimmer]),
-            builder: (_, __) => _Scene(
+            builder: (_, _) => _Scene(
               main: _main.value,
               breathe: _breathe.value,
               particles: _particles.value,

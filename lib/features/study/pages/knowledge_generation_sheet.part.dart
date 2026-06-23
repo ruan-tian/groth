@@ -29,17 +29,7 @@ class _GenerationSheetState extends ConsumerState<_GenerationSheet> {
     final controller = ref.read(knowledgeGenerationControllerProvider.notifier);
     return _SheetScaffold(
       title: '生成知识卡',
-      child: job == null
-          ? const _GenerationProgressView(
-              progress: KnowledgeGenerationProgress(
-                stage: 'prepare',
-                message: '正在启动生成任务',
-                completedUnits: 0,
-                totalUnits: 1,
-                savedCount: 0,
-              ),
-            )
-          : _buildJob(context, job, controller),
+      child: _buildJob(context, job, controller),
     );
   }
 

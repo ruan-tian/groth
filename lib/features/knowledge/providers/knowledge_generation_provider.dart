@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/repositories/knowledge_v3_repository.dart';
-import '../../../shared/providers/repository_providers.dart';
 import 'knowledge_card_ai_provider.dart';
 import '../services/knowledge_v3_ai_service.dart';
 
@@ -45,13 +44,10 @@ class KnowledgeGenerationController
     extends StateNotifier<KnowledgeGenerationJobState> {
   KnowledgeGenerationController({
     required KnowledgeV3AiService aiService,
-    required KnowledgeV3Repository repository,
   })  : _aiService = aiService,
-        _repository = repository,
         super(const KnowledgeGenerationJobState(isRunning: false));
 
   final KnowledgeV3AiService _aiService;
-  final KnowledgeV3Repository _repository;
 
   Future<void> start({
     required KnowledgeSpaceV3 space,
@@ -92,6 +88,5 @@ final knowledgeGenerationControllerProvider =
         KnowledgeGenerationJobState>((ref) {
   return KnowledgeGenerationController(
     aiService: ref.watch(knowledgeV3AiServiceProvider),
-    repository: ref.watch(knowledgeV3RepositoryProvider),
   );
 });

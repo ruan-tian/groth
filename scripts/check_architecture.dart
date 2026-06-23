@@ -1,13 +1,18 @@
 import 'dart:io';
 
-/// Growth OS 架构守卫脚本
+/// Growth OS Architecture Guard Script
 ///
-/// 检查代码库是否遵守架构规则：
-/// 1. core 不允许 import features
-/// 2. shared 不允许 import features（re-export 除外）
-/// 3. pages 不允许直接 import core/database
+/// Checks:
+/// R1: core must not import features
+/// R2: shared must not import features (re-exports allowed)
+/// R3: pages must not import core/database
+/// R4: core/repositories/ legacy re-export inventory
+/// R5: shared/providers/ legacy re-export inventory
+/// R6: features/*/pages must not use ref.read/watch(databaseProvider)
+/// R7: features/*/providers direct databaseProvider usage (warning)
+/// R8: feature A must not import feature B internals (whitelist excepted)
 ///
-/// 运行方式：dart scripts/check_architecture.dart
+/// Run: dart scripts/check_architecture.dart
 void main() {
   final libDir = Directory('lib');
   if (!libDir.existsSync()) {
@@ -15,44 +20,81 @@ void main() {
     exit(1);
   }
 
-  var violations = <String>[];
+  var errors = <String>[];
+  var warnings = <String>[];
+  var legacyItems = <String>[];
 
-  // Rule 1: core -> features (禁止)
-  violations.addAll(_checkNoImport(
+  // R1: core -> features (forbidden)
+  errors.addAll(_checkNoImport(
     directory: 'lib/core',
     forbiddenPattern: RegExp(r'''import\s+['"].*features/'''),
-    ruleName: 'core -> features',
+    ruleName: 'R1: core -> features',
   ));
 
-  // Rule 2: shared -> features (禁止，re-export 除外)
-  violations.addAll(_checkNoImport(
+  // R2: shared -> features (forbidden, re-exports allowed)
+  errors.addAll(_checkNoImport(
     directory: 'lib/shared',
     forbiddenPattern: RegExp(r'''import\s+['"].*features/'''),
-    ruleName: 'shared -> features',
+    ruleName: 'R2: shared -> features',
   ));
 
-  // Rule 3: pages -> core/database (禁止)
-  violations.addAll(_checkNoImport(
+  // R3: pages -> core/database (forbidden)
+  errors.addAll(_checkNoImport(
     directory: 'lib/features',
     forbiddenPattern: RegExp(r'''import\s+['"].*core/database/'''),
-    ruleName: 'pages -> core/database',
+    ruleName: 'R3: pages -> core/database',
     fileFilter: (path) => path.contains('/pages/'),
   ));
+
+  // R4: core/repositories/ legacy re-export inventory
+  legacyItems.addAll(_checkLegacyRepos());
+
+  // R5: shared/providers/ legacy re-export inventory
+  legacyItems.addAll(_checkLegacyProviders());
+
+  // R6: features/*/pages must not use ref.read/watch(databaseProvider)
+  errors.addAll(_checkPagesDbAccess());
+
+  // R7: features/*/providers direct databaseProvider usage (warning)
+  warnings.addAll(_checkProvidersDbAccess());
+
+  // R8: feature A -> feature B (whitelist excepted)
+  errors.addAll(_checkCrossFeatureImport());
 
   // Report
   print('=== Growth OS Architecture Check ===\n');
 
-  if (violations.isEmpty) {
+  if (errors.isEmpty && warnings.isEmpty && legacyItems.isEmpty) {
     print('No violations found!');
   } else {
-    print('Found ${violations.length} violation(s):\n');
-    for (final v in violations) {
-      print('  - $v');
+    if (errors.isNotEmpty) {
+      print('ERRORS (${errors.length}):\n');
+      for (final v in errors) {
+        print('  [ERROR] $v');
+      }
+      print('');
+    }
+    if (warnings.isNotEmpty) {
+      print('WARNINGS (${warnings.length}):\n');
+      for (final v in warnings) {
+        print('  [WARN]  $v');
+      }
+      print('');
+    }
+    if (legacyItems.isNotEmpty) {
+      print('LEGACY RE-EXPORTS (${legacyItems.length}):\n');
+      for (final v in legacyItems) {
+        print('  [LEGACY] $v');
+      }
+      print('');
     }
   }
 
-  exit(violations.isEmpty ? 0 : 1);
+  // Only errors cause exit code 1; warnings and legacy are informational
+  exit(errors.isEmpty ? 0 : 1);
 }
+
+// ─── Rules R1-R3: Forbidden import check ─────────────────────────────────────
 
 List<String> _checkNoImport({
   required String directory,
@@ -80,11 +122,239 @@ List<String> _checkNoImport({
         continue; // Skip re-exports (allowed)
       }
       if (forbiddenPattern.hasMatch(line)) {
-        final relativePath = entity.path.replaceAll('\\', '/');
+        final relativePath = _relative(entity.path);
         violations.add('$ruleName: $relativePath:${i + 1} -- ${line.trim()}');
       }
     }
   }
 
   return violations;
+}
+
+// ─── R4: core/repositories/ legacy re-export ─────────────────────────────────
+
+List<String> _checkLegacyRepos() {
+  final legacy = <String>[];
+  final dir = Directory('lib/core/repositories');
+
+  if (!dir.existsSync()) return legacy;
+
+  for (final entity in dir.listSync()) {
+    if (entity is! File) continue;
+    if (!entity.path.endsWith('.dart')) continue;
+
+    final fileName = entity.path.split(Platform.pathSeparator).last;
+    if (fileName == 'setting_repository.dart') continue;
+
+    // Check if it is a pure re-export file
+    final content = entity.readAsStringSync();
+    final lines = content.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    final isReExport = lines.every(
+      (l) => l.trim().startsWith('//') || l.trim().startsWith('export '),
+    );
+
+    if (isReExport) {
+      legacy.add('core/repositories/$fileName -> re-export (migrate to features/)');
+    }
+  }
+
+  return legacy;
+}
+
+// ─── R5: shared/providers/ legacy re-export ──────────────────────────────────
+
+List<String> _checkLegacyProviders() {
+  final legacy = <String>[];
+  final dir = Directory('lib/shared/providers');
+
+  if (!dir.existsSync()) return legacy;
+
+  // Global providers allowed to stay in shared/providers/
+  const globalProviders = {
+    'database_provider.dart',
+    'settings_provider.dart',
+    'app_lifecycle_provider.dart',
+    'current_date_provider.dart',
+    'focus_audio_provider.dart',
+    'repository_providers.dart',
+    'service_providers.dart',
+    'settings_facade.dart',
+  };
+
+  for (final entity in dir.listSync()) {
+    if (entity is! File) continue;
+    if (!entity.path.endsWith('.dart')) continue;
+
+    final fileName = entity.path.split(Platform.pathSeparator).last;
+    if (globalProviders.contains(fileName)) continue;
+
+    // Check if it is a pure re-export file
+    final content = entity.readAsStringSync();
+    final lines = content.split('\n').where((l) => l.trim().isNotEmpty).toList();
+    final isReExport = lines.every(
+      (l) => l.trim().startsWith('//') || l.trim().startsWith('export '),
+    );
+
+    if (isReExport) {
+      legacy.add('shared/providers/$fileName -> re-export (migrate to features/)');
+    }
+  }
+
+  return legacy;
+}
+
+// ─── R6: features/*/pages must not use ref.read/watch(databaseProvider) ──────
+
+List<String> _checkPagesDbAccess() {
+  final violations = <String>[];
+  final featuresDir = Directory('lib/features');
+
+  if (!featuresDir.existsSync()) return violations;
+
+  final dbPattern = RegExp(
+    r'''ref\.(read|watch)\s*\(\s*(databaseProvider|appDatabaseProvider)\s*\)''',
+  );
+
+  for (final entity in featuresDir.listSync(recursive: true)) {
+    if (entity is! File) continue;
+    if (!entity.path.endsWith('.dart')) continue;
+    if (!entity.path.contains('/pages/')) continue;
+
+    final lines = entity.readAsLinesSync();
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (line.trim().startsWith('//')) continue;
+      if (dbPattern.hasMatch(line)) {
+        final relativePath = _relative(entity.path);
+        violations.add(
+          'R6: pages direct DB access: $relativePath:${i + 1} -- ${line.trim()}',
+        );
+      }
+    }
+  }
+
+  return violations;
+}
+
+// ─── R7: features/*/providers direct databaseProvider (warning) ──────────────
+
+List<String> _checkProvidersDbAccess() {
+  final warnings = <String>[];
+  final featuresDir = Directory('lib/features');
+
+  if (!featuresDir.existsSync()) return warnings;
+
+  final dbPattern = RegExp(
+    r'''ref\.(read|watch)\s*\(\s*(databaseProvider|appDatabaseProvider)\s*\)''',
+  );
+
+  for (final entity in featuresDir.listSync(recursive: true)) {
+    if (entity is! File) continue;
+    if (!entity.path.endsWith('.dart')) continue;
+    if (!entity.path.contains('/providers/')) continue;
+
+    final lines = entity.readAsLinesSync();
+    for (var i = 0; i < lines.length; i++) {
+      final line = lines[i];
+      if (line.trim().startsWith('//')) continue;
+      if (dbPattern.hasMatch(line)) {
+        final relativePath = _relative(entity.path);
+        warnings.add(
+          'R7: provider direct DB access: $relativePath:${i + 1} -- ${line.trim()}',
+        );
+      }
+    }
+  }
+
+  return warnings;
+}
+
+// ─── R8: feature A -> feature B (whitelist excepted) ─────────────────────────
+
+List<String> _checkCrossFeatureImport() {
+  final violations = <String>[];
+  final featuresDir = Directory('lib/features');
+
+  if (!featuresDir.existsSync()) return violations;
+
+  // Get all feature directories
+  final featureDirs = featuresDir
+      .listSync()
+      .whereType<Directory>()
+      .map((d) => d.path.split(Platform.pathSeparator).last)
+      .toList();
+
+  // Whitelist: allowed cross-feature dependencies
+  // key: source feature, value: allowed target path prefixes
+  const whitelist = <String, List<String>>{
+    'ai': ['services', 'providers'],
+    'focus': ['models', 'providers', 'utils'],
+    'dashboard': ['utils', 'pages'], // avatar assets + quick action sheet
+    'settings': ['utils'], // avatar assets
+  };
+
+  // Legacy exception files (documented, to be refactored later)
+  const legacyExceptions = {
+    'features/ai/pages/ai_analysis_page.dart',
+  };
+
+  for (final feature in featureDirs) {
+    final featurePath = '${featuresDir.path}/$feature';
+    final allowedTargets = whitelist[feature] ?? [];
+
+    for (final entity in Directory(featurePath).listSync(recursive: true)) {
+      if (entity is! File) continue;
+      if (!entity.path.endsWith('.dart')) continue;
+
+      final relativePath = _relative(entity.path);
+
+      // Skip legacy exceptions
+      if (legacyExceptions.contains(relativePath)) continue;
+
+      final lines = entity.readAsLinesSync();
+      for (var i = 0; i < lines.length; i++) {
+        final line = lines[i];
+        if (line.trim().startsWith('//') || line.trim().startsWith('///')) {
+          continue;
+        }
+        if (line.trim().startsWith('export ')) continue;
+
+        // Check if importing another feature
+        final importMatch =
+            RegExp(r'''import\s+['"].*features/(\w+)/(.*)['"]''').firstMatch(line);
+        if (importMatch == null) continue;
+
+        final targetFeature = importMatch.group(1)!;
+        final targetPath = importMatch.group(2)!;
+
+        // Self-import is OK
+        if (targetFeature == feature) continue;
+
+        // Check whitelist
+        final isWhitelisted = allowedTargets.any((prefix) {
+          if (prefix.isEmpty) return false;
+          // Support wildcard features/*/providers
+          if (prefix.contains('*')) {
+            final pattern = prefix.replaceAll('*', r'\w+');
+            return RegExp('^$pattern').hasMatch(targetPath);
+          }
+          return targetPath.startsWith(prefix);
+        });
+
+        if (!isWhitelisted) {
+          violations.add(
+            'R8: cross-feature: $relativePath:${i + 1} -> $feature -> $targetFeature/$targetPath',
+          );
+        }
+      }
+    }
+  }
+
+  return violations;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+String _relative(String path) {
+  return path.replaceAll('\\', '/').replaceFirst(RegExp(r'^\.?/?'), '');
 }
