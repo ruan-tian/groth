@@ -3,7 +3,7 @@
 import '../../../core/domain/pet/pet_display_intent.dart';
 import '../../../core/domain/pet/pet_priority.dart';
 import '../../../core/domain/pet/pet_runtime_state.dart';
-import '../../../shared/providers/pet_provider.dart';
+import 'pet_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../services/life_session_manager.dart';
 import '../services/pet_orchestrator.dart';

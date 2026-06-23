@@ -7,9 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/pet_ai_result_provider.dart';
-import '../../../shared/providers/pet_orchestrator_provider.dart';
-import '../../../shared/providers/pet_projection_provider.dart';
+import '../../pet/providers/pet_ai_result_provider.dart';
+import '../../pet/providers/pet_orchestrator_provider.dart';
+import '../../pet/providers/pet_projection_provider.dart';
 import '../../../core/domain/pet/pet_scene_model.dart';
 import '../../../core/constants/pet_assets.dart';
 import '../utils/plan_module_assets.dart';

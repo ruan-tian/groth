@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
-import '../../../shared/providers/pet_provider.dart';
+import '../providers/pet_provider.dart';
 import '../../../core/constants/pet_assets.dart';
 import '../widgets/pet_floating_asset.dart';
 

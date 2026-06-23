@@ -9,7 +9,7 @@ import '../utils/pet_ai_result_parser.dart';
 import 'pet_ai_privacy_guard.dart';
 import '../../../core/services/pet_event_bus.dart';
 import '../../../shared/providers/settings_provider.dart';
-import '../../../shared/providers/pet_ai_result_provider.dart';
+import '../providers/pet_ai_result_provider.dart';
 import '../providers/pet_message_provider.dart';
 
 /// 宠物 AI 分析状态

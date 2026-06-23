@@ -5,7 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/providers/pet_projection_provider.dart';
+import '../providers/pet_projection_provider.dart';
 import '../../../core/constants/pet_assets.dart';
 import 'particle_burst.dart';
 import '../../../app/design/design.dart';

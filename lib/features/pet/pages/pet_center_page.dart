@@ -9,7 +9,7 @@ import '../../../app/design/design.dart';
 import '../../../core/services/exp_service.dart';
 import '../../dashboard/providers/dashboard_provider.dart'
     hide expServiceProvider;
-import '../../../shared/providers/pet_provider.dart';
+import '../providers/pet_provider.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../../../core/constants/pet_assets.dart';
 import '../widgets/pet_floating_asset.dart';

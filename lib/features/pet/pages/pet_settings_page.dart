@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/pet_provider.dart';
+import '../providers/pet_provider.dart';
 import '../../../core/constants/pet_assets.dart';
 import '../providers/pet_diary_provider.dart';
 import '../widgets/pet_floating_asset.dart';
