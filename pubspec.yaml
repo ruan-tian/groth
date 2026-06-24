@@ -130,6 +130,7 @@ flutter:
     - assets/images/fitness_timer/
     - assets/images/timer_common/
     - assets/images/ai_providers/
+    - assets/images/ai/
     - assets/images/app/
     - assets/images/quick_actions/
     - assets/images/drinks/

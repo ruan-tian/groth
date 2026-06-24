@@ -443,17 +443,17 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colors.softGold,
+        color: colors.primary.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colors.border),
+        border: Border.all(color: colors.primary.withValues(alpha: 0.12)),
       ),
       child: Row(
         children: [
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: colors.primary.withValues(alpha: 0.14),
+              color: colors.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Icon(
@@ -467,9 +467,9 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
             child: Text(
               '配置 AI 服务后，可使用 AI 分析学习、健身和成长数据，生成个性化建议。',
               style: TextStyle(
-                fontSize: 13,
+                fontSize: 14,
                 color: colors.textSecondary,
-                height: 1.4,
+                height: 1.5,
               ),
             ),
           ),
@@ -526,12 +526,19 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           decoration: BoxDecoration(
-            color: isSelected ? colors.softGold : colors.surfaceVariant,
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? colors.primary.withValues(alpha: 0.08) : colors.card,
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: isSelected ? colors.primary : colors.border,
               width: isSelected ? 2 : 1,
             ),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: 0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -541,13 +548,6 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                 height: 48,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.35),
-                      blurRadius: 4,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(12),
@@ -769,6 +769,8 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
             onChanged: (v) => setState(() => _temperature = v),
           ),
           const SizedBox(height: 16),
+          Divider(color: colors.border, height: 1),
+          const SizedBox(height: 16),
 
           // Max Tokens
           Row(
@@ -844,8 +846,8 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                   vertical: 10,
                 ),
                 decoration: BoxDecoration(
-                  color: isSelected ? colors.softGold : colors.surfaceVariant,
-                  borderRadius: BorderRadius.circular(10),
+                  color: isSelected ? colors.primary.withValues(alpha: 0.10) : colors.card,
+                  borderRadius: BorderRadius.circular(999),
                   border: Border.all(
                     color: isSelected ? colors.primary : colors.border,
                   ),
@@ -856,7 +858,7 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
                     fontSize: 13,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                     color: isSelected
-                        ? colors.textPrimary
+                        ? colors.primary
                         : colors.textSecondary,
                   ),
                 ),
@@ -875,44 +877,24 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   Widget _buildTestButton() {
     final colors = context.growthColors;
 
-    return Semantics(
-      button: true,
-      label: '测试连接',
-      child: GestureDetector(
-        onTap: _isTesting ? null : _testConnection,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: colors.border),
-          ),
-          child: Center(
-            child: _isTesting
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.wifi_tethering_rounded,
-                        size: 18,
-                        color: colors.primary,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '测试连接',
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: colors.primary,
-                        ),
-                      ),
-                    ],
-                  ),
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: OutlinedButton.icon(
+        onPressed: _isTesting ? null : _testConnection,
+        icon: _isTesting
+            ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Icon(Icons.wifi_tethering_rounded, size: 18),
+        label: Text(_isTesting ? '测试中...' : '测试连接'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colors.primary,
+          side: BorderSide(color: colors.primary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
         ),
       ),
@@ -922,53 +904,36 @@ class _AiConfigPageState extends ConsumerState<AiConfigPage> {
   Widget _buildSaveButton() {
     final colors = context.growthColors;
 
-    return Semantics(
-      button: true,
-      label: '保存配置',
-      child: GestureDetector(
-        onTap: _isSaving ? null : _saveConfig,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: BoxDecoration(
-            gradient: _isSaving
-                ? null
-                : LinearGradient(
-                    colors: [colors.primary, colors.primaryLight],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-            color: _isSaving ? colors.primaryLight : null,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: _isSaving
-                ? null
-                : [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.24),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ],
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: _isSaving ? null : _saveConfig,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colors.primary,
+          foregroundColor: colors.textOnAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Center(
-            child: _isSaving
-                ? SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: context.growthColors.textOnAccent,
-                    ),
-                  )
-                : Text(
-                    '保存配置',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: colors.textOnAccent,
-                    ),
-                  ),
-          ),
+          elevation: 2,
+          shadowColor: colors.primary.withValues(alpha: 0.12),
         ),
+        child: _isSaving
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+            : const Text(
+                '保存配置',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
