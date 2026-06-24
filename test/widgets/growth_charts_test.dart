@@ -13,6 +13,40 @@ Widget _wrap(Widget child, {double width = 390}) {
 }
 
 void main() {
+  testWidgets('range selector uses shared layout and changes value', (
+    tester,
+  ) async {
+    var selected = 7;
+    await tester.pumpWidget(
+      _wrap(
+        StatefulBuilder(
+          builder: (context, setState) {
+            return GrowthChartRangeSelector<int>(
+              color: Colors.teal,
+              selected: selected,
+              options: const [
+                GrowthChartRangeOption(value: 7, label: '周'),
+                GrowthChartRangeOption(value: 30, label: '月'),
+                GrowthChartRangeOption(value: 365, label: '年'),
+              ],
+              onChanged: (value) => setState(() => selected = value),
+            );
+          },
+        ),
+      ),
+    );
+
+    expect(find.text('周'), findsOneWidget);
+    expect(find.text('月'), findsOneWidget);
+    expect(find.text('年'), findsOneWidget);
+
+    await tester.tap(find.text('月'));
+    await tester.pumpAndSettle();
+
+    expect(selected, 30);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('animated bar chart handles narrow width and zero data', (
     tester,
   ) async {
@@ -33,6 +67,30 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('animated bar chart accepts duration axis formatter', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 700));
+    await tester.pumpWidget(
+      _wrap(
+        GrowthAnimatedBarChart(
+          points: const [
+            GrowthChartPoint(label: '周一', value: 30),
+            GrowthChartPoint(label: '周二', value: 60),
+            GrowthChartPoint(label: '周三', value: 90),
+          ],
+          color: Colors.teal,
+          valueFormatter: (value) => '${value.round()}m',
+          axisFormatter: (value) => '时长${value.round()}',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('时长'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
@@ -74,6 +132,44 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('multi line chart uses primary axis formatter', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(390, 700));
+    await tester.pumpWidget(
+      _wrap(
+        GrowthMultiLineChart(
+          color: Colors.indigo,
+          axisFormatter: (value) => '${value.toStringAsFixed(1)}h',
+          series: [
+            GrowthChartSeries(
+              name: '睡眠时长',
+              unit: 'h',
+              color: Colors.indigo,
+              points: const [
+                GrowthChartPoint(label: '1/1', value: 6.5),
+                GrowthChartPoint(label: '1/2', value: 8),
+              ],
+              valueFormatter: (value) => '${value.toStringAsFixed(1)}h',
+            ),
+            GrowthChartSeries(
+              name: '睡眠质量',
+              unit: '分',
+              color: Colors.pink,
+              points: const [
+                GrowthChartPoint(label: '1/1', value: 3),
+                GrowthChartPoint(label: '1/2', value: 5),
+              ],
+              valueFormatter: (value) => '${value.toStringAsFixed(1)}分',
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('h'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('heatmap calendar renders a scrollable yearly grid', (
     tester,
   ) async {
@@ -96,6 +192,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(find.text('1月'), findsWidgets);
+    expect(find.text('6月'), findsWidgets);
+    expect(find.text('12月'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 }

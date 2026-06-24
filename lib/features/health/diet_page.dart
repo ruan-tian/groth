@@ -773,159 +773,60 @@ class _DietPageState extends ConsumerState<DietPage> {
     final nutritionData = ref.watch(dailyCalorieWaterProvider(_selectedRange));
     final colors = context.growthColors;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.card, colors.diet.withValues(alpha: 0.06)],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.diet.withValues(alpha: 0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 标题行
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: colors.diet.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.smd),
-                ),
-                child: Icon(
-                  Icons.show_chart_rounded,
-                  color: colors.diet,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                _selectedRange == 7
-                    ? '本周趋势'
-                    : _selectedRange == 30
-                    ? '本月趋势'
-                    : '今年趋势',
-                style: AppTextStyles.cardTitle.copyWith(
-                  color: colors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 时间范围选择器
-          _buildRangeSelector(),
-          const SizedBox(height: 12),
-
-          // 图例
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegend(colors.diet, '卡路里'),
-              const SizedBox(width: 24),
-              _buildLegend(colors.primary, '饮水量'),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 图表
-          ClipRect(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildRangeSelector(),
+        const SizedBox(height: AppSpacing.md),
+        GrowthChartCard(
+          title: '饮食趋势',
+          subtitle: _rangeSubtitle(),
+          icon: Icons.show_chart_rounded,
+          color: colors.diet,
+          legend: [
+            GrowthChartLegendItem(color: colors.diet, label: '卡路里(kcal)'),
+            GrowthChartLegendItem(color: colors.primary, label: '饮水量(ml)'),
+          ],
+          child: ClipRect(
             child: SizedBox(
-              height: 220,
+              height: 244,
               child: nutritionData.when(
                 data: (data) => _CalorieWaterChart(
                   calorieMap: data.calorieMap,
                   waterMap: data.waterMap,
                   days: _selectedRange,
                 ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('加载失败: $e')),
+                loading: () => Center(
+                  child: CircularProgressIndicator(color: colors.diet),
+                ),
+                error: (_, _) => GrowthChartEmpty(color: colors.diet),
               ),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildRangeSelector() {
-    final colors = context.growthColors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceVariant.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(AppRadius.mlg),
-        border: Border.all(color: colors.diet.withValues(alpha: 0.10)),
-      ),
-      padding: const EdgeInsets.all(2),
-      child: Row(
-        children: [
-          _buildRangeChip('周', 7),
-          _buildRangeChip('月', 30),
-          _buildRangeChip('年', 365),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRangeChip(String label, int value) {
-    final isSelected = _selectedRange == value;
-    final colors = context.growthColors;
-    return Expanded(
-      child: Semantics(
-        button: true,
-        label: '显示$label数据',
-        selected: isSelected,
-        child: GestureDetector(
-          onTap: () => setState(() => _selectedRange = value),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? colors.diet : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? colors.textOnAccent : colors.textTertiary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegend(Color color, String label) {
-    final colors = context.growthColors;
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
+    return GrowthChartRangeSelector<int>(
+      color: context.growthColors.diet,
+      selected: _selectedRange,
+      options: const [
+        GrowthChartRangeOption(value: 7, label: '周'),
+        GrowthChartRangeOption(value: 30, label: '月'),
+        GrowthChartRangeOption(value: 365, label: '年'),
       ],
+      onChanged: (value) => setState(() => _selectedRange = value),
     );
+  }
+
+  String _rangeSubtitle() {
+    return switch (_selectedRange) {
+      7 => '近 7 天',
+      30 => '近 30 天',
+      _ => '近 1 年',
+    };
   }
 
   // ---------------------------------------------------------------------------

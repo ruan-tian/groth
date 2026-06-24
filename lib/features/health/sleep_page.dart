@@ -13,7 +13,6 @@ import 'pages/add_sleep_record_sheet.dart';
 import '../plan/utils/plan_module_assets.dart';
 import '../plan/widgets/plan_module_visuals.dart';
 import 'utils/sleep_display_formatters.dart';
-import 'widgets/sleep_combined_chart.dart';
 import 'widgets/sleep_record_detail_sheet.dart';
 import 'widgets/sleep_recent_records_card.dart';
 
@@ -294,239 +293,58 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     int sleepGoal,
   ) {
     final colors = context.growthColors;
-    final rangeLabel = _selectedRange == 7
-        ? '近7天趋势'
-        : _selectedRange == 30
-        ? '近30天趋势'
-        : '近1年趋势';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(rangeLabel, style: AppTextStyles.sectionTitle),
-            const Spacer(),
-            Semantics(
-              button: true,
-              label: '查看详情',
-              child: GestureDetector(
-                onTap: () => _navigateToHistory(context),
-                child: Row(
-                  children: [
-                    Text(
-                      '查看详情',
-                      style: TextStyle(fontSize: 12, color: _lavender),
-                    ),
-                    Icon(Icons.chevron_right, size: 16, color: _lavender),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        // 时间范围选择器
         _buildRangeSelector(),
         const SizedBox(height: AppSpacing.md),
-        // 组合图表
-        durationList.when(
-          data: (dList) {
-            if (dList.isEmpty) return _buildEmptyTrend();
-            return qualityList.when(
-              data: (qList) {
-                return Semantics(
-                  button: true,
-                  label: '睡眠趋势，查看详情',
-                  child: GestureDetector(
-                    onTap: () => _navigateToHistory(context),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            colors.card,
-                            colors.sleep.withValues(alpha: 0.06),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-                        border: Border.all(
-                          color: colors.sleep.withValues(alpha: 0.14),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: colors.shadow.withValues(alpha: 0.2),
-                            blurRadius: 24,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 标题行
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.bar_chart_rounded,
-                                size: 18,
-                                color: _lavender,
-                              ),
-                              const SizedBox(width: 8),
-                              Text('睡眠趋势', style: AppTextStyles.cardTitle),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          // 图例
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              _buildLegend(_lavender, '睡眠时长'),
-                              const SizedBox(width: 24),
-                              _buildLegend(_sleepPink, '睡眠质量'),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          // fl_chart 组合图表
-                          SizedBox(
-                            height: 260,
-                            child: SleepCombinedChart(
-                              durationData: dList,
-                              qualityData: qList,
-                              durationColor: _lavender,
-                              qualityColor: _sleepPink,
-                              goalHours: sleepGoal,
-                              selectedRange: _selectedRange,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          // 平均值
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              weeklyDuration.when(
-                                data: (avg) => _buildAvgItem(
-                                  '平均时长',
-                                  avg != null
-                                      ? formatSleepDuration(avg.toInt())
-                                      : '--',
-                                  _lavender,
-                                ),
-                                loading: () => const SizedBox.shrink(),
-                                error: (_, _) => const ErrorRetryWidget(),
-                              ),
-                              weeklyQuality.when(
-                                data: (avg) => _buildAvgItem(
-                                  '平均质量',
-                                  avg != null
-                                      ? '${avg.toStringAsFixed(1)} 分'
-                                      : '--',
-                                  _sleepPink,
-                                ),
-                                loading: () => const SizedBox.shrink(),
-                                error: (_, _) => const ErrorRetryWidget(),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+        Semantics(
+          button: true,
+          label: '睡眠趋势，查看详情',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _navigateToHistory(context),
+            child: GrowthChartCard(
+              title: '睡眠趋势',
+              subtitle: '${_rangeSubtitle()} · 目标 $sleepGoal小时',
+              icon: Icons.show_chart_rounded,
+              color: colors.sleep,
+              legend: [
+                GrowthChartLegendItem(color: _lavender, label: '睡眠时长(h)'),
+                GrowthChartLegendItem(color: _sleepPink, label: '睡眠质量(分)'),
+              ],
+              child: durationList.when(
+                data: (dList) => qualityList.when(
+                  data: (qList) => _buildSleepTrendChart(
+                    dList,
+                    qList,
+                    weeklyDuration,
+                    weeklyQuality,
                   ),
-                );
-              },
-              loading: () => _buildEmptyTrend(),
-              error: (_, _) => _buildEmptyTrend(),
-            );
-          },
-          loading: () => _buildEmptyTrend(),
-          error: (_, _) => _buildEmptyTrend(),
+                  loading: () => _buildTrendLoading(),
+                  error: (_, _) => _buildEmptyTrend(),
+                ),
+                loading: () => _buildTrendLoading(),
+                error: (_, _) => _buildEmptyTrend(),
+              ),
+            ),
+          ),
         ),
       ],
     );
   }
 
   Widget _buildRangeSelector() {
-    final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: colors.surfaceVariant.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(AppRadius.mlg),
-        border: Border.all(color: _lavender.withValues(alpha: 0.10)),
-      ),
-      child: Row(
-        children: [
-          _buildRangeChip('7天', 7),
-          _buildRangeChip('30天', 30),
-          _buildRangeChip('1年', 365),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRangeChip(String label, int days) {
-    final isSelected = _selectedRange == days;
-    final colors = context.growthColors;
-    return Expanded(
-      child: Semantics(
-        button: true,
-        label: '显示$label数据',
-        selected: isSelected,
-        child: GestureDetector(
-          onTap: () {
-            if (_selectedRange != days) {
-              setState(() => _selectedRange = days);
-            }
-          },
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? colors.card : Colors.transparent,
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: _lavender.withValues(alpha: 0.15),
-                        blurRadius: 4,
-                        offset: const Offset(0, 1),
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Center(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                  color: isSelected ? _lavender : colors.textSecondary,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegend(Color color, String label) {
-    final colors = context.growthColors;
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
+    return GrowthChartRangeSelector<int>(
+      color: _lavender,
+      selected: _selectedRange,
+      options: const [
+        GrowthChartRangeOption(value: 7, label: '周'),
+        GrowthChartRangeOption(value: 30, label: '月'),
+        GrowthChartRangeOption(value: 365, label: '年'),
       ],
+      onChanged: (value) => setState(() => _selectedRange = value),
     );
   }
 
@@ -548,32 +366,256 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     );
   }
 
+  Widget _buildSleepTrendChart(
+    List<Map> durationData,
+    List<Map> qualityData,
+    AsyncValue<double?> weeklyDuration,
+    AsyncValue<double?> weeklyQuality,
+  ) {
+    final data = _processSleepTrendData(durationData, qualityData);
+    if (data.isEmpty) return _buildEmptyTrend();
+
+    final durationPoints = <GrowthChartPoint>[];
+    final qualityPoints = <GrowthChartPoint>[];
+    for (var i = 0; i < data.length; i++) {
+      final item = data[i];
+      final label = _sleepTrendLabel(item, i);
+      final subLabel = _sleepTrendSubLabel(item);
+      final duration = (item['duration'] as num?)?.toDouble() ?? 0;
+      final quality = (item['quality'] as num?)?.toDouble() ?? 0;
+
+      durationPoints.add(
+        GrowthChartPoint(
+          label: label,
+          subLabel: subLabel,
+          value: duration / 60,
+          rawLabel: _formatSleepTrendDuration(duration),
+        ),
+      );
+      qualityPoints.add(
+        GrowthChartPoint(
+          label: label,
+          subLabel: subLabel,
+          value: quality,
+          rawLabel: quality > 0 ? _formatSleepTrendQuality(quality) : '--',
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        GrowthMultiLineChart(
+          key: ValueKey(
+            'sleep_line_${_selectedRange}_${data.length}_${data.hashCode}',
+          ),
+          color: _lavender,
+          height: 244,
+          axisFormatter: (value) => '${_trimDouble(value)}h',
+          series: [
+            GrowthChartSeries(
+              name: '睡眠时长',
+              unit: 'h',
+              color: _lavender,
+              points: durationPoints,
+              valueFormatter: (value) => '${_trimDouble(value)}h',
+            ),
+            GrowthChartSeries(
+              name: '睡眠质量',
+              unit: '分',
+              color: _sleepPink,
+              points: qualityPoints,
+              valueFormatter: _formatSleepTrendQuality,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            weeklyDuration.when(
+              data: (avg) => _buildAvgItem(
+                '平均时长',
+                avg != null ? formatSleepDuration(avg.toInt()) : '--',
+                _lavender,
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => _buildAvgItem('平均时长', '--', _lavender),
+            ),
+            weeklyQuality.when(
+              data: (avg) => _buildAvgItem(
+                '平均质量',
+                avg != null ? '${avg.toStringAsFixed(1)} 分' : '--',
+                _sleepPink,
+              ),
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => _buildAvgItem('平均质量', '--', _sleepPink),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   void _navigateToHistory(BuildContext context) {
     context.push('/plan/sleep/history');
   }
 
   Widget _buildEmptyTrend() {
-    return Container(
-      height: 180,
-      decoration: BoxDecoration(
-        color: _lavenderLight,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.show_chart,
-              size: 40,
-              color: _lavender.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 8),
-            Text('暂无数据', style: TextStyle(color: _lavender)),
-          ],
-        ),
-      ),
+    return SizedBox(
+      height: 244,
+      child: GrowthChartEmpty(color: _lavender, label: '记录后显示睡眠趋势'),
     );
+  }
+
+  Widget _buildTrendLoading() {
+    return SizedBox(
+      height: 244,
+      child: Center(child: CircularProgressIndicator(color: _lavender)),
+    );
+  }
+
+  String _rangeSubtitle() {
+    return switch (_selectedRange) {
+      7 => '近 7 天',
+      30 => '近 30 天',
+      _ => '近 1 年',
+    };
+  }
+
+  List<Map<String, dynamic>> _processSleepTrendData(
+    List<Map> durationData,
+    List<Map> qualityData,
+  ) {
+    final merged = _mergeSleepTrendData(durationData, qualityData);
+    if (_selectedRange == 30) return _aggregateSleepTrendByWeek(merged);
+    if (_selectedRange == 365) return _aggregateSleepTrendByMonth(merged);
+    return merged;
+  }
+
+  List<Map<String, dynamic>> _mergeSleepTrendData(
+    List<Map> durationData,
+    List<Map> qualityData,
+  ) {
+    final map = <String, Map<String, dynamic>>{};
+    for (final item in durationData) {
+      final date = item['date'] as String? ?? '';
+      if (date.isEmpty) continue;
+      map[date] = {'date': date, 'duration': item['duration'], 'quality': null};
+    }
+    for (final item in qualityData) {
+      final date = item['date'] as String? ?? '';
+      if (date.isEmpty) continue;
+      map.putIfAbsent(
+        date,
+        () => {'date': date, 'duration': null, 'quality': null},
+      );
+      map[date]!['quality'] = item['quality'];
+    }
+    return map.values.toList()
+      ..sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+  }
+
+  List<Map<String, dynamic>> _aggregateSleepTrendByWeek(
+    List<Map<String, dynamic>> daily,
+  ) {
+    if (daily.isEmpty) return [];
+    final weeks = <Map<String, dynamic>>[];
+    for (var i = 0; i < daily.length; i += 7) {
+      final chunk = daily.sublist(i, (i + 7).clamp(0, daily.length));
+      final durationValues = chunk
+          .map((item) => (item['duration'] as num?)?.toDouble())
+          .whereType<double>()
+          .toList();
+      final qualityValues = chunk
+          .map((item) => (item['quality'] as num?)?.toDouble())
+          .whereType<double>()
+          .toList();
+      weeks.add({
+        'date': chunk.first['date'],
+        'endDate': chunk.last['date'],
+        'duration': _averageDouble(durationValues),
+        'quality': qualityValues.isEmpty ? null : _averageDouble(qualityValues),
+      });
+    }
+    return weeks;
+  }
+
+  List<Map<String, dynamic>> _aggregateSleepTrendByMonth(
+    List<Map<String, dynamic>> daily,
+  ) {
+    if (daily.isEmpty) return [];
+    final monthMap = <String, List<Map<String, dynamic>>>{};
+    for (final item in daily) {
+      final date = item['date'] as String? ?? '';
+      if (date.length < 7) continue;
+      monthMap.putIfAbsent(date.substring(0, 7), () => []).add(item);
+    }
+    final keys = monthMap.keys.toList()..sort();
+    return keys.map((key) {
+      final chunk = monthMap[key]!;
+      final durationValues = chunk
+          .map((item) => (item['duration'] as num?)?.toDouble())
+          .whereType<double>()
+          .toList();
+      final qualityValues = chunk
+          .map((item) => (item['quality'] as num?)?.toDouble())
+          .whereType<double>()
+          .toList();
+      return {
+        'date': key,
+        'duration': _averageDouble(durationValues),
+        'quality': qualityValues.isEmpty ? null : _averageDouble(qualityValues),
+      };
+    }).toList();
+  }
+
+  String _sleepTrendLabel(Map<String, dynamic> item, int index) {
+    if (_selectedRange == 30) return '第${index + 1}周';
+    final date = item['date'] as String? ?? '';
+    if (_selectedRange == 365) {
+      final month = date.length >= 7
+          ? int.tryParse(date.substring(5, 7))
+          : null;
+      return month == null ? date : '$month月';
+    }
+    final parsed = DateTime.tryParse(date);
+    return parsed == null ? date : '${parsed.month}/${parsed.day}';
+  }
+
+  String _sleepTrendSubLabel(Map<String, dynamic> item) {
+    if (_selectedRange != 30) return '';
+    final start = _dateShort(item['date'] as String? ?? '');
+    final end = _dateShort(item['endDate'] as String? ?? '');
+    if (start.isEmpty || end.isEmpty) return '';
+    return '$start-$end';
+  }
+
+  String _formatSleepTrendDuration(double minutes) {
+    if (minutes <= 0) return '0m';
+    if (minutes < 60) return '${minutes.round()}m';
+    return '${_trimDouble(minutes / 60)}h';
+  }
+
+  String _formatSleepTrendQuality(double quality) {
+    if (quality <= 0) return '--';
+    return '${quality.toStringAsFixed(1)}分';
+  }
+
+  static String _dateShort(String value) {
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return '';
+    return '${parsed.month}/${parsed.day}';
+  }
+
+  static double _averageDouble(List<double> values) {
+    if (values.isEmpty) return 0;
+    return values.reduce((a, b) => a + b) / values.length;
+  }
+
+  static String _trimDouble(double value) {
+    return value == value.roundToDouble()
+        ? value.round().toString()
+        : value.toStringAsFixed(1);
   }
 
   // ─── 睡眠建议 ────────────────────────────────────────────────────────────

@@ -228,8 +228,14 @@ class _JournalHeatmapSectionState
         children: [
           Row(
             children: [
+              const Icon(
+                Icons.calendar_month_rounded,
+                size: 18,
+                color: JournalColors.pinkMain,
+              ),
+              const SizedBox(width: 8),
               Text(
-                '📅 写作热力图',
+                '写作热力图',
                 style: AppTextStyles.cardTitle.copyWith(fontSize: 15),
               ),
               const SizedBox(width: 8),

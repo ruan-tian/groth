@@ -13,6 +13,90 @@ class GrowthChartLegendItem {
   final String label;
 }
 
+class GrowthChartRangeOption<T> {
+  const GrowthChartRangeOption({required this.value, required this.label});
+
+  final T value;
+  final String label;
+}
+
+class GrowthChartRangeSelector<T> extends StatelessWidget {
+  const GrowthChartRangeSelector({
+    super.key,
+    required this.options,
+    required this.selected,
+    required this.color,
+    required this.onChanged,
+  });
+
+  final List<GrowthChartRangeOption<T>> options;
+  final T selected;
+  final Color color;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Container(
+      height: 44,
+      padding: const EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(AppRadius.mlg),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: options.map((option) {
+          final isSelected = option.value == selected;
+          return Expanded(
+            child: Semantics(
+              button: true,
+              selected: isSelected,
+              label: option.label,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: isSelected ? null : () => onChanged(option.value),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: isSelected ? color : Colors.transparent,
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: colors.shadow.withValues(alpha: 0.24),
+                              blurRadius: 4,
+                              offset: const Offset(0, 1),
+                            ),
+                          ]
+                        : null,
+                  ),
+                  child: Text(
+                    option.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: isSelected
+                          ? colors.textOnAccent
+                          : colors.textSecondary,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
 class GrowthChartCard extends StatelessWidget {
   const GrowthChartCard({
     super.key,
@@ -201,12 +285,14 @@ class GrowthAnimatedBarChart extends StatefulWidget {
     required this.points,
     required this.color,
     required this.valueFormatter,
+    this.axisFormatter,
     this.height = 240,
   });
 
   final List<GrowthChartPoint> points;
   final Color color;
   final String Function(double value) valueFormatter;
+  final String Function(double value)? axisFormatter;
   final double height;
 
   @override
@@ -311,7 +397,8 @@ class _GrowthAnimatedBarChartState extends State<GrowthAnimatedBarChart> {
                               return const SizedBox.shrink();
                             }
                             return Text(
-                              formatCompactNumber(value),
+                              widget.axisFormatter?.call(value) ??
+                                  formatCompactNumber(value),
                               style: TextStyle(
                                 fontSize: 10,
                                 color: colors.textTertiary,
@@ -447,11 +534,13 @@ class GrowthMultiLineChart extends StatefulWidget {
     super.key,
     required this.series,
     required this.color,
+    this.axisFormatter,
     this.height = 220,
   });
 
   final List<GrowthChartSeries> series;
   final Color color;
+  final String Function(double value)? axisFormatter;
   final double height;
 
   @override
@@ -585,7 +674,12 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
                         },
                       ),
                     ),
-                    titlesData: _lineTitles(colors, visibleSeries, density),
+                    titlesData: _lineTitles(
+                      colors,
+                      visibleSeries,
+                      density,
+                      widget.axisFormatter,
+                    ),
                     lineBarsData: List.generate(visibleSeries.length, (sIndex) {
                       final series = visibleSeries[sIndex];
                       final scale = scales[series.name]!;
@@ -649,6 +743,7 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
     AppThemeColors colors,
     List<GrowthChartSeries> series,
     ChartDensityPolicy density,
+    String Function(double value)? axisFormatter,
   ) {
     final primary = series.first;
     final primaryScale = ChartAxisScale.fromValues(
@@ -666,8 +761,9 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
           interval: 0.25,
           getTitlesWidget: (value, meta) {
             if (value <= 0) return const SizedBox.shrink();
+            final rawValue = primaryScale.denormalize(value);
             return Text(
-              formatCompactNumber(primaryScale.denormalize(value)),
+              axisFormatter?.call(rawValue) ?? primary.valueFormatter(rawValue),
               style: TextStyle(fontSize: 10, color: colors.textTertiary),
             );
           },
@@ -819,113 +915,134 @@ class GrowthHeatmapCalendar extends StatelessWidget {
     final maxValue = data.values.isEmpty ? 1 : data.values.reduce(math.max);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final cell = (constraints.maxWidth / 19).clamp(11.0, 17.0);
-        final spacing = (cell * 0.22).clamp(2.0, 3.5);
+        const weekdayWidth = 28.0;
+        const gridGap = 5.0;
+        final availableWidth = math.max(
+          0.0,
+          constraints.maxWidth - weekdayWidth - gridGap,
+        );
+        final visibleWeeks = constraints.maxWidth < 380 ? 16.0 : 18.0;
+        final cell = (availableWidth / visibleWeeks).clamp(11.0, 17.0);
+        final spacing = (cell * 0.20).clamp(2.0, 3.25);
         return RepaintBoundary(
           child: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: const Duration(milliseconds: 420),
-              curve: Curves.easeOutCubic,
-              builder: (context, progress, _) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _HeatmapMonthRow(
-                      weeks: weeks,
-                      cell: cell,
-                      spacing: spacing,
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _HeatmapWeekdayColumn(cell: cell, spacing: spacing),
-                        const SizedBox(width: 4),
-                        ...List.generate(weeks.length, (weekIndex) {
-                          return Column(
-                            children: List.generate(7, (dayIndex) {
-                              final date = weeks[weekIndex][dayIndex];
-                              if (date == null) {
-                                return SizedBox(
-                                  width: cell + spacing,
-                                  height: cell + spacing,
-                                );
-                              }
-                              final value = data[_normalize(date)] ?? 0;
-                              final level = value <= 0
-                                  ? 0
-                                  : ((value / maxValue) * 4).ceil().clamp(1, 4);
-                              final isToday = _sameDay(date, DateTime.now());
-                              final isPeak = value > 0 && value == maxValue;
-                              final delay = (weekIndex * 0.025).clamp(
-                                0.0,
-                                0.24,
-                              );
-                              final localProgress =
-                                  ((progress - delay) / (1 - delay)).clamp(
-                                    0.0,
-                                    1.0,
+            physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics(),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.only(right: 10, bottom: 2),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: 1),
+                duration: const Duration(milliseconds: 420),
+                curve: Curves.easeOutCubic,
+                builder: (context, progress, _) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _HeatmapMonthRow(
+                        weeks: weeks,
+                        cell: cell,
+                        spacing: spacing,
+                        leftOffset: weekdayWidth + gridGap,
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _HeatmapWeekdayColumn(
+                            cell: cell,
+                            spacing: spacing,
+                            width: weekdayWidth,
+                          ),
+                          const SizedBox(width: gridGap),
+                          ...List.generate(weeks.length, (weekIndex) {
+                            return Column(
+                              children: List.generate(7, (dayIndex) {
+                                final date = weeks[weekIndex][dayIndex];
+                                if (date == null) {
+                                  return SizedBox(
+                                    width: cell + spacing,
+                                    height: cell + spacing,
                                   );
-                              return Transform.scale(
-                                scale: 0.86 + 0.14 * localProgress,
-                                child: Opacity(
-                                  opacity: localProgress,
-                                  child: Tooltip(
-                                    message:
-                                        '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}  $value',
-                                    child: GestureDetector(
-                                      onTap: onDayTap == null
-                                          ? null
-                                          : () => onDayTap!(date),
-                                      child: Container(
-                                        width: cell,
-                                        height: cell,
-                                        margin: EdgeInsets.all(spacing / 2),
-                                        decoration: BoxDecoration(
-                                          color: _heatColor(level),
-                                          borderRadius: BorderRadius.circular(
-                                            cell * 0.28,
-                                          ),
-                                          border: isToday
-                                              ? Border.all(
-                                                  color: colors.primary,
-                                                  width: 1.8,
-                                                )
-                                              : isPeak
-                                              ? Border.all(
-                                                  color: maxColor.withValues(
-                                                    alpha: 0.55,
-                                                  ),
-                                                  width: 1.2,
-                                                )
-                                              : null,
-                                          boxShadow: isToday || isPeak
-                                              ? [
-                                                  BoxShadow(
+                                }
+                                final value = data[_normalize(date)] ?? 0;
+                                final level = value <= 0
+                                    ? 0
+                                    : ((value / maxValue) * 4).ceil().clamp(
+                                        1,
+                                        4,
+                                      );
+                                final isToday = _sameDay(date, DateTime.now());
+                                final isPeak = value > 0 && value == maxValue;
+                                final delay = (weekIndex * 0.025).clamp(
+                                  0.0,
+                                  0.24,
+                                );
+                                final localProgress =
+                                    ((progress - delay) / (1 - delay)).clamp(
+                                      0.0,
+                                      1.0,
+                                    );
+                                return Transform.scale(
+                                  scale: 0.86 + 0.14 * localProgress,
+                                  child: Opacity(
+                                    opacity: localProgress,
+                                    child: Tooltip(
+                                      message:
+                                          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}  $value',
+                                      child: GestureDetector(
+                                        onTap: onDayTap == null
+                                            ? null
+                                            : () => onDayTap!(date),
+                                        child: Container(
+                                          width: cell,
+                                          height: cell,
+                                          margin: EdgeInsets.all(spacing / 2),
+                                          decoration: BoxDecoration(
+                                            color: _heatColor(level),
+                                            borderRadius: BorderRadius.circular(
+                                              cell * 0.28,
+                                            ),
+                                            border: isToday
+                                                ? Border.all(
+                                                    color: colors.primary,
+                                                    width: 1.8,
+                                                  )
+                                                : isPeak
+                                                ? Border.all(
                                                     color: maxColor.withValues(
-                                                      alpha: 0.22,
+                                                      alpha: 0.55,
                                                     ),
-                                                    blurRadius: 6,
-                                                  ),
-                                                ]
-                                              : null,
+                                                    width: 1.2,
+                                                  )
+                                                : null,
+                                            boxShadow: isToday || isPeak
+                                                ? [
+                                                    BoxShadow(
+                                                      color: maxColor
+                                                          .withValues(
+                                                            alpha: 0.22,
+                                                          ),
+                                                      blurRadius: 6,
+                                                    ),
+                                                  ]
+                                                : null,
+                                          ),
                                         ),
                                       ),
                                     ),
                                   ),
-                                ),
-                              );
-                            }),
-                          );
-                        }),
-                      ],
-                    ),
-                  ],
-                );
-              },
+                                );
+                              }),
+                            );
+                          }),
+                        ],
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
           ),
         );
@@ -974,29 +1091,36 @@ class _HeatmapMonthRow extends StatelessWidget {
     required this.weeks,
     required this.cell,
     required this.spacing,
+    required this.leftOffset,
   });
 
   final List<List<DateTime?>> weeks;
   final double cell;
   final double spacing;
+  final double leftOffset;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     var lastMonth = 0;
     return Padding(
-      padding: const EdgeInsets.only(left: 30),
+      padding: EdgeInsets.only(left: leftOffset),
       child: Row(
         children: List.generate(weeks.length, (index) {
           final dates = weeks[index].whereType<DateTime>().toList();
           var text = '';
           if (dates.isNotEmpty) {
-            final first = dates.first;
-            if (first.month != lastMonth || first.day <= 7) {
-              if (first.month != lastMonth) {
-                text = '${first.month}月';
-                lastMonth = first.month;
+            DateTime? marker;
+            for (final date in dates) {
+              if (date.month != lastMonth && date.day <= 7) {
+                marker = date;
+                break;
               }
+            }
+            marker ??= dates.first.month != lastMonth ? dates.first : null;
+            if (marker != null) {
+              text = '${marker.month}月';
+              lastMonth = marker.month;
             }
           }
           return SizedBox(
@@ -1017,10 +1141,15 @@ class _HeatmapMonthRow extends StatelessWidget {
 }
 
 class _HeatmapWeekdayColumn extends StatelessWidget {
-  const _HeatmapWeekdayColumn({required this.cell, required this.spacing});
+  const _HeatmapWeekdayColumn({
+    required this.cell,
+    required this.spacing,
+    required this.width,
+  });
 
   final double cell;
   final double spacing;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
@@ -1029,7 +1158,7 @@ class _HeatmapWeekdayColumn extends StatelessWidget {
     return Column(
       children: List.generate(7, (index) {
         return SizedBox(
-          width: 26,
+          width: width,
           height: cell + spacing,
           child: Align(
             alignment: Alignment.centerRight,
@@ -1054,18 +1183,21 @@ class _ValueBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      constraints: const BoxConstraints(maxHeight: 22),
+      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: Color.alphaBlend(color.withValues(alpha: 0.12), colors.card),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
+        color: Color.alphaBlend(color.withValues(alpha: 0.08), colors.card),
+        borderRadius: BorderRadius.circular(7),
+        border: Border.all(color: color.withValues(alpha: 0.14)),
       ),
       child: Text(
         text,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.w800,
+          color: color.withValues(alpha: 0.9),
+          fontSize: 9.5,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );

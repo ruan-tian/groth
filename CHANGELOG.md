@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-06-24 Chart UI Unification and Axis Fixes
+
+- Added shared `GrowthChartRangeSelector` and axis formatter support for bar and multi-line charts.
+- Fixed study trend chart Y-axis to show real duration labels and reduced top value badge size.
+- Unified fitness, diet, and sleep main chart cards around the shared chart shell and range selector.
+- Changed sleep trend to a normalized two-line chart for duration and quality, keeping real units in labels/tooltips.
+- Polished journal heatmap density/alignment and replaced emoji title marker with a stable system icon.
+- Added targeted chart widget tests for range selector, axis formatting, multi-line labels, and heatmap month labels.
+
 ## 2026-06-23 Architecture Upgrade Phase D: Page Import Path Fixes
 
 - Fixed dashboard_page: `dashboard_providers.dart` → `providers/dashboard_provider.dart`
