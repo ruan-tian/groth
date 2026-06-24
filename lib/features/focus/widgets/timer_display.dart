@@ -14,6 +14,9 @@ class TimerDisplay extends StatefulWidget {
     this.size = 280,
     this.dark = false,
     this.roundLabel,
+    this.title,
+    this.subject,
+    this.showTitle = false,
     this.catAsset,
     this.showCat = true,
   });
@@ -24,6 +27,9 @@ class TimerDisplay extends StatefulWidget {
   final double size;
   final bool dark;
   final String? roundLabel;
+  final String? title;
+  final String? subject;
+  final bool showTitle;
   final String? catAsset;
   final bool showCat;
 
@@ -116,44 +122,75 @@ class _TimerDisplayState extends State<TimerDisplay>
               ],
             ),
           ),
-          if (widget.showCat)
-            Positioned(
-              top: widget.size * 0.22,
-              child: Image.asset(
-                widget.catAsset ?? FocusAssets.catReading,
-                width: widget.size * 0.24,
-                height: widget.size * 0.24,
-                fit: BoxFit.contain,
-              ),
-            ),
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              SizedBox(height: widget.showCat ? widget.size * 0.12 : 0),
+              // 标题 — 仅操作模式
+              AnimatedOpacity(
+                opacity: widget.showTitle ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                child: AnimatedSlide(
+                  offset:
+                      widget.showTitle ? Offset.zero : const Offset(0, -0.3),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: widget.showTitle
+                      ? Padding(
+                          padding:
+                              EdgeInsets.only(bottom: widget.size * 0.015),
+                          child: Text(
+                            widget.title ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: widget.size * 0.052,
+                              height: 1.0,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+              // 轮次
               Text(
                 widget.roundLabel ?? '',
                 style: TextStyle(
                   color: colors.textSecondary,
-                  fontSize: widget.size * 0.052,
-                  fontWeight: FontWeight.w700,
+                  fontSize:
+                      widget.showTitle ? widget.size * 0.038 : widget.size * 0.045,
+                  height: 1.0,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              SizedBox(height: widget.size * 0.02),
+              SizedBox(
+                  height: widget.showTitle
+                      ? widget.size * 0.015
+                      : widget.size * 0.02),
+              // 时间
               Text(
                 _formatTime(widget.remaining),
                 style: TextStyle(
                   color: colors.textPrimary,
-                  fontSize: widget.size * 0.18,
+                  fontSize:
+                      widget.showTitle ? widget.size * 0.16 : widget.size * 0.18,
+                  height: 1.0,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 0,
                   fontFeatures: const [FontFeature.tabularFigures()],
                 ),
               ),
-              SizedBox(height: widget.size * 0.04),
+              SizedBox(
+                  height: widget.showTitle
+                      ? widget.size * 0.025
+                      : widget.size * 0.03),
+              // 百分比胶囊
               Container(
                 padding: EdgeInsets.symmetric(
-                  horizontal: widget.size * 0.055,
-                  vertical: widget.size * 0.018,
+                  horizontal: widget.size * 0.046,
+                  vertical: widget.size * 0.014,
                 ),
                 decoration: BoxDecoration(
                   color: accent.withValues(alpha: widget.dark ? 0.18 : 0.13),
@@ -164,11 +201,76 @@ class _TimerDisplayState extends State<TimerDisplay>
                   widget.isBreak ? '休息中' : '$percent%',
                   style: TextStyle(
                     color: accent,
-                    fontSize: widget.size * 0.052,
+                    fontSize: widget.showTitle
+                        ? widget.size * 0.042
+                        : widget.size * 0.045,
+                    height: 1.0,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
+              // 科目标签 — 仅操作模式
+              AnimatedOpacity(
+                opacity: widget.showTitle ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                child: AnimatedSlide(
+                  offset:
+                      widget.showTitle ? Offset.zero : const Offset(0, 0.3),
+                  duration: const Duration(milliseconds: 300),
+                  curve: Curves.easeOutCubic,
+                  child: widget.showTitle && widget.subject != null
+                      ? Padding(
+                          padding:
+                              EdgeInsets.only(top: widget.size * 0.025),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: widget.size * 0.035,
+                              vertical: widget.size * 0.012,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colors.success
+                                  .withValues(alpha: 0.18),
+                              borderRadius:
+                                  BorderRadius.circular(widget.size * 0.07),
+                              border: Border.all(
+                                color: colors.success
+                                    .withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: Text(
+                              widget.subject!,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.success,
+                                fontSize: widget.size * 0.035,
+                                height: 1.0,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              ),
+              // 猫图
+              if (widget.showCat && widget.catAsset != null)
+                Padding(
+                  padding: EdgeInsets.only(top: widget.showTitle
+                      ? widget.size * 0.03
+                      : widget.size * 0.04),
+                  child: Image.asset(
+                    widget.catAsset!,
+                    width: widget.showTitle
+                        ? widget.size * 0.14
+                        : widget.size * 0.16,
+                    height: widget.showTitle
+                        ? widget.size * 0.14
+                        : widget.size * 0.16,
+                    fit: BoxFit.contain,
+                  ),
+                ),
             ],
           ),
         ],

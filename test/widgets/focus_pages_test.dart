@@ -10,6 +10,7 @@ import 'package:growth_os/features/plan/services/reminder_notification_service.d
 import 'package:growth_os/shared/providers/focus_audio_provider.dart';
 import 'package:growth_os/features/focus/providers/focus_provider.dart';
 import 'package:growth_os/features/focus/widgets/focus_sound_panel.dart';
+import 'package:growth_os/features/focus/widgets/timer_display.dart';
 
 FocusSession _focusSession({
   int id = 1,
@@ -251,9 +252,30 @@ void main() {
       await tester.pumpWidget(_sessionPage());
       await tester.pump(const Duration(milliseconds: 100));
 
+      // 沉浸模式：只显示时间、轮次、猫图
+      expect(find.text('01:00'), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_timer_stage')), findsOneWidget);
+      expect(find.byType(TimerDisplay), findsOneWidget);
+      // 标题和科目默认隐藏
+      expect(find.text('English reading'), findsNothing);
+      expect(find.text('English'), findsNothing);
+
+      // 点击屏幕切换到操作模式
+      await tester.tap(find.byType(TimerDisplay));
+      await tester.pump(); // 触发 rebuild，动画从 t=0 开始
+      await tester.pump(const Duration(milliseconds: 400)); // 动画完成
+
+      // 操作模式：标题、科目、底部栏可见
       expect(find.text('English reading'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
-      expect(find.text('01:00'), findsOneWidget);
+      expect(find.byKey(const ValueKey('next_phase_pill')), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_sound_dock')), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_sound_sheet')), findsNothing);
+      expect(tester.getCenter(find.byType(TimerDisplay)).dx, closeTo(195, 3));
+      expect(
+        tester.getSize(find.byKey(const ValueKey('focus_sound_dock'))).width,
+        lessThan(310),
+      );
     });
 
     testWidgets('renders landscape timer core controls', (tester) async {
@@ -261,8 +283,25 @@ void main() {
       await tester.pumpWidget(_sessionPage());
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('English reading'), findsOneWidget);
+      // 沉浸模式
       expect(find.text('01:00'), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_timer_stage')), findsOneWidget);
+      expect(find.byType(TimerDisplay), findsOneWidget);
+      expect(find.text('English reading'), findsNothing);
+
+      // 点击显示控制区
+      await tester.tap(find.byType(TimerDisplay));
+      await tester.pump(); // 触发 rebuild
+      await tester.pump(const Duration(milliseconds: 400)); // 动画完成
+
+      expect(find.text('English reading'), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_sound_dock')), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_sound_drawer')), findsNothing);
+      expect(
+        tester.getSize(find.byType(TimerDisplay)).width,
+        greaterThanOrEqualTo(500),
+      );
+      expect(tester.getCenter(find.byType(TimerDisplay)).dx, lessThan(470));
     });
 
     testWidgets('renders compact phone landscape without overflow', (
@@ -272,8 +311,80 @@ void main() {
       await tester.pumpWidget(_sessionPage());
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('English reading'), findsOneWidget);
+      // 沉浸模式
       expect(find.text('01:00'), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_timer_stage')), findsOneWidget);
+      expect(find.byType(TimerDisplay), findsOneWidget);
+      expect(find.text('English reading'), findsNothing);
+
+      // 点击显示控制区
+      await tester.tap(find.byType(TimerDisplay));
+      await tester.pump(); // 触发 rebuild
+      await tester.pump(const Duration(milliseconds: 400)); // 动画完成
+
+      expect(find.text('English reading'), findsOneWidget);
+      expect(find.byKey(const ValueKey('focus_sound_dock')), findsOneWidget);
+      expect(
+        tester.getSize(find.byType(TimerDisplay)).width,
+        greaterThanOrEqualTo(250),
+      );
+      expect(tester.getCenter(find.byType(TimerDisplay)).dx, lessThan(270));
+    });
+
+    testWidgets('portrait sound dock opens bottom sheet and closes', (
+      tester,
+    ) async {
+      await setViewport(tester, 390, 844);
+      await tester.pumpWidget(_sessionPage());
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 先显示控制区
+      await tester.tap(find.byType(TimerDisplay));
+      await tester.pump(); // 触发 rebuild
+      await tester.pump(const Duration(milliseconds: 400)); // 动画完成
+
+      await tester.tap(find.byKey(const ValueKey('focus_sound_dock')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('focus_sound_sheet')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('focus_sound_sheet')),
+          matching: find.text('专注声音'),
+        ),
+        findsOneWidget,
+      );
+
+      await tester.tap(
+        find.byKey(const ValueKey('focus_sound_overlay_barrier')),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('focus_sound_sheet')), findsNothing);
+      expect(find.byKey(const ValueKey('focus_sound_dock')), findsOneWidget);
+    });
+
+    testWidgets('landscape sound dock opens right drawer', (tester) async {
+      await setViewport(tester, 1366, 768);
+      await tester.pumpWidget(_sessionPage());
+      await tester.pump(const Duration(milliseconds: 100));
+
+      // 先显示控制区
+      await tester.tap(find.byType(TimerDisplay));
+      await tester.pump(); // 触发 rebuild
+      await tester.pump(const Duration(milliseconds: 400)); // 动画完成
+
+      await tester.tap(find.byKey(const ValueKey('focus_sound_dock')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('focus_sound_drawer')), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('focus_sound_drawer')),
+          matching: find.text('专注声音'),
+        ),
+        findsOneWidget,
+      );
     });
 
     testWidgets('keeps selected white noise when session starts', (
@@ -283,8 +394,19 @@ void main() {
       await tester.pumpWidget(_sessionPageWithSound('white_noise'));
       await tester.pump(const Duration(milliseconds: 100));
 
-      expect(find.text('白噪音播放中'), findsOneWidget);
+      // 先显示控制区（标题、底部栏默认隐藏）
+      await tester.tap(find.byType(TimerDisplay));
+      await tester.pump(); // 触发 rebuild
+      await tester.pump(const Duration(milliseconds: 400)); // 动画完成
+
+      expect(find.text('白噪声'), findsOneWidget);
       expect(find.text('安静模式'), findsNothing);
+
+      await tester.tap(find.byKey(const ValueKey('focus_sound_dock')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('focus_sound_sheet')), findsOneWidget);
+      expect(find.text('白噪音播放中'), findsOneWidget);
     });
 
     testWidgets('noise mode switch restores noise instead of quiet mode', (

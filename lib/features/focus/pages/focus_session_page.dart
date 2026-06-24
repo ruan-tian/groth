@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:drift/drift.dart' as drift;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
@@ -31,7 +32,6 @@ part '../widgets/focus_session_widgets.dart';
 
 const _sessionMint = Color(0xFF9DEBD8);
 const _sessionCream = Color(0xFFF7E5C6);
-const _sessionInk = Color(0xFF113541);
 
 class FocusSessionPage extends ConsumerStatefulWidget {
   const FocusSessionPage({
@@ -63,6 +63,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   bool _completionDialogShown = false;
   bool _musicWasPlayingOnEnter = false;
   bool _focusStartedMusic = false;
+  bool _soundPanelOpen = false;
+  bool _controlsVisible = false;
+  Timer? _hideTimer;
   late FocusAudioStateNotifier _audioNotifier;
   String? _currentSoundType;
 
@@ -72,6 +75,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     _audioNotifier = ref.read(focusAudioStateProvider.notifier);
     _musicWasPlayingOnEnter = ref.read(musicPlayerProvider).isPlaying;
     WidgetsBinding.instance.addObserver(this);
+    unawaited(
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky),
+    );
     Future.microtask(() {
       if (!mounted) return;
       ref
@@ -90,7 +96,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
 
   @override
   void dispose() {
+    _hideTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
+    unawaited(SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge));
     _stopSessionAudioForDispose();
     super.dispose();
   }
@@ -208,6 +216,31 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     }
 
     ref.read(focusAudioStateProvider.notifier).stopNoise();
+  }
+
+  void _toggleSoundPanel() {
+    if (!mounted) return;
+    setState(() => _soundPanelOpen = !_soundPanelOpen);
+  }
+
+  void _closeSoundPanel() {
+    if (!mounted || !_soundPanelOpen) return;
+    setState(() => _soundPanelOpen = false);
+  }
+
+  void _toggleControls() {
+    if (!mounted) return;
+    setState(() => _controlsVisible = !_controlsVisible);
+    _resetHideTimer();
+  }
+
+  void _resetHideTimer() {
+    _hideTimer?.cancel();
+    if (_controlsVisible) {
+      _hideTimer = Timer(const Duration(seconds: 5), () {
+        if (mounted) setState(() => _controlsVisible = false);
+      });
+    }
   }
 
   void _skipBreak() {
@@ -537,34 +570,49 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                   _CompactLandscapeSession(
                     cycleState: cycleState,
                     isCycleDone: isCycleDone,
+                    soundPanelOpen: _soundPanelOpen,
+                    controlsVisible: _controlsVisible,
                     onCancel: _showCancelDialog,
                     onPause: _pauseTimer,
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: _handleSoundChanged,
+                    onSoundPanelToggle: _toggleSoundPanel,
+                    onSoundPanelClose: _closeSoundPanel,
+                    onToggleControls: _toggleControls,
                   )
                 else if (isLandscape)
                   _LandscapeSession(
                     cycleState: cycleState,
                     isCycleDone: isCycleDone,
+                    soundPanelOpen: _soundPanelOpen,
+                    controlsVisible: _controlsVisible,
                     onCancel: _showCancelDialog,
                     onPause: _pauseTimer,
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: _handleSoundChanged,
+                    onSoundPanelToggle: _toggleSoundPanel,
+                    onSoundPanelClose: _closeSoundPanel,
+                    onToggleControls: _toggleControls,
                   )
                 else
                   _PortraitSession(
                     cycleState: cycleState,
                     isCycleDone: isCycleDone,
+                    soundPanelOpen: _soundPanelOpen,
+                    controlsVisible: _controlsVisible,
                     onCancel: _showCancelDialog,
                     onPause: _pauseTimer,
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
                     onSoundChanged: _handleSoundChanged,
+                    onSoundPanelToggle: _toggleSoundPanel,
+                    onSoundPanelClose: _closeSoundPanel,
+                    onToggleControls: _toggleControls,
                   ),
               ],
             );
