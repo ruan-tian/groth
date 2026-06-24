@@ -1,5 +1,12 @@
 # Changelog
 
+## 2026-06-24 Music Capsule Final Edge Remote
+
+- Refined the dashboard music capsule into a final edge-docked remote: default state is a narrow side handle, reducing visual obstruction while keeping a reliable touch target.
+- Redesigned the revealed mini remote with a side grip, cover, playback status, progress, play/pause, and next controls, keeping the full player sheet as the detailed view.
+- Adjusted floating layout sizing for 360/390/430px phone widths and preserved drag-to-edge snapping with auto-dock behavior.
+- Updated dashboard widget coverage to assert the docked handle remains compact and the revealed remote still opens the player.
+
 ## 2026-06-24 Chart UI Unification and Axis Fixes
 
 - Added shared `GrowthChartRangeSelector` and axis formatter support for bar and multi-line charts.
@@ -546,3 +553,9 @@
 - 新 Growth OS 吊进入动画：浅蓝白纸面背景、成长环、软基图标浮现玻璃提示条和细进度条，挂载?`MaterialApp.router.builder`，不改变业务跔?- 动画攌系统减少动效设置，并使用 `IgnorePointer` 避免吊蒙层阻底层页面交互或测试点击?- 使用 `picture/APP图标.png` 生成应用内品牌图、Android launcher mipmap、iOS AppIcon ?Windows `app_icon.ico`?- 验证 `flutter analyze lib/app/app.dart lib/app/launch_intro_overlay.dart` ?`flutter test test/widget_test.dart` 通过?- 加固吊性：减少动效模式下改为短品牌定帧而不昛接跳过；动画时长延长并加中心光晕，同时补充 Android/iOS 原生吊静图标，避免冷启动白屏后直接进入首页?
 
 
+## 2026-06-24 番茄钟白噪音模式修复
+
+- 开始专注时改为读取点击瞬间的最新专注设置，避免白噪音选择刚更新就被旧 `setup` 快照覆盖成安静模式。
+- 专注声音面板点击“白噪音”时恢复上次噪音或默认白噪声，不再把模式切换误当成 `null`/无声。
+- 专注会话页统一规范化声音类型，并收敛横屏、竖屏、紧凑横屏的声音切换逻辑，避免不同布局状态不一致。
+- 补充番茄钟声音回归测试，验证白噪声进入会话后保持播放状态，且白噪音模式切换不会回到安静模式。

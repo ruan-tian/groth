@@ -19,6 +19,7 @@ import '../../../shared/providers/repository_providers.dart';
 import '../../study/providers/study_provider.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
+import '../../../core/services/focus_audio_service.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../../music/providers/music_player_provider.dart';
 import '../utils/focus_assets.dart';
@@ -81,7 +82,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
             type: widget.type,
             title: widget.title,
             subject: widget.subject,
-            soundType: widget.soundType,
+            soundType: _normalizeSessionSoundType(widget.soundType),
           );
       _initAudio();
     });
@@ -103,7 +104,9 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
 
   void _initAudio() {
     if (!mounted) return;
-    final soundType = ref.read(focusCycleProvider).soundType;
+    final soundType = _normalizeSessionSoundType(
+      ref.read(focusCycleProvider).soundType,
+    );
     _currentSoundType = soundType;
     if (soundType == 'music') {
       unawaited(_startFocusMusic());
@@ -174,6 +177,37 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   void _resumeTimer() {
     _resumeSessionAudio();
     ref.read(focusCycleProvider.notifier).resume();
+  }
+
+  String? _normalizeSessionSoundType(String? soundType) {
+    if (soundType == null || soundType.isEmpty || soundType == 'none') {
+      return null;
+    }
+    if (soundType == 'music') return 'music';
+    return FocusAudioService.normalizeSoundType(soundType);
+  }
+
+  void _handleSoundChanged(String? value) {
+    final normalized = _normalizeSessionSoundType(value);
+    _currentSoundType = normalized;
+    ref.read(focusCycleProvider.notifier).setSoundType(normalized);
+
+    if (normalized == 'music') {
+      _focusStartedMusic = true;
+      ref.read(focusAudioStateProvider.notifier).stopNoise();
+      unawaited(_startFocusMusic());
+      return;
+    }
+
+    if (normalized != null) {
+      ref.read(musicPlayerProvider.notifier).pause();
+      unawaited(
+        ref.read(focusAudioStateProvider.notifier).changeSound(normalized),
+      );
+      return;
+    }
+
+    ref.read(focusAudioStateProvider.notifier).stopNoise();
   }
 
   void _skipBreak() {
@@ -508,24 +542,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
-                    onSoundChanged: (value) {
-                      if (value == 'music') {
-                        _focusStartedMusic = true;
-                        ref.read(focusAudioStateProvider.notifier).stopNoise();
-                        unawaited(_startFocusMusic());
-                      } else if (value != null &&
-                          value.isNotEmpty &&
-                          value != 'none') {
-                        ref.read(musicPlayerProvider.notifier).pause();
-                        ref
-                            .read(focusAudioStateProvider.notifier)
-                            .changeSound(value);
-                      } else {
-                        ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      }
-                      _currentSoundType = value;
-                      ref.read(focusCycleProvider.notifier).setSoundType(value);
-                    },
+                    onSoundChanged: _handleSoundChanged,
                   )
                 else if (isLandscape)
                   _LandscapeSession(
@@ -536,24 +553,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
-                    onSoundChanged: (value) {
-                      if (value == 'music') {
-                        _focusStartedMusic = true;
-                        ref.read(focusAudioStateProvider.notifier).stopNoise();
-                        unawaited(_startFocusMusic());
-                      } else if (value != null &&
-                          value.isNotEmpty &&
-                          value != 'none') {
-                        ref.read(musicPlayerProvider.notifier).pause();
-                        ref
-                            .read(focusAudioStateProvider.notifier)
-                            .changeSound(value);
-                      } else {
-                        ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      }
-                      _currentSoundType = value;
-                      ref.read(focusCycleProvider.notifier).setSoundType(value);
-                    },
+                    onSoundChanged: _handleSoundChanged,
                   )
                 else
                   _PortraitSession(
@@ -564,24 +564,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onResume: _resumeTimer,
                     onSkipBreak: _skipBreak,
                     onReturn: () => context.pop(),
-                    onSoundChanged: (value) {
-                      if (value == 'music') {
-                        _focusStartedMusic = true;
-                        ref.read(focusAudioStateProvider.notifier).stopNoise();
-                        unawaited(_startFocusMusic());
-                      } else if (value != null &&
-                          value.isNotEmpty &&
-                          value != 'none') {
-                        ref.read(musicPlayerProvider.notifier).pause();
-                        ref
-                            .read(focusAudioStateProvider.notifier)
-                            .changeSound(value);
-                      } else {
-                        ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      }
-                      _currentSoundType = value;
-                      ref.read(focusCycleProvider.notifier).setSoundType(value);
-                    },
+                    onSoundChanged: _handleSoundChanged,
                   ),
               ],
             );

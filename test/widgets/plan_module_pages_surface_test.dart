@@ -165,7 +165,6 @@ void main() {
 
         expect(find.byType(ModulePageSurface), findsOneWidget);
         expect(find.byType(PlanModuleVisualHeader), findsOneWidget);
-        expect(find.byType(PlanModuleActionImageCard), findsOneWidget);
         if (page is DietPage) {
           expect(find.text('今天想喝点什么'), findsOneWidget);
         }

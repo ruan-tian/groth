@@ -66,7 +66,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                   titleController: _titleController,
                   subjectController: _subjectController,
                   customController: _customController,
-                  onStart: () => _startFocus(setup),
+                  onStart: _startFocus,
                 );
               }
               return _PortraitFocusSetup(
@@ -76,7 +76,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                 titleController: _titleController,
                 subjectController: _subjectController,
                 customController: _customController,
-                onStart: () => _startFocus(setup),
+                onStart: _startFocus,
               );
             },
           ),
@@ -85,7 +85,8 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     );
   }
 
-  void _startFocus(FocusSetupState setup) {
+  void _startFocus() {
+    final setup = ref.read(focusSetupProvider);
     final duration = setup.type == 'custom'
         ? (int.tryParse(_customController.text) ?? 30)
         : setup.durationMinutes;
@@ -106,7 +107,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       '&rounds=${setup.totalRounds}'
       '&title=${Uri.encodeComponent(title)}'
       '&subject=${Uri.encodeComponent(subject)}'
-      '${setup.soundType != null ? "&sound=${setup.soundType}" : ""}',
+      '${setup.soundType != null ? "&sound=${Uri.encodeComponent(setup.soundType!)}" : ""}',
     );
   }
 }

@@ -47,7 +47,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     final weeklyGoal = ref.watch(weeklyFitnessGoalProvider);
 
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: colors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
@@ -58,7 +58,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 ),
               ),
               centerTitle: false,
-              backgroundColor: colors.background,
+              backgroundColor: colors.paper,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
               actions: [
                 IconButton(
                   tooltip: '身体数据',
@@ -87,25 +89,25 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.capsuleNav != null) widget.capsuleNav!,
+                // [1] 宠物陪伴
                 PlanModuleVisualHeader(
                   module: PlanModuleType.fitness,
                   color: colors.fitness,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                PlanModuleActionImageCard(
-                  module: PlanModuleType.fitness,
-                  color: colors.fitness,
-                  onTap: () => context.push('/plan/fitness/timer'),
-                ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 12),
+                // [2] 今日训练 HeroCard
                 _buildTodayTrainingCard(todayMinutes, fitnessGoal),
-                const SizedBox(height: AppSpacing.lg),
-                _buildRecordTrainingEntry(context),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 16),
+                // [3] 双列功能入口
+                _buildDualEntryCards(context),
+                const SizedBox(height: 16),
+                // [4] 本周训练数据卡
                 _buildWeeklyTrainingCard(weeklyCount, weeklyGoal),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 12),
+                // [5] 健身趋势图表
                 _buildWeightCurveCard(),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 4),
+                // [6] 最近训练记录
                 recentRecords.when(
                   data: (records) {
                     if (records.isEmpty) {
@@ -252,15 +254,30 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     );
   }
 
-  Widget _buildRecordTrainingEntry(BuildContext context) {
+  Widget _buildDualEntryCards(BuildContext context) {
     final colors = context.growthColors;
-    return PlanModuleRecordEntryCard(
-      color: colors.fitness,
-      icon: Icons.edit_note_rounded,
-      title: '记录训练',
-      subtitle: '手动添加训练记录',
-      buttonLabel: '添加',
-      onTap: () => context.push('/plan/fitness/add'),
+    return Row(
+      children: [
+        Expanded(
+          child: _FitnessEntryCard(
+            icon: Icons.timer_rounded,
+            title: '开始训练',
+            subtitle: '计时记录',
+            color: colors.fitness,
+            onTap: () => context.push('/plan/fitness/timer'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _FitnessEntryCard(
+            icon: Icons.edit_note_rounded,
+            title: '记录训练',
+            subtitle: '手动添加',
+            color: colors.fitness,
+            onTap: () => context.push('/plan/fitness/add'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -340,9 +357,10 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 error: (_, _) => _buildWeightEmptyState(),
               ),
             ),
-          ),
-        ),
-      ],
+                  ),
+                ),
+                const SizedBox(height: 96),
+              ],
     );
   }
 

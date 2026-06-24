@@ -149,30 +149,15 @@ class ModuleMetricChip {
   final String label;
 }
 
-BoxDecoration _moduleCardDecoration(Color color, BuildContext context) {
+BoxDecoration _moduleCardDecoration(
+  Color color,
+  BuildContext context,
+) {
   return BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        context.growthColors.card.withValues(alpha: 0.98),
-        color.withValues(alpha: 0.032),
-      ],
-    ),
+    color: context.growthColors.card,
     borderRadius: BorderRadius.circular(AppRadius.xxxl),
     border: Border.all(color: color.withValues(alpha: 0.12)),
-    boxShadow: [
-      BoxShadow(
-        color: color.withValues(alpha: 0.07),
-        blurRadius: 24,
-        offset: const Offset(0, 10),
-      ),
-      BoxShadow(
-        color: context.growthColors.shadow.withValues(alpha: 0.25),
-        blurRadius: 18,
-        offset: const Offset(0, 7),
-      ),
-    ],
+    boxShadow: AppShadows.hero(color),
   );
 }
 
@@ -398,7 +383,7 @@ class ModuleRecordsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: _moduleCardDecoration(color, context),
-      padding: const EdgeInsets.all(AppSpacing.lg),
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -421,7 +406,7 @@ class ModuleRecordsCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.sectionTitle.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

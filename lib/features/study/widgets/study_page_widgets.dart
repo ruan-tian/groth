@@ -116,23 +116,17 @@ class _QuickActionCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Container(
           padding: const EdgeInsets.symmetric(
             vertical: AppSpacing.md,
             horizontal: AppSpacing.xs,
           ),
           decoration: BoxDecoration(
-            color: colors.card.withValues(alpha: 0.86),
-            borderRadius: BorderRadius.circular(AppRadius.xxl),
+            color: colors.card,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             border: Border.all(color: colors.border),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.12),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            boxShadow: AppShadows.sm,
           ),
           child: Column(
             children: [
@@ -212,14 +206,7 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.card.withValues(alpha: 0.98),
-            colors.softBlue.withValues(alpha: 0.42),
-          ],
-        ),
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
         border: Border.all(color: colors.border),
         boxShadow: [

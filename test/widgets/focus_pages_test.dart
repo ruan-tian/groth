@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +9,7 @@ import 'package:growth_os/features/focus/pages/focus_session_page.dart';
 import 'package:growth_os/features/plan/services/reminder_notification_service.dart';
 import 'package:growth_os/shared/providers/focus_audio_provider.dart';
 import 'package:growth_os/features/focus/providers/focus_provider.dart';
+import 'package:growth_os/features/focus/widgets/focus_sound_panel.dart';
 
 FocusSession _focusSession({
   int id = 1,
@@ -50,6 +51,44 @@ Widget _sessionPage() {
         title: 'English reading',
         subject: 'English',
         totalRounds: 2,
+      ),
+    ),
+  );
+}
+
+Widget _sessionPageWithSound(String soundType) {
+  return ProviderScope(
+    overrides: [
+      focusCycleProvider.overrideWith((_) => _StaticFocusCycleNotifier()),
+      focusAudioStateProvider.overrideWith(_NoopFocusAudioNotifier.new),
+    ],
+    child: MaterialApp(
+      home: FocusSessionPage(
+        durationMinutes: 1,
+        type: 'pomodoro',
+        title: 'English reading',
+        subject: 'English',
+        soundType: soundType,
+        totalRounds: 2,
+      ),
+    ),
+  );
+}
+
+Widget _soundPanel({
+  required String initialSoundType,
+  required ValueChanged<String?> onSoundChanged,
+}) {
+  return ProviderScope(
+    overrides: [
+      focusAudioStateProvider.overrideWith(_NoopFocusAudioNotifier.new),
+    ],
+    child: MaterialApp(
+      home: Scaffold(
+        body: FocusSoundPanel(
+          initialSoundType: initialSoundType,
+          onSoundChanged: onSoundChanged,
+        ),
       ),
     ),
   );
@@ -219,6 +258,34 @@ void main() {
       expect(find.text('English reading'), findsOneWidget);
       expect(find.text('01:00'), findsOneWidget);
     });
+
+    testWidgets('keeps selected white noise when session starts', (
+      tester,
+    ) async {
+      await setViewport(tester, 390, 844);
+      await tester.pumpWidget(_sessionPageWithSound('white_noise'));
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.text('白噪音播放中'), findsOneWidget);
+      expect(find.text('安静模式'), findsNothing);
+    });
+
+    testWidgets('noise mode switch restores noise instead of quiet mode', (
+      tester,
+    ) async {
+      String? selected;
+      await setViewport(tester, 390, 844);
+      await tester.pumpWidget(
+        _soundPanel(
+          initialSoundType: 'none',
+          onSoundChanged: (value) => selected = value,
+        ),
+      );
+
+      await tester.tap(find.text('白噪音').first);
+      await tester.pump();
+
+      expect(selected, 'white_noise');
+    });
   });
 }
-

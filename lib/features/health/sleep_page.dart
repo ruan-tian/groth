@@ -33,7 +33,12 @@ class _SleepPageState extends ConsumerState<SleepPage> {
 
   // 薰衣草色系 (mapped to theme)
   Color get _lavender => context.growthColors.sleep;
-  Color get _lavenderDark => context.growthColors.primaryDark;
+  Color get _lavenderDark => HSLColor.fromColor(context.growthColors.sleep)
+      .withLightness(
+        (HSLColor.fromColor(context.growthColors.sleep).lightness - 0.12)
+            .clamp(0.0, 1.0),
+      )
+      .toColor();
   Color get _lavenderLight => context.growthColors.softPurple;
   Color get _sleepPink => context.growthColors.journal;
 
@@ -75,6 +80,8 @@ class _SleepPageState extends ConsumerState<SleepPage> {
               title: Text('睡眠', style: AppTextStyles.pageTitle),
               centerTitle: false,
               backgroundColor: colors.paper,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
               actions: [
                 IconButton(
                   tooltip: '设置睡眠目标',
@@ -90,7 +97,6 @@ class _SleepPageState extends ConsumerState<SleepPage> {
             ref.invalidate(lastNightSleepRecordProvider);
             ref.invalidate(recentSleepRecordsProvider(5));
             ref.invalidate(recentSleepRecordsProvider(10));
-            // Only invalidate the selected range
             if (_selectedRange == 7) {
               ref.invalidate(weeklySleepDurationProvider);
               ref.invalidate(weeklySleepQualityProvider);
@@ -109,33 +115,24 @@ class _SleepPageState extends ConsumerState<SleepPage> {
               children: [
                 if (widget.capsuleNav != null) widget.capsuleNav!,
 
-                // ── 1. 小猫提示条 ──
+                // [1] 宠物陪伴
                 PlanModuleVisualHeader(
                   module: PlanModuleType.sleep,
                   color: colors.sleep,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                PlanModuleActionImageCard(
-                  module: PlanModuleType.sleep,
-                  color: colors.sleep,
-                  onTap: () => context.push('/plan/sleep/reminder'),
-                ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── 2. 昨晚睡眠概况 ──
+                const SizedBox(height: 12),
+                // [2] 昨晚睡眠 HeroCard
                 _buildSleepOverview(
                   lastNightRecord,
                   weeklyDuration,
                   weeklyQuality,
                   sleepGoal,
                 ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── 3. 记录睡眠入口 ──
+                const SizedBox(height: 16),
+                // [3] 记录睡眠入口
                 _buildRecordSleepEntry(context),
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── 4. 趋势图表 ──
+                const SizedBox(height: 20),
+                // [4] 睡眠趋势图表
                 _buildTrendSection(
                   durationList,
                   qualityList,
@@ -143,14 +140,13 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                   weeklyQuality,
                   sleepGoal,
                 ),
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── 5. 睡眠建议 ──
+                const SizedBox(height: 20),
+                // [5] 睡眠建议 SoftCard
                 _buildSleepSuggestions(lastNightRecord, sleepGoal),
-                const SizedBox(height: AppSpacing.lg),
-
-                // ── 6. 最近记录 ──
+                const SizedBox(height: 16),
+                // [6] 最近记录
                 _buildRecentRecords(recentRecords),
+                const SizedBox(height: 96),
               ],
             ),
           ),
@@ -230,20 +226,10 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.card, colors.sleep.withValues(alpha: 0.06)],
-        ),
+        color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.sleep.withValues(alpha: 0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        border: Border.all(color: colors.sleep.withValues(alpha: 0.12)),
+        boxShadow: AppShadows.sm,
       ),
       child: Center(
         child: Column(
@@ -632,7 +618,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: _lavenderLight,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppRadius.mlg),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

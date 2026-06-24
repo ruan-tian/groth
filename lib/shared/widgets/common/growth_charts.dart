@@ -123,25 +123,12 @@ class GrowthChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.card.withValues(alpha: 0.98),
-            Color.alphaBlend(color.withValues(alpha: 0.075), colors.card),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
         border: Border.all(color: color.withValues(alpha: 0.16)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        boxShadow: AppShadows.md,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,7 +157,7 @@ class GrowthChartCard extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: AppTextStyles.cardTitle.copyWith(
                         color: colors.textPrimary,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                     if (subtitle != null) ...[
@@ -277,6 +264,53 @@ class GrowthChartEmpty extends StatelessWidget {
       ),
     );
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Common X-axis label builder
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Build a bottom axis label widget for charts.
+///
+/// Shows [point.label] as main text and [point.subLabel] as secondary text.
+/// Returns empty widget if [index] should be hidden based on [labelStep].
+Widget buildChartAxisLabel({
+  required int index,
+  required int totalCount,
+  required int labelStep,
+  required GrowthChartPoint point,
+  required AppThemeColors colors,
+}) {
+  if (index < 0 || index >= totalCount) {
+    return const SizedBox.shrink();
+  }
+  if (!ChartValueLabelPolicy.shouldShowAxisLabel(index, totalCount, labelStep)) {
+    return const SizedBox.shrink();
+  }
+  return Padding(
+    padding: const EdgeInsets.only(top: 6),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          point.label,
+          style: TextStyle(
+            fontSize: 10.5,
+            fontWeight: FontWeight.w700,
+            color: colors.textSecondary,
+          ),
+        ),
+        if (point.subLabel?.isNotEmpty == true)
+          Text(
+            point.subLabel!,
+            style: TextStyle(
+              fontSize: 9.5,
+              color: colors.textTertiary,
+            ),
+          ),
+      ],
+    ),
+  );
 }
 
 class GrowthAnimatedBarChart extends StatefulWidget {
@@ -413,41 +447,12 @@ class _GrowthAnimatedBarChartState extends State<GrowthAnimatedBarChart> {
                           showTitles: true,
                           reservedSize: 42,
                           getTitlesWidget: (value, meta) {
-                            final index = value.toInt();
-                            if (index < 0 || index >= widget.points.length) {
-                              return const SizedBox.shrink();
-                            }
-                            if (!ChartValueLabelPolicy.shouldShowAxisLabel(
-                              index,
-                              widget.points.length,
-                              density.labelStep,
-                            )) {
-                              return const SizedBox.shrink();
-                            }
-                            final point = widget.points[index];
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 6),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    point.label,
-                                    style: TextStyle(
-                                      fontSize: 10.5,
-                                      fontWeight: FontWeight.w700,
-                                      color: colors.textSecondary,
-                                    ),
-                                  ),
-                                  if (point.subLabel?.isNotEmpty == true)
-                                    Text(
-                                      point.subLabel!,
-                                      style: TextStyle(
-                                        fontSize: 9.5,
-                                        color: colors.textTertiary,
-                                      ),
-                                    ),
-                                ],
-                              ),
+                            return buildChartAxisLabel(
+                              index: value.toInt(),
+                              totalCount: widget.points.length,
+                              labelStep: density.labelStep,
+                              point: widget.points[value.toInt()],
+                              colors: colors,
                             );
                           },
                         ),
@@ -774,41 +779,12 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
           showTitles: true,
           reservedSize: 42,
           getTitlesWidget: (value, meta) {
-            final index = value.round();
-            if (index < 0 || index >= primary.points.length) {
-              return const SizedBox.shrink();
-            }
-            if (!ChartValueLabelPolicy.shouldShowAxisLabel(
-              index,
-              primary.points.length,
-              density.labelStep,
-            )) {
-              return const SizedBox.shrink();
-            }
-            final point = primary.points[index];
-            return Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    point.label,
-                    style: TextStyle(
-                      fontSize: 10.5,
-                      fontWeight: FontWeight.w700,
-                      color: colors.textSecondary,
-                    ),
-                  ),
-                  if (point.subLabel?.isNotEmpty == true)
-                    Text(
-                      point.subLabel!,
-                      style: TextStyle(
-                        fontSize: 9.5,
-                        color: colors.textTertiary,
-                      ),
-                    ),
-                ],
-              ),
+            return buildChartAxisLabel(
+              index: value.round(),
+              totalCount: primary.points.length,
+              labelStep: density.labelStep,
+              point: primary.points[value.round()],
+              colors: colors,
             );
           },
         ),

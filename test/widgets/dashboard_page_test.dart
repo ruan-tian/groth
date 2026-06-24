@@ -152,6 +152,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('docked_music_handle')), findsOneWidget);
+      final dockedBox = tester.renderObject<RenderBox>(
+        find.byKey(const ValueKey('docked_music_handle')),
+      );
+      expect(dockedBox.size.width, lessThan(60));
 
       await tester.tap(find.byKey(const ValueKey('docked_music_handle')));
       await tester.pumpAndSettle();

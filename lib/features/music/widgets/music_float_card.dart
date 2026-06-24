@@ -20,23 +20,12 @@ class _MusicFloatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final motionOff = AppMotion.reduceMotion(context);
-    final colors = context.growthColors;
     return AnimatedContainer(
       duration: AppMotion.duration(context, AppMotion.slow),
       curve: AppMotion.standard,
       clipBehavior: Clip.none,
       padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: AnimatedSwitcher(
         duration: AppMotion.duration(context, AppMotion.normal),
         switchInCurve: AppMotion.standard,
@@ -89,86 +78,102 @@ class _DockedMusicHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final track = state.currentTrack;
-    final hasTrack = track != null;
+    final hasTrack = state.currentTrack != null;
     final isPlaying = state.isPlaying && hasTrack;
+    final radius = side == _MusicDockSide.left
+        ? const BorderRadius.horizontal(right: Radius.circular(22))
+        : const BorderRadius.horizontal(left: Radius.circular(22));
 
     return Tooltip(
       message: hasTrack ? '展开音乐控制' : '导入音乐',
       child: GrowthPressable(
         onTap: onReveal,
         semanticLabel: hasTrack ? '展开音乐控制' : '导入音乐',
-        borderRadius: BorderRadius.circular(999),
+        borderRadius: BorderRadius.circular(22),
         child: Align(
           alignment: side == _MusicDockSide.left
               ? Alignment.centerRight
               : Alignment.centerLeft,
           child: Container(
-            width: 42,
-            height: 64,
+            width: 34,
+            height: 76,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.horizontal(
-                left: side == _MusicDockSide.left
-                    ? const Radius.circular(0)
-                    : const Radius.circular(999),
-                right: side == _MusicDockSide.left
-                    ? const Radius.circular(999)
-                    : const Radius.circular(0),
-              ),
-              color: colors.card.withValues(alpha: 0.78),
-              border: Border.all(color: colors.border.withValues(alpha: 0.72)),
+              borderRadius: radius,
+              color: colors.card.withValues(alpha: 0.88),
+              border: Border.all(color: colors.border.withValues(alpha: 0.64)),
               boxShadow: [
                 BoxShadow(
-                  color: colors.shadow.withValues(alpha: 0.18),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+                  color: colors.shadow.withValues(alpha: 0.20),
+                  blurRadius: 22,
+                  offset: const Offset(0, 10),
+                ),
+                BoxShadow(
+                  color: colors.primary.withValues(
+                    alpha: isPlaying ? 0.18 : 0.08,
+                  ),
+                  blurRadius: 16,
+                  spreadRadius: -4,
                 ),
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.horizontal(
-                left: side == _MusicDockSide.left
-                    ? const Radius.circular(0)
-                    : const Radius.circular(999),
-                right: side == _MusicDockSide.left
-                    ? const Radius.circular(999)
-                    : const Radius.circular(0),
-              ),
+              borderRadius: radius,
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    begin: side == _MusicDockSide.left
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
-                    end: side == _MusicDockSide.left
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                     colors: [
-                      colors.card.withValues(alpha: 0.34),
-                      colors.primaryLight.withValues(alpha: 0.20),
+                      colors.card.withValues(alpha: 0.96),
+                      colors.primaryLight.withValues(alpha: 0.22),
+                      colors.surface.withValues(alpha: 0.88),
                     ],
                   ),
                 ),
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    left: side == _MusicDockSide.left ? 16 : 7,
-                    right: side == _MusicDockSide.left ? 7 : 16,
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        hasTrack ? Icons.music_note_rounded : Icons.add_rounded,
-                        size: 18,
-                        color: colors.primary,
+                child: Stack(
+                  children: [
+                    Positioned(
+                      top: 9,
+                      bottom: 9,
+                      left: side == _MusicDockSide.left ? null : 8,
+                      right: side == _MusicDockSide.left ? 8 : null,
+                      child: Container(
+                        width: 3,
+                        decoration: BoxDecoration(
+                          color: colors.border.withValues(alpha: 0.62),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
                       ),
-                      const SizedBox(height: 6),
-                      _MiniWaveBars(
-                        isPlaying: isPlaying,
-                        color: colors.primary,
+                    ),
+                    Align(
+                      alignment: side == _MusicDockSide.left
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Padding(
+                        padding: EdgeInsets.only(
+                          left: side == _MusicDockSide.left ? 7 : 5,
+                          right: side == _MusicDockSide.left ? 5 : 7,
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              hasTrack
+                                  ? Icons.graphic_eq_rounded
+                                  : Icons.add_rounded,
+                              size: 18,
+                              color: colors.primary,
+                            ),
+                            const SizedBox(height: 7),
+                            _MiniWaveBars(
+                              isPlaying: isPlaying,
+                              color: colors.primary,
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -211,6 +216,9 @@ class _RevealedMusicRemote extends ConsumerWidget {
         final hasTrack = track != null;
         final isPlaying = state.isPlaying && hasTrack;
         final progress = state.progress;
+        final radius = side == _MusicDockSide.left
+            ? const BorderRadius.horizontal(right: Radius.circular(999))
+            : const BorderRadius.horizontal(left: Radius.circular(999));
 
         return Align(
           alignment: side == _MusicDockSide.left
@@ -221,114 +229,170 @@ class _RevealedMusicRemote extends ConsumerWidget {
             semanticLabel: hasTrack ? '打开完整播放器' : '导入音乐',
             borderRadius: BorderRadius.circular(999),
             child: Container(
-              height: 64,
-              padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
+              height: 70,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(999),
-                color: colors.card.withValues(alpha: 0.82),
+                borderRadius: radius,
+                color: colors.card.withValues(alpha: 0.90),
                 border: Border.all(
-                  color: colors.border.withValues(alpha: 0.72),
+                  color: colors.border.withValues(alpha: 0.70),
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: colors.shadow.withValues(alpha: 0.20),
-                    blurRadius: 22,
-                    offset: const Offset(0, 10),
+                    color: colors.shadow.withValues(alpha: 0.22),
+                    blurRadius: 26,
+                    offset: const Offset(0, 12),
+                  ),
+                  BoxShadow(
+                    color: colors.primary.withValues(
+                      alpha: isPlaying ? 0.18 : 0.08,
+                    ),
+                    blurRadius: 20,
+                    spreadRadius: -6,
                   ),
                 ],
               ),
-              child: Row(
-                textDirection: side == _MusicDockSide.left
-                    ? TextDirection.ltr
-                    : TextDirection.rtl,
-                children: [
-                  _MiniCover(track: track, isPlaying: isPlaying),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Directionality(
-                      textDirection: TextDirection.ltr,
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            track?.title ?? '甜甜音乐',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: colors.textPrimary,
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            hasTrack
-                                ? (isPlaying ? '正在播放' : '已暂停')
-                                : '导入音乐开始播放',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: colors.textSecondary,
-                              fontSize: 10.5,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(999),
-                            child: LinearProgressIndicator(
-                              minHeight: 3,
-                              value: hasTrack ? progress.clamp(0.0, 1.0) : 0,
-                              backgroundColor: colors.surfaceVariant,
-                              valueColor: AlwaysStoppedAnimation(
-                                colors.primary,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 7),
-                  Directionality(
-                    textDirection: TextDirection.ltr,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _MiniCircleButton(
-                          tooltip: hasTrack
-                              ? (isPlaying ? '暂停' : '播放')
-                              : '导入音乐',
-                          icon: state.isLoading || state.isImporting
-                              ? Icons.hourglass_empty_rounded
-                              : hasTrack
-                              ? (isPlaying
-                                    ? Icons.pause_rounded
-                                    : Icons.play_arrow_rounded)
-                              : Icons.add_rounded,
-                          filled: true,
-                          onTap: state.isLoading || state.isImporting
-                              ? null
-                              : hasTrack
-                              ? controller.togglePlayPause
-                              : onImport,
-                        ),
-                        const SizedBox(width: 5),
-                        _MiniCircleButton(
-                          tooltip: '下一首',
-                          icon: Icons.skip_next_rounded,
-                          onTap: hasTrack ? controller.playNext : null,
-                        ),
+              child: ClipRRect(
+                borderRadius: radius,
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        colors.card.withValues(alpha: 0.94),
+                        colors.surface.withValues(alpha: 0.88),
+                        colors.primaryLight.withValues(alpha: 0.18),
                       ],
                     ),
                   ),
-                ],
+                  child: Row(
+                    textDirection: side == _MusicDockSide.left
+                        ? TextDirection.ltr
+                        : TextDirection.rtl,
+                    children: [
+                      SizedBox(width: side == _MusicDockSide.left ? 6 : 8),
+                      const _MiniGrip(),
+                      const SizedBox(width: 7),
+                      _MiniCover(track: track, isPlaying: isPlaying),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                track?.title ?? '甜甜音乐',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: colors.textPrimary,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 3),
+                              Text(
+                                hasTrack
+                                    ? (isPlaying ? '正在播放' : '已暂停')
+                                    : '导入音乐开始播放',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: colors.textSecondary,
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 7),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(999),
+                                child: LinearProgressIndicator(
+                                  minHeight: 3,
+                                  value: hasTrack
+                                      ? progress.clamp(0.0, 1.0)
+                                      : 0,
+                                  backgroundColor: colors.surfaceVariant,
+                                  valueColor: AlwaysStoppedAnimation(
+                                    colors.primary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 7),
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _MiniCircleButton(
+                              tooltip: hasTrack
+                                  ? (isPlaying ? '暂停' : '播放')
+                                  : '导入音乐',
+                              icon: state.isLoading || state.isImporting
+                                  ? Icons.hourglass_empty_rounded
+                                  : hasTrack
+                                  ? (isPlaying
+                                        ? Icons.pause_rounded
+                                        : Icons.play_arrow_rounded)
+                                  : Icons.add_rounded,
+                              filled: true,
+                              onTap: state.isLoading || state.isImporting
+                                  ? null
+                                  : hasTrack
+                                  ? controller.togglePlayPause
+                                  : onImport,
+                            ),
+                            const SizedBox(width: 5),
+                            _MiniCircleButton(
+                              tooltip: '下一首',
+                              icon: Icons.skip_next_rounded,
+                              onTap: hasTrack ? controller.playNext : null,
+                            ),
+                          ],
+                        ),
+                      ),
+                      SizedBox(width: side == _MusicDockSide.left ? 10 : 6),
+                    ],
+                  ),
+                ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _MiniGrip extends StatelessWidget {
+  const _MiniGrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return SizedBox(
+      width: 7,
+      height: 42,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          3,
+          (index) => Container(
+            width: 3,
+            height: 3,
+            margin: const EdgeInsets.symmetric(vertical: 3),
+            decoration: BoxDecoration(
+              color: colors.textTertiary.withValues(alpha: 0.46),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

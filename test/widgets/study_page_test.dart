@@ -186,7 +186,6 @@ void main() {
 
       expect(find.byType(StudyPage), findsOneWidget);
       expect(find.byType(PlanModuleVisualHeader), findsOneWidget);
-      expect(find.byType(PlanModuleActionImageCard), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
       expect(find.text('知识空间'), findsOneWidget);
       expect(find.text('导入资料，让甜甜帮你生成知识卡'), findsOneWidget);

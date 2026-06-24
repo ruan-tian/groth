@@ -65,6 +65,7 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
             isRevealed: _isRevealed || _dragOffset != null,
           );
           return Stack(
+            clipBehavior: Clip.none,
             children: [
               AnimatedPositioned(
                 duration: motionOff || _dragOffset != null
@@ -201,9 +202,11 @@ class _MusicFloatLayout {
     final screenWidth = constraints.maxWidth;
     final screenHeight = constraints.maxHeight;
     final compact = screenWidth < 380;
-    final width = isRevealed ? (compact ? 220.0 : 248.0) : 48.0;
-    final height = isRevealed ? 68.0 : 72.0;
-    final handlePeek = 22.0;
+    final width = isRevealed
+        ? math.min(compact ? 232.0 : 272.0, screenWidth - 24.0)
+        : 54.0;
+    final height = isRevealed ? 74.0 : 82.0;
+    final handlePeek = compact ? 22.0 : 24.0;
     final edgeMargin = isRevealed ? 10.0 : 0.0;
     const bottomReserve = 106.0;
     final minX = edgeMargin;

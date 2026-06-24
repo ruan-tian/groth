@@ -93,6 +93,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
               centerTitle: false,
               backgroundColor: colors.paper,
               surfaceTintColor: Colors.transparent,
+              elevation: 0,
               actions: [
                 IconButton(
                   tooltip: '专注计时',
@@ -123,22 +124,16 @@ class _StudyPageState extends ConsumerState<StudyPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                //  小猫提示?
+                // [1] 宠物陪伴
                 PlanModuleVisualHeader(
                   module: PlanModuleType.study,
                   color: colors.study,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                PlanModuleActionImageCard(
-                  module: PlanModuleType.study,
-                  color: colors.study,
-                  onTap: () => context.push('/focus'),
-                ),
-                const SizedBox(height: AppSpacing.md),
+                const SizedBox(height: 12),
+                // [2] 知识空间入口 FeatureCard
                 _buildKnowledgeReviewEntry(context, knowledgeOverview),
-                const SizedBox(height: AppSpacing.lg),
-
-                //  顶部数据卡片
+                const SizedBox(height: 16),
+                // [3] 今日学习 HeroCard
                 _buildStatsCards(
                   context,
                   ref,
@@ -146,23 +141,19 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                   todayRecords,
                   studyGoal,
                 ),
-                const SizedBox(height: AppSpacing.xl),
-
-                //  学习趋势
-                //  忍操作
+                const SizedBox(height: 20),
+                // [4] 三列快捷操作
                 _buildQuickActions(context),
-                const SizedBox(height: AppSpacing.xl),
-
-                //  科目分布
-                //  近?
-                _buildRecentRecords(context, ref, recentRecords),
-                const SizedBox(height: AppSpacing.xl),
-
+                const SizedBox(height: 20),
+                // [5] 学习趋势图表
                 _buildStudyTrendSection(context),
-                const SizedBox(height: AppSpacing.xl),
-
+                const SizedBox(height: 20),
+                // [6] 科目分布
                 _buildSubjectDistribution(context, subjectDist),
-                const SizedBox(height: AppSpacing.xl),
+                const SizedBox(height: 20),
+                // [7] 最近学习记录
+                _buildRecentRecords(context, ref, recentRecords),
+                const SizedBox(height: 96),
               ],
             ),
           ),
@@ -211,20 +202,14 @@ class _StudyPageState extends ConsumerState<StudyPage> {
           color: Colors.transparent,
           child: InkWell(
             onTap: () => context.push('/plan/study/flash-review'),
-            borderRadius: BorderRadius.circular(22),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
             child: Container(
               padding: const EdgeInsets.all(AppSpacing.lg),
               decoration: BoxDecoration(
                 color: colors.card,
-                borderRadius: BorderRadius.circular(22),
+                borderRadius: BorderRadius.circular(AppRadius.xl),
                 border: Border.all(color: colors.border),
-                boxShadow: [
-                  BoxShadow(
-                    color: colors.study.withValues(alpha: 0.08),
-                    blurRadius: 22,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
+                boxShadow: AppShadows.sm,
               ),
               child: Row(
                 children: [
@@ -256,7 +241,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                           overflow: TextOverflow.ellipsis,
                           style: AppTextStyles.sectionTitle.copyWith(
                             color: colors.textPrimary,
-                            fontWeight: FontWeight.w800,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                         const SizedBox(height: AppSpacing.xs),
@@ -303,11 +288,11 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Container(
-                    width: 92,
+                    width: 88,
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF6F8FF),
-                      borderRadius: BorderRadius.circular(18),
+                      color: colors.study.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(AppRadius.lg),
                       border: Border.all(color: colors.border),
                     ),
                     child: Column(
@@ -341,7 +326,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
         height: 150,
         decoration: BoxDecoration(
           color: colors.card,
-          borderRadius: BorderRadius.circular(22),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
           border: Border.all(color: colors.border),
         ),
       ),

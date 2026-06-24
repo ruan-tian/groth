@@ -51,4 +51,16 @@ class AppShadows {
       ),
     ];
   }
+
+  /// HeroCard / ModuleRecordsCard 专用：模块色轻影。
+  /// 比 [colored] 更轻（8% alpha, blur 16），适合大卡片。
+  static List<BoxShadow> hero(Color color) {
+    return [
+      BoxShadow(
+        color: color.withValues(alpha: 0.08),
+        blurRadius: 16,
+        offset: const Offset(0, 6),
+      ),
+    ];
+  }
 }

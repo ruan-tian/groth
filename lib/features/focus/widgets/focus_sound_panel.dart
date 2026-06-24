@@ -25,6 +25,9 @@ class FocusSoundPanel extends ConsumerWidget {
     final colors = context.growthColors;
     final audioState = ref.watch(focusAudioStateProvider);
     final current = audioState.currentSoundType ?? initialSoundType;
+    final noiseFallback = current != 'none' && current != 'music'
+        ? current
+        : 'white_noise';
     final musicMode = current == 'music';
 
     return Container(
@@ -80,7 +83,7 @@ class FocusSoundPanel extends ConsumerWidget {
           const SizedBox(height: 12),
           _AudioModeSwitch(
             musicMode: musicMode,
-            onNoise: () => onSoundChanged?.call(null),
+            onNoise: () => onSoundChanged?.call(noiseFallback),
             onMusic: () => onSoundChanged?.call('music'),
           ),
           const SizedBox(height: 14),
@@ -211,7 +214,9 @@ class _NoisePanel extends ConsumerWidget {
                   selected: selected,
                   compact: compact,
                   onTap: () {
-                    onSoundChanged?.call(sound.value == 'none' ? null : sound.value);
+                    onSoundChanged?.call(
+                      sound.value == 'none' ? null : sound.value,
+                    );
                   },
                 );
               })
@@ -354,7 +359,9 @@ class _FocusMusicPanel extends ConsumerWidget {
               icon: state.isImporting
                   ? Icons.hourglass_empty_rounded
                   : Icons.add_rounded,
-              onTap: state.isImporting ? null : () => facade.controller.importTracks(),
+              onTap: state.isImporting
+                  ? null
+                  : () => facade.controller.importTracks(),
             ),
           ],
         ),
@@ -620,10 +627,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
     );
   }
 
-  Widget _buildCollectionTabs(
-    MusicPlayerState state,
-    FocusMusicFacade facade,
-  ) {
+  Widget _buildCollectionTabs(MusicPlayerState state, FocusMusicFacade facade) {
     final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(4),
