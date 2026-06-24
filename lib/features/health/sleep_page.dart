@@ -484,12 +484,12 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   ) {
     final map = <String, Map<String, dynamic>>{};
     for (final item in durationData) {
-      final date = item['date'] as String? ?? '';
+      final date = _normalizeDate(item['date'] as String? ?? '');
       if (date.isEmpty) continue;
       map[date] = {'date': date, 'duration': item['duration'], 'quality': null};
     }
     for (final item in qualityData) {
-      final date = item['date'] as String? ?? '';
+      final date = _normalizeDate(item['date'] as String? ?? '');
       if (date.isEmpty) continue;
       map.putIfAbsent(
         date,
@@ -499,6 +499,14 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     }
     return map.values.toList()
       ..sort((a, b) => (a['date'] as String).compareTo(b['date'] as String));
+  }
+
+  /// Normalize date string to yyyy-MM-dd format
+  String _normalizeDate(String date) {
+    if (date.isEmpty) return '';
+    final parsed = DateTime.tryParse(date);
+    if (parsed == null) return date;
+    return '${parsed.year}-${parsed.month.toString().padLeft(2, '0')}-${parsed.day.toString().padLeft(2, '0')}';
   }
 
   List<Map<String, dynamic>> _aggregateSleepTrendByWeek(
@@ -564,16 +572,26 @@ class _SleepPageState extends ConsumerState<SleepPage> {
           : null;
       return month == null ? date : '$month月';
     }
+    // Week view: show weekday name
     final parsed = DateTime.tryParse(date);
-    return parsed == null ? date : '${parsed.month}/${parsed.day}';
+    if (parsed != null) {
+      const names = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+      return names[parsed.weekday - 1];
+    }
+    return date;
   }
 
   String _sleepTrendSubLabel(Map<String, dynamic> item) {
-    if (_selectedRange != 30) return '';
-    final start = _dateShort(item['date'] as String? ?? '');
-    final end = _dateShort(item['endDate'] as String? ?? '');
-    if (start.isEmpty || end.isEmpty) return '';
-    return '$start-$end';
+    if (_selectedRange == 365) return '';
+    final date = item['date'] as String? ?? '';
+    if (_selectedRange == 30) {
+      final start = _dateShort(item['date'] as String? ?? '');
+      final end = _dateShort(item['endDate'] as String? ?? '');
+      if (start.isEmpty || end.isEmpty) return '';
+      return '$start-$end';
+    }
+    // Week view: show M/d
+    return _dateShort(date);
   }
 
   String _formatSleepTrendDuration(double minutes) {

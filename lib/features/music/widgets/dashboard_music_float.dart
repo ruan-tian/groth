@@ -1,5 +1,6 @@
-import 'dart:math' as math;
 import 'dart:async';
+import 'dart:math' as math;
+import 'dart:ui';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -67,6 +68,14 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
           return Stack(
             clipBehavior: Clip.none,
             children: [
+              if (layout.isRevealed)
+                Positioned.fill(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: _dock,
+                    child: const SizedBox.expand(),
+                  ),
+                ),
               AnimatedPositioned(
                 duration: motionOff || _dragOffset != null
                     ? Duration.zero
@@ -153,6 +162,15 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
     _scheduleAutoDock();
   }
 
+  void _dock() {
+    _autoDockTimer?.cancel();
+    if (!mounted) return;
+    setState(() {
+      _dragOffset = null;
+      _isRevealed = false;
+    });
+  }
+
   void _scheduleAutoDock() {
     _autoDockTimer?.cancel();
     _autoDockTimer = Timer(const Duration(seconds: 4), () {
@@ -203,16 +221,16 @@ class _MusicFloatLayout {
     final screenHeight = constraints.maxHeight;
     final compact = screenWidth < 380;
     final width = isRevealed
-        ? math.min(compact ? 232.0 : 272.0, screenWidth - 24.0)
-        : 54.0;
-    final height = isRevealed ? 74.0 : 82.0;
-    final handlePeek = compact ? 22.0 : 24.0;
-    final edgeMargin = isRevealed ? 10.0 : 0.0;
+        ? math.min(compact ? 216.0 : 244.0, screenWidth - 16.0)
+        : 46.0;
+    final height = isRevealed ? 66.0 : 68.0;
+    final handlePeek = compact ? 24.0 : 26.0;
+    final edgeInset = width - handlePeek;
     const bottomReserve = 106.0;
-    final minX = edgeMargin;
+    final minX = isRevealed ? 0.0 : -edgeInset;
     final maxX = isRevealed
-        ? math.max(edgeMargin, screenWidth - width - edgeMargin)
-        : math.max(edgeMargin, screenWidth - handlePeek);
+        ? math.max(0.0, screenWidth - width)
+        : math.max(minX, screenWidth - handlePeek);
     final minY = media.padding.top + 8;
     final maxY = math.max(
       minY,

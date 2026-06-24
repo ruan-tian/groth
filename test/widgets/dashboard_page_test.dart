@@ -155,11 +155,26 @@ void main() {
       final dockedBox = tester.renderObject<RenderBox>(
         find.byKey(const ValueKey('docked_music_handle')),
       );
-      expect(dockedBox.size.width, lessThan(60));
+      expect(dockedBox.size.width, lessThanOrEqualTo(48));
+      expect(
+        tester.getTopLeft(find.byKey(const ValueKey('docked_music_handle'))).dx,
+        lessThan(0),
+      );
 
       await tester.tap(find.byKey(const ValueKey('docked_music_handle')));
       await tester.pumpAndSettle();
 
+      expect(
+        find.byKey(const ValueKey('revealed_music_remote')),
+        findsOneWidget,
+      );
+
+      await tester.tapAt(const Offset(220, 120));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('docked_music_handle')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('docked_music_handle')));
+      await tester.pumpAndSettle();
       expect(
         find.byKey(const ValueKey('revealed_music_remote')),
         findsOneWidget,
