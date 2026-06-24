@@ -128,7 +128,9 @@ class ChartAxisScale {
   static double _niceInterval(double range) {
     if (range <= 0) return 1;
     final rough = range / 4;
-    final exponent = math.pow(10, (math.log(rough) / math.ln10).floor()).toDouble();
+    final exponent = math
+        .pow(10, (math.log(rough) / math.ln10).floor())
+        .toDouble();
     final normalized = rough / exponent;
     final nice = normalized <= 1
         ? 1
@@ -195,7 +197,9 @@ class ChartValueLabelPolicy {
   }) {
     final result = <int>{};
     if (values.isEmpty) return result;
-    if (touchedIndex != null && touchedIndex >= 0 && touchedIndex < values.length) {
+    if (touchedIndex != null &&
+        touchedIndex >= 0 &&
+        touchedIndex < values.length) {
       result.add(touchedIndex);
     }
 
@@ -203,7 +207,8 @@ class ChartValueLabelPolicy {
     var minIndex = 0;
     for (var i = 1; i < values.length; i++) {
       if (values[i] > values[maxIndex]) maxIndex = i;
-      if (values[i] > 0 && (values[minIndex] == 0 || values[i] < values[minIndex])) {
+      if (values[i] > 0 &&
+          (values[minIndex] == 0 || values[i] < values[minIndex])) {
         minIndex = i;
       }
     }

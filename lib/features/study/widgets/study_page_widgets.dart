@@ -1,6 +1,6 @@
 part of '../study_page.dart';
 
-//  图表用格式化?0m / 1.5h 
+//  图表用格式化?0m / 1.5h
 String _formatMinutesCompact(int minutes) {
   if (minutes <= 0) return '0m';
   if (minutes < 60) return '${minutes}m';
@@ -41,7 +41,7 @@ class _BarData {
 // 学习趋势柱状图（fl_chart，支持周/?年）
 // =============================================================================
 
-class _StudyBarChart extends StatefulWidget {
+class _StudyBarChart extends StatelessWidget {
   const _StudyBarChart({
     required this.stats,
     required this.totalHours,
@@ -55,56 +55,35 @@ class _StudyBarChart extends StatefulWidget {
   final String range; // 'week' | 'month' | 'year'
 
   @override
-  State<_StudyBarChart> createState() => _StudyBarChartState();
-}
-
-class _StudyBarChartState extends State<_StudyBarChart> {
-  int? _touchedIndex;
-  DurationChartScale? _cachedScale;
-
-  AppThemeColors get _colors => context.growthColors;
-
-  @override
-  void didUpdateWidget(_StudyBarChart oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!identical(widget.stats, oldWidget.stats)) {
-      _cachedScale = null;
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final totalMinutes = widget.stats.fold<int>(
-      0,
-      (sum, bar) => sum + bar.value,
-    );
-    final activeLabel = widget.range == 'year' ? '活跃月份' : '学习天数';
-    final activeUnit = widget.range == 'year' ? '月' : '天';
-    final points = widget.stats.map((bar) {
-      final rawLabel = widget.range == 'month' && bar.avgValue != null
-          ? '${_formatMinutesCompact(bar.value)} · 日均 ${_formatMinutesCompact(bar.avgValue!)}'
-          : _formatMinutesCompact(bar.value);
-      return GrowthChartPoint(
-        label: bar.label,
-        subLabel: bar.subLabel,
-        date: bar.date,
-        value: bar.value.toDouble(),
-        rawLabel: rawLabel,
-      );
-    }).toList(growable: false);
+    final totalMinutes = stats.fold<int>(0, (sum, bar) => sum + bar.value);
+    final activeLabel = range == 'year' ? '活跃月份' : '学习天数';
+    final activeUnit = range == 'year' ? '月' : '天';
+    final points = stats
+        .map((bar) {
+          final rawLabel = range == 'month' && bar.avgValue != null
+              ? '${_formatMinutesCompact(bar.value)} · 日均 ${_formatMinutesCompact(bar.avgValue!)}'
+              : _formatMinutesCompact(bar.value);
+          return GrowthChartPoint(
+            label: bar.label,
+            subLabel: bar.subLabel,
+            date: bar.date,
+            value: bar.value.toDouble(),
+            rawLabel: rawLabel,
+          );
+        })
+        .toList(growable: false);
 
     return GrowthChartCard(
       title: '学习趋势',
       subtitle:
-          '总时长 ${_formatMinutesCompact(totalMinutes)} · $activeLabel ${widget.totalDays}$activeUnit',
+          '总时长 ${_formatMinutesCompact(totalMinutes)} · $activeLabel $totalDays$activeUnit',
       icon: Icons.auto_graph_rounded,
       color: colors.study,
-      legend: [
-        GrowthChartLegendItem(color: colors.study, label: '学习时长'),
-      ],
+      legend: [GrowthChartLegendItem(color: colors.study, label: '学习时长')],
       child: GrowthAnimatedBarChart(
-        key: ValueKey('study_${widget.range}_${points.length}_$totalMinutes'),
+        key: ValueKey('study_${range}_${points.length}_$totalMinutes'),
         points: points,
         color: colors.study,
         valueFormatter: (value) => _formatMinutesCompact(value.round()),
@@ -113,7 +92,10 @@ class _StudyBarChartState extends State<_StudyBarChart> {
     );
   }
 
-  //  触摸交互 
+  //  触摸交互
+}
+
+/*
   BarTouchData _buildTouchData() {
     final minutesList = widget.stats.map((s) => s.value).toList();
     final scale = buildDurationChartScale(minutesList);
@@ -465,6 +447,9 @@ class _ValueBubble extends StatelessWidget {
 // =============================================================================
 // 忍操作卡片
 // =============================================================================
+
+class _QuickActionCard extends StatelessWidget {
+*/
 
 class _QuickActionCard extends StatelessWidget {
   const _QuickActionCard({

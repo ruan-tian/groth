@@ -24,3 +24,4 @@ export 'celebration_overlay.dart';
 export 'growth_confirm_dialog.dart';
 export 'chart_tooltip_theme.dart';
 export 'growth_charts.dart';
+export '../../../core/utils/growth_chart_utils.dart';

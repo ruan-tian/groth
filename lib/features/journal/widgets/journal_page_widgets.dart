@@ -263,14 +263,12 @@ class _JournalHeatmapSectionState
                 ? Column(
                     key: ValueKey('heatmap_${selectedYear}_${data.length}'),
                     children: [
-                      HeatmapCalendar(
+                      GrowthHeatmapCalendar(
                         data: data,
-                        monthsToShow: 12,
                         startDate: DateTime(selectedYear),
                         endDate: DateTime(selectedYear, 12, 31),
                         baseColor: JournalColors.heat0,
                         maxColor: JournalColors.heat4,
-                        showLegend: false,
                       ),
                       const SizedBox(height: 12),
                       const _HeatmapLegend(),

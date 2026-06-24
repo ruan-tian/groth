@@ -124,7 +124,9 @@ class GrowthChartCard extends StatelessWidget {
             switchInCurve: Curves.easeOutCubic,
             switchOutCurve: Curves.easeOutCubic,
             child: SizedBox(
-              key: ValueKey(title + (subtitle ?? '') + child.hashCode.toString()),
+              key: ValueKey(
+                title + (subtitle ?? '') + child.hashCode.toString(),
+              ),
               height: height,
               child: child,
             ),
@@ -474,10 +476,9 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final count = visibleSeries.map((s) => s.points.length).fold<int>(
-          0,
-          math.max,
-        );
+        final count = visibleSeries
+            .map((s) => s.points.length)
+            .fold<int>(0, math.max);
         final density = ChartDensityPolicy.resolve(
           width: constraints.maxWidth,
           pointCount: count,
@@ -526,11 +527,11 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
                               show: true,
                               getDotPainter: (spot, percent, barData, index) =>
                                   FlDotCirclePainter(
-                                radius: 5.5,
-                                color: colors.card,
-                                strokeWidth: 2.8,
-                                strokeColor: barData.color ?? widget.color,
-                              ),
+                                    radius: 5.5,
+                                    color: colors.card,
+                                    strokeWidth: 2.8,
+                                    strokeColor: barData.color ?? widget.color,
+                                  ),
                             ),
                           );
                         }).toList();
@@ -561,22 +562,26 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
                         fitInsideHorizontally: true,
                         fitInsideVertically: true,
                         getTooltipItems: (spots) {
-                          return spots.map((spot) {
-                            final series = visibleSeries[spot.barIndex];
-                            final index = spot.x.round();
-                            if (index < 0 || index >= series.points.length) {
-                              return null;
-                            }
-                            final point = series.points[index];
-                            return LineTooltipItem(
-                              '${series.name} ${point.rawLabel ?? series.valueFormatter(point.value)}',
-                              TextStyle(
-                                color: series.color,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            );
-                          }).whereType<LineTooltipItem>().toList();
+                          return spots
+                              .map((spot) {
+                                final series = visibleSeries[spot.barIndex];
+                                final index = spot.x.round();
+                                if (index < 0 ||
+                                    index >= series.points.length) {
+                                  return null;
+                                }
+                                final point = series.points[index];
+                                return LineTooltipItem(
+                                  '${series.name} ${point.rawLabel ?? series.valueFormatter(point.value)}',
+                                  TextStyle(
+                                    color: series.color,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                );
+                              })
+                              .whereType<LineTooltipItem>()
+                              .toList();
                         },
                       ),
                     ),
@@ -584,11 +589,9 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
                     lineBarsData: List.generate(visibleSeries.length, (sIndex) {
                       final series = visibleSeries[sIndex];
                       final scale = scales[series.name]!;
-                      final revealCount =
-                          (series.points.length * progress).ceil().clamp(
-                                1,
-                                series.points.length,
-                              );
+                      final revealCount = (series.points.length * progress)
+                          .ceil()
+                          .clamp(1, series.points.length);
                       final points = series.points
                           .take(revealCount)
                           .toList(growable: false);
@@ -754,7 +757,12 @@ class _GrowthSleepComboChartState extends State<GrowthSleepComboChart> {
             child: IgnorePointer(
               ignoring: false,
               child: Padding(
-                padding: const EdgeInsets.only(left: 42, right: 8, top: 40, bottom: 42),
+                padding: const EdgeInsets.only(
+                  left: 42,
+                  right: 8,
+                  top: 40,
+                  bottom: 42,
+                ),
                 child: GrowthMultiLineChart(
                   series: [
                     GrowthChartSeries(
@@ -852,9 +860,15 @@ class GrowthHeatmapCalendar extends StatelessWidget {
                                   : ((value / maxValue) * 4).ceil().clamp(1, 4);
                               final isToday = _sameDay(date, DateTime.now());
                               final isPeak = value > 0 && value == maxValue;
-                              final delay = (weekIndex * 0.025).clamp(0.0, 0.24);
+                              final delay = (weekIndex * 0.025).clamp(
+                                0.0,
+                                0.24,
+                              );
                               final localProgress =
-                                  ((progress - delay) / (1 - delay)).clamp(0.0, 1.0);
+                                  ((progress - delay) / (1 - delay)).clamp(
+                                    0.0,
+                                    1.0,
+                                  );
                               return Transform.scale(
                                 scale: 0.86 + 0.14 * localProgress,
                                 child: Opacity(
@@ -881,13 +895,13 @@ class GrowthHeatmapCalendar extends StatelessWidget {
                                                   width: 1.8,
                                                 )
                                               : isPeak
-                                                  ? Border.all(
-                                                      color: maxColor.withValues(
-                                                        alpha: 0.55,
-                                                      ),
-                                                      width: 1.2,
-                                                    )
-                                                  : null,
+                                              ? Border.all(
+                                                  color: maxColor.withValues(
+                                                    alpha: 0.55,
+                                                  ),
+                                                  width: 1.2,
+                                                )
+                                              : null,
                                           boxShadow: isToday || isPeak
                                               ? [
                                                   BoxShadow(
@@ -936,7 +950,9 @@ class GrowthHeatmapCalendar extends StatelessWidget {
     final gridStart = normalizedStart.subtract(
       Duration(days: normalizedStart.weekday - 1),
     );
-    final gridEnd = normalizedEnd.add(Duration(days: 7 - normalizedEnd.weekday));
+    final gridEnd = normalizedEnd.add(
+      Duration(days: 7 - normalizedEnd.weekday),
+    );
     final weeks = <List<DateTime?>>[];
     var cursor = gridStart;
     while (!cursor.isAfter(gridEnd)) {

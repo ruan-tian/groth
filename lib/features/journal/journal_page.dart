@@ -21,8 +21,8 @@ import 'models/inspiration_catalog.dart';
 import 'providers/journal_stats_provider.dart';
 import 'utils/journal_constants.dart';
 import '../../shared/widgets/common/error_retry_widget.dart';
+import '../../shared/widgets/common/growth_charts.dart';
 import 'widgets/journal_colors.dart';
-import '../statistics/widgets/heatmap_calendar.dart';
 
 part 'widgets/journal_page_widgets.dart';
 

@@ -74,15 +74,87 @@ class _ModeOption extends StatelessWidget {
   }
 }
 
-class _FitnessTrendChart extends StatefulWidget {
+class _FitnessTrendChart extends StatelessWidget {
   const _FitnessTrendChart({required this.data});
 
   final List<FitnessChartData> data;
 
   @override
-  State<_FitnessTrendChart> createState() => _FitnessTrendChartState();
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    final weightPoints = data
+        .where((item) => item.weight != null)
+        .map(
+          (item) => GrowthChartPoint(
+            label: _dateLabel(item.date),
+            date: item.date,
+            value: item.weight!,
+            rawLabel: '${item.weight!.toStringAsFixed(1)}kg',
+          ),
+        )
+        .toList(growable: false);
+    return GrowthMultiLineChart(
+      key: ValueKey('fitness_${data.length}_${data.hashCode}'),
+      color: colors.fitness,
+      height: 224,
+      series: [
+        GrowthChartSeries(
+          name: '锻炼',
+          unit: 'min',
+          color: colors.fitness,
+          points: data
+              .map(
+                (item) => GrowthChartPoint(
+                  label: _dateLabel(item.date),
+                  date: item.date,
+                  value: item.minutes.toDouble(),
+                  rawLabel: _formatMinutes(item.minutes.toDouble()),
+                ),
+              )
+              .toList(growable: false),
+          valueFormatter: _formatMinutes,
+        ),
+        GrowthChartSeries(
+          name: '消耗',
+          unit: 'kcal',
+          color: colors.warning,
+          points: data
+              .map(
+                (item) => GrowthChartPoint(
+                  label: _dateLabel(item.date),
+                  date: item.date,
+                  value: item.calories.toDouble(),
+                  rawLabel: '${item.calories}kcal',
+                ),
+              )
+              .toList(growable: false),
+          valueFormatter: (value) => '${value.round()}kcal',
+        ),
+        if (weightPoints.isNotEmpty)
+          GrowthChartSeries(
+            name: '体重',
+            unit: 'kg',
+            color: colors.textTertiary,
+            points: weightPoints,
+            valueFormatter: (value) => '${value.toStringAsFixed(1)}kg',
+          ),
+      ],
+    );
+  }
+
+  static String _dateLabel(DateTime date) => '${date.month}/${date.day}';
+
+  static String _formatMinutes(double value) {
+    if (value < 60) return '${value.round()}min';
+    final hours = value / 60;
+    final text = hours == hours.roundToDouble()
+        ? hours.round().toString()
+        : hours.toStringAsFixed(1);
+    return '${text}h';
+  }
 }
 
+/*
 class _FitnessTrendChartState extends State<_FitnessTrendChart> {
   int? _touchedIndex;
 
@@ -434,3 +506,4 @@ class _FitnessTrendChartState extends State<_FitnessTrendChart> {
     );
   }
 }
+*/
