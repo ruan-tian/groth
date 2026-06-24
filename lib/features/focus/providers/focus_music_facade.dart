@@ -5,6 +5,10 @@ import '../../music/models/music_player_state.dart';
 import '../../music/providers/music_player_provider.dart';
 import '../../music/utils/music_assets.dart';
 
+// Re-export music types for focus module
+export '../../music/models/music_player_state.dart' show MusicPlayerState, MusicCollection;
+export '../../../core/database/app_database.dart' show MusicTrack;
+
 /// Facade for focus module to access music player functionality.
 ///
 /// This decouples the focus module from directly importing music module

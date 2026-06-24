@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../features/music/models/music_player_state.dart';
-import '../../../features/music/utils/music_assets.dart';
 import '../../../shared/providers/focus_audio_provider.dart';
 import '../providers/focus_music_facade.dart';
 import '../utils/focus_options.dart';
@@ -292,7 +289,7 @@ class _FocusMusicPanel extends ConsumerWidget {
               ClipRRect(
                 borderRadius: BorderRadius.circular(14),
                 child: Image.asset(
-                  track?.coverAsset ?? MusicAssets.coverDefault,
+                  track?.coverAsset ?? facade.defaultCoverAsset,
                   width: compact ? 44 : 52,
                   height: compact ? 44 : 52,
                   fit: BoxFit.cover,
@@ -755,7 +752,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.asset(
-                track.coverAsset ?? MusicAssets.coverDefault,
+                track.coverAsset ?? facade.defaultCoverAsset,
                 width: 44,
                 height: 44,
                 fit: BoxFit.cover,
