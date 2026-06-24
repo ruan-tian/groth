@@ -33,6 +33,14 @@ class WeatherRepository {
         .getSingleOrNull();
   }
 
+  /// 获取指定日期天气
+  Future<DailyWeather?> getWeatherByDate(String dateKey) async {
+    return (_db.select(_db.dailyWeatherTable)
+          ..where((t) => t.date.equals(dateKey))
+          ..limit(1))
+        .getSingleOrNull();
+  }
+
   /// 获取最近 N 天天气
   Future<List<DailyWeather>> getRecentWeather({int days = 7}) async {
     final now = DateTime.now();

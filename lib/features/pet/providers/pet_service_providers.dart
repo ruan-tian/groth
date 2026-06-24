@@ -2,16 +2,24 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../shared/providers/database_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../../../shared/services/settings_write_queue.dart';
+import '../../plan/providers/task_provider.dart';
 import '../services/pet_diary_data_collector.dart';
 import '../services/pet_diary_service.dart';
 
 /// PetDiaryDataCollector Provider.
 final petDiaryDataCollectorProvider = Provider<PetDiaryDataCollector>((ref) {
-  return PetDiaryDataCollector(ref.watch(appDatabaseProvider));
+  return PetDiaryDataCollector(
+    studyRepo: ref.watch(studyRepositoryProvider),
+    fitnessRepo: ref.watch(fitnessRepositoryProvider),
+    dietRepo: ref.watch(dietRepositoryProvider),
+    sleepRepo: ref.watch(sleepRepositoryProvider),
+    taskRepo: ref.watch(dailyTaskRepositoryProvider),
+    expRepo: ref.watch(expRepositoryProvider),
+    weatherRepo: ref.watch(weatherRepositoryProvider),
+  );
 });
 
 /// Pet diary generation service Provider.

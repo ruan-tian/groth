@@ -104,18 +104,20 @@ Current legacy re-exports: 0 files (all deleted)
 Some services need to query data from multiple modules for aggregation purposes. These services should:
 
 1. Be placed in the feature that owns the aggregation logic
-2. Accept repositories as constructor dependencies when possible
+2. Accept repositories as constructor dependencies
 3. Use repository methods when available
 4. Fall back to direct DB access only when repository methods don't exist
 
 ### PetDiaryDataCollector
 
-`PetDiaryDataCollector` aggregates data from study, fitness, diet, sleep, task, exp, and weather modules for pet diary generation. It uses direct DB access because:
+`PetDiaryDataCollector` aggregates data from study, fitness, diet, sleep, task, exp, and weather modules for pet diary generation. It now uses repository methods:
 
-1. **Repository methods don't match exact query needs**: The collector needs date range queries (e.g., `getStudyRecordsByDateRange`), but repositories only have date-specific queries (e.g., `getStudyRecordsByDate`)
-2. **Private DB fields**: Repository `_db` fields are private and can't be accessed from outside
-3. **Cross-module aggregation**: The collector queries 7 different modules, which would require 7 different repository injections
+- `StudyRepository.getStudyRecordsByRange(DateTime, DateTime)`
+- `FitnessRepository.getFitnessRecordsByRange(DateTime, DateTime)`
+- `DietRepository.getDietRecordsByDate(DateTime)`
+- `SleepRepository.getSleepRecordByDate(DateTime)`
+- `ExpRepository.getExpLogsByRange(DateTime, DateTime)`
+- `DailyTaskRepository.getTasksByDate(String)`
+- `WeatherRepository.getWeatherByDate(String)`
 
-**Status**: Accepted as a documented exception. The collector provides a clean interface that isolates DB access from the service layer.
-
-**Future optimization**: Add missing query methods to repositories (e.g., `getStudyRecordsByDateRange`, `getDietRecordsByDate`, `getTasksByDate`) and refactor the collector to use them.
+**Status**: Fully integrated with repository pattern.
