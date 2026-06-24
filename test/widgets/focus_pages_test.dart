@@ -78,10 +78,18 @@ Widget _sessionPageWithSound(String soundType) {
 Widget _soundPanel({
   required String initialSoundType,
   required ValueChanged<String?> onSoundChanged,
+  String? audioCurrentSoundType,
+  bool audioPlaying = false,
 }) {
   return ProviderScope(
     overrides: [
-      focusAudioStateProvider.overrideWith(_NoopFocusAudioNotifier.new),
+      focusAudioStateProvider.overrideWith(
+        (ref) => _NoopFocusAudioNotifier(
+          ref,
+          currentSoundType: audioCurrentSoundType,
+          isPlaying: audioPlaying,
+        ),
+      ),
     ],
     child: MaterialApp(
       home: Scaffold(
@@ -140,7 +148,16 @@ class _StaticFocusCycleNotifier extends FocusCycleNotifier {
 }
 
 class _NoopFocusAudioNotifier extends FocusAudioStateNotifier {
-  _NoopFocusAudioNotifier(super.ref);
+  _NoopFocusAudioNotifier(
+    super.ref, {
+    String? currentSoundType,
+    bool isPlaying = false,
+  }) {
+    state = state.copyWith(
+      currentSoundType: currentSoundType,
+      isPlaying: isPlaying,
+    );
+  }
 
   @override
   Future<void> startNoise(String soundType) async {
@@ -287,5 +304,33 @@ void main() {
 
       expect(selected, 'white_noise');
     });
+
+    testWidgets(
+      'sound tile follows session selection before audio catches up',
+      (tester) async {
+        await setViewport(tester, 390, 844);
+        await tester.pumpWidget(
+          _soundPanel(
+            initialSoundType: 'ocean',
+            audioCurrentSoundType: 'rain',
+            audioPlaying: true,
+            onSoundChanged: (_) {},
+          ),
+        );
+
+        expect(
+          find.byKey(const ValueKey('focus_sound_tile_ocean_selected')),
+          findsOneWidget,
+        );
+        expect(
+          find.byKey(const ValueKey('focus_sound_tile_rain_selected')),
+          findsNothing,
+        );
+        expect(
+          find.byKey(const ValueKey('focus_sound_tile_rain_idle')),
+          findsOneWidget,
+        );
+      },
+    );
   });
 }

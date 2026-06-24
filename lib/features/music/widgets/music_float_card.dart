@@ -81,8 +81,8 @@ class _DockedMusicHandle extends StatelessWidget {
     final hasTrack = state.currentTrack != null;
     final isPlaying = state.isPlaying && hasTrack;
     final radius = side == _MusicDockSide.left
-        ? const BorderRadius.horizontal(right: Radius.circular(24))
-        : const BorderRadius.horizontal(left: Radius.circular(24));
+        ? const BorderRadius.horizontal(right: Radius.circular(22))
+        : const BorderRadius.horizontal(left: Radius.circular(22));
 
     return Tooltip(
       message: hasTrack ? '展开音乐控制' : '导入音乐',
@@ -95,8 +95,8 @@ class _DockedMusicHandle extends StatelessWidget {
               ? Alignment.centerRight
               : Alignment.centerLeft,
           child: Container(
-            width: 46,
-            height: 68,
+            width: 42,
+            height: 62,
             decoration: BoxDecoration(
               borderRadius: radius,
               color: colors.card.withValues(alpha: 0.82),
@@ -135,10 +135,10 @@ class _DockedMusicHandle extends StatelessWidget {
                   child: Stack(
                     children: [
                       Positioned(
-                        top: 9,
-                        bottom: 9,
-                        left: side == _MusicDockSide.left ? null : 18,
-                        right: side == _MusicDockSide.left ? 18 : null,
+                        top: 10,
+                        bottom: 10,
+                        left: side == _MusicDockSide.left ? null : 16,
+                        right: side == _MusicDockSide.left ? 16 : null,
                         child: Container(
                           width: 2,
                           decoration: BoxDecoration(
@@ -152,23 +152,18 @@ class _DockedMusicHandle extends StatelessWidget {
                             ? Alignment.centerRight
                             : Alignment.centerLeft,
                         child: SizedBox(
-                          width: 26,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                hasTrack
-                                    ? Icons.graphic_eq_rounded
-                                    : Icons.add_rounded,
-                                size: 17,
-                                color: colors.primary,
-                              ),
-                              const SizedBox(height: 6),
-                              _MiniWaveBars(
-                                isPlaying: isPlaying,
-                                color: colors.primary,
-                              ),
-                            ],
+                          width: 24,
+                          child: Center(
+                            child: hasTrack
+                                ? _MiniWaveBars(
+                                    isPlaying: isPlaying,
+                                    color: colors.primary,
+                                  )
+                                : Icon(
+                                    Icons.add_rounded,
+                                    size: 18,
+                                    color: colors.primary,
+                                  ),
                           ),
                         ),
                       ),
@@ -229,7 +224,7 @@ class _RevealedMusicRemote extends ConsumerWidget {
             semanticLabel: hasTrack ? '打开完整播放器' : '导入音乐',
             borderRadius: radius,
             child: Container(
-              height: 64,
+              height: 58,
               decoration: BoxDecoration(
                 borderRadius: radius,
                 color: colors.card.withValues(alpha: 0.88),
@@ -272,11 +267,11 @@ class _RevealedMusicRemote extends ConsumerWidget {
                           ? TextDirection.ltr
                           : TextDirection.rtl,
                       children: [
-                        SizedBox(width: side == _MusicDockSide.left ? 4 : 6),
+                        SizedBox(width: side == _MusicDockSide.left ? 4 : 5),
                         const _MiniGrip(),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 5),
                         _MiniCover(track: track, isPlaying: isPlaying),
-                        const SizedBox(width: 7),
+                        const SizedBox(width: 6),
                         Expanded(
                           child: Directionality(
                             textDirection: TextDirection.ltr,
@@ -290,11 +285,11 @@ class _RevealedMusicRemote extends ConsumerWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: colors.textPrimary,
-                                    fontSize: 12,
+                                    fontSize: 11.5,
                                     fontWeight: FontWeight.w900,
                                   ),
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: 1),
                                 Text(
                                   hasTrack
                                       ? (isPlaying ? '正在播放' : '已暂停')
@@ -303,11 +298,11 @@ class _RevealedMusicRemote extends ConsumerWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
                                     color: colors.textSecondary,
-                                    fontSize: 10,
+                                    fontSize: 9.5,
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 5),
                                 ClipRRect(
                                   borderRadius: BorderRadius.circular(999),
                                   child: LinearProgressIndicator(
@@ -325,7 +320,7 @@ class _RevealedMusicRemote extends ConsumerWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 5),
                         Directionality(
                           textDirection: TextDirection.ltr,
                           child: Row(
@@ -358,7 +353,7 @@ class _RevealedMusicRemote extends ConsumerWidget {
                             ],
                           ),
                         ),
-                        SizedBox(width: side == _MusicDockSide.left ? 8 : 4),
+                        SizedBox(width: side == _MusicDockSide.left ? 7 : 4),
                       ],
                     ),
                   ),
@@ -379,8 +374,8 @@ class _MiniGrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return SizedBox(
-      width: 6,
-      height: 36,
+      width: 5,
+      height: 32,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(
@@ -410,8 +405,8 @@ class _MiniCover extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      width: 42,
-      height: 42,
+      width: 38,
+      height: 38,
       padding: const EdgeInsets.all(2),
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -465,15 +460,15 @@ class _MiniCircleButton extends StatelessWidget {
         semanticLabel: tooltip,
         borderRadius: BorderRadius.circular(999),
         child: Container(
-          width: filled ? 30 : 28,
-          height: filled ? 30 : 28,
+          width: filled ? 28 : 26,
+          height: filled ? 28 : 26,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: filled ? colors.primary : colors.surfaceVariant,
           ),
           child: Icon(
             icon,
-            size: filled ? 19 : 18,
+            size: filled ? 18 : 17,
             color: onTap == null
                 ? colors.textHint
                 : filled
@@ -534,8 +529,8 @@ class _MiniWaveBarsState extends State<_MiniWaveBars>
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 14,
-      height: 13,
+      width: 16,
+      height: 18,
       child: AnimatedBuilder(
         animation: _controller,
         builder: (context, _) {
@@ -637,8 +632,8 @@ class _CapsuleWavePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     final centerY = size.height / 2;
     final width = size.width;
-    final barWidth = math.max(2.2, width / 13);
-    final gap = math.max(1.4, width / 30);
+    final barWidth = math.max(1.4, width / 13);
+    final gap = math.max(0.8, width / 30);
     final total = barWidth * 7 + gap * 6;
     final startX = (width - total) / 2;
 

@@ -221,10 +221,10 @@ class _MusicFloatLayout {
     final screenHeight = constraints.maxHeight;
     final compact = screenWidth < 380;
     final width = isRevealed
-        ? math.min(compact ? 216.0 : 244.0, screenWidth - 16.0)
-        : 46.0;
-    final height = isRevealed ? 66.0 : 68.0;
-    final handlePeek = compact ? 24.0 : 26.0;
+        ? math.min(compact ? 204.0 : 232.0, screenWidth - 16.0)
+        : 42.0;
+    final height = isRevealed ? 60.0 : 62.0;
+    final handlePeek = compact ? 22.0 : 24.0;
     final edgeInset = width - handlePeek;
     const bottomReserve = 106.0;
     final minX = isRevealed ? 0.0 : -edgeInset;

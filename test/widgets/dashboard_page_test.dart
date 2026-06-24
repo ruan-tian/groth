@@ -155,7 +155,8 @@ void main() {
       final dockedBox = tester.renderObject<RenderBox>(
         find.byKey(const ValueKey('docked_music_handle')),
       );
-      expect(dockedBox.size.width, lessThanOrEqualTo(48));
+      expect(dockedBox.size.width, lessThanOrEqualTo(44));
+      expect(find.byIcon(Icons.graphic_eq_rounded), findsNothing);
       expect(
         tester.getTopLeft(find.byKey(const ValueKey('docked_music_handle'))).dx,
         lessThan(0),

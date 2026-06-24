@@ -24,7 +24,10 @@ class FocusSoundPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
     final audioState = ref.watch(focusAudioStateProvider);
-    final current = audioState.currentSoundType ?? initialSoundType;
+    final selectedSound = initialSoundType.isEmpty ? 'none' : initialSoundType;
+    final current = selectedSound == 'none'
+        ? (audioState.currentSoundType ?? selectedSound)
+        : selectedSound;
     final noiseFallback = current != 'none' && current != 'music'
         ? current
         : 'white_noise';
@@ -209,6 +212,7 @@ class _NoisePanel extends ConsumerWidget {
               .map((sound) {
                 final selected = current == sound.value;
                 return _SessionSoundTile(
+                  value: sound.value,
                   label: sound.label,
                   asset: sound.asset,
                   selected: selected,
@@ -461,6 +465,7 @@ class _FocusMusicButton extends StatelessWidget {
 
 class _SessionSoundTile extends StatelessWidget {
   const _SessionSoundTile({
+    required this.value,
     required this.label,
     required this.asset,
     required this.selected,
@@ -468,6 +473,7 @@ class _SessionSoundTile extends StatelessWidget {
     required this.onTap,
   });
 
+  final String value;
   final String label;
   final String asset;
   final bool selected;
@@ -479,47 +485,55 @@ class _SessionSoundTile extends StatelessWidget {
     final colors = context.growthColors;
     final selectedColor = colors.focus;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: compact ? 74 : 84,
-        padding: EdgeInsets.symmetric(
-          vertical: compact ? 8 : 10,
-          horizontal: 6,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: GestureDetector(
+        key: ValueKey(
+          'focus_sound_tile_${value}_${selected ? 'selected' : 'idle'}',
         ),
-        decoration: BoxDecoration(
-          color: selected
-              ? selectedColor.withValues(alpha: 0.14)
-              : colors.surface.withValues(alpha: 0.64),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected
-                ? selectedColor
-                : colors.border.withValues(alpha: 0.7),
-            width: selected ? 1.6 : 1,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: compact ? 74 : 84,
+          padding: EdgeInsets.symmetric(
+            vertical: compact ? 8 : 10,
+            horizontal: 6,
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              asset,
-              width: compact ? 32 : 38,
-              height: compact ? 32 : 38,
+          decoration: BoxDecoration(
+            color: selected
+                ? selectedColor.withValues(alpha: 0.14)
+                : colors.surface.withValues(alpha: 0.64),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected
+                  ? selectedColor
+                  : colors.border.withValues(alpha: 0.7),
+              width: selected ? 1.6 : 1,
             ),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: selected ? selectedColor : colors.textSecondary,
-                fontSize: compact ? 11 : 12,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                asset,
+                width: compact ? 32 : 38,
+                height: compact ? 32 : 38,
               ),
-            ),
-          ],
+              const SizedBox(height: 5),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected ? selectedColor : colors.textSecondary,
+                  fontSize: compact ? 11 : 12,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
