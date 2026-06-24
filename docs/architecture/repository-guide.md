@@ -97,4 +97,15 @@ class StudyRepository { ... }
 
 `core/repositories/` contains re-export files for backward compatibility. These are marked with `// Legacy compatibility only.` New code should import directly from `features/*/repositories/`.
 
-Current legacy re-exports: 19 files
+Current legacy re-exports: 0 files (all deleted)
+
+## Data Aggregation Services
+
+Some services need to query data from multiple modules for aggregation purposes. These services should:
+
+1. Be placed in the feature that owns the aggregation logic
+2. Accept repositories as constructor dependencies
+3. Use repository methods when available
+4. Fall back to direct DB access only when repository methods don't exist
+
+Example: `PetDiaryDataCollector` aggregates data from study, fitness, diet, sleep, task, exp, and weather modules. It uses direct DB access because the repositories don't have the exact query methods needed (e.g., `getStudyRecordsByDateRange`). This is acceptable as a documented exception.
