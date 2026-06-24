@@ -75,76 +75,40 @@ class _StudyBarChartState extends State<_StudyBarChart> {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final minutesList = widget.stats.map((s) => s.value).toList();
-    final scale = _cachedScale ??= buildDurationChartScale(minutesList);
-    final yMax = scale.maxY;
+    final totalMinutes = widget.stats.fold<int>(
+      0,
+      (sum, bar) => sum + bar.value,
+    );
+    final activeLabel = widget.range == 'year' ? '活跃月份' : '学习天数';
+    final activeUnit = widget.range == 'year' ? '月' : '天';
+    final points = widget.stats.map((bar) {
+      final rawLabel = widget.range == 'month' && bar.avgValue != null
+          ? '${_formatMinutesCompact(bar.value)} · 日均 ${_formatMinutesCompact(bar.avgValue!)}'
+          : _formatMinutesCompact(bar.value);
+      return GrowthChartPoint(
+        label: bar.label,
+        subLabel: bar.subLabel,
+        date: bar.date,
+        value: bar.value.toDouble(),
+        rawLabel: rawLabel,
+      );
+    }).toList(growable: false);
 
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.card.withValues(alpha: 0.98),
-            colors.softBlue.withValues(alpha: 0.46),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.border),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.14),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          //  顶部统 
-          Row(
-            children: [
-              _buildStat(
-                '总时长',
-                _formatMinutesCompact(
-                  widget.stats.fold<int>(0, (s, b) => s + b.value),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.xl),
-              _buildStat(
-                widget.range == 'year' ? '活跃月份' : '学习天数',
-                widget.range == 'year'
-                    ? '${widget.totalDays} 月'
-                    : '${widget.totalDays} 天',
-              ),
-              const Spacer(),
-              _buildLegend(),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.lg),
-          //  柱状?+ 顶部标 
-          ClipRect(
-            child: SizedBox(
-              height: 240,
-              child: RepaintBoundary(
-                child: BarChart(
-                  BarChartData(
-                    maxY: yMax * 1.25, // extra space for value labels
-                    alignment: BarChartAlignment.spaceAround,
-                    barTouchData: _buildTouchData(),
-                    titlesData: _buildTitles(scale, yMax),
-                    gridData: _buildGrid(scale),
-                    borderData: FlBorderData(show: false),
-                    barGroups: List.generate(widget.stats.length, (i) {
-                      return _buildBarGroup(i, yMax);
-                    }),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+    return GrowthChartCard(
+      title: '学习趋势',
+      subtitle:
+          '总时长 ${_formatMinutesCompact(totalMinutes)} · $activeLabel ${widget.totalDays}$activeUnit',
+      icon: Icons.auto_graph_rounded,
+      color: colors.study,
+      legend: [
+        GrowthChartLegendItem(color: colors.study, label: '学习时长'),
+      ],
+      child: GrowthAnimatedBarChart(
+        key: ValueKey('study_${widget.range}_${points.length}_$totalMinutes'),
+        points: points,
+        color: colors.study,
+        valueFormatter: (value) => _formatMinutesCompact(value.round()),
+        height: 244,
       ),
     );
   }

@@ -23,3 +23,4 @@ export 'skeleton_loader.dart';
 export 'celebration_overlay.dart';
 export 'growth_confirm_dialog.dart';
 export 'chart_tooltip_theme.dart';
+export 'growth_charts.dart';

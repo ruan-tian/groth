@@ -106,7 +106,9 @@ class ChartAxisScale {
 
   static double _niceCeil(double value) {
     if (value <= 0) return 1;
-    final exponent = math.pow(10, math.log(value) / math.ln10.floor()).toDouble();
+    final exponent = math
+        .pow(10, (math.log(value) / math.ln10).floor())
+        .toDouble();
     final normalized = value / exponent;
     final nice = normalized <= 1
         ? 1.0
