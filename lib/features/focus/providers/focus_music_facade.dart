@@ -32,6 +32,16 @@ class FocusMusicFacade {
     await _ref.read(musicPlayerProvider.notifier).togglePlayPause();
   }
 
+  /// Play the previous track.
+  Future<void> playPrevious() async {
+    await _ref.read(musicPlayerProvider.notifier).playPrevious();
+  }
+
+  /// Play the next track.
+  Future<void> playNext() async {
+    await _ref.read(musicPlayerProvider.notifier).playNext();
+  }
+
   /// Pause the current track.
   Future<void> pause() async {
     await _ref.read(musicPlayerProvider.notifier).pause();

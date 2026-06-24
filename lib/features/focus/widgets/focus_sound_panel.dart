@@ -4,9 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
 import '../../../features/music/models/music_player_state.dart';
-import '../../../features/music/providers/music_player_provider.dart';
 import '../../../features/music/utils/music_assets.dart';
 import '../../../shared/providers/focus_audio_provider.dart';
+import '../providers/focus_music_facade.dart';
 import '../utils/focus_options.dart';
 
 class FocusSoundPanel extends ConsumerWidget {
@@ -274,8 +274,8 @@ class _FocusMusicPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
-    final state = ref.watch(musicPlayerProvider);
-    final controller = ref.read(musicPlayerProvider.notifier);
+    final facade = ref.watch(focusMusicFacadeProvider);
+    final state = facade.watchState();
     final track = state.currentTrack;
 
     return Column(
@@ -332,7 +332,7 @@ class _FocusMusicPanel extends ConsumerWidget {
                 onTap: () {
                   onSoundChanged?.call('music');
                   ref.read(focusAudioStateProvider.notifier).stopNoise();
-                  controller.togglePlayPause();
+                  facade.togglePlayPause();
                 },
               ),
             ],
@@ -343,12 +343,12 @@ class _FocusMusicPanel extends ConsumerWidget {
           children: [
             _FocusMusicButton(
               icon: Icons.skip_previous_rounded,
-              onTap: state.hasTracks ? controller.playPrevious : null,
+              onTap: state.hasTracks ? facade.playPrevious : null,
             ),
             const SizedBox(width: 8),
             _FocusMusicButton(
               icon: Icons.skip_next_rounded,
-              onTap: state.hasTracks ? controller.playNext : null,
+              onTap: state.hasTracks ? facade.playNext : null,
             ),
             const SizedBox(width: 8),
             Expanded(child: _FocusCollectionButton(state: state)),
@@ -357,7 +357,7 @@ class _FocusMusicPanel extends ConsumerWidget {
               icon: state.isImporting
                   ? Icons.hourglass_empty_rounded
                   : Icons.add_rounded,
-              onTap: state.isImporting ? null : controller.importTracks,
+              onTap: state.isImporting ? null : () => facade.controller.importTracks(),
             ),
           ],
         ),
@@ -377,7 +377,7 @@ class _FocusMusicPanel extends ConsumerWidget {
                 divisions: 20,
                 activeColor: colors.focus,
                 inactiveColor: colors.border.withValues(alpha: 0.55),
-                onChanged: controller.setVolume,
+                onChanged: facade.setVolume,
               ),
             ),
             Text(
@@ -545,7 +545,8 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   @override
   void initState() {
     super.initState();
-    final collection = ref.read(musicPlayerProvider).selectedCollection;
+    final facade = ref.read(focusMusicFacadeProvider);
+    final collection = facade.selectedCollection;
     _pageController = PageController(initialPage: collection.index);
   }
 
@@ -558,8 +559,8 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final state = ref.watch(musicPlayerProvider);
-    final controller = ref.read(musicPlayerProvider.notifier);
+    final facade = ref.watch(focusMusicFacadeProvider);
+    final state = facade.watchState();
     final tracks = state.selectedTracks;
 
     return Container(
@@ -609,13 +610,13 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _buildCollectionTabs(state, controller),
+            child: _buildCollectionTabs(state, facade),
           ),
           const SizedBox(height: 12),
           Expanded(
             child: tracks.isEmpty
                 ? _buildEmptyState()
-                : _buildTrackList(tracks, state, controller),
+                : _buildTrackList(tracks, state, facade),
           ),
         ],
       ),
@@ -624,7 +625,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
 
   Widget _buildCollectionTabs(
     MusicPlayerState state,
-    MusicPlayerController controller,
+    FocusMusicFacade facade,
   ) {
     final colors = context.growthColors;
     return Container(
@@ -640,7 +641,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
               return Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    controller.selectCollection(collection);
+                    facade.controller.selectCollection(collection);
                     _pageController.animateToPage(
                       collection.index,
                       duration: const Duration(milliseconds: 250),
@@ -711,7 +712,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   Widget _buildTrackList(
     List<MusicTrack> tracks,
     MusicPlayerState state,
-    MusicPlayerController controller,
+    FocusMusicFacade facade,
   ) {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -720,7 +721,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
       itemBuilder: (context, index) {
         final track = tracks[index];
         final selected = track.id == state.currentTrackId;
-        return _buildTrackTile(track, selected, controller);
+        return _buildTrackTile(track, selected, facade);
       },
     );
   }
@@ -728,12 +729,12 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   Widget _buildTrackTile(
     MusicTrack track,
     bool selected,
-    MusicPlayerController controller,
+    FocusMusicFacade facade,
   ) {
     final colors = context.growthColors;
     return GestureDetector(
       onTap: () {
-        controller.playTrack(track);
+        facade.controller.playTrack(track);
         Navigator.pop(context);
       },
       child: Container(

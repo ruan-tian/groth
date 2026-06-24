@@ -316,7 +316,7 @@ List<String> _checkCrossFeatureImport() {
   // key: source feature, value: allowed target path prefixes
   const whitelist = <String, List<String>>{
     'ai': ['services', 'providers'],
-    'focus': ['models', 'providers', 'utils'], // White noise - FocusMusicFacade created, to be integrated
+    'focus': ['models', 'providers', 'utils'], // White noise - FocusMusicFacade integrated
     'dashboard': ['utils', 'pages', 'providers'], // Quick actions - DashboardQuickActions created
     'settings': ['utils'], // Avatar assets - acceptable
     'fitness': ['providers'], // Dashboard refresh - FitnessDashboardFacade created
