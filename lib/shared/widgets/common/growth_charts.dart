@@ -123,7 +123,7 @@ class GrowthChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.xxl),
@@ -779,11 +779,15 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
           showTitles: true,
           reservedSize: 42,
           getTitlesWidget: (value, meta) {
+            final index = value.round();
+            if (index < 0 || index >= primary.points.length) {
+              return const SizedBox.shrink();
+            }
             return buildChartAxisLabel(
-              index: value.round(),
+              index: index,
               totalCount: primary.points.length,
               labelStep: density.labelStep,
-              point: primary.points[value.round()],
+              point: primary.points[index],
               colors: colors,
             );
           },

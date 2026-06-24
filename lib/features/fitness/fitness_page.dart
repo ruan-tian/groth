@@ -106,7 +106,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 const SizedBox(height: 12),
                 // [5] 健身趋势图表
                 _buildWeightCurveCard(),
-                const SizedBox(height: 4),
+                const SizedBox(height: 12),
                 // [6] 最近训练记录
                 recentRecords.when(
                   data: (records) {
@@ -357,10 +357,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 error: (_, _) => _buildWeightEmptyState(),
               ),
             ),
-                  ),
-                ),
-                const SizedBox(height: 96),
-              ],
+          ),
+        ),
+      ],
     );
   }
 

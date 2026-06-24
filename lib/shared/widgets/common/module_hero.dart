@@ -383,7 +383,7 @@ class ModuleRecordsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: _moduleCardDecoration(color, context),
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

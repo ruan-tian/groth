@@ -569,21 +569,6 @@ class PlanModuleActionImageCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      // 文字区渐变遮罩 — 左侧重白 → 右侧透明
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              context.growthColors.card.withValues(alpha: 0.82),
-                              context.growthColors.card.withValues(alpha: 0.55),
-                              Colors.transparent,
-                            ],
-                            stops: const [0, 0.45, 1],
-                          ),
-                        ),
-                      ),
                       Positioned.fill(
                         child: Padding(
                           padding: EdgeInsets.fromLTRB(
