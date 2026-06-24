@@ -772,7 +772,7 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 36,
+          reservedSize: 42,
           getTitlesWidget: (value, meta) {
             final index = value.round();
             if (index < 0 || index >= primary.points.length) {
@@ -788,9 +788,26 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
             final point = primary.points[index];
             return Padding(
               padding: const EdgeInsets.only(top: 6),
-              child: Text(
-                point.label,
-                style: TextStyle(fontSize: 10, color: colors.textTertiary),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    point.label,
+                    style: TextStyle(
+                      fontSize: 10.5,
+                      fontWeight: FontWeight.w700,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                  if (point.subLabel?.isNotEmpty == true)
+                    Text(
+                      point.subLabel!,
+                      style: TextStyle(
+                        fontSize: 9.5,
+                        color: colors.textTertiary,
+                      ),
+                    ),
+                ],
               ),
             );
           },

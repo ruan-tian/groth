@@ -9,6 +9,15 @@
 - Polished journal heatmap density/alignment and replaced emoji title marker with a stable system icon.
 - Added targeted chart widget tests for range selector, axis formatting, multi-line labels, and heatmap month labels.
 
+## 2026-06-24 Music Edge Remote and Playback Stability
+
+- Replaced the dashboard music image capsule with an edge-docked handle and drag-out mini remote.
+- Kept the full player sheet as the detailed view while making play/pause, next, progress, and import available from the mini remote.
+- Added async playback error reporting so music failures clear loading/playing state and show a retry message.
+- Made focus white-noise startup await background initialization and normalize unsupported sound types to a safe fallback.
+- Fixed focus session sound switching so selecting music actually starts the current music track.
+- Updated dashboard music widget tests for the new edge remote interaction.
+
 ## 2026-06-23 Architecture Upgrade Phase D: Page Import Path Fixes
 
 - Fixed dashboard_page: `dashboard_providers.dart` → `providers/dashboard_provider.dart`

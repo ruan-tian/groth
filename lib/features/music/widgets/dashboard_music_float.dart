@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,6 +28,14 @@ class DashboardMusicFloat extends ConsumerStatefulWidget {
 
 class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
   Offset? _dragOffset;
+  bool _isRevealed = false;
+  Timer? _autoDockTimer;
+
+  @override
+  void dispose() {
+    _autoDockTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +62,7 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
             constraints: constraints,
             state: state,
             dragOffset: _dragOffset,
+            isRevealed: _isRevealed || _dragOffset != null,
           );
           return Stack(
             children: [
@@ -66,9 +76,18 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
                 width: layout.width,
                 height: layout.height,
                 child: GestureDetector(
-                  onTap: () => _openPlayerSheet(context),
+                  behavior: HitTestBehavior.translucent,
+                  onTap: () {
+                    if (_isRevealed) {
+                      _openPlayerSheet(context);
+                    } else {
+                      _revealTemporarily();
+                    }
+                  },
                   onPanStart: (_) => setState(() {
+                    _autoDockTimer?.cancel();
                     _dragOffset = Offset(layout.left, layout.top);
+                    _isRevealed = true;
                   }),
                   onPanUpdate: (details) => setState(() {
                     final current =
@@ -76,7 +95,15 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
                     _dragOffset = layout.clamp(current + details.delta);
                   }),
                   onPanEnd: (_) => _finishDrag(layout),
-                  child: _MusicFloatCard(state: state),
+                  child: _MusicFloatCard(
+                    state: state,
+                    side: layout.side,
+                    isRevealed: layout.isRevealed,
+                    onReveal: _revealTemporarily,
+                    onOpenPlayer: () => _openPlayerSheet(context),
+                    onImport: () =>
+                        showMusicImportDestinationSheet(context, ref),
+                  ),
                 ),
               ),
             ],
@@ -90,6 +117,8 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
     final controller = ref.read(musicPlayerProvider.notifier);
     if (ref.read(musicPlayerProvider).isExpanded) return;
 
+    _autoDockTimer?.cancel();
+    if (mounted) setState(() => _isRevealed = false);
     controller.toggleExpanded();
     await showModalBottomSheet<void>(
       context: context,
@@ -109,12 +138,30 @@ class _DashboardMusicFloatState extends ConsumerState<DashboardMusicFloat> {
     final normalized = layout.toNormalized(snapped);
     setState(() {
       _dragOffset = null;
+      _isRevealed = true;
     });
     ref
         .read(musicPlayerProvider.notifier)
         .setFloatPosition(x: normalized.dx, y: normalized.dy);
+    _scheduleAutoDock();
+  }
+
+  void _revealTemporarily() {
+    if (!mounted) return;
+    setState(() => _isRevealed = true);
+    _scheduleAutoDock();
+  }
+
+  void _scheduleAutoDock() {
+    _autoDockTimer?.cancel();
+    _autoDockTimer = Timer(const Duration(seconds: 4), () {
+      if (!mounted) return;
+      setState(() => _isRevealed = false);
+    });
   }
 }
+
+enum _MusicDockSide { left, right }
 
 class _MusicFloatLayout {
   const _MusicFloatLayout({
@@ -127,6 +174,8 @@ class _MusicFloatLayout {
     required this.minY,
     required this.maxY,
     required this.screenWidth,
+    required this.side,
+    required this.isRevealed,
   });
 
   final double left;
@@ -138,31 +187,44 @@ class _MusicFloatLayout {
   final double minY;
   final double maxY;
   final double screenWidth;
+  final _MusicDockSide side;
+  final bool isRevealed;
 
   static _MusicFloatLayout from({
     required BuildContext context,
     required BoxConstraints constraints,
     required MusicPlayerState state,
     required Offset? dragOffset,
+    required bool isRevealed,
   }) {
     final media = MediaQuery.of(context);
     final screenWidth = constraints.maxWidth;
     final screenHeight = constraints.maxHeight;
-    const width = 66.0;
-    const height = 150.0;
-    const margin = 6.0;
+    final compact = screenWidth < 380;
+    final width = isRevealed ? (compact ? 220.0 : 248.0) : 48.0;
+    final height = isRevealed ? 68.0 : 72.0;
+    final handlePeek = 22.0;
+    final edgeMargin = isRevealed ? 10.0 : 0.0;
     const bottomReserve = 106.0;
-    final minX = margin;
-    final maxX = math.max(margin, screenWidth - width - margin);
+    final minX = edgeMargin;
+    final maxX = isRevealed
+        ? math.max(edgeMargin, screenWidth - width - edgeMargin)
+        : math.max(edgeMargin, screenWidth - handlePeek);
     final minY = media.padding.top + 8;
     final maxY = math.max(
       minY,
       screenHeight - media.padding.bottom - bottomReserve - height,
     );
-    final rawLeft = minX + (maxX - minX) * state.floatX;
+    final side = state.floatX < 0.5
+        ? _MusicDockSide.left
+        : _MusicDockSide.right;
+    final rawLeft = side == _MusicDockSide.left ? minX : maxX;
     final rawTop = minY + (maxY - minY) * state.floatY;
     final offset = dragOffset ?? Offset(rawLeft, rawTop);
     final clamped = _clampOffset(offset, minX, maxX, minY, maxY);
+    final effectiveSide = clamped.dx + width / 2 < screenWidth / 2
+        ? _MusicDockSide.left
+        : _MusicDockSide.right;
 
     return _MusicFloatLayout(
       left: clamped.dx,
@@ -174,6 +236,8 @@ class _MusicFloatLayout {
       minY: minY,
       maxY: maxY,
       screenWidth: screenWidth,
+      side: effectiveSide,
+      isRevealed: isRevealed,
     );
   }
 

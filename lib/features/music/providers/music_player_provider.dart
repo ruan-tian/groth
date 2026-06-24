@@ -167,6 +167,17 @@ class MusicPlayerController extends StateNotifier<MusicPlayerState> {
   }
 
   void _listenToPlayer() {
+    _player.onPlaybackError = (error, stackTrace) {
+      if (_disposed) return;
+      debugPrint('Music playback failed: $error');
+      _setState(
+        state.copyWith(
+          isPlaying: false,
+          isLoading: false,
+          errorMessage: '播放失败，请重试',
+        ),
+      );
+    };
     _subscriptions.add(
       _player.positionStream.listen((position) {
         if (_disposed) return;

@@ -4,7 +4,6 @@ import '../../core/services/focus_audio_service.dart';
 
 final focusAudioServiceProvider = Provider<FocusAudioService>((ref) {
   final service = FocusAudioService();
-  FocusAudioService.initBackground();
   ref.onDispose(() => service.dispose());
   return service;
 });
@@ -55,10 +54,11 @@ class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
 
   Future<void> startNoise(String soundType) async {
     final service = _ref.read(focusAudioServiceProvider);
+    final normalizedSoundType = FocusAudioService.normalizeSoundType(soundType);
     try {
-      await service.playNoise(soundType, volume: state.volume);
+      await service.playNoise(normalizedSoundType, volume: state.volume);
       state = state.copyWith(
-        currentSoundType: soundType,
+        currentSoundType: normalizedSoundType,
         isPlaying: true,
         errorMessage: null,
       );
@@ -79,8 +79,12 @@ class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
 
   Future<void> resumeNoise() async {
     final service = _ref.read(focusAudioServiceProvider);
-    await service.resumeNoise();
-    state = state.copyWith(isPlaying: true);
+    try {
+      await service.resumeNoise();
+      state = state.copyWith(isPlaying: service.isNoisePlaying);
+    } catch (_) {
+      state = state.copyWith(isPlaying: false, errorMessage: '白噪音播放失败，请重试');
+    }
   }
 
   Future<void> stopNoise() async {
@@ -117,11 +121,12 @@ class FocusAudioStateNotifier extends StateNotifier<FocusAudioState> {
 
   Future<void> changeSound(String soundType) async {
     final service = _ref.read(focusAudioServiceProvider);
+    final normalizedSoundType = FocusAudioService.normalizeSoundType(soundType);
     await service.stopNoise();
     try {
-      await service.playNoise(soundType, volume: state.volume);
+      await service.playNoise(normalizedSoundType, volume: state.volume);
       state = state.copyWith(
-        currentSoundType: soundType,
+        currentSoundType: normalizedSoundType,
         isPlaying: true,
         errorMessage: null,
       );

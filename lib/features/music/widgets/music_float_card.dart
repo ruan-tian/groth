@@ -1,9 +1,21 @@
 part of 'dashboard_music_float.dart';
 
 class _MusicFloatCard extends StatelessWidget {
-  const _MusicFloatCard({required this.state});
+  const _MusicFloatCard({
+    required this.state,
+    required this.side,
+    required this.isRevealed,
+    required this.onReveal,
+    required this.onOpenPlayer,
+    required this.onImport,
+  });
 
   final MusicPlayerState state;
+  final _MusicDockSide side;
+  final bool isRevealed;
+  final VoidCallback onReveal;
+  final VoidCallback onOpenPlayer;
+  final VoidCallback onImport;
 
   @override
   Widget build(BuildContext context) {
@@ -43,183 +55,431 @@ class _MusicFloatCard extends StatelessWidget {
             ),
           );
         },
-        child: _CollapsedMusicCapsule(
-          key: const ValueKey('collapsed_music_capsule'),
-          state: state,
-        ),
+        child: isRevealed
+            ? _RevealedMusicRemote(
+                key: const ValueKey('revealed_music_remote'),
+                state: state,
+                side: side,
+                onOpenPlayer: onOpenPlayer,
+                onImport: onImport,
+              )
+            : _DockedMusicHandle(
+                key: const ValueKey('docked_music_handle'),
+                state: state,
+                side: side,
+                onReveal: onReveal,
+              ),
       ),
     );
   }
 }
 
-class _CollapsedMusicCapsule extends ConsumerWidget {
-  const _CollapsedMusicCapsule({super.key, required this.state});
-
-  final MusicPlayerState state;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.growthColors;
-    final controller = ref.read(musicPlayerProvider.notifier);
-    final track = state.currentTrack;
-    final hasTrack = track != null;
-    final isPlaying = state.isPlaying && hasTrack;
-    final asset = isPlaying
-        ? MusicAssets.capsulePlaying
-        : MusicAssets.capsuleIdle;
-    final artwork = MusicArtworkMapper.forTrack(track);
-    return GrowthEntrance(
-      duration: AppMotion.normal,
-      offset: const Offset(0, 8),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (isPlaying)
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.20),
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          Positioned.fill(
-            child: Image.asset(
-              asset,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
-            ),
-          ),
-          Positioned(
-            left: 15,
-            right: 15,
-            top: isPlaying ? 82 : 58,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 180),
-              opacity: isPlaying ? 1 : 0.55,
-              child: _CapsuleWaveVisualizer(
-                isPlaying: isPlaying,
-                color: colors.primary,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 18,
-            child: _CapsulePlayButton(
-              isPlaying: isPlaying,
-              isLoading: state.isLoading || state.isImporting,
-              hasTrack: hasTrack,
-              accentAsset: artwork.decorations.first,
-              onTap: () {
-                if (state.isLoading || state.isImporting) return;
-                if (hasTrack) {
-                  controller.togglePlayPause();
-                } else {
-                  showMusicImportDestinationSheet(context, ref);
-                }
-              },
-            ),
-          ),
-          if (state.isImporting)
-            Positioned(
-              right: 5,
-              top: 10,
-              child: SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: colors.primary.withValues(alpha: 0.76),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CapsulePlayButton extends StatelessWidget {
-  const _CapsulePlayButton({
-    required this.isPlaying,
-    required this.isLoading,
-    required this.hasTrack,
-    required this.accentAsset,
-    required this.onTap,
+class _DockedMusicHandle extends StatelessWidget {
+  const _DockedMusicHandle({
+    super.key,
+    required this.state,
+    required this.side,
+    required this.onReveal,
   });
 
-  final bool isPlaying;
-  final bool isLoading;
-  final bool hasTrack;
-  final String accentAsset;
-  final VoidCallback onTap;
+  final MusicPlayerState state;
+  final _MusicDockSide side;
+  final VoidCallback onReveal;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final icon = !hasTrack
-        ? Icons.add_rounded
-        : isPlaying
-        ? Icons.pause_rounded
-        : Icons.play_arrow_rounded;
-    final tooltip = !hasTrack ? '导入音乐' : (isPlaying ? '暂停' : '播放');
+    final track = state.currentTrack;
+    final hasTrack = track != null;
+    final isPlaying = state.isPlaying && hasTrack;
 
+    return Tooltip(
+      message: hasTrack ? '展开音乐控制' : '导入音乐',
+      child: GrowthPressable(
+        onTap: onReveal,
+        semanticLabel: hasTrack ? '展开音乐控制' : '导入音乐',
+        borderRadius: BorderRadius.circular(999),
+        child: Align(
+          alignment: side == _MusicDockSide.left
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
+          child: Container(
+            width: 42,
+            height: 64,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.horizontal(
+                left: side == _MusicDockSide.left
+                    ? const Radius.circular(0)
+                    : const Radius.circular(999),
+                right: side == _MusicDockSide.left
+                    ? const Radius.circular(999)
+                    : const Radius.circular(0),
+              ),
+              color: colors.card.withValues(alpha: 0.78),
+              border: Border.all(color: colors.border.withValues(alpha: 0.72)),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.shadow.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.horizontal(
+                left: side == _MusicDockSide.left
+                    ? const Radius.circular(0)
+                    : const Radius.circular(999),
+                right: side == _MusicDockSide.left
+                    ? const Radius.circular(999)
+                    : const Radius.circular(0),
+              ),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: side == _MusicDockSide.left
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
+                    end: side == _MusicDockSide.left
+                        ? Alignment.centerRight
+                        : Alignment.centerLeft,
+                    colors: [
+                      colors.card.withValues(alpha: 0.34),
+                      colors.primaryLight.withValues(alpha: 0.20),
+                    ],
+                  ),
+                ),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    left: side == _MusicDockSide.left ? 16 : 7,
+                    right: side == _MusicDockSide.left ? 7 : 16,
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        hasTrack ? Icons.music_note_rounded : Icons.add_rounded,
+                        size: 18,
+                        color: colors.primary,
+                      ),
+                      const SizedBox(height: 6),
+                      _MiniWaveBars(
+                        isPlaying: isPlaying,
+                        color: colors.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RevealedMusicRemote extends ConsumerWidget {
+  const _RevealedMusicRemote({
+    super.key,
+    required this.state,
+    required this.side,
+    required this.onOpenPlayer,
+    required this.onImport,
+  });
+
+  final MusicPlayerState state;
+  final _MusicDockSide side;
+  final VoidCallback onOpenPlayer;
+  final VoidCallback onImport;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 180) {
+          return _DockedMusicHandle(
+            state: state,
+            side: side,
+            onReveal: state.currentTrack == null ? onImport : onOpenPlayer,
+          );
+        }
+
+        final colors = context.growthColors;
+        final controller = ref.read(musicPlayerProvider.notifier);
+        final track = state.currentTrack;
+        final hasTrack = track != null;
+        final isPlaying = state.isPlaying && hasTrack;
+        final progress = state.progress;
+
+        return Align(
+          alignment: side == _MusicDockSide.left
+              ? Alignment.centerLeft
+              : Alignment.centerRight,
+          child: GrowthPressable(
+            onTap: hasTrack ? onOpenPlayer : onImport,
+            semanticLabel: hasTrack ? '打开完整播放器' : '导入音乐',
+            borderRadius: BorderRadius.circular(999),
+            child: Container(
+              height: 64,
+              padding: const EdgeInsets.fromLTRB(8, 7, 8, 7),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(999),
+                color: colors.card.withValues(alpha: 0.82),
+                border: Border.all(
+                  color: colors.border.withValues(alpha: 0.72),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.shadow.withValues(alpha: 0.20),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Row(
+                textDirection: side == _MusicDockSide.left
+                    ? TextDirection.ltr
+                    : TextDirection.rtl,
+                children: [
+                  _MiniCover(track: track, isPlaying: isPlaying),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Directionality(
+                      textDirection: TextDirection.ltr,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            track?.title ?? '甜甜音乐',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            hasTrack
+                                ? (isPlaying ? '正在播放' : '已暂停')
+                                : '导入音乐开始播放',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: colors.textSecondary,
+                              fontSize: 10.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: LinearProgressIndicator(
+                              minHeight: 3,
+                              value: hasTrack ? progress.clamp(0.0, 1.0) : 0,
+                              backgroundColor: colors.surfaceVariant,
+                              valueColor: AlwaysStoppedAnimation(
+                                colors.primary,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 7),
+                  Directionality(
+                    textDirection: TextDirection.ltr,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _MiniCircleButton(
+                          tooltip: hasTrack
+                              ? (isPlaying ? '暂停' : '播放')
+                              : '导入音乐',
+                          icon: state.isLoading || state.isImporting
+                              ? Icons.hourglass_empty_rounded
+                              : hasTrack
+                              ? (isPlaying
+                                    ? Icons.pause_rounded
+                                    : Icons.play_arrow_rounded)
+                              : Icons.add_rounded,
+                          filled: true,
+                          onTap: state.isLoading || state.isImporting
+                              ? null
+                              : hasTrack
+                              ? controller.togglePlayPause
+                              : onImport,
+                        ),
+                        const SizedBox(width: 5),
+                        _MiniCircleButton(
+                          tooltip: '下一首',
+                          icon: Icons.skip_next_rounded,
+                          onTap: hasTrack ? controller.playNext : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MiniCover extends StatelessWidget {
+  const _MiniCover({required this.track, required this.isPlaying});
+
+  final MusicTrack? track;
+  final bool isPlaying;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Container(
+      width: 48,
+      height: 48,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.card,
+        border: Border.all(
+          color: isPlaying
+              ? colors.primary.withValues(alpha: 0.38)
+              : colors.border,
+        ),
+      ),
+      child: ClipOval(
+        child: track == null
+            ? DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [colors.primaryLight, colors.card],
+                  ),
+                ),
+                child: Icon(Icons.music_note_rounded, color: colors.primary),
+              )
+            : Image.asset(
+                MusicArtworkMapper.coverForTrack(track),
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+              ),
+      ),
+    );
+  }
+}
+
+class _MiniCircleButton extends StatelessWidget {
+  const _MiniCircleButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Tooltip(
       message: tooltip,
       child: GrowthPressable(
-        onTap: isLoading ? null : onTap,
+        onTap: onTap,
         semanticLabel: tooltip,
         borderRadius: BorderRadius.circular(999),
         child: Container(
-          height: 34,
+          width: filled ? 34 : 30,
+          height: filled ? 34 : 30,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: colors.card.withValues(alpha: 0.92),
-            border: Border.all(
-              color: colors.primary.withValues(alpha: 0.28),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.18),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            color: filled ? colors.primary : colors.surfaceVariant,
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                right: -1,
-                top: -2,
-                child: Opacity(
-                  opacity: 0.22,
-                  child: Image.asset(accentAsset, width: 18, height: 18),
-                ),
-              ),
-              if (isLoading)
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: colors.primary.withValues(alpha: 0.78),
-                  ),
-                )
-              else
-                Icon(icon, color: colors.primary, size: 24),
-            ],
+          child: Icon(
+            icon,
+            size: filled ? 21 : 19,
+            color: onTap == null
+                ? colors.textHint
+                : filled
+                ? colors.textOnAccent
+                : colors.primary,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MiniWaveBars extends StatefulWidget {
+  const _MiniWaveBars({required this.isPlaying, required this.color});
+
+  final bool isPlaying;
+  final Color color;
+
+  @override
+  State<_MiniWaveBars> createState() => _MiniWaveBarsState();
+}
+
+class _MiniWaveBarsState extends State<_MiniWaveBars>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MiniWaveBars oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isPlaying != widget.isPlaying) _sync();
+  }
+
+  void _sync() {
+    if (widget.isPlaying) {
+      _controller.repeat();
+    } else {
+      _controller.stop();
+      _controller.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 16,
+      height: 14,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: _CapsuleWavePainter(
+              phase: _controller.value,
+              isPlaying: widget.isPlaying,
+              color: widget.color,
+            ),
+          );
+        },
       ),
     );
   }

@@ -106,22 +106,26 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     final soundType = ref.read(focusCycleProvider).soundType;
     _currentSoundType = soundType;
     if (soundType == 'music') {
-      final musicState = ref.read(musicPlayerProvider);
-      if (!musicState.isPlaying && musicState.currentTrack != null) {
-        _focusStartedMusic = true;
-        ref.read(musicPlayerProvider.notifier).togglePlayPause();
-      } else if (musicState.currentTrack == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('请先在音乐页面导入本地音乐')),
-          );
-        }
-      }
+      unawaited(_startFocusMusic());
       return;
     }
     if (soundType != null && soundType.isNotEmpty && soundType != 'none') {
-      ref.read(musicPlayerProvider.notifier).pause();
-      ref.read(focusAudioStateProvider.notifier).startNoise(soundType);
+      unawaited(ref.read(musicPlayerProvider.notifier).pause());
+      unawaited(
+        ref.read(focusAudioStateProvider.notifier).startNoise(soundType),
+      );
+    }
+  }
+
+  Future<void> _startFocusMusic() async {
+    final musicState = ref.read(musicPlayerProvider);
+    if (!musicState.isPlaying && musicState.currentTrack != null) {
+      _focusStartedMusic = true;
+      await ref.read(musicPlayerProvider.notifier).togglePlayPause();
+    } else if (musicState.currentTrack == null && mounted && context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('请先在音乐页面导入本地音乐')));
     }
   }
 
@@ -137,14 +141,10 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   void _resumeSessionAudio() {
     final soundType = ref.read(focusCycleProvider).soundType;
     if (soundType == 'music') {
-      final state = ref.read(musicPlayerProvider);
-      if (!state.isPlaying && state.currentTrack != null) {
-        _focusStartedMusic = true;
-        ref.read(musicPlayerProvider.notifier).togglePlayPause();
-      }
+      unawaited(_startFocusMusic());
       return;
     }
-    ref.read(focusAudioStateProvider.notifier).resumeNoise();
+    unawaited(ref.read(focusAudioStateProvider.notifier).resumeNoise());
   }
 
   void _stopSessionAudio() {
@@ -512,9 +512,14 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                       if (value == 'music') {
                         _focusStartedMusic = true;
                         ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      } else if (value != null && value.isNotEmpty && value != 'none') {
+                        unawaited(_startFocusMusic());
+                      } else if (value != null &&
+                          value.isNotEmpty &&
+                          value != 'none') {
                         ref.read(musicPlayerProvider.notifier).pause();
-                        ref.read(focusAudioStateProvider.notifier).changeSound(value);
+                        ref
+                            .read(focusAudioStateProvider.notifier)
+                            .changeSound(value);
                       } else {
                         ref.read(focusAudioStateProvider.notifier).stopNoise();
                       }
@@ -535,9 +540,14 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                       if (value == 'music') {
                         _focusStartedMusic = true;
                         ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      } else if (value != null && value.isNotEmpty && value != 'none') {
+                        unawaited(_startFocusMusic());
+                      } else if (value != null &&
+                          value.isNotEmpty &&
+                          value != 'none') {
                         ref.read(musicPlayerProvider.notifier).pause();
-                        ref.read(focusAudioStateProvider.notifier).changeSound(value);
+                        ref
+                            .read(focusAudioStateProvider.notifier)
+                            .changeSound(value);
                       } else {
                         ref.read(focusAudioStateProvider.notifier).stopNoise();
                       }
@@ -558,9 +568,14 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                       if (value == 'music') {
                         _focusStartedMusic = true;
                         ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      } else if (value != null && value.isNotEmpty && value != 'none') {
+                        unawaited(_startFocusMusic());
+                      } else if (value != null &&
+                          value.isNotEmpty &&
+                          value != 'none') {
                         ref.read(musicPlayerProvider.notifier).pause();
-                        ref.read(focusAudioStateProvider.notifier).changeSound(value);
+                        ref
+                            .read(focusAudioStateProvider.notifier)
+                            .changeSound(value);
                       } else {
                         ref.read(focusAudioStateProvider.notifier).stopNoise();
                       }

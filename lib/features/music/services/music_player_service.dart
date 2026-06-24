@@ -5,6 +5,7 @@ import 'package:just_audio/just_audio.dart';
 class MusicPlayerService {
   final AudioPlayer _player = AudioPlayer();
   String? _currentPath;
+  void Function(Object error, StackTrace stackTrace)? onPlaybackError;
 
   String? get currentPath => _currentPath;
   Stream<Duration> get positionStream => _player.positionStream;
@@ -25,11 +26,11 @@ class MusicPlayerService {
   Future<Duration?> playFile(String filePath, {required double volume}) async {
     final duration = await load(filePath);
     await setVolume(volume);
-    unawaited(_player.play());
+    _startPlayback();
     return duration;
   }
 
-  Future<void> play() => _player.play();
+  Future<void> play() async => _startPlayback();
 
   Future<void> pause() => _player.pause();
 
@@ -42,6 +43,14 @@ class MusicPlayerService {
 
   Future<void> setVolume(double volume) {
     return _player.setVolume(volume.clamp(0.0, 1.0).toDouble());
+  }
+
+  void _startPlayback() {
+    unawaited(
+      _player.play().catchError((Object error, StackTrace stackTrace) {
+        onPlaybackError?.call(error, stackTrace);
+      }),
+    );
   }
 
   Future<void> dispose() async {

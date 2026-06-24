@@ -115,7 +115,7 @@ void main() {
       expect(find.textContaining('Lv.5'), findsWidgets);
       expect(find.text('今日概览'), findsOneWidget);
       // Default cards are now "study" and "focus" in compact mode
-      expect(find.text('90分钟'), findsOneWidget);  // study
+      expect(find.text('90分钟'), findsOneWidget); // study
     });
 
     testWidgets('shows quick action sheet from FAB', (tester) async {
@@ -141,7 +141,7 @@ void main() {
       expect(find.text('开始日记'), findsOneWidget);
     });
 
-    testWidgets('shows and expands the music floating capsule', (tester) async {
+    testWidgets('shows and expands the music edge remote', (tester) async {
       await tester.pumpWidget(
         _buildTestableWidget(
           overrides: [
@@ -151,12 +151,17 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      expect(find.byKey(const ValueKey('docked_music_handle')), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('docked_music_handle')));
+      await tester.pumpAndSettle();
+
       expect(
-        find.byKey(const ValueKey('collapsed_music_capsule')),
+        find.byKey(const ValueKey('revealed_music_remote')),
         findsOneWidget,
       );
 
-      await tester.tap(find.byKey(const ValueKey('collapsed_music_capsule')));
+      await tester.tap(find.byKey(const ValueKey('revealed_music_remote')));
       await tester.pumpAndSettle();
 
       expect(find.byKey(const ValueKey('expanded_music_card')), findsOneWidget);
@@ -183,11 +188,11 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        await tester.tap(find.byKey(const ValueKey('collapsed_music_capsule')));
+        await tester.tap(find.byKey(const ValueKey('docked_music_handle')));
         await tester.pumpAndSettle();
 
         expect(
-          find.byKey(const ValueKey('expanded_music_card')),
+          find.byKey(const ValueKey('revealed_music_remote')),
           findsOneWidget,
           reason: 'width $width',
         );

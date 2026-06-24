@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 
 class FocusAudioService {
   static bool _initialized = false;
+  static Future<void>? _initializing;
 
   final AudioPlayer _noisePlayer = AudioPlayer();
   final AudioPlayer _bellPlayer = AudioPlayer();
@@ -22,13 +23,22 @@ class FocusAudioService {
 
   static Future<void> initBackground() async {
     if (_initialized) return;
-    _initialized = true;
-    await JustAudioBackground.init(
-      androidNotificationChannelId: 'com.growthos.focus.audio',
-      androidNotificationChannelName: '\u4e13\u6ce8\u767d\u566a\u97f3',
-      androidNotificationOngoing: true,
-      preloadArtwork: false,
-    );
+    final running = _initializing;
+    if (running != null) return running;
+    _initializing =
+        JustAudioBackground.init(
+              androidNotificationChannelId: 'com.growthos.focus.audio',
+              androidNotificationChannelName: '\u4e13\u6ce8\u767d\u566a\u97f3',
+              androidNotificationOngoing: true,
+              preloadArtwork: false,
+            )
+            .then((_) {
+              _initialized = true;
+            })
+            .whenComplete(() {
+              _initializing = null;
+            });
+    return _initializing!;
   }
 
   static String displayNameForSound(String soundType) {
@@ -54,12 +64,26 @@ class FocusAudioService {
     return 'assets/audio/noise/$soundType.mp3';
   }
 
+  static const Set<String> supportedNoiseTypes = {
+    'rain',
+    'ocean',
+    'forest',
+    'cafe',
+    'white_noise',
+  };
+
+  static String normalizeSoundType(String soundType) {
+    return supportedNoiseTypes.contains(soundType) ? soundType : 'white_noise';
+  }
+
   static String assetPathForBell(String bellType) {
     return 'assets/audio/bell/$bellType.mp3';
   }
 
   Future<void> playNoise(String soundType, {double volume = 0.6}) async {
-    final assetPath = assetPathForSound(soundType);
+    await initBackground();
+    final normalizedSoundType = normalizeSoundType(soundType);
+    final assetPath = assetPathForSound(normalizedSoundType);
     final token = ++_noiseSwitchToken;
 
     try {
@@ -76,7 +100,7 @@ class FocusAudioService {
 
       if (_currentNoiseAsset != assetPath) {
         await _noisePlayer.pause();
-        await _setNoiseSource(assetPath, soundType);
+        await _setNoiseSource(assetPath, normalizedSoundType);
         if (token != _noiseSwitchToken) return;
         _currentNoiseAsset = assetPath;
       }
