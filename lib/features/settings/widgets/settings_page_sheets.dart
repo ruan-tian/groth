@@ -51,15 +51,11 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final categories = <String, List<_GoalItem>>{};
-    for (final goal in _goals) {
-      categories.putIfAbsent(goal.category, () => []).add(goal);
-    }
 
     return DraggableScrollableSheet(
-      initialChildSize: 0.75,
-      minChildSize: 0.5,
-      maxChildSize: 0.92,
+      initialChildSize: 0.6,
+      minChildSize: 0.4,
+      maxChildSize: 0.85,
       expand: false,
       builder: (ctx, scrollController) {
         return Container(
@@ -69,6 +65,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
           ),
           child: Column(
             children: [
+              // 拖拽条
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Container(
@@ -80,41 +77,32 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              // 标题
               Text(
                 '今日目标',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
                   color: colors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 4),
-              Text(
-                '点击目标项可修改数值',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: colors.textTertiary.withValues(alpha: 0.8),
-                ),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              // 目标列表
               Expanded(
                 child: ListView.builder(
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: categories.length,
-                  itemBuilder: (ctx, index) {
-                    final categoryName = categories.keys.elementAt(index);
-                    final items = categories[categoryName]!;
-                    return _buildCategory(categoryName, items);
-                  },
+                  itemCount: _goals.length,
+                  itemBuilder: (ctx, index) => _buildGoalTile(_goals[index]),
                 ),
               ),
+              // 保存按钮
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 child: SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 52,
                   child: ElevatedButton(
                     onPressed: () => Navigator.pop(context, _goals),
                     style: ElevatedButton.styleFrom(
@@ -128,7 +116,7 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                     child: const Text(
                       '保存目标',
                       style: TextStyle(
-                        fontSize: 15,
+                        fontSize: 16,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -142,65 +130,28 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
     );
   }
 
-  Widget _buildCategory(String name, List<_GoalItem> items) {
-    final colors = context.growthColors;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 10),
-          child: Row(
-            children: [
-              Container(
-                width: 4,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: colors.primary,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                name,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: colors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-        ...items.map(_buildGoalTile),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
   Widget _buildGoalTile(_GoalItem goal) {
     final colors = context.growthColors;
-    return GestureDetector(
-      onTap: () => _showGoalEditDialog(goal),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GrowthCard(
+        onTap: () => _showGoalEditSheet(goal),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: colors.surface,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: colors.border.withValues(alpha: 0.55)),
-        ),
+        borderRadius: 16,
         child: Row(
           children: [
+            // 图标
             Container(
-              width: 38,
-              height: 38,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: goal.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(goal.icon, color: goal.color, size: 20),
+              child: Icon(goal.icon, color: goal.color, size: 22),
             ),
             const SizedBox(width: 14),
+            // 标题和数值
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -208,39 +159,35 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                   Text(
                     goal.label,
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                       color: colors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 3),
                   Text(
                     '${goal.value} ${goal.unit}',
-                    style: TextStyle(fontSize: 12, color: colors.textTertiary),
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: colors.textSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
+            // 编辑图标
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              width: 32,
+              height: 32,
               decoration: BoxDecoration(
-                color: goal.color.withValues(alpha: 0.1),
+                color: goal.color.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                '${goal.value}',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: goal.color,
-                ),
+              child: Icon(
+                Icons.edit_rounded,
+                size: 16,
+                color: goal.color,
               ),
-            ),
-            const SizedBox(width: 4),
-            Icon(
-              Icons.edit_rounded,
-              size: 16,
-              color: colors.textTertiary.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -248,116 +195,17 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
     );
   }
 
-  Future<void> _showGoalEditDialog(_GoalItem goal) async {
-    final colors = context.growthColors;
-    final controller = TextEditingController(text: goal.value.toString());
-    final formKey = GlobalKey<FormState>();
-
-    final result = await showDialog<int>(
+  Future<void> _showGoalEditSheet(_GoalItem goal) async {
+    await GoalEditSheet.show(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: colors.paper,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: goal.color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(goal.icon, color: goal.color, size: 20),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  goal.label,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          content: Form(
-            key: formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextFormField(
-                  controller: controller,
-                  textInputAction: TextInputAction.done,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  autofocus: true,
-                  decoration: InputDecoration(
-                    labelText: '目标值',
-                    suffixText: goal.unit,
-                    suffixStyle: TextStyle(
-                      color: colors.textTertiary,
-                      fontSize: 14,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: colors.border),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide(color: goal.color, width: 2),
-                    ),
-                  ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return '请输入目标值';
-                    final number = int.tryParse(value);
-                    if (number == null || number <= 0) return '请输入正整数';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '当前设定: ${goal.value} ${goal.unit}',
-                  style: TextStyle(fontSize: 12, color: colors.textTertiary),
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text('取消', style: TextStyle(color: colors.textTertiary)),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (formKey.currentState!.validate()) {
-                  Navigator.pop(ctx, int.parse(controller.text));
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: goal.color,
-                foregroundColor: colors.textOnAccent,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                elevation: 0,
-              ),
-              child: const Text('确定'),
-            ),
-          ],
-        );
+      title: goal.label,
+      currentValue: goal.value,
+      unit: goal.unit,
+      color: goal.color,
+      onSave: (newValue) {
+        setState(() => goal.value = newValue);
       },
     );
-
-    if (result != null && mounted) {
-      setState(() {
-        goal.value = result;
-      });
-    }
   }
 }
 

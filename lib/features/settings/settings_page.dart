@@ -9,6 +9,8 @@ import '../dashboard/providers/dashboard_provider.dart';
 import '../pet/providers/pet_diary_provider.dart';
 import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
+import '../../shared/widgets/common/goal_edit_sheet.dart';
+import '../../shared/widgets/common/growth_card.dart';
 import '../../shared/widgets/common/growth_confirm_dialog.dart';
 import 'widgets/settings_page_sections.dart';
 
