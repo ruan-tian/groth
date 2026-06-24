@@ -319,7 +319,7 @@ List<String> _checkCrossFeatureImport() {
     'focus': ['models', 'providers', 'utils'], // White noise - FocusMusicFacade integrated
     'dashboard': ['utils', 'pages', 'providers'], // Quick actions - DashboardQuickActions created
     'settings': ['utils'], // Avatar assets - acceptable
-    'fitness': ['providers'], // Dashboard refresh - FitnessDashboardFacade created
+    'fitness': ['providers'], // Dashboard refresh - FitnessDashboardFacade integrated
   };
 
   // Legacy exception files (documented, to be refactored later)

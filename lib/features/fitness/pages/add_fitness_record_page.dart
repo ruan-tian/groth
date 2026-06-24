@@ -9,8 +9,10 @@ import '../models/fitness_data.dart';
 import 'package:growth_os/core/domain/pet/pet_event.dart';
 import 'package:growth_os/core/services/pet_event_bus.dart';
 import 'package:growth_os/features/fitness/models/activity_type.dart';
-import 'package:growth_os/features/dashboard/providers/dashboard_provider.dart';
+import 'package:growth_os/features/fitness/providers/fitness_dashboard_facade.dart';
 import 'package:growth_os/features/fitness/providers/fitness_provider.dart';
+import 'package:growth_os/shared/providers/repository_providers.dart';
+import 'package:growth_os/shared/providers/service_providers.dart';
 import 'package:growth_os/shared/widgets/common/common_widgets.dart';
 
 class AddFitnessRecordPage extends ConsumerStatefulWidget {
@@ -1477,7 +1479,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       ref.invalidate(recentFitnessRecordsProvider);
       ref.invalidate(todayFitnessMinutesProvider);
       ref.invalidate(weeklyFitnessCountProvider);
-      ref.invalidate(dashboardProvider);
+      ref.read(fitnessDashboardFacadeProvider).refreshDashboard();
       ref.invalidate(fitnessChartDataProvider(7));
       ref.invalidate(fitnessChartDataProvider(30));
       ref.invalidate(fitnessChartDataProvider(365));

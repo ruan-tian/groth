@@ -8,6 +8,7 @@ import '../models/fitness_data.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
+import '../providers/fitness_dashboard_facade.dart';
 import '../../fitness/providers/fitness_provider.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../models/workout_session_state.dart';
@@ -323,7 +324,7 @@ class _FitnessTrainingTimerPageState
     ref.invalidate(recentFitnessRecordsProvider);
     ref.invalidate(todayFitnessMinutesProvider);
     ref.invalidate(weeklyFitnessCountProvider);
-    ref.invalidate(dashboardProvider);
+    ref.read(fitnessDashboardFacadeProvider).refreshDashboard();
     ref.invalidate(fitnessChartDataProvider(7));
     ref.invalidate(fitnessChartDataProvider(30));
     ref.invalidate(fitnessChartDataProvider(365));

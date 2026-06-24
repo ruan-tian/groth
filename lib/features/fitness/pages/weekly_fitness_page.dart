@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../../app/design/design.dart';
 import '../models/fitness_data.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
+import '../providers/fitness_dashboard_facade.dart';
 import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
@@ -409,7 +410,7 @@ class _WeeklyFitnessPageState extends ConsumerState<WeeklyFitnessPage> {
         ref.invalidate(sortedRecentFitnessRecordsProvider);
         ref.invalidate(recentFitnessRecordsProvider);
         ref.invalidate(todayFitnessMinutesProvider);
-        ref.invalidate(dashboardProvider);
+        ref.read(fitnessDashboardFacadeProvider).refreshDashboard();
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,

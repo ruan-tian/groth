@@ -8,7 +8,8 @@ import '../../core/constants/fitness_constants.dart';
 import '../../core/database/app_database.dart';
 import '../../core/utils/chart_scale_utils.dart';
 import '../../core/utils/date_utils.dart';
-import '../dashboard/providers/dashboard_provider.dart';
+import '../../shared/providers/repository_providers.dart';
+import 'providers/fitness_dashboard_facade.dart';
 import 'providers/fitness_provider.dart';
 import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
@@ -814,7 +815,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         ref.invalidate(recentFitnessRecordsProvider);
         ref.invalidate(todayFitnessMinutesProvider);
         ref.invalidate(weeklyFitnessCountProvider);
-        ref.invalidate(dashboardProvider);
+        ref.read(fitnessDashboardFacadeProvider).refreshDashboard();
         ref.invalidate(fitnessChartDataProvider(7));
         ref.invalidate(fitnessChartDataProvider(30));
         ref.invalidate(fitnessChartDataProvider(365));
