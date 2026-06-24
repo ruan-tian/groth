@@ -18,6 +18,7 @@ class SettingsProfileCard extends StatelessWidget {
     required this.nextLevelExpFor,
     required this.onProfileTap,
     required this.onLevelTap,
+    this.onAvatarTap,
     super.key,
   });
 
@@ -28,6 +29,7 @@ class SettingsProfileCard extends StatelessWidget {
   final int Function(int currentLevel) nextLevelExpFor;
   final VoidCallback onProfileTap;
   final ValueChanged<DashboardData> onLevelTap;
+  final VoidCallback? onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +60,10 @@ class SettingsProfileCard extends StatelessWidget {
               onTap: onProfileTap,
               child: Row(
                 children: [
-                  _SettingsAvatar(avatarPath: avatarPath),
+                  GestureDetector(
+                    onTap: onAvatarTap,
+                    child: _SettingsAvatar(avatarPath: avatarPath),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -494,10 +499,10 @@ class _SettingsAvatar extends StatelessWidget {
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        color: colors.primary.withValues(alpha: 0.08),
+        color: colors.card,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colors.primary.withValues(alpha: 0.2),
+          color: colors.border,
           width: 2,
         ),
       ),

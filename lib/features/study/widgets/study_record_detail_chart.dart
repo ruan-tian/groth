@@ -180,7 +180,9 @@ class _StudyTrendChartState extends ConsumerState<_StudyTrendChart> {
 
         for (int w = 0; w < 4; w++) {
           final weekStart = monthStart.add(Duration(days: w * 7));
-          final weekEnd = weekStart.add(const Duration(days: 6));
+          final weekEnd = w == 3
+              ? DateTime(now.year, now.month + 1, 0)
+              : weekStart.add(const Duration(days: 6));
           final weekStats = stats.where(
             (s) => !s.date.isBefore(weekStart) && !s.date.isAfter(weekEnd),
           );

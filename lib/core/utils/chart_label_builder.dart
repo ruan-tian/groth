@@ -5,7 +5,7 @@ class ChartLabelBuilder {
   const ChartLabelBuilder._();
 
   static const _weekdayNames = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-  static const _weekNames = ['一周', '二周', '三周', '四周'];
+  static const _weekNames = ['一', '二', '三', '四', '五', '六'];
 
   /// Build main label for X-axis.
   ///
@@ -19,7 +19,10 @@ class ChartLabelBuilder {
   }) {
     if (range == 30) {
       // Month view: show week number
-      return '第${_weekNames[index % 4]}';
+      final name = index >= 0 && index < _weekNames.length
+          ? _weekNames[index]
+          : '${index + 1}';
+      return '第$name周';
     }
     if (range == 365) {
       // Year view: show month

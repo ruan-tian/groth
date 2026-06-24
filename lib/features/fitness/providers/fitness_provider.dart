@@ -1,4 +1,4 @@
-﻿import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../shared/widgets/sort_button.dart';
 
 import '../../../core/constants/fitness_constants.dart';
@@ -180,19 +180,23 @@ final fitnessChartDataProvider = FutureProvider.family<List<FitnessChartData>, i
 ) async {
   final repo = ref.watch(fitnessRepositoryProvider);
   final now = DateTime.now();
-  final start = DateTime(
-    now.year,
-    now.month,
-    now.day,
-  ).subtract(Duration(days: days - 1));
+  final today = DateTime(now.year, now.month, now.day);
+  final start = days >= 365
+      ? DateTime(now.year)
+      : today.subtract(Duration(days: days - 1));
+  final end = days >= 365 ? DateTime(now.year, 12, 31) : now;
 
   // 获取健身记录和身体数据（并行查询）
   final results = await Future.wait([
-    repo.getFitnessRecordsByRange(start, now),
-    repo.getBodyMetricsByRange(start, now),
+    repo.getFitnessRecordsByRange(start, end),
+    repo.getBodyMetricsByRange(start, end),
   ]);
   final records = results[0] as List<FitnessRecord>;
   final metrics = results[1] as List<BodyMetric>;
+
+  if (days >= 365) {
+    return _aggregateFitnessChartDataByYear(records, metrics, now.year);
+  }
 
   // 按日期聚合健身数据
   final Map<String, FitnessChartData> dateMap = {};
@@ -246,3 +250,50 @@ final fitnessChartDataProvider = FutureProvider.family<List<FitnessChartData>, i
     ..sort((a, b) => a.date.compareTo(b.date));
   return result;
 });
+
+List<FitnessChartData> _aggregateFitnessChartDataByYear(
+  List<FitnessRecord> records,
+  List<BodyMetric> metrics,
+  int year,
+) {
+  final monthMap = <int, FitnessChartData>{
+    for (var month = 1; month <= 12; month++)
+      month: FitnessChartData(
+        date: DateTime(year, month),
+        minutes: 0,
+        calories: 0,
+        weight: null,
+      ),
+  };
+
+  for (final record in records) {
+    final date = DateTime.fromMillisecondsSinceEpoch(record.startTime);
+    if (date.year != year) continue;
+    final existing = monthMap[date.month]!;
+    monthMap[date.month] = FitnessChartData(
+      date: existing.date,
+      minutes: existing.minutes + record.durationMinutes,
+      calories:
+          existing.calories +
+          FitnessConstants.estimateCalories(record.durationMinutes),
+      weight: existing.weight,
+    );
+  }
+
+  final sortedMetrics =
+      metrics.where((metric) => metric.weight != null).toList()
+        ..sort((a, b) => a.recordDate.compareTo(b.recordDate));
+  for (final metric in sortedMetrics) {
+    final date = DateTime.tryParse(metric.recordDate);
+    if (date == null || date.year != year) continue;
+    final existing = monthMap[date.month]!;
+    monthMap[date.month] = FitnessChartData(
+      date: existing.date,
+      minutes: existing.minutes,
+      calories: existing.calories,
+      weight: metric.weight,
+    );
+  }
+
+  return List.generate(12, (index) => monthMap[index + 1]!);
+}

@@ -220,20 +220,20 @@ class _LegendPill extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 16,
-          height: 4,
+          width: 12,
+          height: 3,
           decoration: BoxDecoration(
             color: item.color,
             borderRadius: BorderRadius.circular(999),
           ),
         ),
-        const SizedBox(width: 5),
+        const SizedBox(width: 4),
         Text(
           item.label,
           style: TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             color: colors.textTertiary,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -280,37 +280,139 @@ Widget buildChartAxisLabel({
   required int labelStep,
   required GrowthChartPoint point,
   required AppThemeColors colors,
+  TitleMeta? meta,
 }) {
   if (index < 0 || index >= totalCount) {
     return const SizedBox.shrink();
   }
-  if (!ChartValueLabelPolicy.shouldShowAxisLabel(index, totalCount, labelStep)) {
+  if (!ChartValueLabelPolicy.shouldShowAxisLabel(
+    index,
+    totalCount,
+    labelStep,
+  )) {
     return const SizedBox.shrink();
   }
-  return Padding(
-    padding: const EdgeInsets.only(top: 6),
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          point.label,
+  final hasSubLabel = point.subLabel?.isNotEmpty == true;
+  final content = Column(
+    mainAxisSize: MainAxisSize.min,
+    children: [
+      _AxisTitleText(
+        point.label,
+        maxWidth: hasSubLabel ? 52 : 34,
+        style: TextStyle(
+          fontSize: 9.5,
+          fontWeight: FontWeight.w700,
+          color: colors.textSecondary,
+        ),
+      ),
+      if (hasSubLabel)
+        _AxisTitleText(
+          point.subLabel!,
+          maxWidth: 52,
           style: TextStyle(
-            fontSize: 10.5,
-            fontWeight: FontWeight.w700,
-            color: colors.textSecondary,
+            fontSize: 8.2,
+            fontWeight: FontWeight.w500,
+            color: colors.textTertiary,
           ),
         ),
-        if (point.subLabel?.isNotEmpty == true)
-          Text(
-            point.subLabel!,
-            style: TextStyle(
-              fontSize: 9.5,
-              color: colors.textTertiary,
-            ),
-          ),
-      ],
+    ],
+  );
+  if (meta == null) {
+    return Padding(padding: const EdgeInsets.only(top: 6), child: content);
+  }
+  return SideTitleWidget(
+    meta: meta,
+    space: 5,
+    fitInside: SideTitleFitInsideData.fromTitleMeta(
+      meta,
+      enabled: index == 0 || index == totalCount - 1,
+      distanceFromEdge: 2,
+    ),
+    child: content,
+  );
+}
+
+class _AxisTitleText extends StatelessWidget {
+  const _AxisTitleText(
+    this.text, {
+    required this.maxWidth,
+    required this.style,
+  });
+
+  final String text;
+  final double maxWidth;
+  final TextStyle style;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: maxWidth,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Text(
+          text,
+          maxLines: 1,
+          softWrap: false,
+          textAlign: TextAlign.center,
+          style: style,
+        ),
+      ),
+    );
+  }
+}
+
+int? _axisIndexFromValue(double value, int length) {
+  if (length <= 0 || value.isNaN || value.isInfinite) return null;
+  final index = value.round();
+  if ((value - index).abs() > 0.01 || index < 0 || index >= length) {
+    return null;
+  }
+  return index;
+}
+
+bool _isNormalizedAxisTick(double value) {
+  const ticks = [0.25, 0.5, 0.75, 1.0];
+  return ticks.any((tick) => (value - tick).abs() <= 0.01);
+}
+
+Widget _leftAxisTitle({
+  required TitleMeta meta,
+  required String text,
+  required AppThemeColors colors,
+  double width = 48,
+}) {
+  return SideTitleWidget(
+    meta: meta,
+    space: 6,
+    child: SizedBox(
+      width: width,
+      child: Text(
+        text,
+        maxLines: 1,
+        softWrap: false,
+        textAlign: TextAlign.right,
+        style: TextStyle(fontSize: 9.5, color: colors.textTertiary),
+      ),
     ),
   );
+}
+
+bool _isAxisValueInside(double value, double min, double max) {
+  return value > min + 0.0001 && value <= max + 0.0001;
+}
+
+double _bottomAxisReservedSize(
+  List<GrowthChartPoint> points,
+  ChartDensityPolicy density,
+) {
+  final visible = ChartValueLabelPolicy.visibleAxisIndexes(
+    points.length,
+    density.labelStep,
+  );
+  final hasSubLabel = visible.any(
+    (index) => points[index].subLabel?.isNotEmpty == true,
+  );
+  return hasSubLabel ? 40 : 30;
 }
 
 class GrowthAnimatedBarChart extends StatefulWidget {
@@ -404,12 +506,13 @@ class _GrowthAnimatedBarChartState extends State<GrowthAnimatedBarChart> {
                       topTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 42,
+                          reservedSize: 24,
                           getTitlesWidget: (value, meta) {
-                            final index = value.toInt();
-                            if (!labels.contains(index) ||
-                                index < 0 ||
-                                index >= widget.points.length) {
+                            final index = _axisIndexFromValue(
+                              value,
+                              widget.points.length,
+                            );
+                            if (index == null || !labels.contains(index)) {
                               return const SizedBox.shrink();
                             }
                             return _ValueBadge(
@@ -424,20 +527,22 @@ class _GrowthAnimatedBarChartState extends State<GrowthAnimatedBarChart> {
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 40,
+                          reservedSize: 50,
                           interval: scale.interval,
                           getTitlesWidget: (value, meta) {
-                            if (value <= scale.min) {
+                            if (!_isAxisValueInside(
+                              value,
+                              scale.min,
+                              scale.max,
+                            )) {
                               return const SizedBox.shrink();
                             }
-                            return Text(
-                              widget.axisFormatter?.call(value) ??
+                            return _leftAxisTitle(
+                              meta: meta,
+                              text:
+                                  widget.axisFormatter?.call(value) ??
                                   formatCompactNumber(value),
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: colors.textTertiary,
-                              ),
-                              textAlign: TextAlign.right,
+                              colors: colors,
                             );
                           },
                         ),
@@ -445,14 +550,25 @@ class _GrowthAnimatedBarChartState extends State<GrowthAnimatedBarChart> {
                       bottomTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
-                          reservedSize: 42,
+                          reservedSize: _bottomAxisReservedSize(
+                            widget.points,
+                            density,
+                          ),
                           getTitlesWidget: (value, meta) {
+                            final index = _axisIndexFromValue(
+                              value,
+                              widget.points.length,
+                            );
+                            if (index == null) {
+                              return const SizedBox.shrink();
+                            }
                             return buildChartAxisLabel(
-                              index: value.toInt(),
+                              index: index,
                               totalCount: widget.points.length,
                               labelStep: density.labelStep,
-                              point: widget.points[value.toInt()],
+                              point: widget.points[index],
                               colors: colors,
+                              meta: meta,
                             );
                           },
                         ),
@@ -596,11 +712,13 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
               builder: (context, progress, _) {
                 return LineChart(
                   LineChartData(
-                    minX: 0,
-                    maxX: (count - 1).clamp(1, 366).toDouble(),
+                    minX: count <= 1 ? 0.0 : -0.12,
+                    maxX: count <= 1
+                        ? 1.0
+                        : (count - 1).clamp(1, 366).toDouble() + 0.12,
                     minY: 0,
                     maxY: 1,
-                    clipData: FlClipData.all(),
+                    clipData: const FlClipData.none(),
                     gridData: _softGrid(colors, 0.25),
                     borderData: FlBorderData(show: false),
                     lineTouchData: LineTouchData(
@@ -762,14 +880,20 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
       leftTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 42,
+          reservedSize: 54,
           interval: 0.25,
           getTitlesWidget: (value, meta) {
-            if (value <= 0) return const SizedBox.shrink();
+            if (!_isNormalizedAxisTick(value)) {
+              return const SizedBox.shrink();
+            }
             final rawValue = primaryScale.denormalize(value);
-            return Text(
-              axisFormatter?.call(rawValue) ?? primary.valueFormatter(rawValue),
-              style: TextStyle(fontSize: 10, color: colors.textTertiary),
+            return _leftAxisTitle(
+              meta: meta,
+              text:
+                  axisFormatter?.call(rawValue) ??
+                  primary.valueFormatter(rawValue),
+              colors: colors,
+              width: 52,
             );
           },
         ),
@@ -777,10 +901,10 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
       bottomTitles: AxisTitles(
         sideTitles: SideTitles(
           showTitles: true,
-          reservedSize: 42,
+          reservedSize: _bottomAxisReservedSize(primary.points, density),
           getTitlesWidget: (value, meta) {
-            final index = value.round();
-            if (index < 0 || index >= primary.points.length) {
+            final index = _axisIndexFromValue(value, primary.points.length);
+            if (index == null) {
               return const SizedBox.shrink();
             }
             return buildChartAxisLabel(
@@ -789,6 +913,7 @@ class _GrowthMultiLineChartState extends State<GrowthMultiLineChart> {
               labelStep: density.labelStep,
               point: primary.points[index],
               colors: colors,
+              meta: meta,
             );
           },
         ),
@@ -1180,21 +1305,21 @@ class _ValueBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      constraints: const BoxConstraints(maxHeight: 22),
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      constraints: const BoxConstraints(maxHeight: 16, maxWidth: 40),
+      padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 1),
       decoration: BoxDecoration(
-        color: Color.alphaBlend(color.withValues(alpha: 0.08), colors.card),
-        borderRadius: BorderRadius.circular(7),
-        border: Border.all(color: color.withValues(alpha: 0.14)),
+        color: Color.alphaBlend(color.withValues(alpha: 0.055), colors.card),
+        borderRadius: BorderRadius.circular(5),
+        border: Border.all(color: color.withValues(alpha: 0.10)),
       ),
       child: Text(
         text,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
         style: TextStyle(
-          color: color.withValues(alpha: 0.9),
-          fontSize: 9.5,
-          fontWeight: FontWeight.w700,
+          color: color.withValues(alpha: 0.82),
+          fontSize: 8,
+          fontWeight: FontWeight.w600,
         ),
       ),
     );

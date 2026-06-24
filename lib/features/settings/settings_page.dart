@@ -73,6 +73,7 @@ class SettingsPage extends ConsumerWidget {
               nextLevelExpFor: _calcNextLevelExp,
               onProfileTap: () => context.push('/settings/profile'),
               onLevelTap: (data) => _showLevelDetailSheet(context, data),
+              onAvatarTap: () => context.push('/settings/profile'),
             ),
             const SizedBox(height: 24),
 

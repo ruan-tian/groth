@@ -150,17 +150,19 @@ class _SleepCombinedChartState extends State<SleepCombinedChart> {
   List<Map<String, dynamic>> _aggregateByMonth(
     List<Map<String, dynamic>> daily,
   ) {
-    if (daily.isEmpty) return [];
+    final now = DateTime.now();
+    final year = now.year;
     final monthMap = <String, List<Map<String, dynamic>>>{};
     for (final item in daily) {
       final date = item['date'] as String? ?? '';
-      if (date.length >= 7) {
-        monthMap.putIfAbsent(date.substring(0, 7), () => []).add(item);
-      }
+      final parsed = DateTime.tryParse(date);
+      if (parsed == null || parsed.year != year) continue;
+      monthMap.putIfAbsent(date.substring(0, 7), () => []).add(item);
     }
-    final sortedKeys = monthMap.keys.toList()..sort();
-    return sortedKeys.map((key) {
-      final chunk = monthMap[key]!;
+    return List.generate(12, (index) {
+      final month = index + 1;
+      final key = '$year-${month.toString().padLeft(2, '0')}';
+      final chunk = monthMap[key] ?? const <Map<String, dynamic>>[];
       final durValues = chunk
           .map((e) => (e['duration'] as num?)?.toDouble())
           .whereType<double>()

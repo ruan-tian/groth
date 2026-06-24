@@ -153,7 +153,11 @@ class _DietPageState extends ConsumerState<DietPage> {
                   color: colors.diet.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(AppRadius.smd),
                 ),
-                child: Icon(Icons.local_cafe_rounded, color: colors.diet, size: 22),
+                child: Icon(
+                  Icons.local_cafe_rounded,
+                  color: colors.diet,
+                  size: 22,
+                ),
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
@@ -170,7 +174,9 @@ class _DietPageState extends ConsumerState<DietPage> {
                 '${drink.brand} · ${drink.name}',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
+                style: AppTextStyles.caption.copyWith(
+                  color: colors.textSecondary,
+                ),
               ),
             ],
           ),
@@ -726,20 +732,17 @@ class _DietPageState extends ConsumerState<DietPage> {
             GrowthChartLegendItem(color: colors.diet, label: '卡路里(kcal)'),
             GrowthChartLegendItem(color: colors.primary, label: '饮水量(ml)'),
           ],
-          child: ClipRect(
-            child: SizedBox(
-              height: 244,
-              child: nutritionData.when(
-                data: (data) => _CalorieWaterChart(
-                  calorieMap: data.calorieMap,
-                  waterMap: data.waterMap,
-                  days: _selectedRange,
-                ),
-                loading: () => Center(
-                  child: CircularProgressIndicator(color: colors.diet),
-                ),
-                error: (_, _) => GrowthChartEmpty(color: colors.diet),
+          child: SizedBox(
+            height: 244,
+            child: nutritionData.when(
+              data: (data) => _CalorieWaterChart(
+                calorieMap: data.calorieMap,
+                waterMap: data.waterMap,
+                days: _selectedRange,
               ),
+              loading: () =>
+                  Center(child: CircularProgressIndicator(color: colors.diet)),
+              error: (_, _) => GrowthChartEmpty(color: colors.diet),
             ),
           ),
         ),
@@ -763,8 +766,8 @@ class _DietPageState extends ConsumerState<DietPage> {
   String _rangeSubtitle() {
     return switch (_selectedRange) {
       7 => '近 7 天',
-      30 => '近 30 天',
-      _ => '近 1 年',
+      30 => '本月',
+      _ => '本年',
     };
   }
 

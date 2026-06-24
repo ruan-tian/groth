@@ -35,8 +35,10 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   Color get _lavender => context.growthColors.sleep;
   Color get _lavenderDark => HSLColor.fromColor(context.growthColors.sleep)
       .withLightness(
-        (HSLColor.fromColor(context.growthColors.sleep).lightness - 0.12)
-            .clamp(0.0, 1.0),
+        (HSLColor.fromColor(context.growthColors.sleep).lightness - 0.12).clamp(
+          0.0,
+          1.0,
+        ),
       )
       .toColor();
   Color get _lavenderLight => context.growthColors.softPurple;
@@ -464,7 +466,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
     return switch (_selectedRange) {
       7 => '近 7 天',
       30 => '近 30 天',
-      _ => '近 1 年',
+      _ => '本年',
     };
   }
 
@@ -537,16 +539,19 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   List<Map<String, dynamic>> _aggregateSleepTrendByMonth(
     List<Map<String, dynamic>> daily,
   ) {
-    if (daily.isEmpty) return [];
+    final now = DateTime.now();
+    final year = now.year;
     final monthMap = <String, List<Map<String, dynamic>>>{};
     for (final item in daily) {
       final date = item['date'] as String? ?? '';
-      if (date.length < 7) continue;
+      final parsed = DateTime.tryParse(date);
+      if (parsed == null || parsed.year != year) continue;
       monthMap.putIfAbsent(date.substring(0, 7), () => []).add(item);
     }
-    final keys = monthMap.keys.toList()..sort();
-    return keys.map((key) {
-      final chunk = monthMap[key]!;
+    return List.generate(12, (index) {
+      final month = index + 1;
+      final key = '$year-${month.toString().padLeft(2, '0')}';
+      final chunk = monthMap[key] ?? const <Map<String, dynamic>>[];
       final durationValues = chunk
           .map((item) => (item['duration'] as num?)?.toDouble())
           .whereType<double>()

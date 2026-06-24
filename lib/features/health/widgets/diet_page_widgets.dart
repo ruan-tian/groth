@@ -95,22 +95,26 @@ class _CalorieWaterChartState extends State<_CalorieWaterChart> {
 
     for (int w = 0; w < 4; w++) {
       final weekStart = monthStart.add(Duration(days: w * 7));
-      // 不超过今天
-      final weekEnd = weekStart.add(const Duration(days: 6));
+      final monthEnd = DateTime(now.year, now.month + 1, 0);
+      final weekEnd = w == 3
+          ? monthEnd
+          : weekStart.add(const Duration(days: 6));
       final actualEnd = weekEnd.isAfter(today) ? today : weekEnd;
 
       int totalCal = 0;
       int totalWater = 0;
-      var d = weekStart;
-      while (!d.isAfter(actualEnd)) {
-        final key = DateFormat('yyyy-MM-dd').format(d);
-        totalCal += widget.calorieMap[key] ?? 0;
-        totalWater += widget.waterMap[key] ?? 0;
-        d = d.add(const Duration(days: 1));
+      if (!actualEnd.isBefore(weekStart)) {
+        var d = weekStart;
+        while (!d.isAfter(actualEnd)) {
+          final key = DateFormat('yyyy-MM-dd').format(d);
+          totalCal += widget.calorieMap[key] ?? 0;
+          totalWater += widget.waterMap[key] ?? 0;
+          d = d.add(const Duration(days: 1));
+        }
       }
 
       final startLabel = DateFormat('M/d').format(weekStart);
-      final endLabel = DateFormat('M/d').format(actualEnd);
+      final endLabel = DateFormat('M/d').format(weekEnd);
 
       points.add(
         _ChartPoint(
@@ -257,12 +261,16 @@ class _DietEntryCard extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 title,
-                style: AppTextStyles.cardTitle.copyWith(color: colors.textPrimary),
+                style: AppTextStyles.cardTitle.copyWith(
+                  color: colors.textPrimary,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
-                style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
+                style: AppTextStyles.caption.copyWith(
+                  color: colors.textSecondary,
+                ),
               ),
             ],
           ),

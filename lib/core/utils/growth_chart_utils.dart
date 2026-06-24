@@ -167,7 +167,7 @@ class ChartDensityPolicy {
     }
     if (pointCount <= 12) {
       return ChartDensityPolicy(
-        labelStep: width < 380 ? 2 : 1,
+        labelStep: width < 430 ? 2 : 1,
         barWidth: width < 380 ? 12 : 16,
         showDots: true,
       );
@@ -179,8 +179,9 @@ class ChartDensityPolicy {
         showDots: false,
       );
     }
+    final targetLabels = width < 380 ? 4 : 6;
     return ChartDensityPolicy(
-      labelStep: 1,
+      labelStep: (pointCount / targetLabels).ceil(),
       barWidth: width < 380 ? 8 : 10,
       showDots: false,
     );
@@ -220,8 +221,21 @@ class ChartValueLabelPolicy {
   }
 
   static bool shouldShowAxisLabel(int index, int length, int step) {
-    if (length <= 1) return true;
-    return index == 0 || index == length - 1 || index % step == 0;
+    return visibleAxisIndexes(length, step).contains(index);
+  }
+
+  static Set<int> visibleAxisIndexes(int length, int step) {
+    if (length <= 0) return const {};
+    if (length == 1) return const {0};
+    final normalizedStep = step < 1 ? 1 : step;
+    final labelCount = (length / normalizedStep).ceil().clamp(2, length);
+    if (labelCount >= length) {
+      return {for (var i = 0; i < length; i++) i};
+    }
+    return {
+      for (var i = 0; i < labelCount; i++)
+        ((i * (length - 1)) / (labelCount - 1)).round(),
+    };
   }
 }
 

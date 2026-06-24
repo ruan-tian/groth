@@ -398,10 +398,11 @@ class _StudyPageState extends ConsumerState<StudyPage> {
             ),
           ],
           onTargetTap: () => _showGoalEditSheet(context, ref, studyGoal),
+          compact: true,
         );
       },
       loading: () => Container(
-        height: 200,
+        height: 160,
         decoration: BoxDecoration(
           color: colors.card,
           borderRadius: BorderRadius.circular(AppRadius.lg),
@@ -669,7 +670,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     // Build 4 week buckets based on calendar weeks within the month
     final List<List<DailyStats>> buckets = [[], [], [], []];
     for (final d in sorted) {
-      // Week index: day 1-7 鈫?0, 8-14 鈫?1, 15-21 鈫?2, 22-31 鈫?3
+      // Week buckets: 1-7, 8-14, 15-21, 22-month end.
       final weekIdx = ((d.date.day - 1) / 7).floor().clamp(0, 3);
       buckets[weekIdx].add(d);
     }

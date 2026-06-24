@@ -5,6 +5,7 @@ import '../../../core/database/app_database.dart';
 import '../../../core/services/statistics_service.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/providers/service_providers.dart';
+import '../utils/study_chart_ranges.dart';
 
 // =============================================================================
 // 学习记录 Provider
@@ -49,10 +50,11 @@ final weeklyStudyMinutesProvider = FutureProvider<int>((ref) async {
   return records.fold<int>(0, (sum, r) => sum + r.durationMinutes);
 });
 
-/// 最近 7 天每日统计
+/// 本自然周每日统计（周一到周日）。
 final weeklyDailyStudyProvider = FutureProvider<List<DailyStats>>((ref) {
   final statsService = ref.watch(statisticsServiceProvider);
-  return statsService.getWeeklyStats();
+  final range = StudyChartRanges.weekRange();
+  return statsService.getDailyStatsRange(range.start, range.end);
 });
 
 /// 最近 5 条学习记录（按学习开始时间倒序）
@@ -61,18 +63,27 @@ final recentStudyRecordsProvider = FutureProvider<List<StudyRecord>>((ref) {
   return repo.getRecentStudyRecords(limit: 5);
 });
 
-/// 最近 30 天每日统计
+/// 本自然月每日统计。
 final monthlyDailyStudyProvider = FutureProvider<List<DailyStats>>((ref) {
   final statsService = ref.watch(statisticsServiceProvider);
-  return statsService.getMonthlyStats();
+  final range = StudyChartRanges.monthRange();
+  return statsService.getDailyStatsRange(range.start, range.end);
 });
 
-/// 最近 12 个月月度统计
+/// 本自然年月度统计（1月到12月）。
 final yearlyMonthlyStudyProvider = FutureProvider<List<MonthlyAggregate>>((
   ref,
-) {
+) async {
   final statsService = ref.watch(statisticsServiceProvider);
-  return statsService.getYearlyStats();
+  final range = StudyChartRanges.yearRange();
+  final dailyStats = await statsService.getDailyStatsRange(
+    range.start,
+    range.end,
+  );
+  return StudyChartRanges.monthlyAggregatesForYear(
+    dailyStats,
+    range.start.year,
+  );
 });
 
 /// 按天数范围获取科目分布

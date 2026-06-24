@@ -13,6 +13,17 @@ Widget _wrap(Widget child, {double width = 390}) {
 }
 
 void main() {
+  test('axis labels are sampled evenly instead of by modulo', () {
+    expect(
+      ChartValueLabelPolicy.visibleAxisIndexes(12, 2),
+      equals({0, 2, 4, 7, 9, 11}),
+    );
+    expect(
+      ChartValueLabelPolicy.visibleAxisIndexes(31, 7),
+      equals({0, 8, 15, 23, 30}),
+    );
+  });
+
   testWidgets('range selector uses shared layout and changes value', (
     tester,
   ) async {
@@ -167,6 +178,52 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('h'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('multi line chart keeps month axis labels unique', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(390, 700));
+    final months = List.generate(
+      12,
+      (index) => GrowthChartPoint(label: '${index + 1}月', value: index + 1),
+    );
+    await tester.pumpWidget(
+      _wrap(
+        GrowthMultiLineChart(
+          color: Colors.teal,
+          series: [
+            GrowthChartSeries(
+              name: 'A',
+              unit: 'min',
+              color: Colors.teal,
+              points: months,
+              valueFormatter: (value) => value.round().toString(),
+            ),
+            GrowthChartSeries(
+              name: 'B',
+              unit: 'kcal',
+              color: Colors.orange,
+              points: months
+                  .map(
+                    (point) => GrowthChartPoint(
+                      label: point.label,
+                      value: point.value * 2,
+                    ),
+                  )
+                  .toList(),
+              valueFormatter: (value) => value.round().toString(),
+            ),
+          ],
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('1月'), findsOneWidget);
+    expect(find.text('5月'), findsOneWidget);
+    expect(find.text('12月'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

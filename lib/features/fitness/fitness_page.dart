@@ -388,7 +388,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     return switch (_selectedRange) {
       7 => '近 7 天',
       30 => '近 30 天',
-      _ => '近 1 年',
+      _ => '本年',
     };
   }
 
