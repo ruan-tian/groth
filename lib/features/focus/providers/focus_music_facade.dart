@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/database/app_database.dart';
 import '../../music/models/music_player_state.dart';
 import '../../music/providers/music_player_provider.dart';
+import '../../music/utils/music_assets.dart';
 
 /// Facade for focus module to access music player functionality.
 ///
@@ -10,6 +12,7 @@ import '../../music/providers/music_player_provider.dart';
 /// - Play/pause music
 /// - Get current playback state
 /// - Set volume
+/// - Get current track info
 class FocusMusicFacade {
   FocusMusicFacade(this._ref);
 
@@ -20,6 +23,9 @@ class FocusMusicFacade {
 
   /// Watch the music player state for changes.
   MusicPlayerState watchState() => _ref.watch(musicPlayerProvider);
+
+  /// Get the music player controller.
+  MusicPlayerController get controller => _ref.read(musicPlayerProvider.notifier);
 
   /// Toggle play/pause.
   Future<void> togglePlayPause() async {
@@ -41,6 +47,15 @@ class FocusMusicFacade {
 
   /// Check if music is currently playing.
   bool get isPlaying => _ref.read(musicPlayerProvider).isPlaying;
+
+  /// Get the current track.
+  MusicTrack? get currentTrack => _ref.read(musicPlayerProvider).currentTrack;
+
+  /// Get the default cover asset.
+  String get defaultCoverAsset => MusicAssets.coverDefault;
+
+  /// Get the selected collection.
+  MusicCollection get selectedCollection => _ref.read(musicPlayerProvider).selectedCollection;
 }
 
 /// Provider for FocusMusicFacade.

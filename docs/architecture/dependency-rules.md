@@ -22,19 +22,29 @@ core -> must not import features
 
 Short-term exceptions documented in `scripts/check_architecture.dart`:
 
-| Source | Target | Allowed Paths | Reason |
-|--------|--------|---------------|--------|
-| ai | knowledge | services, providers | AI analysis uses knowledge context |
-| focus | music | models, providers, utils | White noise in focus timer |
-| dashboard | fitness, health | utils, pages, providers | Dashboard aggregation + refresh |
-| settings | fitness | utils | Avatar assets |
-| fitness | dashboard | providers | Refresh dashboard after adding record |
+| Source | Target | Allowed Paths | Reason | Status |
+|--------|--------|---------------|--------|--------|
+| ai | knowledge | services, providers | AI analysis uses knowledge context | ✅ Facade integrated |
+| focus | music | models, providers, utils | White noise in focus timer | ⏳ FocusMusicFacade created, to be integrated |
+| dashboard | fitness, health | utils, pages, providers | Dashboard aggregation + refresh | ✅ DashboardQuickActions created |
+| settings | fitness | utils | Avatar assets | ✅ Acceptable |
+| fitness | dashboard | providers | Refresh dashboard after adding record | ✅ FitnessDashboardFacade created |
 
 ## Legacy Exceptions
 
 | File | Exception | TODO |
 |------|-----------|------|
-| features/ai/pages/ai_analysis_page.dart | Imports 5 module providers | Refactor to AiAnalysisInputFacade (facade created) |
+| features/ai/pages/ai_analysis_page.dart | Imports 5 module providers | ✅ Refactored to use AiAnalysisInputFacade |
+
+## Facade Files
+
+| Facade | File | Purpose |
+|--------|------|---------|
+| AiAnalysisInputFacade | `lib/features/ai/providers/ai_analysis_input_facade.dart` | Aggregates study/fitness/diet/sleep/dashboard data for AI analysis |
+| FocusMusicFacade | `lib/features/focus/providers/focus_music_facade.dart` | Abstracts music player for focus module |
+| DashboardQuickActions | `lib/features/dashboard/providers/dashboard_quick_actions.dart` | Abstracts health quick actions for dashboard |
+| FitnessDashboardFacade | `lib/features/fitness/providers/fitness_dashboard_facade.dart` | Abstracts dashboard refresh for fitness module |
+| PetDiaryDataCollector | `lib/features/pet/services/pet_diary_data_collector.dart` | Encapsulates DB queries for pet diary service |
 
 ## Legacy Re-exports
 

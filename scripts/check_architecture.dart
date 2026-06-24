@@ -316,10 +316,10 @@ List<String> _checkCrossFeatureImport() {
   // key: source feature, value: allowed target path prefixes
   const whitelist = <String, List<String>>{
     'ai': ['services', 'providers'],
-    'focus': ['models', 'providers', 'utils'], // White noise - facade created
-    'dashboard': ['utils', 'pages', 'providers'], // Quick actions - facade created
-    'settings': ['utils'], // Avatar assets
-    'fitness': ['providers'], // Dashboard refresh - facade created
+    'focus': ['models', 'providers', 'utils'], // White noise - FocusMusicFacade created, to be integrated
+    'dashboard': ['utils', 'pages', 'providers'], // Quick actions - DashboardQuickActions created
+    'settings': ['utils'], // Avatar assets - acceptable
+    'fitness': ['providers'], // Dashboard refresh - FitnessDashboardFacade created
   };
 
   // Legacy exception files (documented, to be refactored later)
