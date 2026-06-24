@@ -7,6 +7,17 @@ import '../../../core/database/app_database.dart';
 /// Encapsulates direct database queries needed for cross-module data
 /// aggregation in pet diary generation. This isolates the database
 /// access pattern from the service layer.
+///
+/// **Why direct DB access?**
+/// - PetDiaryDataCollector aggregates data from 7 different modules
+/// - Repository methods don't have the exact query signatures needed
+///   (e.g., date range queries, multi-table aggregation)
+/// - This is a legitimate data aggregation service, not a business logic layer
+/// - The collector provides a clean interface that isolates DB access
+///
+/// **Future optimization:**
+/// - Add missing query methods to repositories (e.g., getStudyRecordsByDateRange)
+/// - Refactor PetDiaryDataCollector to use repository methods when available
 class PetDiaryDataCollector {
   PetDiaryDataCollector(this._db);
 
