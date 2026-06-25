@@ -123,18 +123,7 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                   color: colors.sleep,
                 ),
                 const SizedBox(height: 12),
-                // [2] 昨晚睡眠 HeroCard
-                _buildSleepOverview(
-                  lastNightRecord,
-                  weeklyDuration,
-                  weeklyQuality,
-                  sleepGoal,
-                ),
-                const SizedBox(height: 16),
-                // [3] 记录睡眠入口
-                _buildRecordSleepEntry(context),
-                const SizedBox(height: 16),
-                // [4] 睡眠提醒计时器入口
+                // [2] 睡眠打卡入口
                 PlanModuleActionImageCard(
                   module: PlanModuleType.sleep,
                   color: _lavender,
@@ -143,6 +132,14 @@ class _SleepPageState extends ConsumerState<SleepPage> {
                   caption: '入睡打卡 · 早起打卡 · 睡眠提醒',
                   buttonLabel: '进入打卡',
                   height: 160,
+                ),
+                const SizedBox(height: 16),
+                // [3] 昨晚睡眠 HeroCard
+                _buildSleepOverview(
+                  lastNightRecord,
+                  weeklyDuration,
+                  weeklyQuality,
+                  sleepGoal,
                 ),
                 const SizedBox(height: 20),
                 // [4] 睡眠趋势图表
@@ -270,17 +267,6 @@ class _SleepPageState extends ConsumerState<SleepPage> {
   }
 
   // ─── 记录睡眠入口 ────────────────────────────────────────────────────────
-
-  Widget _buildRecordSleepEntry(BuildContext context) {
-    return PlanModuleRecordEntryCard(
-      color: _lavender,
-      icon: Icons.edit_note_rounded,
-      title: '记录睡眠',
-      subtitle: '记录昨晚的睡眠数据',
-      buttonLabel: '添加',
-      onTap: () => _showAddRecordSheet(context),
-    );
-  }
 
   // ─── 趋势图表 ─────────────────────────────────────────────────────────────
 
