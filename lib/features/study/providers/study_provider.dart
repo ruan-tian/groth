@@ -103,6 +103,56 @@ final subjectDistributionByRangeProvider =
       return distribution;
     });
 
+// =============================================================================
+// 学习概览数据模型
+// =============================================================================
+
+class StudyOverview {
+  const StudyOverview({
+    required this.totalMinutes,
+    required this.activeDays,
+    required this.dailyAverage,
+    required this.distribution,
+  });
+
+  final int totalMinutes;
+  final int activeDays;
+  final int dailyAverage;
+  final Map<String, int> distribution;
+}
+
+/// 按天数范围获取学习概览（含活跃天数、日均、科目分布）
+final studyOverviewByRangeProvider =
+    FutureProvider.family<StudyOverview, int>((ref, days) async {
+      final repo = ref.watch(studyRepositoryProvider);
+      final now = DateTime.now();
+      final start = now.subtract(Duration(days: days));
+      final records = await repo.getStudyRecordsByRange(start, now);
+
+      final distribution = <String, int>{};
+      final activeDates = <String>{};
+      var totalMinutes = 0;
+
+      for (final r in records) {
+        final subject = r.subject ?? '未分类';
+        distribution[subject] =
+            (distribution[subject] ?? 0) + r.durationMinutes;
+        totalMinutes += r.durationMinutes;
+        final date = DateTime.fromMillisecondsSinceEpoch(r.startTime);
+        activeDates.add('${date.year}-${date.month}-${date.day}');
+      }
+
+      final activeDays = activeDates.isEmpty ? 1 : activeDates.length;
+      final dailyAverage = totalMinutes > 0 ? (totalMinutes / activeDays).round() : 0;
+
+      return StudyOverview(
+        totalMinutes: totalMinutes,
+        activeDays: activeDays,
+        dailyAverage: dailyAverage,
+        distribution: distribution,
+      );
+    });
+
 /// 按科目统计学习时长分布（最近 30 天，向后兼容）
 final subjectDistributionProvider = FutureProvider<Map<String, int>>((ref) {
   return ref.watch(subjectDistributionByRangeProvider(30).future);

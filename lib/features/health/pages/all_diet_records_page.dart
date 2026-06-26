@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
+import '../../../core/constants/record_icon_assets.dart';
 import '../models/health_data.dart';
 import '../../health/providers/diet_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
+import '../../../shared/widgets/sort_button.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
-
-/// 饮食记录排序方式
-enum DietSortOption { newest, oldest, highestScore }
 
 /// 全部饮食记录页面
 ///
@@ -23,11 +23,10 @@ class AllDietRecordsPage extends ConsumerStatefulWidget {
 }
 
 class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
-  // ── 饮食主题色（橄榄绿） ──
-  static const _accent = Color(0xFF6B8E23);
-  static const _accentLight = Color(0xFFEAF8F0);
+  // ── 饮食主题色（橙色） ──
+  static const _accent = Color(0xFFB66A00);
 
-  DietSortOption _sortOption = DietSortOption.newest;
+  SortOption _sortOption = SortOption.newest;
 
   /// 当前已加载的记录数量上限（分批加载）
   int _loadLimit = 50;
@@ -56,14 +55,10 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          PopupMenuButton<DietSortOption>(
-            icon: Icon(Icons.sort, color: context.growthColors.textSecondary),
-            onSelected: (option) => setState(() => _sortOption = option),
-            itemBuilder: (context) => [
-              _buildSortItem(DietSortOption.newest, '最新优先'),
-              _buildSortItem(DietSortOption.oldest, '最早优先'),
-              _buildSortItem(DietSortOption.highestScore, '评分最高'),
-            ],
+          SortButton<SortOption>.legacy(
+            currentSort: _sortOption,
+            onSortChanged: (option) => setState(() => _sortOption = option),
+            accentColor: _accent,
           ),
         ],
       ),
@@ -82,34 +77,6 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
             style: TextStyle(color: context.growthColors.textSecondary),
           ),
         ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 排序菜单
-  // ---------------------------------------------------------------------------
-
-  PopupMenuItem<DietSortOption> _buildSortItem(
-    DietSortOption option,
-    String text,
-  ) {
-    return PopupMenuItem(
-      value: option,
-      child: Row(
-        children: [
-          Text(
-            text,
-            style: TextStyle(
-              fontSize: 14,
-              color: context.growthColors.textPrimary,
-            ),
-          ),
-          if (_sortOption == option) ...[
-            const Spacer(),
-            const Icon(Icons.check_rounded, size: 16, color: _accent),
-          ],
-        ],
       ),
     );
   }
@@ -193,7 +160,7 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
                   onDismissed: () {},
                   child: _DietRecordTile(
                     record: record,
-                    onTap: () => _showDietDetailSheet(record),
+                    onTap: () => context.push('/plan/diet/detail/${record.id}'),
                   ),
                 );
               },
@@ -213,7 +180,7 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFF6B8E23), Color(0xFF8BAD45)],
+          colors: [Color(0xFFB66A00), Color(0xFFD48800)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -252,13 +219,13 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
   List<DietRecord> _sortRecords(List<DietRecord> records) {
     final sorted = List<DietRecord>.from(records);
     switch (_sortOption) {
-      case DietSortOption.newest:
+      case SortOption.newest:
         sorted.sort((a, b) => b.mealDate.compareTo(a.mealDate));
         break;
-      case DietSortOption.oldest:
+      case SortOption.oldest:
         sorted.sort((a, b) => a.mealDate.compareTo(b.mealDate));
         break;
-      case DietSortOption.highestScore:
+      case SortOption.highestExp:
         sorted.sort((a, b) => b.healthScore.compareTo(a.healthScore));
         break;
     }
@@ -319,152 +286,6 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
           subtitle: '去记录你的每一餐吧',
           accentColor: _accent,
         ),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 饮食详情弹窗（使用 RecordDetailSheet）
-  // ---------------------------------------------------------------------------
-
-  void _showDietDetailSheet(DietRecord record) {
-    final mealTypeLabel = _mealTypeLabel(record.mealType);
-    final portionLabel = _portionLabel(record.portionLevel);
-    final calorieLabel = _calorieLabel(record.calorieLevel);
-    final proteinLabel = _proteinLabel(record.proteinLevel);
-
-    RecordDetailSheet.show(
-      context: context,
-      title: _formatDate(record),
-      accentColor: _accent,
-      accentColorLight: _accentLight,
-      primaryMetricLabel: '健康评分',
-      primaryMetricValue: '${record.healthScore}/5',
-      primaryMetricIcon: Icons.star_rounded,
-      detailItems: [
-        DetailItem(
-          label: '餐次',
-          value: mealTypeLabel,
-          icon: Icons.restaurant_rounded,
-        ),
-        DetailItem(
-          label: '份量',
-          value: portionLabel,
-          icon: Icons.scale_outlined,
-        ),
-        DetailItem(
-          label: '热量',
-          value: calorieLabel,
-          icon: Icons.local_fire_department_outlined,
-        ),
-        DetailItem(
-          label: '蛋白质',
-          value: proteinLabel,
-          icon: Icons.bolt_outlined,
-        ),
-      ],
-      extraCards: _buildExtraCards(record),
-    );
-  }
-
-  Widget? _buildExtraCards(DietRecord record) {
-    final hasFood = record.foodText.isNotEmpty;
-    final hasNote = record.note != null && record.note!.isNotEmpty;
-    if (!hasFood && !hasNote) return null;
-
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        if (hasFood) ...[
-          _buildFoodTextCard(record.foodText),
-          const SizedBox(height: 12),
-        ],
-        if (hasNote) _buildNoteCard(record.note!),
-      ],
-    );
-  }
-
-  Widget _buildFoodTextCard(String foodText) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: _accentLight,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.fastfood_rounded, color: _accent, size: 20),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '食物描述',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: context.growthColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  foodText,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
-                    color: context.growthColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNoteCard(String note) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: context.growthColors.surfaceVariant,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(
-            Icons.note_outlined,
-            color: context.growthColors.textSecondary,
-            size: 20,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '备注',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: context.growthColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  note,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: context.growthColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -534,74 +355,6 @@ class _AllDietRecordsPageState extends ConsumerState<AllDietRecordsPage> {
   // ---------------------------------------------------------------------------
   // 辅助方法
   // ---------------------------------------------------------------------------
-
-  String _formatDate(DietRecord record) {
-    final date = DateTime.parse(record.mealDate);
-    final weekday = [
-      '周一',
-      '周二',
-      '周三',
-      '周四',
-      '周五',
-      '周六',
-      '周日',
-    ][date.weekday - 1];
-    return '${date.year}年${date.month}月${date.day}日 $weekday';
-  }
-
-  String _mealTypeLabel(String mealType) {
-    switch (mealType) {
-      case 'breakfast':
-        return '早餐';
-      case 'lunch':
-        return '午餐';
-      case 'dinner':
-        return '晚餐';
-      case 'snack':
-        return '加餐';
-      default:
-        return mealType;
-    }
-  }
-
-  String _portionLabel(String portion) {
-    switch (portion) {
-      case 'small':
-        return '少量';
-      case 'normal':
-        return '正常';
-      case 'large':
-        return '大量';
-      default:
-        return portion;
-    }
-  }
-
-  String _calorieLabel(String calorie) {
-    switch (calorie) {
-      case 'low':
-        return '低热量';
-      case 'normal':
-        return '正常';
-      case 'high':
-        return '高热量';
-      default:
-        return calorie;
-    }
-  }
-
-  String _proteinLabel(String protein) {
-    switch (protein) {
-      case 'low':
-        return '低蛋白';
-      case 'medium':
-        return '适中';
-      case 'high':
-        return '高蛋白';
-      default:
-        return protein;
-    }
-  }
 }
 
 // =============================================================================
@@ -698,10 +451,19 @@ class _DietRecordTile extends StatelessWidget {
                 color: _accentLight,
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: const Icon(
-                Icons.restaurant_rounded,
-                color: _accent,
-                size: 22,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Image.asset(
+                  RecordIconAssets.dietByMealType(record.mealType),
+                  width: 22,
+                  height: 22,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.restaurant_rounded,
+                    color: _accent,
+                    size: 22,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.md),

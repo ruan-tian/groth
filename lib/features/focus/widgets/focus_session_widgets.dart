@@ -6,6 +6,8 @@ class _PortraitSession extends StatelessWidget {
     required this.isCycleDone,
     required this.soundPanelOpen,
     required this.controlsVisible,
+    required this.locked,
+    required this.onToggleLock,
     required this.onCancel,
     required this.onPause,
     required this.onResume,
@@ -21,6 +23,8 @@ class _PortraitSession extends StatelessWidget {
   final bool isCycleDone;
   final bool soundPanelOpen;
   final bool controlsVisible;
+  final bool locked;
+  final VoidCallback onToggleLock;
   final VoidCallback onCancel;
   final VoidCallback onPause;
   final VoidCallback onResume;
@@ -59,6 +63,13 @@ class _PortraitSession extends StatelessWidget {
           child: Center(child: _SmallBackButton(onTap: onCancel)),
         ),
 
+        // 2b. 锁定按钮（右上角）
+        Positioned(
+          top: padding.top + 8,
+          right: 20,
+          child: _LockButton(locked: locked, onToggle: onToggleLock),
+        ),
+
         // 3. 计时器主体
         Positioned(
           top: stageTop,
@@ -71,15 +82,14 @@ class _PortraitSession extends StatelessWidget {
           ),
         ),
 
-        // 4. 全屏手势层（在计时器下面，控制按钮上面）
-        if (!controlsVisible)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: onToggleControls,
-              behavior: HitTestBehavior.translucent,
-              child: const SizedBox.expand(),
-            ),
+        // 4. 全屏手势层（始终存在，锁定时禁用）
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: locked ? null : onToggleControls,
+            behavior: HitTestBehavior.translucent,
+            child: const SizedBox.expand(),
           ),
+        ),
 
         // 5. 控制按钮（点击显示/隐藏，带动画）
         AnimatedPositioned(
@@ -155,6 +165,8 @@ class _LandscapeSession extends StatelessWidget {
     required this.isCycleDone,
     required this.soundPanelOpen,
     required this.controlsVisible,
+    required this.locked,
+    required this.onToggleLock,
     required this.onCancel,
     required this.onPause,
     required this.onResume,
@@ -170,6 +182,8 @@ class _LandscapeSession extends StatelessWidget {
   final bool isCycleDone;
   final bool soundPanelOpen;
   final bool controlsVisible;
+  final bool locked;
+  final VoidCallback onToggleLock;
   final VoidCallback onCancel;
   final VoidCallback onPause;
   final VoidCallback onResume;
@@ -205,6 +219,13 @@ class _LandscapeSession extends StatelessWidget {
           child: _SmallBackButton(onTap: onCancel),
         ),
 
+        // 2b. 锁定按钮（右上角）
+        Positioned(
+          top: padding.top + 12,
+          right: 30,
+          child: _LockButton(locked: locked, onToggle: onToggleLock),
+        ),
+
         // 3. 计时器主体（居中偏左）
         Positioned(
           top: stageTop,
@@ -218,15 +239,14 @@ class _LandscapeSession extends StatelessWidget {
           ),
         ),
 
-        // 4. 全屏手势层
-        if (!controlsVisible)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: onToggleControls,
-              behavior: HitTestBehavior.translucent,
-              child: const SizedBox.expand(),
-            ),
+        // 4. 全屏手势层（始终存在，锁定时禁用）
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: locked ? null : onToggleControls,
+            behavior: HitTestBehavior.translucent,
+            child: const SizedBox.expand(),
           ),
+        ),
 
         // 5. 右侧面板（点击显示/隐藏，带动画）
         AnimatedPositioned(
@@ -286,6 +306,8 @@ class _CompactLandscapeSession extends StatelessWidget {
     required this.isCycleDone,
     required this.soundPanelOpen,
     required this.controlsVisible,
+    required this.locked,
+    required this.onToggleLock,
     required this.onCancel,
     required this.onPause,
     required this.onResume,
@@ -301,6 +323,8 @@ class _CompactLandscapeSession extends StatelessWidget {
   final bool isCycleDone;
   final bool soundPanelOpen;
   final bool controlsVisible;
+  final bool locked;
+  final VoidCallback onToggleLock;
   final VoidCallback onCancel;
   final VoidCallback onPause;
   final VoidCallback onResume;
@@ -336,6 +360,13 @@ class _CompactLandscapeSession extends StatelessWidget {
           child: _SmallBackButton(onTap: onCancel),
         ),
 
+        // 2b. 锁定按钮（右上角）
+        Positioned(
+          top: padding.top + 12,
+          right: 30,
+          child: _LockButton(locked: locked, onToggle: onToggleLock),
+        ),
+
         // 3. 计时器主体（居中偏左）
         Positioned(
           top: stageTop,
@@ -350,15 +381,14 @@ class _CompactLandscapeSession extends StatelessWidget {
           ),
         ),
 
-        // 4. 全屏手势层
-        if (!controlsVisible)
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: onToggleControls,
-              behavior: HitTestBehavior.translucent,
-              child: const SizedBox.expand(),
-            ),
+        // 4. 全屏手势层（始终存在，锁定时禁用）
+        Positioned.fill(
+          child: GestureDetector(
+            onTap: locked ? null : onToggleControls,
+            behavior: HitTestBehavior.translucent,
+            child: const SizedBox.expand(),
           ),
+        ),
 
         // 5. 右侧面板（点击显示/隐藏，带动画）
         AnimatedPositioned(
@@ -435,6 +465,35 @@ class _SmallBackButton extends StatelessWidget {
           Icons.close_rounded,
           size: 20,
           color: _sessionCream.withValues(alpha: 0.7),
+        ),
+      ),
+    );
+  }
+}
+
+class _LockButton extends StatelessWidget {
+  const _LockButton({required this.locked, required this.onToggle});
+  final bool locked;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _sessionCream.withValues(alpha: locked ? 0.35 : 0.15),
+          border: Border.all(
+            color: _sessionCream.withValues(alpha: locked ? 0.6 : 0.25),
+          ),
+        ),
+        child: Icon(
+          locked ? Icons.lock_rounded : Icons.lock_open_rounded,
+          size: 18,
+          color: _sessionCream.withValues(alpha: locked ? 0.9 : 0.5),
         ),
       ),
     );
@@ -735,108 +794,6 @@ class _FocusSoundOverlay extends StatelessWidget {
               child: GestureDetector(onTap: () {}, child: panel),
             ),
           ),
-      ],
-    );
-  }
-}
-
-class _SessionTopBar extends StatelessWidget {
-  const _SessionTopBar({
-    required this.title,
-    required this.onBack,
-    required this.centered,
-    this.compact = false,
-  });
-
-  final String title;
-  final VoidCallback onBack;
-  final bool centered;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _RoundIconButton(
-          icon: Icons.arrow_back_ios_new_rounded,
-          onTap: onBack,
-          size: compact ? 44 : 48,
-          subtle: true,
-        ),
-        if (centered) const Spacer(),
-        if (title.isNotEmpty)
-          Padding(
-            padding: EdgeInsets.only(left: centered ? 0 : 18),
-            child: Text(
-              title,
-              style: TextStyle(
-                color: _sessionCream,
-                fontSize: compact ? 22 : 30,
-                fontWeight: FontWeight.w900,
-                letterSpacing: 0,
-              ),
-            ),
-          ),
-        if (centered) const Spacer(),
-        if (centered) const SizedBox(width: 54),
-      ],
-    );
-  }
-}
-
-class _SessionTitleBlock extends StatelessWidget {
-  const _SessionTitleBlock({
-    required this.cycleState,
-    required this.centered,
-    this.compact = false,
-  });
-
-  final FocusCycleState cycleState;
-  final bool centered;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    final title = cycleState.isBreak
-        ? (cycleState.phase == FocusPhase.longBreak ? '长休息' : '短休息')
-        : (cycleState.title.isEmpty
-              ? '${focusTypeLabel(cycleState.type)}专注'
-              : cycleState.title);
-    return Column(
-      crossAxisAlignment: centered
-          ? CrossAxisAlignment.center
-          : CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          textAlign: centered ? TextAlign.center : TextAlign.start,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: _sessionCream,
-            fontSize: compact ? 20 : 28,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        if (cycleState.subject.isNotEmpty && !cycleState.isBreak) ...[
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 7),
-            decoration: BoxDecoration(
-              color: _sessionMint.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: _sessionMint.withValues(alpha: 0.5)),
-            ),
-            child: Text(
-              cycleState.subject,
-              style: TextStyle(
-                color: _sessionMint,
-                fontSize: compact ? 12 : 15,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
       ],
     );
   }

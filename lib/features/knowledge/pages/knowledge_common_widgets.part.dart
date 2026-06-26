@@ -7,14 +7,9 @@ class _GradientSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Color(0xFFF6F8FF), Color(0xFFFFFFFF)],
-        ),
-      ),
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return ColoredBox(
+      color: colors.paper,
       child: child,
     );
   }
@@ -33,20 +28,15 @@ class _PaperCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     final card = Container(
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: AppColors.paper,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F315BEF),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        border: Border.all(color: colors.border),
+        boxShadow: AppShadows.sm,
       ),
       child: child,
     );
@@ -54,7 +44,7 @@ class _PaperCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         onTap: onTap,
         child: card,
       ),
@@ -70,16 +60,17 @@ class _GlassPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return ClipRRect(
-      borderRadius: BorderRadius.circular(22),
+      borderRadius: BorderRadius.circular(AppRadius.xxl),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
         child: Container(
           padding: padding,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.74),
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.62)),
+            color: colors.card.withValues(alpha: 0.74),
+            borderRadius: BorderRadius.circular(AppRadius.xxl),
+            border: Border.all(color: colors.card.withValues(alpha: 0.62)),
           ),
           child: child,
         ),
@@ -561,11 +552,6 @@ class _T {
     fontSize: 24,
     fontWeight: FontWeight.w700,
     color: AppColors.study,
-  );
-  static const reviewNumber = TextStyle(
-    fontSize: 22,
-    fontWeight: FontWeight.w700,
-    color: AppColors.textPrimary,
   );
   static const actionLabel = TextStyle(
     fontSize: 13,

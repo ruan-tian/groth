@@ -1,6 +1,6 @@
 part of '../study_page.dart';
 
-//  图表用格式化?0m / 1.5h
+//  图表用格式化: 0m / 1.5h
 String _formatMinutesCompact(int minutes) {
   if (minutes <= 0) return '0m';
   if (minutes < 60) return '${minutes}m';
@@ -38,7 +38,7 @@ class _BarData {
 }
 
 // =============================================================================
-// 学习趋势柱状图（fl_chart，支持周/?年）
+// 学习趋势柱状图（fl_chart，支持周/月/年）
 // =============================================================================
 
 class _StudyBarChart extends StatelessWidget {
@@ -151,7 +151,7 @@ class _QuickActionCard extends StatelessWidget {
 }
 
 // =============================================================================
-// 绉戠洰鍒嗗竷鍗＄墖锛堝乏楗煎浘 + 鍙冲浘渚嬶級
+// 科目分布卡片（左环形图 + 右图例）— 蓝色同色系
 // =============================================================================
 
 class _SubjectDistributionCard extends StatefulWidget {
@@ -204,73 +204,187 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
     final top5 = dist.top5;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: colors.card,
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.border),
+        border: Border.all(color: const Color(0xFFEEF1FA)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.14),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
+            color: const Color(0xFF485CB4).withValues(alpha: 0.10),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
           ),
         ],
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          //  左侧：饼?
-          SizedBox(
-            width: 160,
-            height: 160,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                RepaintBoundary(
-                  child: PieChart(
-                    PieChartData(
-                      pieTouchData: PieTouchData(
-                        touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                          setState(() {
-                            if (!event.isInterestedForInteractions ||
-                                pieTouchResponse == null ||
-                                pieTouchResponse.touchedSection == null) {
-                              _touchedIndex = -1;
-                              return;
-                            }
-                            _touchedIndex = pieTouchResponse
-                                .touchedSection!
-                                .touchedSectionIndex;
-                          });
-                        },
-                      ),
-                      borderData: FlBorderData(show: false),
-                      sectionsSpace: 2,
-                      centerSpaceRadius: 42,
-                      sections: _buildSections(context, top5, total),
-                    ),
-                    duration: const Duration(milliseconds: 150),
-                    curve: Curves.linear,
-                  ),
+          // 左侧：环形图
+          _buildDonutChart(context, top5, total, colors),
+          const SizedBox(width: 24),
+          // 右侧：图例列表
+          Expanded(
+            child: _buildLegend(context, top5, total, colors),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDonutChart(
+    BuildContext context,
+    List<MapEntry<String, int>> entries,
+    int total,
+    AppThemeColors colors,
+  ) {
+    return SizedBox(
+      width: 150,
+      height: 150,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          RepaintBoundary(
+            child: PieChart(
+              PieChartData(
+                pieTouchData: PieTouchData(
+                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          pieTouchResponse == null ||
+                          pieTouchResponse.touchedSection == null) {
+                        _touchedIndex = -1;
+                        return;
+                      }
+                      _touchedIndex = pieTouchResponse
+                          .touchedSection!
+                          .touchedSectionIndex;
+                    });
+                  },
                 ),
-                // 涓績鎬绘椂闀?
-                Column(
-                  mainAxisSize: MainAxisSize.min,
+                borderData: FlBorderData(show: false),
+                sectionsSpace: 2,
+                centerSpaceRadius: 48,
+                sections: _buildSections(context, entries, total),
+              ),
+              duration: const Duration(milliseconds: 150),
+              curve: Curves.linear,
+            ),
+          ),
+          // 中心文字
+          Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _formatMinutes(total),
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '总学习',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: colors.textTertiary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegend(
+    BuildContext context,
+    List<MapEntry<String, int>> entries,
+    int total,
+    AppThemeColors colors,
+  ) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: List.generate(entries.length, (index) {
+        final entry = entries[index];
+        final isUncategorized = entry.key == '未分类';
+        final color = isUncategorized
+            ? _uncategorizedColor()
+            : _colorByIndex(colors, index);
+        final percent =
+            total > 0 ? (entry.value / total * 100).round() : 0;
+        final isSelected = _touchedIndex == index;
+
+        return GestureDetector(
+          onTap: () {
+            setState(() {
+              _touchedIndex = _touchedIndex == index ? -1 : index;
+            });
+          },
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? color.withValues(alpha: 0.06)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(
+                color: isSelected
+                    ? color.withValues(alpha: 0.2)
+                    : Colors.transparent,
+              ),
+            ),
+            child: Column(
+              children: [
+                Row(
                   children: [
+                    // 科目名
+                    Expanded(
+                      child: Text(
+                        entry.key,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight:
+                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          color: colors.textPrimary,
+                        ),
+                      ),
+                    ),
+                    // 时长
                     Text(
-                      _formatHours(total),
+                      _formatMinutes(entry.value),
                       style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
                         color: colors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                // 胶囊进度条
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: total > 0 ? entry.value / total : 0.0,
+                          minHeight: 6,
+                          backgroundColor: color.withValues(alpha: 0.1),
+                          valueColor: AlwaysStoppedAnimation<Color>(color),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      '总时长',
+                      '$percent%',
                       style: TextStyle(
                         fontSize: 11,
+                        fontWeight: FontWeight.w500,
                         color: colors.textTertiary,
                       ),
                     ),
@@ -279,117 +393,8 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
               ],
             ),
           ),
-
-          const SizedBox(width: 20),
-
-          //  右侧：图例列?
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: List.generate(top5.length, (index) {
-                final entry = top5[index];
-                final color = _colorByIndex(context.growthColors, index);
-                final percent = total > 0
-                    ? (entry.value / total * 100).round()
-                    : 0;
-                final isSelected = _touchedIndex == index;
-
-                return GestureDetector(
-                  onTap: () {
-                    setState(() {
-                      _touchedIndex = _touchedIndex == index ? -1 : index;
-                    });
-                  },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 200),
-                    margin: const EdgeInsets.only(bottom: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? color.withValues(alpha: 0.08)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? color.withValues(alpha: 0.3)
-                            : Colors.transparent,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        // 褰╄壊鍦嗙偣
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: isSelected ? 10 : 8,
-                          height: isSelected ? 10 : 8,
-                          decoration: BoxDecoration(
-                            color: color,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // 科目名
-                        SizedBox(
-                          width: 36,
-                          child: Text(
-                            entry.key,
-                            style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: isSelected
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                              color: colors.textPrimary,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // 杩涘害鏉?
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(3),
-                            child: LinearProgressIndicator(
-                              value: total > 0 ? entry.value / total : 0.0,
-                              minHeight: 6,
-                              backgroundColor: color.withValues(alpha: 0.1),
-                              valueColor: AlwaysStoppedAnimation<Color>(color),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        // 鏃堕暱 + 鐧惧垎姣?
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              _formatMinutes(entry.value),
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: colors.textPrimary,
-                              ),
-                            ),
-                            Text(
-                              '$percent%',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: colors.textTertiary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-            ),
-          ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
@@ -402,25 +407,22 @@ class _SubjectDistributionCardState extends State<_SubjectDistributionCard> {
     return List.generate(entries.length, (index) {
       final isTouched = _touchedIndex == index;
       final entry = entries[index];
-      final color = _colorByIndex(context.growthColors, index);
+      final isUncategorized = entry.key == '未分类';
+      final color = isUncategorized
+          ? _uncategorizedColor()
+          : _colorByIndex(colors, index);
 
       return PieChartSectionData(
         color: color,
         value: entry.value.toDouble(),
         title: '',
-        radius: isTouched ? 38 : 32,
-        borderSide: isTouched
-            ? BorderSide(color: colors.card, width: 2)
-            : BorderSide(color: colors.card.withValues(alpha: 0.52), width: 1),
+        radius: isTouched ? 30 : 27,
+        borderSide: BorderSide(
+          color: colors.card.withValues(alpha: 0.8),
+          width: 1.5,
+        ),
       );
     });
-  }
-
-  String _formatHours(int minutes) {
-    if (minutes < 60) return '${minutes}m';
-    final h = minutes ~/ 60;
-    final m = minutes % 60;
-    return m > 0 ? '$h.${(m * 10 / 60).round()}h' : '${h}h';
   }
 
   String _formatMinutes(int minutes) {

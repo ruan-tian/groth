@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
+import '../../../core/constants/record_icon_assets.dart';
 import '../models/fitness_data.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 import '../providers/fitness_dashboard_facade.dart';
@@ -514,7 +515,17 @@ class _WeeklyRecordTile extends StatelessWidget {
               color: colors.softOrange,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(Icons.fitness_center, color: colors.fitness),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Image.asset(
+                RecordIconAssets.fitness,
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) =>
+                    Icon(Icons.fitness_center, color: colors.fitness),
+              ),
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(

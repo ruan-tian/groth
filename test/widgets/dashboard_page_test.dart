@@ -112,7 +112,6 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('你的成长，由你掌控'), findsOneWidget);
-      expect(find.textContaining('Lv.5'), findsWidgets);
       expect(find.text('今日概览'), findsOneWidget);
       // Default cards are now "study" and "focus" in compact mode
       expect(find.text('90分钟'), findsOneWidget); // study

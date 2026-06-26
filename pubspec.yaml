@@ -127,6 +127,10 @@ flutter:
     - assets/images/focus/lights/
     - assets/images/focus/particles/
     - assets/images/focus/status/
+    - assets/images/study_record/
+    - assets/images/fitness_record/
+    - assets/images/diet_record/
+    - assets/images/sleep_record/
     - assets/images/fitness_timer/
     - assets/images/timer_common/
     - assets/images/ai_providers/
@@ -139,6 +143,9 @@ flutter:
     - assets/images/health_timer/sleep/
     - assets/images/knowledge_cards/
     - assets/images/knowledge_cards/v3/
+    - assets/images/record_icons/
+    - assets/images/dashboard/
+    - assets/images/dashboard/deco/
     - assets/images/music/
     - assets/images/journal/backgrounds/
     - assets/images/journal/cats/

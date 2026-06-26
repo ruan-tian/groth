@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
+import '../../../core/constants/record_icon_assets.dart';
 import '../models/health_data.dart';
 import '../../health/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
-
-enum SleepSortOption { newest, oldest, highestQuality }
+import '../../../shared/widgets/sort_button.dart';
 
 class SleepHistoryPage extends ConsumerStatefulWidget {
   const SleepHistoryPage({super.key});
@@ -19,7 +20,7 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
   String _selectedPeriod = 'week';
-  SleepSortOption _sortOption = SleepSortOption.newest;
+  SortOption _sortOption = SortOption.newest;
 
   @override
   void initState() {
@@ -73,16 +74,10 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          PopupMenuButton<SleepSortOption>(
-            icon: Icon(Icons.sort_rounded, color: colors.textSecondary),
-            color: colors.card,
-            surfaceTintColor: colors.card,
-            onSelected: (option) => setState(() => _sortOption = option),
-            itemBuilder: (context) => [
-              _buildSortItem(context, SleepSortOption.newest, '最新优先'),
-              _buildSortItem(context, SleepSortOption.oldest, '最早优先'),
-              _buildSortItem(context, SleepSortOption.highestQuality, '质量最高'),
-            ],
+          SortButton<SortOption>.legacy(
+            currentSort: _sortOption,
+            onSortChanged: (option) => setState(() => _sortOption = option),
+            accentColor: colors.sleep,
           ),
         ],
         bottom: TabBar(
@@ -119,26 +114,6 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
         error: (e, _) => Center(
           child: Text('加载失败：$e', style: TextStyle(color: colors.textSecondary)),
         ),
-      ),
-    );
-  }
-
-  PopupMenuItem<SleepSortOption> _buildSortItem(
-    BuildContext context,
-    SleepSortOption option,
-    String text,
-  ) {
-    final colors = context.growthColors;
-    return PopupMenuItem(
-      value: option,
-      child: Row(
-        children: [
-          Text(text, style: TextStyle(fontSize: 14, color: colors.textPrimary)),
-          if (_sortOption == option) ...[
-            const Spacer(),
-            Icon(Icons.check_rounded, size: 16, color: colors.sleep),
-          ],
-        ],
       ),
     );
   }
@@ -236,7 +211,7 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
               final record = item.record!;
               return _SleepRecordCard(
                 record: record,
-                onTap: () => _showRecordDetail(context, record),
+                onTap: () => context.push('/plan/sleep/detail/${record.id}'),
               );
             },
           ),
@@ -268,11 +243,11 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
   List<SleepRecord> _sortRecords(List<SleepRecord> records) {
     final sorted = List<SleepRecord>.from(records);
     switch (_sortOption) {
-      case SleepSortOption.newest:
+      case SortOption.newest:
         sorted.sort((a, b) => b.sleepDate.compareTo(a.sleepDate));
-      case SleepSortOption.oldest:
+      case SortOption.oldest:
         sorted.sort((a, b) => a.sleepDate.compareTo(b.sleepDate));
-      case SleepSortOption.highestQuality:
+      case SortOption.highestExp:
         sorted.sort((a, b) => b.qualityLevel.compareTo(a.qualityLevel));
     }
     return sorted;
@@ -289,233 +264,6 @@ class _SleepHistoryPageState extends ConsumerState<SleepHistoryPage>
           subtitle: '记录你的睡眠数据，\n追踪每日睡眠质量',
           accentColor: colors.sleep,
         ),
-      ),
-    );
-  }
-
-  void _showRecordDetail(BuildContext context, SleepRecord record) {
-    final colors = context.growthColors;
-    final date = DateTime.parse(record.sleepDate);
-    final weekday = _weekdayLabel(date);
-    final dateStr = '${date.year}年${date.month}月${date.day}日 $weekday';
-    final hours = record.durationMinutes ~/ 60;
-    final mins = record.durationMinutes % 60;
-
-    RecordDetailSheet.show(
-      context: context,
-      title: dateStr,
-      accentColor: colors.sleep,
-      accentColorLight: colors.softPurple,
-      primaryMetricLabel: '睡眠时长',
-      primaryMetricValue: '${hours}h ${mins}m',
-      primaryMetricIcon: Icons.nightlight_round,
-      detailItems: [
-        DetailItem(
-          label: '入睡时间',
-          value: record.sleepTime,
-          icon: Icons.nightlight_round,
-        ),
-        DetailItem(
-          label: '起床时间',
-          value: record.wakeTime,
-          icon: Icons.wb_sunny_rounded,
-        ),
-        DetailItem(
-          label: '入睡用时',
-          value: '${record.fallAsleepMinutes}分钟',
-          icon: Icons.timer_outlined,
-        ),
-        DetailItem(
-          label: '夜间醒来',
-          value: '${record.wakeCount}次',
-          icon: Icons.notifications_none_rounded,
-        ),
-      ],
-      extraCards: Column(
-        children: [
-          _buildQualityCard(context, record),
-          const SizedBox(height: AppSpacing.md),
-          _buildEnergyCard(context, record),
-          if (record.dreamNote?.isNotEmpty == true) ...[
-            const SizedBox(height: AppSpacing.md),
-            _buildDreamCard(context, record),
-          ],
-          if (record.note?.isNotEmpty == true) ...[
-            const SizedBox(height: AppSpacing.md),
-            _buildNoteCard(context, record),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQualityCard(BuildContext context, SleepRecord record) {
-    final colors = context.growthColors;
-    final qualityColor = _qualityColor(colors, record.qualityLevel);
-    return _DetailInfoCard(
-      backgroundColor: colors.softGold,
-      icon: Icons.star_rounded,
-      iconColor: qualityColor,
-      label: '睡眠质量',
-      value: '${record.qualityLevel}/5',
-      trailing: _qualityLabel(record.qualityLevel),
-      trailingColor: qualityColor,
-    );
-  }
-
-  Widget _buildEnergyCard(BuildContext context, SleepRecord record) {
-    final colors = context.growthColors;
-    return _DetailInfoCard(
-      backgroundColor: colors.softGreen,
-      icon: Icons.battery_charging_full_rounded,
-      iconColor: colors.success,
-      label: '醒后精力',
-      value: '${record.energyLevel}/5',
-    );
-  }
-
-  Widget _buildDreamCard(BuildContext context, SleepRecord record) {
-    final colors = context.growthColors;
-    return _TextDetailCard(
-      backgroundColor: colors.softPurple,
-      icon: Icons.auto_awesome_rounded,
-      iconColor: colors.sleep,
-      label: '梦境',
-      value: record.dreamNote!,
-    );
-  }
-
-  Widget _buildNoteCard(BuildContext context, SleepRecord record) {
-    final colors = context.growthColors;
-    return _TextDetailCard(
-      backgroundColor: colors.surfaceVariant,
-      icon: Icons.note_outlined,
-      iconColor: colors.textSecondary,
-      label: '备注',
-      value: record.note!,
-    );
-  }
-}
-
-class _DetailInfoCard extends StatelessWidget {
-  const _DetailInfoCard({
-    required this.backgroundColor,
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.value,
-    this.trailing,
-    this.trailingColor,
-  });
-
-  final Color backgroundColor;
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final String value;
-  final String? trailing;
-  final Color? trailingColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor, size: 24),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Row(
-                  children: [
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    if (trailing != null) ...[
-                      const SizedBox(width: AppSpacing.sm),
-                      Text(
-                        trailing!,
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: trailingColor ?? iconColor,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TextDetailCard extends StatelessWidget {
-  const _TextDetailCard({
-    required this.backgroundColor,
-    required this.icon,
-    required this.iconColor,
-    required this.label,
-    required this.value,
-  });
-
-  final Color backgroundColor;
-  final IconData icon;
-  final Color iconColor;
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: backgroundColor,
-        borderRadius: BorderRadius.circular(AppRadius.sm),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: iconColor, size: 20),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(fontSize: 13, color: colors.textSecondary),
-                ),
-                const SizedBox(height: AppSpacing.xs),
-                Text(
-                  value,
-                  style: TextStyle(fontSize: 14, color: colors.textPrimary),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -603,10 +351,19 @@ class _SleepRecordCard extends StatelessWidget {
                 color: colors.softPurple.withValues(alpha: 0.74),
                 borderRadius: BorderRadius.circular(AppRadius.sm),
               ),
-              child: Icon(
-                Icons.nightlight_round,
-                color: colors.sleep,
-                size: 24,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Image.asset(
+                  RecordIconAssets.sleep,
+                  width: 24,
+                  height: 24,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.nightlight_round,
+                    color: colors.sleep,
+                    size: 24,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: AppSpacing.lg),

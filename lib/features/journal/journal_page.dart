@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
 import '../../../core/constants/pet_assets.dart';
+import '../../../core/constants/record_icon_assets.dart';
 import '../dashboard/providers/dashboard_provider.dart';
 import 'providers/journal_provider.dart';
 import '../../shared/widgets/sort_button.dart';
@@ -92,7 +93,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 onPressed: () => Navigator.pop(context),
               ),
               actions: [
-                SortButton(
+                SortButton<SortOption>.legacy(
                   currentSort: sort,
                   onSortChanged: (s) =>
                       ref.read(journalSortProvider.notifier).state = s,
@@ -608,7 +609,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           Row(
             children: [
               Expanded(child: _buildSectionTitle('最近日记 ✨')),
-              SortButton(
+              SortButton<SortOption>.legacy(
                 currentSort: ref.watch(journalSortProvider),
                 onSortChanged: (s) =>
                     ref.read(journalSortProvider.notifier).state = s,

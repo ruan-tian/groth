@@ -40,9 +40,36 @@ class _KnowledgeFlashReviewPageState
                     ),
                     const SizedBox(height: 14),
                     stats.when(
-                      data: (item) => _ReviewOverview(
-                        stats: item,
-                        onStart: () => _start(cards.valueOrNull ?? const []),
+                      data: (item) => Column(
+                        children: [
+                          _ReviewOverview(
+                            stats: item,
+                            onStart: () => _start(cards.valueOrNull ?? const []),
+                          ),
+                          const SizedBox(height: 16),
+                          _ModeSelectionCards(
+                            dueCount: item.dueCount,
+                            weakCount: item.weakCount,
+                            onDue: () => _startWithMode(
+                              cards.valueOrNull ?? const [],
+                              KnowledgeReviewModeV3.due,
+                            ),
+                            onWeak: () => _startWithMode(
+                              cards.valueOrNull ?? const [],
+                              KnowledgeReviewModeV3.weak,
+                            ),
+                            onAll: () => _startWithMode(
+                              cards.valueOrNull ?? const [],
+                              KnowledgeReviewModeV3.all,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _LearningStatusCards(
+                            masteredCount: item.masteredCount,
+                            weakCount: item.weakCount,
+                            reviewedCount: item.reviewedCount,
+                          ),
+                        ],
                       ),
                       loading: () => const _Skeleton(height: 180),
                       error: (_, _) => _ErrorBlock(
@@ -146,6 +173,33 @@ class _KnowledgeFlashReviewPageState
     });
   }
 
+  Future<void> _startWithMode(
+    List<KnowledgeCardV3> cards,
+    KnowledgeReviewModeV3 mode,
+  ) async {
+    if (cards.isEmpty) {
+      _toast(context, '还没有知识卡，先从资料生成一组。');
+      return;
+    }
+    final queue = await ref.read(
+      knowledgeReviewQueueV3Provider(
+        KnowledgeReviewQueueRequestV3(spaceId: widget.spaceId, mode: mode),
+      ).future,
+    );
+    if (!mounted) return;
+    if (queue.isEmpty) {
+      _toast(context, '当前模式没有可复习卡片，可以试试全部随机。');
+      return;
+    }
+    setState(() {
+      _queue = queue;
+      _index = 0;
+      _answerVisible = false;
+      _startedAt = DateTime.now();
+      _completedCount = 0;
+    });
+  }
+
   Future<void> _rate(int rating) async {
     final card = _queue[_index];
     final durationMs = _startedAt == null
@@ -213,31 +267,102 @@ class _ReviewOverview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _PaperCard(
-      child: Column(
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: const Color(0xFFEEF1F8)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3F5FEA).withValues(alpha: 0.08),
+            blurRadius: 32,
+            offset: const Offset(0, 12),
+          ),
+        ],
+      ),
+      child: Row(
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          // 左侧：小猫插画
+          _TiantianImage(asset: 'tiantian_thinking.webp', size: 100),
+          const SizedBox(width: 20),
+          // 右侧：数据 + 按钮
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '今日复习计划',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF8A93A8),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '今日待复习 ${stats.dueCount} 张',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '薄弱卡片 ${stats.weakCount} 张',
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF7B8499),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Row(
                   children: [
-                    Text('${stats.dueCount} 今日待复习', style: _T.reviewNumber),
-                    const SizedBox(height: 8),
-                    Text('${stats.weakCount} 薄弱卡片', style: _T.body),
+                    const Text(
+                      '掌握率',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFF8A93A8),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    _MasteryRing(percent: stats.masteryPercent),
                   ],
                 ),
-              ),
-              _MasteryRing(percent: stats.masteryPercent),
-            ],
-          ),
-          const SizedBox(height: 18),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              onPressed: onStart,
-              style: _primaryButtonStyle(),
-              child: const Text('开始抽卡'),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: onStart,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF3F5FEA),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '开始复习',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Icon(Icons.arrow_forward_rounded, size: 18),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -276,18 +401,293 @@ class _MasteryRing extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: 92,
-      height: 92,
+      width: 48,
+      height: 48,
       child: Stack(
         alignment: Alignment.center,
         children: [
           CircularProgressIndicator(
             value: percent / 100,
-            strokeWidth: 8,
-            backgroundColor: AppColors.softBlue,
-            color: AppColors.study,
+            strokeWidth: 5,
+            backgroundColor: const Color(0xFFEEF2FF),
+            color: const Color(0xFF5DD6B3),
           ),
-          Text('$percent%', style: _T.cardTitle),
+          Text(
+            '$percent%',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF111827),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModeSelectionCards extends StatelessWidget {
+  const _ModeSelectionCards({
+    required this.dueCount,
+    required this.weakCount,
+    required this.onDue,
+    required this.onWeak,
+    required this.onAll,
+  });
+
+  final int dueCount;
+  final int weakCount;
+  final VoidCallback onDue;
+  final VoidCallback onWeak;
+  final VoidCallback onAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '复习模式',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _ModeCard(
+                icon: Icons.schedule_rounded,
+                title: '今日到期',
+                subtitle: '$dueCount 张',
+                description: '优先复习',
+                color: const Color(0xFF3F5FEA),
+                onTap: onDue,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ModeCard(
+                icon: Icons.priority_high_rounded,
+                title: '薄弱强化',
+                subtitle: '$weakCount 张',
+                description: '重点巩固',
+                color: const Color(0xFF5DD6B3),
+                onTap: onWeak,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _ModeCard(
+                icon: Icons.shuffle_rounded,
+                title: '全部随机',
+                subtitle: '随机抽取',
+                description: '轻松复习',
+                color: const Color(0xFF8A93A8),
+                onTap: onAll,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _ModeCard extends StatelessWidget {
+  const _ModeCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.description,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String description;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFEEF1F8)),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.08),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, color: color, size: 18),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF111827),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF7B8499),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              description,
+              style: const TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFFA5AEC2),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LearningStatusCards extends StatelessWidget {
+  const _LearningStatusCards({
+    required this.masteredCount,
+    required this.weakCount,
+    required this.reviewedCount,
+  });
+
+  final int masteredCount;
+  final int weakCount;
+  final int reviewedCount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '学习状态',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _StatusCard(
+                icon: Icons.check_circle_outline_rounded,
+                title: '已掌握',
+                value: '$masteredCount 张',
+                color: const Color(0xFF5DD6B3),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatusCard(
+                icon: Icons.warning_amber_rounded,
+                title: '待加强',
+                value: '$weakCount 张',
+                color: const Color(0xFFFFB17A),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _StatusCard(
+                icon: Icons.local_fire_department_rounded,
+                title: '已复习',
+                value: '$reviewedCount 张',
+                color: const Color(0xFF3F5FEA),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusCard extends StatelessWidget {
+  const _StatusCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFEEF1F8)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 10),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF8A93A8),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF111827),
+            ),
+          ),
         ],
       ),
     );
@@ -308,8 +708,32 @@ class _ReviewEmptyHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (cards.isNotEmpty) {
-      return const _PaperCard(
-        child: Text('如果今天没有到期卡，也可以点击开始抽卡后选择“全部随机”。', style: _T.body),
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEEFDF7),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.lightbulb_outline_rounded,
+              size: 16,
+              color: Color(0xFF5DD6B3),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                '没有到期卡？可以选择"全部随机"继续巩固。',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF5DD6B3),
+                ),
+              ),
+            ),
+          ],
+        ),
       );
     }
     return _PaperCard(

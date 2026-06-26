@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
 import '../models/study_data.dart';
-import '../../../core/utils/chart_scale_utils.dart';
 import '../../study/providers/study_provider.dart';
 import '../../dashboard/providers/dashboard_provider.dart';
 
 part '../widgets/study_record_detail_widgets.dart';
-part '../widgets/study_record_detail_chart.dart';
 
 /// 学习记录详情页
 ///

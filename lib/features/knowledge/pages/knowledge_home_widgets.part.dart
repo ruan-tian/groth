@@ -19,6 +19,7 @@ class _HomeTopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return _GlassPanel(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       child: LayoutBuilder(
@@ -29,9 +30,9 @@ class _HomeTopBar extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 tooltip: '返回',
                 onPressed: onBack,
-                icon: const Icon(
+                icon: Icon(
                   Icons.arrow_back_rounded,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               Expanded(
@@ -65,18 +66,18 @@ class _HomeTopBar extends StatelessWidget {
                 visualDensity: VisualDensity.compact,
                 tooltip: '知识库',
                 onPressed: onLibrary,
-                icon: const Icon(
+                icon: Icon(
                   Icons.menu_rounded,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
                 tooltip: '管理空间',
                 onPressed: onManageSpaces,
-                icon: const Icon(
+                icon: Icon(
                   Icons.more_horiz_rounded,
-                  color: AppColors.textPrimary,
+                  color: colors.textPrimary,
                 ),
               ),
             ],
@@ -121,12 +122,13 @@ class _SpaceSelectorSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.6,
       ),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: colors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
@@ -144,7 +146,7 @@ class _SpaceSelectorSheet extends StatelessWidget {
             width: 36,
             height: 4,
             decoration: BoxDecoration(
-              color: AppColors.border,
+              color: colors.border,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -159,7 +161,7 @@ class _SpaceSelectorSheet extends StatelessWidget {
                     Navigator.of(context).pop();
                     onManage();
                   },
-                  child: Text('管理', style: TextStyle(color: AppColors.study)),
+                  child: Text('管理', style: TextStyle(color: colors.study)),
                 ),
               ],
             ),
@@ -202,6 +204,7 @@ class _SpaceOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     final icon = switch (space.type) {
       'study' => Icons.menu_book_rounded,
       'exam' => Icons.quiz_rounded,
@@ -210,17 +213,17 @@ class _SpaceOptionTile extends StatelessWidget {
       _ => Icons.folder_rounded,
     };
     final color = switch (space.type) {
-      'study' => AppColors.study,
-      'exam' => AppColors.warning,
-      'work' => AppColors.fitness,
-      'hobby' => AppColors.journal,
-      _ => AppColors.textSecondary,
+      'study' => colors.study,
+      'exam' => colors.warning,
+      'work' => colors.fitness,
+      'hobby' => colors.journal,
+      _ => colors.textSecondary,
     };
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Material(
         color: isCurrent
-            ? AppColors.study.withValues(alpha: 0.08)
+            ? colors.study.withValues(alpha: 0.08)
             : Colors.transparent,
         borderRadius: BorderRadius.circular(14),
         child: InkWell(
@@ -251,7 +254,7 @@ class _SpaceOptionTile extends StatelessWidget {
                           fontWeight: isCurrent
                               ? FontWeight.w700
                               : FontWeight.w500,
-                          color: AppColors.textPrimary,
+                          color: colors.textPrimary,
                         ),
                       ),
                       if (space.note?.trim().isNotEmpty == true)
@@ -261,7 +264,7 @@ class _SpaceOptionTile extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                     ],
@@ -270,7 +273,7 @@ class _SpaceOptionTile extends StatelessWidget {
                 if (isCurrent)
                   Icon(
                     Icons.check_circle_rounded,
-                    color: AppColors.study,
+                    color: colors.study,
                     size: 20,
                   ),
               ],
@@ -297,26 +300,14 @@ class _PrimaryTaskCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     final task = _task;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            AppColors.study.withValues(alpha: 0.95),
-            AppColors.focus.withValues(alpha: 0.86),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.study.withValues(alpha: 0.18),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        color: colors.study,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        boxShadow: AppShadows.colored(colors.study),
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
@@ -326,13 +317,13 @@ class _PrimaryTaskCard extends StatelessWidget {
             children: [
               Text(
                 task.title,
-                style: _T.cardTitle.copyWith(color: Colors.white),
+                style: _T.cardTitle.copyWith(color: colors.card),
               ),
               const SizedBox(height: 4),
               Text(
                 task.subtitle,
                 style: _T.body.copyWith(
-                  color: Colors.white.withValues(alpha: 0.86),
+                  color: colors.card.withValues(alpha: 0.86),
                 ),
               ),
             ],
@@ -341,10 +332,10 @@ class _PrimaryTaskCard extends StatelessWidget {
             onPressed: task.onTap,
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, 44),
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.study,
+              backgroundColor: colors.card,
+              foregroundColor: colors.study,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(AppRadius.md),
               ),
             ),
             child: Text(task.label),
@@ -427,14 +418,15 @@ class _TaskIconBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return Container(
       width: 50,
       height: 50,
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(16),
+        color: colors.card.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(AppRadius.mlg),
       ),
-      child: Icon(icon, color: Colors.white, size: 24),
+      child: Icon(icon, color: colors.card, size: 24),
     );
   }
 }
@@ -462,30 +454,25 @@ class _WelcomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.88),
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.study.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        border: Border.all(color: colors.border),
+        boxShadow: AppShadows.sm,
       ),
       child: Row(
         children: [
           _TiantianImage(asset: 'tiantian_thinking.webp', size: 58),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('你好，我是甜甜', style: _T.cardTitle),
-                SizedBox(height: 5),
+                const SizedBox(height: 5),
                 Text('有资料想问我，或让我帮你生成知识卡吧。', style: _T.body),
               ],
             ),
@@ -494,8 +481,8 @@ class _WelcomeCard extends StatelessWidget {
             tooltip: '问甜甜',
             onPressed: onAsk,
             style: IconButton.styleFrom(
-              backgroundColor: AppColors.study.withValues(alpha: 0.1),
-              foregroundColor: AppColors.study,
+              backgroundColor: colors.study.withValues(alpha: 0.1),
+              foregroundColor: colors.study,
             ),
             icon: const Icon(Icons.arrow_forward_rounded),
           ),
@@ -520,19 +507,14 @@ class _AskBox extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.study.withValues(alpha: 0.12)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: colors.card,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: colors.border),
+        boxShadow: AppShadows.sm,
       ),
       child: TextField(
         controller: controller,
@@ -543,7 +525,7 @@ class _AskBox extends StatelessWidget {
         maxLines: 3,
         decoration: InputDecoration(
           border: InputBorder.none,
-          icon: const Icon(Icons.search_rounded, color: AppColors.study),
+          icon: Icon(Icons.search_rounded, color: colors.study),
           hintText: '搜索资料、知识卡，或直接问甜甜...',
           suffixIcon: TextButton.icon(
             onPressed: onAsk,
@@ -563,6 +545,7 @@ class _BackTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return Row(
       children: [
         IconButton(
@@ -570,9 +553,9 @@ class _BackTitle extends StatelessWidget {
           padding: EdgeInsets.zero,
           constraints: const BoxConstraints.tightFor(width: 40, height: 40),
           onPressed: () => Navigator.of(context).maybePop(),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_rounded,
-            color: AppColors.textPrimary,
+            color: colors.textPrimary,
           ),
         ),
         const SizedBox(width: 4),
@@ -623,6 +606,7 @@ class _QuickActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return _PaperCard(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
       onTap: action.onTap,
@@ -632,10 +616,10 @@ class _QuickActionTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppColors.study.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(13),
+              color: colors.study.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppRadius.smd),
             ),
-            child: Icon(action.icon, color: AppColors.study, size: 20),
+            child: Icon(action.icon, color: colors.study, size: 20),
           ),
           const SizedBox(height: 8),
           Text(
@@ -716,7 +700,8 @@ class _VLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(width: 1, height: 42, color: AppColors.border);
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return Container(width: 1, height: 42, color: colors.border);
   }
 }
 
@@ -913,16 +898,17 @@ class _InlineEmpty extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F9FF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
+        color: colors.softBlue,
+        borderRadius: BorderRadius.circular(AppRadius.mlg),
+        border: Border.all(color: colors.border),
       ),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.study),
+          Icon(icon, color: colors.study),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1127,6 +1113,7 @@ class _SpaceIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     final icon = switch (type) {
       'exam' => Icons.assignment_turned_in_rounded,
       'language' => Icons.translate_rounded,
@@ -1135,11 +1122,11 @@ class _SpaceIcon extends StatelessWidget {
       _ => Icons.auto_stories_rounded,
     };
     final color = switch (type) {
-      'exam' => AppColors.study,
+      'exam' => colors.study,
       'language' => const Color(0xFF7C3AED),
       'skill' => const Color(0xFF168458),
       'interest' => const Color(0xFFF59E0B),
-      _ => AppColors.study,
+      _ => colors.study,
     };
     return Container(
       width: 52,
@@ -1160,23 +1147,24 @@ class _DashedCreateCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.58),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: AppColors.study.withValues(alpha: 0.35)),
+            color: colors.card.withValues(alpha: 0.58),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: colors.study.withValues(alpha: 0.35)),
           ),
-          child: const Row(
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_rounded, color: AppColors.study),
-              SizedBox(width: 8),
+              Icon(Icons.add_rounded, color: colors.study),
+              const SizedBox(width: 8),
               Text('新建空间', style: _T.actionBlue),
             ],
           ),

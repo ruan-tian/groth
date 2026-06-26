@@ -342,7 +342,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.auto_awesome_rounded,
-            iconColor: colors.primary,
+            iconColor: colors.study,
             title: 'AI 自动分析',
             subtitle: autoAiAnalysisEnabled ? '已开启' : '已关闭',
             onTap: onAiAnalysisTap,

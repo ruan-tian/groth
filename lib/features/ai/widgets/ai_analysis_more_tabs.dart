@@ -283,10 +283,19 @@ class _DietAnalysisTab extends ConsumerWidget {
               color: const Color(0xFFFFF7ED),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(
-              _getMealIcon(r.mealType),
-              color: const Color(0xFFB66A00),
-              size: 18,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                RecordIconAssets.dietByMealType(r.mealType),
+                width: 18,
+                height: 18,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => Icon(
+                  _getMealIcon(r.mealType),
+                  color: const Color(0xFFB66A00),
+                  size: 18,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -647,10 +656,19 @@ class _SleepAnalysisTab extends ConsumerWidget {
               color: const Color(0xFFF4F1FF),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.nightlight,
-              color: Color(0xFF5B4BC4),
-              size: 18,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                RecordIconAssets.sleep,
+                width: 18,
+                height: 18,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.nightlight,
+                  color: Color(0xFF5B4BC4),
+                  size: 18,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),

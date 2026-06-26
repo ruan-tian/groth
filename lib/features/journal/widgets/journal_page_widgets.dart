@@ -858,7 +858,7 @@ class _JournalListItem extends StatelessWidget {
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.asset(
-                    PetAssets.journalBook,
+                    RecordIconAssets.journal,
                     width: 28,
                     height: 28,
                     fit: BoxFit.contain,

@@ -67,6 +67,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                   subjectController: _subjectController,
                   customController: _customController,
                   onStart: _startFocus,
+                  onHistory: _showFocusHistory,
                 );
               }
               return _PortraitFocusSetup(
@@ -77,6 +78,7 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                 subjectController: _subjectController,
                 customController: _customController,
                 onStart: _startFocus,
+                onHistory: _showFocusHistory,
               );
             },
           ),
@@ -108,6 +110,15 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       '&title=${Uri.encodeComponent(title)}'
       '&subject=${Uri.encodeComponent(subject)}'
       '${setup.soundType != null ? "&sound=${Uri.encodeComponent(setup.soundType!)}" : ""}',
+    );
+  }
+
+  void _showFocusHistory() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _FocusHistorySheet(),
     );
   }
 }

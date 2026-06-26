@@ -43,7 +43,9 @@ import '../features/study/pages/study_record_detail_page.dart';
 import '../features/study/pages/subject_distribution_page.dart';
 import '../features/study/pages/recent_records_page.dart';
 import '../features/health/pages/all_diet_records_page.dart';
+import '../features/health/pages/diet_record_detail_page.dart';
 import '../features/health/pages/sleep_history_page.dart';
+import '../features/health/pages/sleep_record_detail_page.dart';
 import '../shared/widgets/common/advanced_bottom_nav.dart';
 
 // Route paths
@@ -562,6 +564,24 @@ final goRouter = GoRouter(
                     const AllDietRecordsPage(),
                   ),
                 ),
+                GoRoute(
+                  path: 'diet/detail/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
+                    return buildShellSlideTransition(
+                      context,
+                      state,
+                      DietRecordDetailPage(recordId: id),
+                    );
+                  },
+                ),
                 // Sleep
                 GoRoute(
                   path: 'sleep/add',
@@ -587,6 +607,24 @@ final goRouter = GoRouter(
                     state,
                     const SleepHistoryPage(),
                   ),
+                ),
+                GoRoute(
+                  path: 'sleep/detail/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
+                    return buildShellSlideTransition(
+                      context,
+                      state,
+                      SleepRecordDetailPage(recordId: id),
+                    );
+                  },
                 ),
                 // AI analysis
                 GoRoute(

@@ -304,11 +304,14 @@ class _DashboardDrinkInspirationCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => context.push('/plan/diet/drink-recommendation'),
-        child: Ink(
+        child: Container(
           padding: const EdgeInsets.all(12),
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: colors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(20),
@@ -401,11 +404,14 @@ class _DashboardInspirationBookmarkCard extends StatelessWidget {
 
     return Material(
       color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: BorderRadius.circular(20),
         onTap: () => context.push('/plan/journal/inspiration'),
-        child: Ink(
+        child: Container(
           padding: const EdgeInsets.all(12),
+          clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: colors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(20),

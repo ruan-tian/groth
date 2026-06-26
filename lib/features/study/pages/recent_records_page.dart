@@ -3,12 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
+import '../../../core/constants/record_icon_assets.dart';
 import '../models/study_data.dart';
 import '../../study/providers/study_provider.dart';
 import '../../../shared/widgets/common/date_group_header.dart';
-
-/// 学习记录排序方式
-enum StudySortOption { newest, oldest, highestExp }
+import '../../../shared/widgets/sort_button.dart';
 
 /// 最近学习记录详情页
 ///
@@ -21,7 +20,7 @@ class RecentRecordsPage extends ConsumerStatefulWidget {
 }
 
 class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
-  StudySortOption _sortOption = StudySortOption.newest;
+  SortOption _sortOption = SortOption.newest;
 
   @override
   Widget build(BuildContext context) {
@@ -37,37 +36,10 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
         centerTitle: false,
         elevation: 0,
         actions: [
-          PopupMenuButton<StudySortOption>(
-            icon: Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: colors.study.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-              ),
-              child: Icon(Icons.sort_rounded, color: colors.study, size: 20),
-            ),
-            onSelected: (option) => setState(() => _sortOption = option),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-            ),
-            elevation: 4,
-            itemBuilder: (context) => [
-              _buildSortItem(
-                StudySortOption.newest,
-                '最新优先',
-                Icons.access_time_rounded,
-              ),
-              _buildSortItem(
-                StudySortOption.oldest,
-                '最早优先',
-                Icons.history_rounded,
-              ),
-              _buildSortItem(
-                StudySortOption.highestExp,
-                '经验值最高',
-                Icons.star_rounded,
-              ),
-            ],
+          SortButton<SortOption>.legacy(
+            currentSort: _sortOption,
+            onSortChanged: (option) => setState(() => _sortOption = option),
+            accentColor: colors.study,
           ),
           const SizedBox(width: AppSpacing.sm),
         ],
@@ -117,40 +89,6 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  PopupMenuItem<StudySortOption> _buildSortItem(
-    StudySortOption option,
-    String text,
-    IconData icon,
-  ) {
-    final colors = context.growthColors;
-    final isSelected = _sortOption == option;
-    return PopupMenuItem(
-      value: option,
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isSelected ? colors.study : colors.textSecondary,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? colors.study : colors.textPrimary,
-              ),
-            ),
-          ),
-          if (isSelected)
-            Icon(Icons.check_rounded, size: 18, color: colors.study),
-        ],
       ),
     );
   }
@@ -314,13 +252,13 @@ class _RecentRecordsPageState extends ConsumerState<RecentRecordsPage> {
   List<StudyRecord> _sortRecords(List<StudyRecord> records) {
     final sorted = List<StudyRecord>.from(records);
     switch (_sortOption) {
-      case StudySortOption.newest:
+      case SortOption.newest:
         sorted.sort((a, b) => b.startTime.compareTo(a.startTime));
         break;
-      case StudySortOption.oldest:
+      case SortOption.oldest:
         sorted.sort((a, b) => a.startTime.compareTo(b.startTime));
         break;
-      case StudySortOption.highestExp:
+      case SortOption.highestExp:
         sorted.sort((a, b) => b.expGained.compareTo(a.expGained));
         break;
     }
@@ -475,10 +413,19 @@ class _RecordCard extends StatelessWidget {
                 color: colors.study.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(13),
               ),
-              child: Icon(
-                Icons.menu_book_rounded,
-                color: colors.study,
-                size: 21,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(AppRadius.sm),
+                child: Image.asset(
+                  RecordIconAssets.study,
+                  width: 21,
+                  height: 21,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(
+                    Icons.menu_book_rounded,
+                    color: colors.study,
+                    size: 21,
+                  ),
+                ),
               ),
             ),
             const SizedBox(width: 14),

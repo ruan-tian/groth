@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../core/constants/record_icon_assets.dart';
+
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
 import '../../core/services/statistics_service.dart';
@@ -18,27 +20,32 @@ import '../plan/widgets/plan_module_visuals.dart';
 
 part 'widgets/study_page_widgets.dart';
 
+const _knowledgeSpaceIllustration =
+    'assets/images/knowledge_cards/knowledge_space_tiantian.webp';
+
 // =============================================================================
-// 科目调色板（按排序 index 分配颜色，最多 15 色）
+// 科目调色板 — 蓝色同色系（按排序 index 分配，最多 15 色）
 // =============================================================================
 
 List<Color> _subjectPalette(AppThemeColors c) => [
-  c.danger, // 1 红
-  c.fitness, // 2 橙
-  c.diet, // 3 琥珀
-  c.accent, // 4 金
-  const Color(0xFF65A30D), // 5 黄绿
-  const Color(0xFF059669), // 6 翠绿
-  c.focus, // 7 青
-  const Color(0xFF2563EB), // 8 钢蓝
-  c.study, // 9 蓝
-  c.sleep, // 10 紫
-  const Color(0xFF7C3AED), // 11 紫罗兰
-  const Color(0xFFDB2777), // 12 品红
-  const Color(0xFFBE185D), // 13 玫红
-  c.journal, // 14 玫粉
-  c.primaryLight, // 15 浅靛
+  const Color(0xFF3F5FEA), // 主蓝
+  const Color(0xFF5B7CFA), // 柔和蓝紫
+  const Color(0xFF7EA6FF), // 浅蓝
+  const Color(0xFF8FB7FF), // 更浅蓝
+  const Color(0xFF4A6CF7), // 深蓝紫
+  const Color(0xFF6B8CFF), // 中蓝紫
+  const Color(0xFF9DBBFF), // 雾蓝
+  const Color(0xFF5C7DF9), // 靛蓝
+  const Color(0xFFA8C4FF), // 淡蓝
+  const Color(0xFF7494FF), // 天蓝
+  const Color(0xFFB8D0FF), // 极淡蓝
+  const Color(0xFF6E8EFF), // 中等蓝
+  const Color(0xFFC4D6FF), // 薄雾蓝
+  const Color(0xFF8AA2FF), // 灰蓝
+  const Color(0xFFD0DAFF), // 最淡蓝
 ];
+
+Color _uncategorizedColor() => const Color(0xFFBFCBEE); // 雾蓝灰
 
 Color _colorByIndex(AppThemeColors colors, int index) {
   final palette = _subjectPalette(colors);
@@ -200,123 +207,159 @@ class _StudyPageState extends ConsumerState<StudyPage> {
 
         return Material(
           color: Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: () => context.push('/plan/study/flash-review'),
-            borderRadius: BorderRadius.circular(AppRadius.xl),
-            child: Container(
-              padding: const EdgeInsets.all(AppSpacing.lg),
+            borderRadius: BorderRadius.circular(24),
+            child: Ink(
+              height: 168,
               decoration: BoxDecoration(
                 color: colors.card,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(color: colors.border),
-                boxShadow: AppShadows.sm,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: colors.study.withValues(alpha: 0.12)),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.study.withValues(alpha: 0.08),
+                    blurRadius: 18,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(23),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compact = constraints.maxWidth < 360;
+                    final illustrationWidth = compact ? 124.0 : 146.0;
+                    final rightReserve = compact ? 88.0 : 118.0;
+
+                    return Stack(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.study.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                          child: Text(
-                            '甜甜知识空间',
-                            style: AppTextStyles.caption.copyWith(
-                              color: colors.study,
-                              fontWeight: FontWeight.w700,
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: 88,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.transparent,
+                                  colors.study.withValues(alpha: 0.13),
+                                ],
+                              ),
                             ),
                           ),
                         ),
-                        const SizedBox(height: AppSpacing.sm),
-                        Text(
-                          title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.sectionTitle.copyWith(
-                            color: colors.textPrimary,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text(
-                          subtitle,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppTextStyles.caption.copyWith(
-                            color: colors.textSecondary,
-                            height: 1.35,
-                          ),
-                        ),
-                        const SizedBox(height: AppSpacing.md),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.md,
-                            vertical: AppSpacing.sm,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colors.study,
-                            borderRadius: BorderRadius.circular(99),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                actionIcon,
-                                color: colors.textOnAccent,
-                                size: 18,
+                        Positioned(
+                          right: compact ? -26 : -18,
+                          bottom: -16,
+                          child: IgnorePointer(
+                            child: Opacity(
+                              opacity: 0.9,
+                              child: Image.asset(
+                                _knowledgeSpaceIllustration,
+                                width: illustrationWidth,
+                                fit: BoxFit.contain,
+                                filterQuality: FilterQuality.high,
                               ),
-                              const SizedBox(width: 8),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          right: 14,
+                          top: 14,
+                          child: Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color: colors.study.withValues(alpha: 0.56),
+                          ),
+                        ),
+                        Padding(
+                          padding: EdgeInsets.fromLTRB(
+                            16,
+                            16,
+                            rightReserve,
+                            16,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colors.card.withValues(alpha: 0.72),
+                                  borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(
+                                    color: colors.study.withValues(alpha: 0.14),
+                                  ),
+                                ),
+                                child: Text(
+                                  '甜甜知识空间',
+                                  style: AppTextStyles.caption.copyWith(
+                                    color: colors.study,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 9),
                               Text(
-                                action,
-                                style: TextStyle(
-                                  color: colors.textOnAccent,
-                                  fontWeight: FontWeight.w700,
+                                title,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.sectionTitle.copyWith(
+                                  color: colors.textPrimary,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                subtitle,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.caption.copyWith(
+                                  color: colors.textSecondary,
+                                  height: 1.36,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 11),
+                              SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                physics: const BouncingScrollPhysics(),
+                                child: Row(
+                                  children: [
+                                    _KnowledgeActionPill(
+                                      icon: actionIcon,
+                                      label: action,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _knowledgeMiniStat(
+                                      value: '${item.cardCount}',
+                                      label: '卡片',
+                                    ),
+                                    const SizedBox(width: 8),
+                                    _knowledgeMiniStat(
+                                      value: '${item.dueCount}',
+                                      label: '待复习',
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Container(
-                    width: 88,
-                    padding: const EdgeInsets.all(AppSpacing.md),
-                    decoration: BoxDecoration(
-                      color: colors.study.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(AppRadius.lg),
-                      border: Border.all(color: colors.border),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.school_rounded,
-                          color: colors.study,
-                          size: 28,
-                        ),
-                        const SizedBox(height: AppSpacing.sm),
-                        _knowledgeMiniStat(
-                          value: '${item.cardCount}',
-                          label: '卡片',
-                        ),
-                        const SizedBox(height: AppSpacing.xs),
-                        _knowledgeMiniStat(
-                          value: '${item.dueCount}',
-                          label: '待复习',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
             ),
           ),
@@ -336,22 +379,38 @@ class _StudyPageState extends ConsumerState<StudyPage> {
 
   Widget _knowledgeMiniStat({required String value, required String label}) {
     final colors = context.growthColors;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Text(
-          value,
-          style: AppTextStyles.body.copyWith(
-            color: colors.textPrimary,
-            fontWeight: FontWeight.w800,
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: colors.card.withValues(alpha: 0.68),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: colors.study.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            value,
+            style: AppTextStyles.body.copyWith(
+              color: colors.textPrimary,
+              fontSize: 14,
+              height: 1,
+              fontWeight: FontWeight.w900,
+            ),
           ),
-        ),
-        const SizedBox(width: 3),
-        Text(
-          label,
-          style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
-        ),
-      ],
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: AppTextStyles.caption.copyWith(
+              color: colors.textSecondary,
+              fontSize: 11,
+              height: 1.05,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -943,6 +1002,7 @@ class _StudyPageState extends ConsumerState<StudyPage> {
                     : Icons.menu_book,
                 iconColor: colors.textOnAccent,
                 iconBackgroundColor: colors.study,
+                imageAsset: RecordIconAssets.study,
                 title: record.title,
                 subtitle:
                     '${record.subject ?? ''} · ${record.durationMinutes}分钟 · $dateStr',
@@ -1064,5 +1124,46 @@ class _StudyPageState extends ConsumerState<StudyPage> {
     final h = minutes ~/ 60;
     final m = minutes % 60;
     return m > 0 ? '${h}h ${m}m' : '${h}h';
+  }
+}
+
+class _KnowledgeActionPill extends StatelessWidget {
+  const _KnowledgeActionPill({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: colors.study,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: [
+          BoxShadow(
+            color: colors.study.withValues(alpha: 0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: colors.textOnAccent, size: 16),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              color: colors.textOnAccent,
+              fontSize: 12,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

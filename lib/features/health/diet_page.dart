@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/constants/record_icon_assets.dart';
+
 import '../../../app/design/design.dart';
 import '../../../core/constants/date_constants.dart';
 import '../../../core/database/app_database.dart';
@@ -244,6 +246,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                     icon: Icons.restaurant_rounded,
                     iconColor: colors.textOnAccent,
                     iconBackgroundColor: colors.diet,
+                    imageAsset: RecordIconAssets.dietByMealType(r.mealType),
                     title: r.foodText,
                     subtitle:
                         '${_mealTypeLabel(r.mealType)} · ${_portionLabel(r.portionLevel)}',

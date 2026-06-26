@@ -282,10 +282,19 @@ class _StudyAnalysisTab extends ConsumerWidget {
               color: const Color(0xFFEEF3FF),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.book,
-              color: Color(0xFF4D6BE8),
-              size: 18,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                RecordIconAssets.study,
+                width: 18,
+                height: 18,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.book,
+                  color: Color(0xFF4D6BE8),
+                  size: 18,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),
@@ -609,10 +618,19 @@ class _FitnessAnalysisTab extends ConsumerWidget {
               color: const Color(0xFFFFF1E7),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Icon(
-              Icons.run_circle,
-              color: Color(0xFFC95F1E),
-              size: 18,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                RecordIconAssets.fitness,
+                width: 18,
+                height: 18,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) => const Icon(
+                  Icons.run_circle,
+                  color: Color(0xFFC95F1E),
+                  size: 18,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 12),

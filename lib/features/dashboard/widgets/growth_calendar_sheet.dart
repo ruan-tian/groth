@@ -64,12 +64,12 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
     final colors = context.growthColors;
     final calendarService = ref.watch(calendarServiceProvider);
     final selectedRequest = _requestForMonth(_displayMonth);
-    final selectedStatsAsync = ref.watch(
-      calendarStatsProvider(selectedRequest),
-    );
+    final selectedStatsAsync = ref.watch(calendarStatsProvider(selectedRequest));
 
-    final height = math.min(MediaQuery.sizeOf(context).height * 0.88, 720.0);
-    final gridHeight = height < 640 ? 292.0 : 330.0;
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final height = math.min(screenHeight * 0.88, 720.0);
+    // 自适应网格高度：根据屏幕高度动态计算
+    final gridHeight = (height < 640 ? 280.0 : 320.0);
 
     return Container(
       height: height,
@@ -90,6 +90,7 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
           padding: const EdgeInsets.fromLTRB(20, 12, 20, 18),
           child: Column(
             children: [
+              // 拖拽把手
               Container(
                 width: 42,
                 height: 4,
@@ -99,14 +100,17 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
                 ),
               ),
               const SizedBox(height: 16),
+              // 月份标题
               _SheetHeader(
                 displayMonth: _displayMonth,
                 onPrevious: () => _shiftMonth(-1),
                 onNext: () => _shiftMonth(1),
               ),
               const SizedBox(height: 14),
+              // 星期头
               _WeekdayHeader(weekdays: _weekdays),
               const SizedBox(height: 8),
+              // 日历网格（PageView 滑动切换月份）
               SizedBox(
                 height: gridHeight,
                 child: PageView.builder(
@@ -116,13 +120,12 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
                   itemBuilder: (context, page) {
                     final pageMonth = _monthForPage(page);
                     final request = _requestForMonth(pageMonth);
-                    final statsAsync = ref.watch(
-                      calendarStatsProvider(request),
-                    );
                     final dayInfos = calendarService.getRange(
                       request.normalizedStart,
                       request.normalizedEnd,
                     );
+                    // 性能优化：用 ref.read 而非 ref.watch 避免不必要的 rebuild
+                    final statsAsync = ref.watch(calendarStatsProvider(request));
 
                     return statsAsync.when(
                       loading: () => _CalendarGrid(
@@ -151,31 +154,39 @@ class _GrowthCalendarSheetState extends ConsumerState<GrowthCalendarSheet> {
                 ),
               ),
               const SizedBox(height: 14),
+              // 选中日详情面板（带动画过渡）
               Expanded(
-                child: selectedStatsAsync.when(
-                  loading: () => _SelectedDayPanel(
-                    dayInfo: calendarService.getDayInfo(_selectedDate),
-                    weekday: _weekdayNames[_selectedDate.weekday - 1],
-                    stats: DailyStats.empty(_selectedDate),
-                    isLoading: true,
-                    onCreateTask: _createTaskForSelectedDate,
-                  ),
-                  error: (error, _) => _CalendarErrorPanel(
-                    error: error,
-                    onRetry: () =>
-                        ref.invalidate(calendarStatsProvider(selectedRequest)),
-                  ),
-                  data: (stats) {
-                    final byDate = _statsByDate(stats);
-                    return _SelectedDayPanel(
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  child: selectedStatsAsync.when(
+                    loading: () => _SelectedDayPanel(
+                      key: ValueKey(_dateKey(_selectedDate)),
                       dayInfo: calendarService.getDayInfo(_selectedDate),
                       weekday: _weekdayNames[_selectedDate.weekday - 1],
-                      stats:
-                          byDate[_dateKey(_selectedDate)] ??
-                          DailyStats.empty(_selectedDate),
+                      stats: DailyStats.empty(_selectedDate),
+                      isLoading: true,
                       onCreateTask: _createTaskForSelectedDate,
-                    );
-                  },
+                    ),
+                    error: (error, _) => _CalendarErrorPanel(
+                      error: error,
+                      onRetry: () =>
+                          ref.invalidate(calendarStatsProvider(selectedRequest)),
+                    ),
+                    data: (stats) {
+                      final byDate = _statsByDate(stats);
+                      return _SelectedDayPanel(
+                        key: ValueKey(_dateKey(_selectedDate)),
+                        dayInfo: calendarService.getDayInfo(_selectedDate),
+                        weekday: _weekdayNames[_selectedDate.weekday - 1],
+                        stats:
+                            byDate[_dateKey(_selectedDate)] ??
+                            DailyStats.empty(_selectedDate),
+                        onCreateTask: _createTaskForSelectedDate,
+                      );
+                    },
+                  ),
                 ),
               ),
             ],
@@ -477,7 +488,7 @@ class _CalendarDayCell extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    fontSize: 9.5,
+                    fontSize: 10,
                     height: 1,
                     fontWeight: hasFestival ? FontWeight.w900 : FontWeight.w600,
                     color: isSelected
@@ -519,7 +530,7 @@ class _ActivityDots extends StatelessWidget {
 
     if (activeColors.isEmpty) {
       return SizedBox(
-        height: 5,
+        height: 6,
         child: Center(
           child: Container(
             width: 4,
@@ -536,7 +547,7 @@ class _ActivityDots extends StatelessWidget {
     }
 
     return SizedBox(
-      height: 5,
+      height: 6,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: activeColors
@@ -544,7 +555,7 @@ class _ActivityDots extends StatelessWidget {
               (color) => Container(
                 width: 5,
                 height: 5,
-                margin: const EdgeInsets.symmetric(horizontal: 1),
+                margin: const EdgeInsets.symmetric(horizontal: 1.5),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: selected
@@ -561,6 +572,7 @@ class _ActivityDots extends StatelessWidget {
 
 class _SelectedDayPanel extends StatelessWidget {
   const _SelectedDayPanel({
+    super.key,
     required this.dayInfo,
     required this.weekday,
     required this.stats,
@@ -587,82 +599,79 @@ class _SelectedDayPanel extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: colors.border),
       ),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          return SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minHeight: constraints.maxHeight),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 日期标题行
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${dayInfo.date.month}月${dayInfo.date.day}日 $weekday',
-                              style: AppTextStyles.cardTitle.copyWith(
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              '农历${dayInfo.lunar.fullLabel}',
-                              style: AppTextStyles.caption.copyWith(
-                                color: colors.textTertiary,
-                              ),
-                            ),
-                          ],
+                      Text(
+                        '${dayInfo.date.month}月${dayInfo.date.day}日 $weekday',
+                        style: AppTextStyles.cardTitle.copyWith(
+                          fontWeight: FontWeight.w900,
                         ),
                       ),
-                      if (isLoading)
-                        SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: colors.primary,
-                          ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '农历${dayInfo.lunar.fullLabel}',
+                        style: AppTextStyles.caption.copyWith(
+                          color: colors.textTertiary,
                         ),
+                      ),
                     ],
                   ),
-                  if (festivals.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: festivals
-                          .map((festival) => _FestivalPill(festival: festival))
-                          .toList(),
+                ),
+                if (isLoading)
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colors.primary,
                     ),
-                  ],
-                  const SizedBox(height: 14),
-                  _MetricGrid(stats: stats),
-                  if (onCreateTask != null) ...[
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton.icon(
-                        onPressed: onCreateTask,
-                        icon: const Icon(Icons.add_task_rounded),
-                        label: const Text('为这天新建任务'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+                  ),
+              ],
             ),
-          );
-        },
+            // 节日标签
+            if (festivals.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: festivals
+                    .map((festival) => _FestivalPill(festival: festival))
+                    .toList(),
+              ),
+            ],
+            const SizedBox(height: 14),
+            // 统计指标网格
+            _MetricGrid(stats: stats),
+            // 创建任务按钮
+            if (onCreateTask != null) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton.icon(
+                  onPressed: onCreateTask,
+                  icon: const Icon(Icons.add_task_rounded),
+                  label: const Text('为这天新建任务'),
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 13),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -677,53 +686,21 @@ class _MetricGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        const spacing = 8.0;
-        final itemWidth = (constraints.maxWidth - spacing * 2) / 3;
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            _MetricTile(
-              width: itemWidth,
-              label: '学习',
-              value: '${stats.studyMinutes}m',
-              color: colors.study,
-            ),
-            _MetricTile(
-              width: itemWidth,
-              label: '健身',
-              value: '${stats.fitnessMinutes}m',
-              color: colors.fitness,
-            ),
-            _MetricTile(
-              width: itemWidth,
-              label: '专注',
-              value: '${stats.focusMinutes}m',
-              color: colors.focus,
-            ),
-            _MetricTile(
-              width: itemWidth,
-              label: '日记',
-              value: '${stats.journalCount}篇',
-              color: colors.journal,
-            ),
-            _MetricTile(
-              width: itemWidth,
-              label: '经验',
-              value: '+${stats.expGained}',
-              color: colors.accent,
-            ),
-            _MetricTile(
-              width: itemWidth,
-              label: '任务',
-              value: '${stats.taskCompleted}/${stats.taskTotal}',
-              color: colors.success,
-            ),
-          ],
-        );
-      },
+    return GridView.count(
+      crossAxisCount: 3,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 8,
+      crossAxisSpacing: 8,
+      childAspectRatio: 1.8,
+      children: [
+        _MetricTile(label: '学习', value: '${stats.studyMinutes}m', color: colors.study),
+        _MetricTile(label: '健身', value: '${stats.fitnessMinutes}m', color: colors.fitness),
+        _MetricTile(label: '专注', value: '${stats.focusMinutes}m', color: colors.focus),
+        _MetricTile(label: '日记', value: '${stats.journalCount}篇', color: colors.journal),
+        _MetricTile(label: '经验', value: '+${stats.expGained}', color: colors.accent),
+        _MetricTile(label: '任务', value: '${stats.taskCompleted}/${stats.taskTotal}', color: colors.success),
+      ],
     );
   }
 }
@@ -759,13 +736,11 @@ class _FestivalPill extends StatelessWidget {
 
 class _MetricTile extends StatelessWidget {
   const _MetricTile({
-    required this.width,
     required this.label,
     required this.value,
     required this.color,
   });
 
-  final double width;
   final String label;
   final String value;
   final Color color;
@@ -774,38 +749,35 @@ class _MetricTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
 
-    return SizedBox(
-      width: width,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: color.withValues(alpha: 0.12)),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              value,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w900,
-                color: colors.textPrimary,
-                height: 1.1,
-              ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w900,
+              color: colors.textPrimary,
+              height: 1.1,
             ),
-            const SizedBox(height: 3),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: AppTextStyles.label.copyWith(color: color),
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppTextStyles.label.copyWith(color: color),
+          ),
+        ],
       ),
     );
   }

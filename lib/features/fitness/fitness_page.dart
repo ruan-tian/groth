@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
+import '../../core/constants/record_icon_assets.dart';
 import '../../core/constants/fitness_constants.dart';
 import '../../core/database/app_database.dart';
 import '../../core/utils/date_utils.dart';
@@ -144,6 +145,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                             icon: Icons.fitness_center,
                             iconColor: colors.textOnAccent,
                             iconBackgroundColor: colors.fitness,
+                            imageAsset: RecordIconAssets.fitness,
                             title: record.title ?? record.bodyPart,
                             subtitle:
                                 '${record.bodyPart} · ${record.durationMinutes}分钟 · $dateStr',

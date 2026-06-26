@@ -8,6 +8,17 @@ import '../../dashboard/providers/dashboard_provider.dart';
 import '../../health/providers/sleep_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 
+const _sleepAssetRoot = 'assets/images/sleep_record';
+const _sleepHeroAsset = '$_sleepAssetRoot/sleep_hero.webp';
+const _sleepDecoAsset = '$_sleepAssetRoot/sleep_deco.webp';
+
+const _sleep = Color(0xFF7A6FF0);
+const _sleepDeep = Color(0xFF5146C6);
+const _sleepDark = Color(0xFF312D72);
+const _sleepMist = Color(0xFFF7F6FF);
+const _sleepSoft = Color(0xFFEDEBFF);
+const _sleepLine = Color(0xFFDCD8FF);
+
 /// 添加睡眠记录弹窗
 class AddSleepRecordSheet extends ConsumerStatefulWidget {
   const AddSleepRecordSheet({super.key, required this.onSave});
@@ -61,7 +72,15 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
     return Container(
       constraints: BoxConstraints(maxHeight: maxHeight),
       decoration: BoxDecoration(
-        color: colors.paper,
+        gradient: LinearGradient(
+          colors: [
+            Colors.white,
+            _sleepMist,
+            _sleepSoft.withValues(alpha: 0.72),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
       ),
       child: Column(
@@ -77,46 +96,96 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
-          const SizedBox(height: 16),
-
-          // ── 标题 ──
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: Row(
-              children: [
-                Text(
-                  '添加睡眠记录',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const Spacer(),
-                Semantics(
-                  button: true,
-                  label: '关闭弹窗',
-                  child: GestureDetector(
-                    onTap: () => Navigator.pop(context),
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+            child: SizedBox(
+              height: 126,
+              child: Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Positioned(
+                    right: 8,
+                    bottom: 4,
                     child: Container(
-                      width: 32,
-                      height: 32,
+                      width: 120,
+                      height: 76,
                       decoration: BoxDecoration(
-                        color: colors.surfaceVariant,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Icon(
-                        Icons.close,
-                        size: 18,
-                        color: colors.textSecondary,
+                        color: _sleepSoft.withValues(alpha: 0.72),
+                        borderRadius: BorderRadius.circular(AppRadius.xxxl),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.86),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  Positioned(
+                    right: -2,
+                    bottom: -8,
+                    child: Image.asset(
+                      _sleepHeroAsset,
+                      width: 134,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    bottom: 12,
+                    right: 126,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '添加睡眠记录',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.pageTitle.copyWith(
+                            fontSize: 26,
+                            color: _sleepDark,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          '把昨晚交给记录，明天会更了解自己',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: _sleepDeep.withValues(alpha: 0.72),
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Positioned(
+                    right: 0,
+                    top: 0,
+                    child: Semantics(
+                      button: true,
+                      label: '关闭弹窗',
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: colors.card.withValues(alpha: 0.82),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: _sleepLine),
+                          ),
+                          child: const Icon(
+                            Icons.close_rounded,
+                            size: 18,
+                            color: _sleepDark,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
 
           // ── 内容区域（可滚动）──
           Flexible(
@@ -153,17 +222,22 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
                     decoration: BoxDecoration(
-                      color: colors.softPurple,
-                      borderRadius: BorderRadius.circular(AppRadius.md),
+                      color: _sleepSoft.withValues(alpha: 0.72),
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      border: Border.all(color: _sleepLine),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.calculate, color: colors.sleep),
+                        const Icon(Icons.calculate, color: _sleepDeep),
                         const SizedBox(width: AppSpacing.sm),
-                        Text(
-                          '自动计算睡眠时长: ${_formatDuration(_calculatedDuration.inMinutes)}',
-                          style: AppTextStyles.cardTitle.copyWith(
-                            color: colors.sleep,
+                        Expanded(
+                          child: Text(
+                            '自动计算睡眠时长: ${_formatDuration(_calculatedDuration.inMinutes)}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTextStyles.cardTitle.copyWith(
+                              color: _sleepDeep,
+                            ),
                           ),
                         ),
                       ],
@@ -218,7 +292,8 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
                     max: 120,
                     divisions: 24,
                     label: '$_fallAsleepMinutes 分钟',
-                    activeColor: colors.sleep,
+                    activeColor: _sleep,
+                    inactiveColor: _sleepLine.withValues(alpha: 0.74),
                     onChanged: (v) =>
                         setState(() => _fallAsleepMinutes = v.toInt()),
                   ),
@@ -235,13 +310,13 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
                             ? () => setState(() => _wakeCount--)
                             : null,
                         icon: const Icon(Icons.remove_circle_outline),
-                        color: colors.sleep,
+                        color: _sleepDeep,
                       ),
                       Text('$_wakeCount 次', style: AppTextStyles.numberMedium),
                       IconButton(
                         onPressed: () => setState(() => _wakeCount++),
                         icon: const Icon(Icons.add_circle_outline),
-                        color: colors.sleep,
+                        color: _sleepDeep,
                       ),
                     ],
                   ),
@@ -287,19 +362,54 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
                     decoration: InputDecoration(
                       hintText: '记录一下睡眠情况或梦境...',
                       filled: true,
-                      fillColor: colors.card,
+                      fillColor: colors.card.withValues(alpha: 0.78),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.md),
-                        borderSide: BorderSide(color: colors.border),
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        borderSide: BorderSide(
+                          color: _sleepLine.withValues(alpha: 0.82),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        borderSide: BorderSide(
+                          color: _sleepLine.withValues(alpha: 0.82),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.xl),
+                        borderSide: const BorderSide(color: _sleep, width: 1.3),
                       ),
                     ),
                   ),
                   const SizedBox(height: AppSpacing.xl),
 
                   // ── 保存按钮 ──
-                  PrimaryButton(
-                    text: '保存记录',
-                    icon: Icons.check,
+                  Row(
+                    children: [
+                      Opacity(
+                        opacity: 0.72,
+                        child: Image.asset(
+                          _sleepDecoAsset,
+                          width: 46,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                      const SizedBox(width: AppSpacing.sm),
+                      Expanded(
+                        child: Text(
+                          '今晚的睡眠被记录下来，明天就多一点线索。',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption.copyWith(
+                            color: _sleepDeep.withValues(alpha: 0.72),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  _SleepSaveButton(
+                    isSaving: _isSaving,
                     onTap: _isValid && !_isSaving ? _save : null,
                   ),
                 ],
@@ -331,13 +441,13 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: colors.border),
+            color: colors.card.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: _sleepLine.withValues(alpha: 0.82)),
           ),
           child: Row(
             children: [
-              Icon(Icons.calendar_today, color: colors.sleep),
+              const Icon(Icons.calendar_today, color: _sleepDeep),
               const SizedBox(width: AppSpacing.md),
               Text(
                 '${_selectedDate.year}年${_selectedDate.month}月${_selectedDate.day}日',
@@ -370,13 +480,13 @@ class _AddSleepRecordSheetState extends ConsumerState<AddSleepRecordSheet> {
         child: Container(
           padding: const EdgeInsets.all(AppSpacing.md),
           decoration: BoxDecoration(
-            color: colors.card,
-            borderRadius: BorderRadius.circular(AppRadius.md),
-            border: Border.all(color: colors.border),
+            color: colors.card.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: _sleepLine.withValues(alpha: 0.82)),
           ),
           child: Row(
             children: [
-              Icon(Icons.access_time, color: colors.sleep),
+              const Icon(Icons.access_time, color: _sleepDeep),
               const SizedBox(width: AppSpacing.md),
               Text(label, style: AppTextStyles.caption),
               const Spacer(),
@@ -486,17 +596,93 @@ class _QualityChip extends StatelessWidget {
           duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
-            color: selected ? colors.sleep.withValues(alpha: 0.1) : colors.card,
+            color: selected
+                ? _sleepSoft.withValues(alpha: 0.92)
+                : colors.card.withValues(alpha: 0.76),
             borderRadius: BorderRadius.circular(AppRadius.xxl),
-            border: Border.all(color: selected ? colors.sleep : colors.border),
+            border: Border.all(color: selected ? _sleep : _sleepLine),
           ),
           child: Text(
             label,
             style: TextStyle(
               fontSize: 13,
               fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              color: selected ? colors.sleep : colors.textSecondary,
+              color: selected ? _sleepDeep : colors.textSecondary,
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SleepSaveButton extends StatelessWidget {
+  const _SleepSaveButton({required this.isSaving, required this.onTap});
+
+  final bool isSaving;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isSaving ? null : onTap,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 190),
+        curve: Curves.easeOutCubic,
+        scale: isSaving ? 0.98 : 1,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          width: double.infinity,
+          height: 54,
+          decoration: BoxDecoration(
+            gradient: isSaving
+                ? null
+                : const LinearGradient(
+                    colors: [_sleep, _sleepDeep],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+            color: isSaving ? _sleep.withValues(alpha: 0.54) : null,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            boxShadow: isSaving
+                ? null
+                : [
+                    BoxShadow(
+                      color: _sleepDeep.withValues(alpha: 0.18),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+          ),
+          child: Center(
+            child: isSaving
+                ? const SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: Colors.white,
+                    ),
+                  )
+                : Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      const SizedBox(width: AppSpacing.xs),
+                      Text(
+                        '保存睡眠记录',
+                        style: AppTextStyles.cardTitle.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),

@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:io';
 
 import '../../app/design/design.dart';
 import '../../core/services/exp_service.dart';
+import '../fitness/utils/fitness_timer_assets.dart';
 import '../dashboard/providers/dashboard_provider.dart';
 import '../pet/providers/pet_diary_provider.dart';
 import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/widgets/common/goal_edit_sheet.dart';
-import '../../shared/widgets/common/growth_card.dart';
 import '../../shared/widgets/common/growth_confirm_dialog.dart';
 import 'widgets/settings_page_sections.dart';
 
@@ -72,7 +73,7 @@ class SettingsPage extends ConsumerWidget {
               levelNameFor: _getLevelName,
               nextLevelExpFor: _calcNextLevelExp,
               onProfileTap: () => context.push('/settings/profile'),
-              onLevelTap: (data) => _showLevelDetailSheet(context, data),
+              onLevelTap: (data) => _showLevelDetailSheet(context, ref, data),
               onAvatarTap: () => context.push('/settings/profile'),
             ),
             const SizedBox(height: 24),
@@ -468,7 +469,7 @@ class SettingsPage extends ConsumerWidget {
         key: 'daily_water_goal',
         label: '每日饮水量',
         icon: Icons.water_drop_rounded,
-        color: context.growthColors.softBlue,
+        color: context.growthColors.study,
         value: ref.read(dailyWaterGoalProvider),
         unit: 'ml',
       ),
@@ -598,7 +599,7 @@ class SettingsPage extends ConsumerWidget {
   void _showAboutDialog(BuildContext context) {
     GrowthConfirmDialog.show(
       context: context,
-      image: 'assets/images/app_icon.webp',
+      image: 'assets/images/dialogs/app_icon.webp',
       title: 'Growth OS',
       subtitle: '版本 0.1.0',
       message: 'Growth OS 是一款陪伴你持续成长的操作系统。\n\n通过数据记录、智能分析与温暖陪伴，帮你把每一天都活成进步的版本。',
@@ -612,7 +613,8 @@ class SettingsPage extends ConsumerWidget {
   // 等级详情弹窗
   // ---------------------------------------------------------------------------
 
-  void _showLevelDetailSheet(BuildContext context, DashboardData data) {
+  void _showLevelDetailSheet(BuildContext context, WidgetRef ref, DashboardData data) {
+    final avatarPath = ref.read(userAvatarPathProvider);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -621,6 +623,7 @@ class SettingsPage extends ConsumerWidget {
         currentLevel: data.currentLevel,
         totalExp: data.totalExp,
         expProgress: data.expProgress,
+        avatarPath: avatarPath,
       ),
     );
   }

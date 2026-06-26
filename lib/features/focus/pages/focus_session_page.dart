@@ -65,6 +65,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   bool _focusStartedMusic = false;
   bool _soundPanelOpen = false;
   bool _controlsVisible = false;
+  bool _locked = false;
   Timer? _hideTimer;
   late FocusAudioStateNotifier _audioNotifier;
   String? _currentSoundType;
@@ -241,6 +242,11 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
         if (mounted) setState(() => _controlsVisible = false);
       });
     }
+  }
+
+  void _toggleLock() {
+    if (!mounted) return;
+    setState(() => _locked = !_locked);
   }
 
   void _skipBreak() {
@@ -572,6 +578,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     isCycleDone: isCycleDone,
                     soundPanelOpen: _soundPanelOpen,
                     controlsVisible: _controlsVisible,
+                    locked: _locked,
                     onCancel: _showCancelDialog,
                     onPause: _pauseTimer,
                     onResume: _resumeTimer,
@@ -581,6 +588,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSoundPanelToggle: _toggleSoundPanel,
                     onSoundPanelClose: _closeSoundPanel,
                     onToggleControls: _toggleControls,
+                    onToggleLock: _toggleLock,
                   )
                 else if (isLandscape)
                   _LandscapeSession(
@@ -588,6 +596,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     isCycleDone: isCycleDone,
                     soundPanelOpen: _soundPanelOpen,
                     controlsVisible: _controlsVisible,
+                    locked: _locked,
                     onCancel: _showCancelDialog,
                     onPause: _pauseTimer,
                     onResume: _resumeTimer,
@@ -597,6 +606,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSoundPanelToggle: _toggleSoundPanel,
                     onSoundPanelClose: _closeSoundPanel,
                     onToggleControls: _toggleControls,
+                    onToggleLock: _toggleLock,
                   )
                 else
                   _PortraitSession(
@@ -604,6 +614,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     isCycleDone: isCycleDone,
                     soundPanelOpen: _soundPanelOpen,
                     controlsVisible: _controlsVisible,
+                    locked: _locked,
                     onCancel: _showCancelDialog,
                     onPause: _pauseTimer,
                     onResume: _resumeTimer,
@@ -613,6 +624,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onSoundPanelToggle: _toggleSoundPanel,
                     onSoundPanelClose: _closeSoundPanel,
                     onToggleControls: _toggleControls,
+                    onToggleLock: _toggleLock,
                   ),
               ],
             );

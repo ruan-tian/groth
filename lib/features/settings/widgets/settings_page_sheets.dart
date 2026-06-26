@@ -51,6 +51,8 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
+    final shortTerm = _goals.where((g) => g.category == '短期目标').toList();
+    final longTerm = _goals.where((g) => g.category == '长期目标').toList();
 
     return DraggableScrollableSheet(
       initialChildSize: 0.6,
@@ -65,7 +67,6 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
           ),
           child: Column(
             children: [
-              // 拖拽条
               Padding(
                 padding: const EdgeInsets.only(top: 12),
                 child: Container(
@@ -78,7 +79,6 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                 ),
               ),
               const SizedBox(height: 20),
-              // 标题
               Text(
                 '今日目标',
                 style: TextStyle(
@@ -88,16 +88,25 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
                 ),
               ),
               const SizedBox(height: 20),
-              // 目标列表
               Expanded(
-                child: ListView.builder(
+                child: ListView(
                   controller: scrollController,
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  itemCount: _goals.length,
-                  itemBuilder: (ctx, index) => _buildGoalTile(_goals[index]),
+                  children: [
+                    if (shortTerm.isNotEmpty) ...[
+                      _SectionHeader(title: '短期目标'),
+                      const SizedBox(height: 8),
+                      for (final goal in shortTerm) _buildGoalTile(goal),
+                    ],
+                    if (longTerm.isNotEmpty) ...[
+                      const SizedBox(height: 16),
+                      _SectionHeader(title: '长期目标'),
+                      const SizedBox(height: 8),
+                      for (final goal in longTerm) _buildGoalTile(goal),
+                    ],
+                  ],
                 ),
               ),
-              // 保存按钮
               Padding(
                 padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                 child: SizedBox(
@@ -132,64 +141,61 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
 
   Widget _buildGoalTile(_GoalItem goal) {
     final colors = context.growthColors;
+    // 图标背景色：使用目标模块色 12% 透明度（参考 iOS 设置页风格）
+    final iconBgColor = goal.color.withValues(alpha: 0.12);
+    // 图标颜色：使用目标模块色（不透明，清晰可辨）
+    final iconColor = goal.color;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: GrowthCard(
-        onTap: () => _showGoalEditSheet(goal),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        borderRadius: 16,
-        child: Row(
-          children: [
-            // 图标
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: goal.color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(goal.icon, color: goal.color, size: 22),
-            ),
-            const SizedBox(width: 14),
-            // 标题和数值
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: () => _showGoalEditSheet(goal),
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                // 图标容器：iOS 风格圆角方形背景 + 模块色图标
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(goal.icon, color: iconColor, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Text(
                     goal.label,
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                      fontWeight: FontWeight.w500,
                       color: colors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 3),
-                  Text(
-                    '${goal.value} ${goal.unit}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: colors.textSecondary,
-                    ),
+                ),
+                Text(
+                  '${goal.value} ${goal.unit}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: colors.textSecondary,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: colors.textHint,
+                ),
+              ],
             ),
-            // 编辑图标
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: goal.color.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(
-                Icons.edit_rounded,
-                size: 16,
-                color: goal.color,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
@@ -201,10 +207,32 @@ class _DailyGoalsSheetState extends State<_DailyGoalsSheet> {
       title: goal.label,
       currentValue: goal.value,
       unit: goal.unit,
-      color: goal.color,
       onSave: (newValue) {
         setState(() => goal.value = newValue);
       },
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Padding(
+      padding: const EdgeInsets.only(left: 4),
+      child: Text(
+        title,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: colors.textTertiary,
+          letterSpacing: 0.5,
+        ),
+      ),
     );
   }
 }
@@ -214,11 +242,13 @@ class _LevelDetailSheet extends StatelessWidget {
     required this.currentLevel,
     required this.totalExp,
     required this.expProgress,
+    required this.avatarPath,
   });
 
   final int currentLevel;
   final int totalExp;
   final int expProgress;
+  final String? avatarPath;
 
   @override
   Widget build(BuildContext context) {
@@ -244,14 +274,14 @@ class _LevelDetailSheet extends StatelessWidget {
             width: 42,
             height: 5,
             decoration: BoxDecoration(
-              color: colors.border,
+              color: colors.textTertiary.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(2.5),
             ),
           ),
-          const SizedBox(height: 20),
-          _buildCurrentLevel(context, progress, nextLevelExp),
           const SizedBox(height: 24),
-          Expanded(child: _buildLevelTiers(context)),
+          _buildCurrentLevel(context, progress, nextLevelExp, colors),
+          const SizedBox(height: 24),
+          Expanded(child: _buildLevelTiers(context, colors)),
         ],
       ),
     );
@@ -261,63 +291,55 @@ class _LevelDetailSheet extends StatelessWidget {
     BuildContext context,
     double progress,
     int nextLevelExp,
+    AppThemeColors colors,
   ) {
-    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Column(
         children: [
-          Container(
-            width: 80,
-            height: 80,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [colors.primary, colors.primaryDark],
-              ),
-              borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: colors.primary.withValues(alpha: 0.3),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Center(
-              child: Text(
-                'Lv.$currentLevel',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textOnAccent,
-                ),
-              ),
-            ),
-          ),
+          // 头像（与设置页面共享）
+          _LevelAvatar(avatarPath: avatarPath),
           const SizedBox(height: 16),
+          // 等级名称
           Text(
-            _getLevelName(currentLevel),
+            'Lv.$currentLevel · ${_getLevelName(currentLevel)}',
             style: TextStyle(
               fontSize: 22,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: colors.textPrimary,
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            'EXP $totalExp / $nextLevelExp',
-            style: TextStyle(fontSize: 14, color: colors.textSecondary),
+          const SizedBox(height: 12),
+          // EXP 进度
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'EXP $totalExp',
+                style: TextStyle(fontSize: 13, color: colors.textTertiary),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Text(
+                  '/',
+                  style: TextStyle(fontSize: 13, color: colors.textHint),
+                ),
+              ),
+              Text(
+                '$nextLevelExp',
+                style: TextStyle(fontSize: 13, color: colors.textTertiary),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
+          // 进度条
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 8,
-              backgroundColor: colors.border.withValues(alpha: 0.3),
-              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+              backgroundColor: colors.study.withValues(alpha: 0.1),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.study),
             ),
           ),
           const SizedBox(height: 8),
@@ -330,33 +352,51 @@ class _LevelDetailSheet extends StatelessWidget {
     );
   }
 
-  Widget _buildLevelTiers(BuildContext context) {
-    final colors = context.growthColors;
+  Widget _buildLevelTiers(BuildContext context, AppThemeColors colors) {
     final tiers = [
-      _LevelTier(level: 1, name: '萌新', minExp: 0, color: colors.textTertiary),
-      _LevelTier(level: 5, name: '探索者', minExp: 1600, color: colors.success),
-      _LevelTier(level: 10, name: '实践者', minExp: 8100, color: colors.study),
-      _LevelTier(level: 15, name: '进阶者', minExp: 20000, color: colors.primary),
-      _LevelTier(level: 20, name: '精英', minExp: 38000, color: colors.warning),
-      _LevelTier(level: 30, name: '大师', minExp: 85000, color: colors.journal),
-      _LevelTier(level: 50, name: '传奇', minExp: 250000, color: colors.fitness),
-      _LevelTier(level: 80, name: '神话', minExp: 640000, color: colors.sleep),
-      _LevelTier(level: 100, name: '永恒', minExp: 1000000, color: colors.accent),
+      _LevelTier(level: 1, name: '萌新', minExp: 0),
+      _LevelTier(level: 5, name: '探索者', minExp: 1600),
+      _LevelTier(level: 10, name: '实践者', minExp: 8100),
+      _LevelTier(level: 15, name: '进阶者', minExp: 20000),
+      _LevelTier(level: 20, name: '精英', minExp: 38000),
+      _LevelTier(level: 30, name: '大师', minExp: 85000),
+      _LevelTier(level: 50, name: '传奇', minExp: 250000),
+      _LevelTier(level: 80, name: '神话', minExp: 640000),
+      _LevelTier(level: 100, name: '永恒', minExp: 1000000),
     ];
 
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
-      itemCount: tiers.length,
-      itemBuilder: (context, index) {
-        final tier = tiers[index];
-        final isUnlocked = currentLevel >= tier.level;
-        final isCurrent =
-            currentLevel >= tier.level &&
-            (index == tiers.length - 1 ||
-                currentLevel < tiers[index + 1].level);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Text(
+            '等级旅程',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: colors.textSecondary,
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            itemCount: tiers.length,
+            itemBuilder: (context, index) {
+              final tier = tiers[index];
+              final isUnlocked = currentLevel >= tier.level;
+              final isCurrent =
+                  currentLevel >= tier.level &&
+                  (index == tiers.length - 1 ||
+                      currentLevel < tiers[index + 1].level);
 
-        return _buildTierItem(context, tier, isUnlocked, isCurrent);
-      },
+              return _buildTierItem(context, tier, isUnlocked, isCurrent, colors);
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -365,41 +405,45 @@ class _LevelDetailSheet extends StatelessWidget {
     _LevelTier tier,
     bool isUnlocked,
     bool isCurrent,
+    AppThemeColors colors,
   ) {
-    final colors = context.growthColors;
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: isCurrent ? tier.color.withValues(alpha: 0.1) : colors.surface,
-        borderRadius: BorderRadius.circular(16),
+        color: isCurrent
+            ? colors.study.withValues(alpha: 0.06)
+            : colors.card,
+        borderRadius: BorderRadius.circular(14),
         border: isCurrent
-            ? Border.all(color: tier.color, width: 2)
+            ? Border.all(color: colors.study.withValues(alpha: 0.3), width: 1.5)
             : Border.all(color: colors.border.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
+          // 等级标识
           Container(
-            width: 48,
-            height: 48,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
               color: isUnlocked
-                  ? tier.color.withValues(alpha: 0.15)
+                  ? colors.study.withValues(alpha: 0.1)
                   : colors.surfaceVariant,
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(12),
             ),
             child: Center(
               child: Text(
                 'Lv.${tier.level}',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
-                  color: isUnlocked ? tier.color : colors.textTertiary,
+                  color: isUnlocked ? colors.study : colors.textTertiary,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 14),
+          // 等级名称 + EXP
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -407,11 +451,9 @@ class _LevelDetailSheet extends StatelessWidget {
                 Text(
                   tier.name,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.w600,
-                    color: isUnlocked
-                        ? colors.textPrimary
-                        : colors.textTertiary,
+                    color: isUnlocked ? colors.textPrimary : colors.textTertiary,
                   ),
                 ),
                 const SizedBox(height: 2),
@@ -425,11 +467,12 @@ class _LevelDetailSheet extends StatelessWidget {
               ],
             ),
           ),
+          // 状态标识
           if (isCurrent)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: tier.color,
+                color: colors.study,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -442,9 +485,9 @@ class _LevelDetailSheet extends StatelessWidget {
               ),
             )
           else if (isUnlocked)
-            Icon(Icons.check_circle_rounded, size: 20, color: tier.color)
+            Icon(Icons.check_circle_rounded, size: 20, color: colors.study)
           else
-            Icon(Icons.lock_outline_rounded, size: 20, color: colors.textHint),
+            Icon(Icons.lock_outline_rounded, size: 18, color: colors.textHint),
         ],
       ),
     );
@@ -463,16 +506,59 @@ class _LevelDetailSheet extends StatelessWidget {
   }
 }
 
+/// 等级详情页头像（与设置页面共享）
+class _LevelAvatar extends StatelessWidget {
+  const _LevelAvatar({required this.avatarPath});
+
+  final String? avatarPath;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    final path = normalizeUserAvatarPath(avatarPath);
+
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: colors.card,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: colors.border, width: 2),
+      ),
+      child: path != null && File(path).existsSync()
+          ? ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.file(
+                File(path),
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Image.asset(
+                    FitnessTimerAssets.catAvatarDefault,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ),
+            )
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                FitnessTimerAssets.catAvatarDefault,
+                fit: BoxFit.cover,
+              ),
+            ),
+    );
+  }
+}
+
 class _LevelTier {
   const _LevelTier({
     required this.level,
     required this.name,
     required this.minExp,
-    required this.color,
   });
 
   final int level;
   final String name;
   final int minExp;
-  final Color color;
 }
