@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../models/study_mode.dart';
 
@@ -62,14 +62,12 @@ class _StudyModeSheet extends ConsumerWidget {
                   return _ModeTile(
                     mode: mode,
                     isSelected: isSelected,
-                    onTap: () {
+                    onTap: () async {
                       HapticFeedback.lightImpact();
-                      ref.read(focusStudyModeProvider.notifier).state = mode;
-                      // 持久化
-                      ref
-                          .read(settingRepositoryProvider)
-                          .setSetting('focus_study_mode', mode.name);
-                      Navigator.pop(context);
+                      await ref
+                          .read(settingsFacadeProvider)
+                          .setFocusStudyMode(mode);
+                      if (context.mounted) Navigator.pop(context);
                     },
                   );
                 },
@@ -92,7 +90,7 @@ class _ModeTile extends StatelessWidget {
 
   final StudyMode mode;
   final bool isSelected;
-  final VoidCallback onTap;
+  final Future<void> Function() onTap;
 
   @override
   Widget build(BuildContext context) {

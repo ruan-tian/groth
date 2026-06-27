@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'design/design.dart';
 import '../features/dashboard/dashboard_page.dart';
+import '../features/dashboard/pages/scenery_gallery_page.dart';
 import '../features/dashboard/pages/task_history_page.dart';
 import '../features/music/pages/music_playlist_page.dart';
 import '../features/music/pages/music_favorites_page.dart';
@@ -38,12 +39,14 @@ import '../features/settings/pages/weather_settings_page.dart';
 import '../features/ai/pages/ai_analysis_page.dart';
 import '../features/settings/pages/ai_config_page.dart';
 import '../features/study/pages/add_study_record_page.dart';
-import '../features/study/pages/knowledge_workspace_page.dart';
+import '../features/knowledge/pages/knowledge_workspace_page.dart';
 import '../features/study/pages/study_record_detail_page.dart';
 import '../features/study/pages/subject_distribution_page.dart';
 import '../features/study/pages/recent_records_page.dart';
 import '../features/health/pages/all_diet_records_page.dart';
+import '../features/health/pages/diet_record_detail_page.dart';
 import '../features/health/pages/sleep_history_page.dart';
+import '../features/health/pages/sleep_record_detail_page.dart';
 import '../shared/widgets/common/advanced_bottom_nav.dart';
 
 // Route paths
@@ -188,6 +191,15 @@ final goRouter = GoRouter(
                     context,
                     state,
                     const MusicFavoritesPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'scenery',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const SceneryGalleryPage(),
                   ),
                 ),
               ],
@@ -562,6 +574,24 @@ final goRouter = GoRouter(
                     const AllDietRecordsPage(),
                   ),
                 ),
+                GoRoute(
+                  path: 'diet/detail/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
+                    return buildShellSlideTransition(
+                      context,
+                      state,
+                      DietRecordDetailPage(recordId: id),
+                    );
+                  },
+                ),
                 // Sleep
                 GoRoute(
                   path: 'sleep/add',
@@ -587,6 +617,24 @@ final goRouter = GoRouter(
                     state,
                     const SleepHistoryPage(),
                   ),
+                ),
+                GoRoute(
+                  path: 'sleep/detail/:id',
+                  pageBuilder: (context, state) {
+                    final id = int.tryParse(state.pathParameters['id'] ?? '');
+                    if (id == null) {
+                      return buildShellSlideTransition(
+                        context,
+                        state,
+                        const SizedBox(),
+                      );
+                    }
+                    return buildShellSlideTransition(
+                      context,
+                      state,
+                      SleepRecordDetailPage(recordId: id),
+                    );
+                  },
                 ),
                 // AI analysis
                 GoRoute(

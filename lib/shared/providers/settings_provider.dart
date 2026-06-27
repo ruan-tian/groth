@@ -1,10 +1,15 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../features/focus/models/study_mode.dart';
 import 'repository_providers.dart';
+
+// Re-export focusStudyModeProvider for backward compatibility.
+// New code should import from features/focus/providers/focus_study_mode_providers.dart.
+export '../../features/focus/providers/focus_study_mode_providers.dart'
+    show focusStudyModeProvider, focusStudyModeInitProvider;
 
 // =============================================================================
 // 设置 Provider
@@ -26,6 +31,22 @@ final settingProvider = FutureProvider.family<String?, String>((
 ) async {
   final repo = ref.watch(settingRepositoryProvider);
   return repo.getSetting(key);
+});
+
+final aiConnectionStatusProvider = FutureProvider<bool>((ref) async {
+  final repo = ref.watch(aiConfigRepositoryProvider);
+  final config = await repo.getEnabledAiConfig();
+  return config != null;
+});
+
+final lastBackupTimeProvider = FutureProvider<DateTime?>((ref) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final value = await repo.getSetting('last_backup_time');
+  if (value == null) return null;
+
+  final timestamp = int.tryParse(value);
+  if (timestamp == null) return null;
+  return DateTime.fromMillisecondsSinceEpoch(timestamp);
 });
 
 /// 主题模式 StateProvider
@@ -426,13 +447,6 @@ final dashboardCardIdsInitProvider = FutureProvider<void>((ref) async {
   }
 });
 
-/// 保存首页卡片配置到数据库
-Future<void> saveDashboardCardIds(WidgetRef ref, List<String> ids) async {
-  ref.read(dashboardCardIdsProvider.notifier).state = ids;
-  final repo = ref.read(settingRepositoryProvider);
-  await repo.setSetting('dashboard_cards', jsonEncode(ids));
-}
-
 // =============================================================================
 // 用户资料 Provider
 // =============================================================================
@@ -445,6 +459,71 @@ final userNicknameProvider = StateProvider<String>((ref) {
 /// 用户头像路径 StateProvider
 final userAvatarPathProvider = StateProvider<String?>((ref) {
   return null;
+});
+
+String? normalizeUserAvatarPath(String? value) {
+  final path = value?.trim();
+  if (path == null || path.isEmpty) return null;
+  return File(path).existsSync() ? path : null;
+}
+
+class UserProfileSnapshot {
+  const UserProfileSnapshot({
+    required this.nickname,
+    required this.birthday,
+    required this.gender,
+    required this.heightText,
+    required this.avatarPath,
+  });
+
+  final String nickname;
+  final DateTime birthday;
+  final String gender;
+  final String heightText;
+  final String? avatarPath;
+
+  String get cacheKey {
+    return [
+      nickname,
+      birthday.toIso8601String(),
+      gender,
+      heightText,
+      avatarPath ?? '',
+    ].join('|');
+  }
+}
+
+final userProfileSnapshotProvider = FutureProvider<UserProfileSnapshot>((
+  ref,
+) async {
+  final repo = ref.watch(settingRepositoryProvider);
+  final nickname = await repo.getSetting('nickname');
+  final birthday = await repo.getSetting('birthday');
+  final gender = await repo.getSetting('gender');
+  final height = await repo.getSetting('height');
+  final avatarPath = normalizeUserAvatarPath(
+    await repo.getSetting('avatar_path'),
+  );
+
+  final resolvedNickname = (nickname == null || nickname.isEmpty)
+      ? '甜甜'
+      : nickname;
+  final resolvedBirthday = birthday == null
+      ? null
+      : DateTime.tryParse(birthday);
+  final resolvedHeight = double.tryParse(height ?? '');
+
+  ref.read(userNicknameProvider.notifier).state = resolvedNickname;
+  ref.read(userAvatarPathProvider.notifier).state = avatarPath;
+  ref.read(userHeightProvider.notifier).state = resolvedHeight;
+
+  return UserProfileSnapshot(
+    nickname: resolvedNickname,
+    birthday: resolvedBirthday ?? DateTime(2000, 6, 15),
+    gender: (gender == null || gender.isEmpty) ? 'male' : gender,
+    heightText: height ?? '',
+    avatarPath: avatarPath,
+  );
 });
 
 /// 从数据库初始化用户昵称的 Provider
@@ -460,9 +539,9 @@ final userNicknameInitProvider = FutureProvider<void>((ref) async {
 final userAvatarInitProvider = FutureProvider<void>((ref) async {
   final repo = ref.watch(settingRepositoryProvider);
   final value = await repo.getSetting('avatar_path');
-  if (value != null && value.isNotEmpty) {
-    ref.read(userAvatarPathProvider.notifier).state = value;
-  }
+  ref.read(userAvatarPathProvider.notifier).state = normalizeUserAvatarPath(
+    value,
+  );
 });
 
 /// 用户身高 StateProvider (cm)
@@ -533,19 +612,5 @@ final journalUploadInitProvider = FutureProvider<void>((ref) async {
   final value = await repo.getSetting('journal_upload');
   if (value != null) {
     ref.read(journalUploadProvider.notifier).state = value == 'true';
-  }
-});
-
-/// 番茄钟学习模式（默认高中生）
-final focusStudyModeProvider = StateProvider<StudyMode>(
-  (ref) => StudyMode.highSchool,
-);
-
-/// 从数据库初始化番茄钟学习模式
-final focusStudyModeInitProvider = FutureProvider<void>((ref) async {
-  final repo = ref.watch(settingRepositoryProvider);
-  final value = await repo.getSetting('focus_study_mode');
-  if (value != null) {
-    ref.read(focusStudyModeProvider.notifier).state = StudyMode.fromName(value);
   }
 });

@@ -5,18 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/exp_repository.dart';
-import 'package:growth_os/core/repositories/pet_repository.dart';
+import 'package:growth_os/features/pet/repositories/exp_repository.dart';
+import 'package:growth_os/features/pet/repositories/pet_repository.dart';
 import 'package:growth_os/core/services/statistics_service.dart';
 import 'package:growth_os/features/pet/services/pet_orchestrator.dart';
 import 'package:growth_os/features/plan/widgets/plan_module_visuals.dart';
 import 'package:growth_os/features/study/study_page.dart';
-import 'package:growth_os/shared/providers/pet_ai_result_provider.dart';
-import 'package:growth_os/shared/providers/pet_orchestrator_provider.dart';
-import 'package:growth_os/shared/providers/pet_projection_provider.dart';
-import 'package:growth_os/shared/providers/knowledge_v3_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_ai_result_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_orchestrator_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_projection_provider.dart';
+import 'package:growth_os/features/knowledge/providers/knowledge_v3_provider.dart';
 import 'package:growth_os/shared/providers/settings_provider.dart';
-import 'package:growth_os/shared/providers/study_provider.dart';
+import 'package:growth_os/features/study/providers/study_provider.dart';
 
 class _TestPetOrchestrator extends PetOrchestrator {
   static AppDatabase? _sharedDb;
@@ -142,7 +142,7 @@ List<Override> _studyPageOverrides({
     ),
     latestPetAnalysisProvider('study').overrideWith((_) async => null),
     dailyGoalsProvider.overrideWith(
-      (_) => const [DailyGoal(name: '瀛︿範', target: 120, unit: '鍒嗛挓')],
+      (_) => const [DailyGoal(name: '学习', target: 120, unit: '分钟')],
     ),
     todayStudyMinutesProvider.overrideWith(
       (_) => todayMinutes?.call() ?? Future.value(0),
@@ -186,7 +186,6 @@ void main() {
 
       expect(find.byType(StudyPage), findsOneWidget);
       expect(find.byType(PlanModuleVisualHeader), findsOneWidget);
-      expect(find.byType(PlanModuleActionImageCard), findsOneWidget);
       expect(find.byType(FloatingActionButton), findsOneWidget);
       expect(find.text('知识空间'), findsOneWidget);
       expect(find.text('导入资料，让甜甜帮你生成知识卡'), findsOneWidget);

@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../core/utils/chart_scale_utils.dart';
-import '../../../shared/providers/study_provider.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../models/study_data.dart';
+import '../../study/providers/study_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 
 part '../widgets/study_record_detail_widgets.dart';
-part '../widgets/study_record_detail_chart.dart';
 
 /// 学习记录详情页
 ///
@@ -22,7 +19,7 @@ class StudyRecordDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final recordAsync = ref.watch(_studyRecordByIdProvider(recordId));
+    final recordAsync = ref.watch(studyRecordByIdProvider(recordId));
 
     return Scaffold(
       backgroundColor: context.growthColors.background,
@@ -80,15 +77,6 @@ class StudyRecordDetailPage extends ConsumerWidget {
 // =============================================================================
 // 根据 ID 查询单条记录的 Provider
 // =============================================================================
-
-final _studyRecordByIdProvider = FutureProvider.family<StudyRecord, int>((
-  ref,
-  id,
-) async {
-  final db = ref.watch(appDatabaseProvider);
-  final query = db.select(db.studyRecords)..where((t) => t.id.equals(id));
-  return query.getSingle();
-});
 
 // =============================================================================
 // 详情内容

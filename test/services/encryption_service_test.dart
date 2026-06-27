@@ -1,10 +1,10 @@
-import 'dart:io';
+﻿import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/ai_config_repository.dart';
-import 'package:growth_os/core/repositories/api_config_repository.dart';
+import 'package:growth_os/features/ai/repositories/ai_config_repository.dart';
+import 'package:growth_os/features/ai/repositories/api_config_repository.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
 
 void main() {
@@ -96,3 +96,4 @@ void main() {
     expect(raw.apiKey, startsWith('v2:'));
   });
 }
+

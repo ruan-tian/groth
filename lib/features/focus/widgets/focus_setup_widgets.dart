@@ -16,6 +16,7 @@ class _PortraitFocusSetup extends ConsumerWidget {
     required this.subjectController,
     required this.customController,
     required this.onStart,
+    required this.onHistory,
   });
 
   final FocusSetupState setup;
@@ -25,16 +26,17 @@ class _PortraitFocusSetup extends ConsumerWidget {
   final TextEditingController subjectController;
   final TextEditingController customController;
   final VoidCallback onStart;
+  final VoidCallback onHistory;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(18, 10, 18, 28),
       children: [
-        _TopBar(compact: false),
-        const SizedBox(height: 14),
+        _TopBar(compact: false, onHistory: onHistory),
+        const SizedBox(height: 12),
         _TodayFocusCard(todayMinutes: todayMinutes, compact: false),
-        const SizedBox(height: 22),
+        const SizedBox(height: 18),
         _SetupForm(
           setup: setup,
           titleController: titleController,
@@ -42,9 +44,9 @@ class _PortraitFocusSetup extends ConsumerWidget {
           customController: customController,
           compact: false,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 18),
         _StartButton(onTap: onStart),
-        const SizedBox(height: 24),
+        const SizedBox(height: 22),
         _RecentFocusList(recentSessions: recentSessions, compact: false),
       ],
     );
@@ -64,6 +66,7 @@ class _LandscapeFocusSetup extends ConsumerWidget {
     required this.subjectController,
     required this.customController,
     required this.onStart,
+    required this.onHistory,
   });
 
   final FocusSetupState setup;
@@ -73,6 +76,7 @@ class _LandscapeFocusSetup extends ConsumerWidget {
   final TextEditingController subjectController;
   final TextEditingController customController;
   final VoidCallback onStart;
+  final VoidCallback onHistory;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,7 +87,7 @@ class _LandscapeFocusSetup extends ConsumerWidget {
           child: ListView(
             padding: const EdgeInsets.fromLTRB(28, 22, 18, 28),
             children: [
-              const _LandscapeHeader(),
+              _LandscapeHeader(onHistory: onHistory),
               const SizedBox(height: 18),
               _TodayFocusCard(todayMinutes: todayMinutes, compact: true),
               const SizedBox(height: 16),
@@ -539,34 +543,61 @@ class _StartButton extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(32),
-          child: Container(
-            height: 64,
+          borderRadius: BorderRadius.circular(28),
+          child: Ink(
+            height: 58,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
+              color: colors.card.withValues(alpha: 0.92),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: colors.focus.withValues(alpha: 0.24)),
               gradient: LinearGradient(
-                colors: [colors.focus, colors.primaryDark],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  colors.card.withValues(alpha: 0.96),
+                  colors.focus.withValues(alpha: 0.13),
+                ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: colors.focus.withValues(alpha: 0.28),
-                  blurRadius: 22,
-                  offset: const Offset(0, 12),
+                  color: colors.focus.withValues(alpha: 0.12),
+                  blurRadius: 16,
+                  offset: const Offset(0, 8),
                 ),
               ],
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(FocusAssets.iconPomodoro, width: 34, height: 34),
-                const SizedBox(width: 12),
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    color: colors.focus.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Image.asset(
+                      FocusAssets.iconPomodoro,
+                      width: 25,
+                      height: 25,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
                 Text(
                   '开始专注',
                   style: TextStyle(
-                    color: colors.textOnAccent,
-                    fontSize: 24,
+                    color: colors.focus,
+                    fontSize: 20,
                     fontWeight: FontWeight.w900,
                   ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_forward_rounded,
+                  color: colors.focus.withValues(alpha: 0.78),
+                  size: 20,
                 ),
               ],
             ),
@@ -582,10 +613,15 @@ class _StartButton extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _RecentFocusList extends StatelessWidget {
-  const _RecentFocusList({required this.recentSessions, required this.compact});
+  const _RecentFocusList({
+    required this.recentSessions,
+    required this.compact,
+    this.showTitle = true,
+  });
 
   final AsyncValue<List<FocusSession>> recentSessions;
   final bool compact;
+  final bool showTitle;
 
   @override
   Widget build(BuildContext context) {
@@ -595,11 +631,13 @@ class _RecentFocusList extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _SectionTitle(
-              icon: Icons.receipt_long_rounded,
-              title: compact ? '最近专注记录' : '最近专注记录',
-            ),
-            const SizedBox(height: 14),
+            if (showTitle) ...[
+              const _SectionTitle(
+                icon: Icons.receipt_long_rounded,
+                title: '最近专注记录',
+              ),
+              const SizedBox(height: 14),
+            ],
             if (sessions.isEmpty)
               Container(
                 width: double.infinity,
@@ -635,6 +673,111 @@ class _RecentFocusList extends StatelessWidget {
       },
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, _) => const ErrorRetryWidget(),
+    );
+  }
+}
+
+class _FocusHistorySheet extends ConsumerWidget {
+  const _FocusHistorySheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final colors = context.growthColors;
+    final recentSessions = ref.watch(recentFocusSessionsProvider);
+    final height = MediaQuery.of(context).size.height;
+
+    return SafeArea(
+      top: false,
+      child: Container(
+        constraints: BoxConstraints(maxHeight: height * 0.76),
+        decoration: BoxDecoration(
+          color: colors.paper,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+          boxShadow: [
+            BoxShadow(
+              color: colors.shadow.withValues(alpha: 0.12),
+              blurRadius: 28,
+              offset: const Offset(0, -8),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 10),
+            Container(
+              width: 42,
+              height: 4,
+              decoration: BoxDecoration(
+                color: colors.border,
+                borderRadius: BorderRadius.circular(999),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 10),
+              child: Row(
+                children: [
+                  Container(
+                    width: 38,
+                    height: 38,
+                    decoration: BoxDecoration(
+                      color: colors.focus.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      Icons.history_rounded,
+                      color: colors.focus,
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '过往专注记录',
+                          style: TextStyle(
+                            color: colors.textPrimary,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '最近 10 次专注会显示在这里',
+                          style: TextStyle(
+                            color: colors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(18, 4, 18, 22),
+                child: _RecentFocusList(
+                  recentSessions: recentSessions,
+                  compact: false,
+                  showTitle: false,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

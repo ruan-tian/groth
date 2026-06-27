@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../shared/providers/task_provider.dart';
+import '../models/dashboard_data.dart';
+import '../../plan/providers/task_provider.dart';
 import '../../../shared/widgets/date_grouped_list.dart';
 
 /// 任务历史页面

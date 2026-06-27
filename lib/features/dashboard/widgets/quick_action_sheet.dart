@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../features/health/pages/add_sleep_record_sheet.dart';
+import '../providers/dashboard_quick_actions.dart';
 
 /// 快速开始菜单
 ///
@@ -13,7 +14,7 @@ import '../../../features/health/pages/add_sleep_record_sheet.dart';
 /// - 喝水打卡（喝水页面）
 /// - 记录睡眠（睡眠页面）
 /// - 开始日记（写日记页面）
-class QuickActionSheet extends StatelessWidget {
+class QuickActionSheet extends ConsumerWidget {
   const QuickActionSheet({super.key});
 
   static Future<void> show(BuildContext context) {
@@ -27,7 +28,7 @@ class QuickActionSheet extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
 
     return Container(
@@ -138,16 +139,8 @@ class QuickActionSheet extends StatelessWidget {
               softColor: colors.softPurple,
               onTap: () {
                 Navigator.pop(context);
-                showModalBottomSheet(
-                  context: context,
-                  isScrollControlled: true,
-                  backgroundColor: Colors.transparent,
-                  builder: (ctx) => AddSleepRecordSheet(
-                    onSave: () {
-                      // 保存后的回调，可以刷新数据
-                    },
-                  ),
-                );
+                final actions = ref.read(dashboardQuickActionsProvider);
+                actions.showAddSleepRecord(context);
               },
             ),
             _QuickActionTile(

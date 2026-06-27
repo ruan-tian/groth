@@ -2,8 +2,8 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
-import 'package:growth_os/features/ai/services/knowledge_context_service.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_source_repository.dart';
+import 'package:growth_os/features/knowledge/services/knowledge_context_service.dart';
 
 void main() {
   setUpAll(() {

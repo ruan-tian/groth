@@ -5,8 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_v3_repository.dart';
-import 'package:growth_os/features/study/pages/knowledge_workspace_page.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
+import 'package:growth_os/features/knowledge/pages/knowledge_workspace_page.dart';
+import 'package:growth_os/features/study/widgets/tiantian_chat_sheet.dart';
 import 'package:growth_os/shared/providers/database_provider.dart';
 
 Widget _buildPage(
@@ -102,9 +103,24 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('你好，我是甜甜'), findsOneWidget);
-    expect(find.text('搜索或问甜甜这个空间里的资料...'), findsOneWidget);
+    expect(find.byType(TextField), findsOneWidget);
     expect(find.text('问甜甜'), findsWidgets);
     expect(find.text('先放进一份学习资料'), findsOneWidget);
+  });
+
+  testWidgets('space card actions use the system bottom action menu', (
+    tester,
+  ) async {
+    await _pump(tester, db);
+
+    await tester.tap(find.byTooltip('空间操作').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PopupMenuButton), findsNothing);
+    expect(find.text('默认知识空间'), findsWidgets);
+    expect(find.text('重命名'), findsOneWidget);
+    expect(find.text('归档'), findsOneWidget);
+    expect(find.text('取消'), findsOneWidget);
   });
 
   testWidgets('creating a space from selector enters it immediately', (
@@ -313,29 +329,37 @@ void main() {
     expect(find.text('很熟练'), findsOneWidget);
   });
 
-  testWidgets('ask Tiantian opens composer and requires references', (
-    tester,
-  ) async {
-    final space = await repo.ensureDefaultSpace();
-    await repo.importMaterial(
-      spaceId: space.id,
-      title: '操作系统笔记',
-      content: '进程是资源分配的基本单位，线程是 CPU 调度的基本单位。',
-    );
+  testWidgets(
+    'ask Tiantian opens the space chat without requiring references',
+    (tester) async {
+      final space = await repo.ensureDefaultSpace();
+      await repo.importMaterial(
+        spaceId: space.id,
+        title: '操作系统笔记',
+        content: '进程是资源分配的基本单位，线程是 CPU 调度的基本单位。',
+      );
 
-    await _pump(tester, db, location: '/plan/study/knowledge/space');
+      await _pump(tester, db, location: '/plan/study/knowledge/space');
 
-    await tester.tap(find.text('问甜甜').last);
-    await tester.pumpAndSettle();
+      await tester.tap(find.text('问甜甜').last);
+      await tester.pumpAndSettle();
 
-    expect(find.text('问甜甜'), findsWidgets);
-    expect(find.text('你想问什么？'), findsOneWidget);
-    expect(find.text('参考资料'), findsOneWidget);
-    expect(find.text('操作系统笔记'), findsWidgets);
-    expect(find.text('确认并提问'), findsOneWidget);
-  });
+      expect(find.byType(TiantianChatSheet), findsOneWidget);
+      expect(find.text('我现在还没有引用空间资料哦～'), findsOneWidget);
+      expect(find.textContaining('你可以直接问我'), findsOneWidget);
+      expect(find.text('你想问什么？'), findsNothing);
+      expect(find.text('确认并提问'), findsNothing);
 
-  testWidgets('submitting a question in the ask box opens Tiantian composer', (
+      await tester.tap(find.byIcon(Icons.library_books_rounded).last);
+      await tester.pumpAndSettle();
+
+      expect(find.text('选择参考资料'), findsOneWidget);
+      expect(find.text('操作系统笔记'), findsWidgets);
+      expect(find.text('确认'), findsOneWidget);
+    },
+  );
+
+  testWidgets('submitting a question in the ask box opens the space chat', (
     tester,
   ) async {
     final space = await repo.ensureDefaultSpace();
@@ -351,10 +375,25 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.search);
     await tester.pumpAndSettle();
 
-    expect(find.text('问甜甜'), findsWidgets);
-    expect(find.text('你想问什么？'), findsOneWidget);
-    expect(find.text('行政法笔记'), findsWidgets);
-    expect(find.text('确认并提问'), findsOneWidget);
+    expect(find.byType(TiantianChatSheet), findsOneWidget);
+    expect(find.text('你想问什么？'), findsNothing);
+    expect(find.text('确认并提问'), findsNothing);
+    expect(tester.takeException(), isNull);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('ask Tiantian opens for an empty space', (tester) async {
+    await repo.ensureDefaultSpace();
+
+    await _pump(tester, db, location: '/plan/study/knowledge/space');
+
+    await tester.tap(find.text('问甜甜').last);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(TiantianChatSheet), findsOneWidget);
+    expect(find.text('我现在还没有引用空间资料哦～'), findsOneWidget);
+    expect(find.widgetWithText(TextField, '问甜甜任何问题...'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('workspace search result opens material detail', (tester) async {
@@ -462,8 +501,13 @@ void main() {
     );
 
     await _pump(tester, db, location: '/plan/study/knowledge/space');
+    for (var i = 0; i < 10; i++) {
+      await tester.pump(const Duration(milliseconds: 200));
+    }
 
-    expect(find.text('生成知识卡'), findsWidgets);
+    // Verify workspace loaded with quick actions section
+    expect(find.text('你好，我是甜甜'), findsOneWidget);
+    // '总结资料' is always shown in quick actions when materials exist
     expect(find.text('总结资料'), findsOneWidget);
   });
 
@@ -643,6 +687,50 @@ void main() {
     final card = await repo.getCard(cardId);
     expect(card?.isArchived, isFalse);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('library item actions use the system bottom action menu', (
+    tester,
+  ) async {
+    final space = await repo.ensureDefaultSpace();
+    await repo.importMaterial(
+      spaceId: space.id,
+      title: '行政法资料',
+      content: '行政处罚追诉时效通常从违法行为发生之日起计算。',
+    );
+    await repo.createCard(
+      spaceId: space.id,
+      question: '行政处罚追诉时效的一般起算点是什么？',
+      answer: '通常从违法行为发生之日起计算。',
+    );
+
+    await _pump(tester, db, location: '/plan/study/knowledge/space');
+    await tester.tap(find.byTooltip('知识库'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('资料操作').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PopupMenuButton), findsNothing);
+    expect(find.text('查看'), findsOneWidget);
+    expect(find.text('续编'), findsOneWidget);
+    expect(find.text('编辑'), findsOneWidget);
+    expect(find.text('删除'), findsOneWidget);
+    expect(find.text('下移'), findsNothing);
+
+    await tester.tap(find.text('取消'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('知识卡'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('知识卡操作').first);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(PopupMenuButton), findsNothing);
+    expect(find.text('知识卡操作'), findsWidgets);
+    expect(find.text('查看'), findsOneWidget);
+    expect(find.text('编辑'), findsOneWidget);
+    expect(find.text('删除'), findsOneWidget);
+    expect(find.text('下移'), findsNothing);
   });
 
   testWidgets('library card tab offers generation instead of adding material', (

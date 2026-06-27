@@ -151,28 +151,10 @@ class ModuleMetricChip {
 
 BoxDecoration _moduleCardDecoration(Color color, BuildContext context) {
   return BoxDecoration(
-    gradient: LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-      colors: [
-        context.growthColors.card.withValues(alpha: 0.98),
-        color.withValues(alpha: 0.032),
-      ],
-    ),
+    color: context.growthColors.card,
     borderRadius: BorderRadius.circular(AppRadius.xxxl),
     border: Border.all(color: color.withValues(alpha: 0.12)),
-    boxShadow: [
-      BoxShadow(
-        color: color.withValues(alpha: 0.07),
-        blurRadius: 24,
-        offset: const Offset(0, 10),
-      ),
-      BoxShadow(
-        color: context.growthColors.shadow.withValues(alpha: 0.25),
-        blurRadius: 18,
-        offset: const Offset(0, 7),
-      ),
-    ],
+    boxShadow: AppShadows.hero(color),
   );
 }
 
@@ -189,6 +171,7 @@ class ModuleHeroCard extends StatelessWidget {
     this.metrics = const [],
     this.onTargetTap,
     this.onTap,
+    this.compact = false,
   });
 
   final IconData icon;
@@ -201,16 +184,31 @@ class ModuleHeroCard extends StatelessWidget {
   final List<ModuleMetricChip> metrics;
   final VoidCallback? onTargetTap;
   final VoidCallback? onTap;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final cardPadding = compact
+        ? const EdgeInsets.fromLTRB(14, 14, 14, 12)
+        : const EdgeInsets.fromLTRB(18, 18, 18, 16);
+    final iconBoxSize = compact ? 38.0 : 44.0;
+    final iconSize = compact ? 20.0 : 23.0;
+    final titleSize = compact ? 15.0 : 16.0;
+    final numberSize = compact ? 26.0 : 30.0;
+    final sectionGap = compact ? 10.0 : AppSpacing.md;
+    final metricTopGap = compact ? 12.0 : AppSpacing.lg;
+    final metricIconSize = compact ? 16.0 : 18.0;
+    final metricValueSize = compact ? 13.5 : 15.0;
+    final metricLabelSize = compact ? 10.0 : 11.0;
+    final progressHeight = compact ? 5.0 : 7.0;
+
     return Semantics(
       button: onTap != null,
       label: title,
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+          padding: cardPadding,
           decoration: _moduleCardDecoration(color, context),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,8 +216,8 @@ class ModuleHeroCard extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    width: 44,
-                    height: 44,
+                    width: iconBoxSize,
+                    height: iconBoxSize,
                     decoration: BoxDecoration(
                       color: context.growthColors.card.withValues(alpha: 0.92),
                       borderRadius: BorderRadius.circular(AppRadius.mlg),
@@ -231,7 +229,7 @@ class ModuleHeroCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(icon, color: color, size: 23),
+                    child: Icon(icon, color: color, size: iconSize),
                   ),
                   const SizedBox(width: AppSpacing.md),
                   Expanded(
@@ -239,7 +237,9 @@ class ModuleHeroCard extends StatelessWidget {
                       title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.cardTitle.copyWith(fontSize: 16),
+                      style: AppTextStyles.cardTitle.copyWith(
+                        fontSize: titleSize,
+                      ),
                     ),
                   ),
                   if (onTargetTap != null)
@@ -270,26 +270,26 @@ class ModuleHeroCard extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: AppSpacing.md),
+              SizedBox(height: sectionGap),
               Text(
                 primaryValue,
                 style: AppTextStyles.numberLarge.copyWith(
                   color: color,
-                  fontSize: 30,
+                  fontSize: numberSize,
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: compact ? 2 : 4),
               Text(primaryLabel, style: AppTextStyles.caption),
               if (progress != null || targetLabel != null) ...[
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: sectionGap),
                 if (progress != null)
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
+                    padding: EdgeInsets.only(bottom: compact ? 4 : 6),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(999),
                       child: LinearProgressIndicator(
                         value: progress!.clamp(0.0, 1.0),
-                        minHeight: 7,
+                        minHeight: progressHeight,
                         backgroundColor: color.withValues(alpha: 0.10),
                         valueColor: AlwaysStoppedAnimation<Color>(color),
                       ),
@@ -320,9 +320,9 @@ class ModuleHeroCard extends StatelessWidget {
                   ),
               ],
               if (metrics.isNotEmpty) ...[
-                const SizedBox(height: AppSpacing.lg),
+                SizedBox(height: metricTopGap),
                 Container(height: 1, color: color.withValues(alpha: 0.10)),
-                const SizedBox(height: AppSpacing.md),
+                SizedBox(height: compact ? 10 : AppSpacing.md),
                 Row(
                   children: metrics.map((m) {
                     return Expanded(
@@ -330,27 +330,27 @@ class ModuleHeroCard extends StatelessWidget {
                         children: [
                           Icon(
                             m.icon,
-                            size: 18,
+                            size: metricIconSize,
                             color: color.withValues(alpha: 0.82),
                           ),
-                          const SizedBox(height: 4),
+                          SizedBox(height: compact ? 3 : 4),
                           Text(
                             m.value,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: metricValueSize,
                               fontWeight: FontWeight.w800,
                               color: context.growthColors.textPrimary,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          SizedBox(height: compact ? 1 : 2),
                           Text(
                             m.label,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: metricLabelSize,
                               color: context.growthColors.textSecondary,
                             ),
                           ),
@@ -421,7 +421,7 @@ class ModuleRecordsCard extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: AppTextStyles.sectionTitle.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),

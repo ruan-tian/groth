@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
@@ -5,8 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/repositories/setting_repository.dart';
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/services/settings_write_queue.dart';
 import '../../../core/domain/pet/life_session.dart';
 import '../../../core/utils/pet_image_messages.dart';
+
+typedef LifeSessionSettingWriter =
+    Future<void> Function(String key, String value);
 
 /// LifeSession 管理器
 ///
@@ -20,11 +25,14 @@ class LifeSessionManager {
   LifeSessionManager({
     required SettingRepository settingRepository,
     required bool aiLifeMessageEnabled,
+    LifeSessionSettingWriter? settingWriter,
   }) : _settingRepository = settingRepository,
-       _aiLifeMessageEnabled = aiLifeMessageEnabled;
+       _aiLifeMessageEnabled = aiLifeMessageEnabled,
+       _settingWriter = settingWriter ?? settingRepository.setSetting;
 
   final SettingRepository _settingRepository;
   final bool _aiLifeMessageEnabled;
+  final LifeSessionSettingWriter _settingWriter;
   static const _storageKey = 'pet_life_session';
 
   LifeSession? _current;
@@ -157,8 +165,7 @@ class LifeSessionManager {
   /// 保存到存储
   Future<void> _saveToStorage(LifeSession session) async {
     try {
-      final repo = _settingRepository;
-      await repo.setSetting(_storageKey, jsonEncode(session.toJson()));
+      await _settingWriter(_storageKey, jsonEncode(session.toJson()));
     } catch (_) {
       // 保存失败不影响显示
     }
@@ -170,9 +177,16 @@ final petAiLifeMessageEnabledProvider = StateProvider<bool>((ref) => false);
 
 /// LifeSession 管理器 Provider
 final lifeSessionManagerProvider = Provider<LifeSessionManager>((ref) {
+  final settingsWriter = SettingsWriteQueue(
+    write: ref.read(settingRepositoryProvider).setSetting,
+  );
+  ref.onDispose(() {
+    unawaited(settingsWriter.dispose());
+  });
   return LifeSessionManager(
     settingRepository: ref.read(settingRepositoryProvider),
     aiLifeMessageEnabled: ref.read(petAiLifeMessageEnabledProvider),
+    settingWriter: settingsWriter.writeNow,
   );
 });
 

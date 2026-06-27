@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
-import '../../shared/providers/focus_provider.dart';
+import 'providers/focus_provider.dart';
 import '../../shared/providers/settings_provider.dart';
 import 'models/study_mode.dart';
 import 'utils/focus_assets.dart';
@@ -66,7 +66,8 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                   titleController: _titleController,
                   subjectController: _subjectController,
                   customController: _customController,
-                  onStart: () => _startFocus(setup),
+                  onStart: _startFocus,
+                  onHistory: _showFocusHistory,
                 );
               }
               return _PortraitFocusSetup(
@@ -76,7 +77,8 @@ class _FocusPageState extends ConsumerState<FocusPage> {
                 titleController: _titleController,
                 subjectController: _subjectController,
                 customController: _customController,
-                onStart: () => _startFocus(setup),
+                onStart: _startFocus,
+                onHistory: _showFocusHistory,
               );
             },
           ),
@@ -85,7 +87,8 @@ class _FocusPageState extends ConsumerState<FocusPage> {
     );
   }
 
-  void _startFocus(FocusSetupState setup) {
+  void _startFocus() {
+    final setup = ref.read(focusSetupProvider);
     final duration = setup.type == 'custom'
         ? (int.tryParse(_customController.text) ?? 30)
         : setup.durationMinutes;
@@ -106,7 +109,16 @@ class _FocusPageState extends ConsumerState<FocusPage> {
       '&rounds=${setup.totalRounds}'
       '&title=${Uri.encodeComponent(title)}'
       '&subject=${Uri.encodeComponent(subject)}'
-      '${setup.soundType != null ? "&sound=${setup.soundType}" : ""}',
+      '${setup.soundType != null ? "&sound=${Uri.encodeComponent(setup.soundType!)}" : ""}',
+    );
+  }
+
+  void _showFocusHistory() {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => const _FocusHistorySheet(),
     );
   }
 }

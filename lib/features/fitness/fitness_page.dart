@@ -1,19 +1,16 @@
-import 'dart:convert';
-
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
+import '../../core/constants/record_icon_assets.dart';
 import '../../core/constants/fitness_constants.dart';
 import '../../core/database/app_database.dart';
-import '../../core/utils/chart_scale_utils.dart';
 import '../../core/utils/date_utils.dart';
-import '../../shared/providers/dashboard_provider.dart'
-    hide fitnessRepositoryProvider, settingRepositoryProvider;
-import '../../shared/providers/fitness_provider.dart';
 import '../../shared/providers/repository_providers.dart';
+import 'providers/fitness_dashboard_facade.dart';
+import 'providers/fitness_provider.dart';
+import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
 import '../../shared/widgets/common/common_widgets.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
@@ -51,7 +48,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     final weeklyGoal = ref.watch(weeklyFitnessGoalProvider);
 
     return Scaffold(
-      backgroundColor: colors.background,
+      backgroundColor: colors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
@@ -62,7 +59,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                 ),
               ),
               centerTitle: false,
-              backgroundColor: colors.background,
+              backgroundColor: colors.paper,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
               actions: [
                 IconButton(
                   tooltip: '身体数据',
@@ -91,25 +90,25 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (widget.capsuleNav != null) widget.capsuleNav!,
+                // [1] 宠物陪伴
                 PlanModuleVisualHeader(
                   module: PlanModuleType.fitness,
                   color: colors.fitness,
                 ),
-                const SizedBox(height: AppSpacing.md),
-                PlanModuleActionImageCard(
-                  module: PlanModuleType.fitness,
-                  color: colors.fitness,
-                  onTap: () => context.push('/plan/fitness/timer'),
-                ),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 12),
+                // [2] 今日训练 HeroCard
                 _buildTodayTrainingCard(todayMinutes, fitnessGoal),
-                const SizedBox(height: AppSpacing.lg),
-                _buildRecordTrainingEntry(context),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 16),
+                // [3] 双列功能入口
+                _buildDualEntryCards(context),
+                const SizedBox(height: 16),
+                // [4] 本周训练数据卡
                 _buildWeeklyTrainingCard(weeklyCount, weeklyGoal),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 12),
+                // [5] 健身趋势图表
                 _buildWeightCurveCard(),
-                const SizedBox(height: AppSpacing.lg),
+                const SizedBox(height: 12),
+                // [6] 最近训练记录
                 recentRecords.when(
                   data: (records) {
                     if (records.isEmpty) {
@@ -146,6 +145,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
                             icon: Icons.fitness_center,
                             iconColor: colors.textOnAccent,
                             iconBackgroundColor: colors.fitness,
+                            imageAsset: RecordIconAssets.fitness,
                             title: record.title ?? record.bodyPart,
                             subtitle:
                                 '${record.bodyPart} · ${record.durationMinutes}分钟 · $dateStr',
@@ -256,15 +256,30 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     );
   }
 
-  Widget _buildRecordTrainingEntry(BuildContext context) {
+  Widget _buildDualEntryCards(BuildContext context) {
     final colors = context.growthColors;
-    return PlanModuleRecordEntryCard(
-      color: colors.fitness,
-      icon: Icons.edit_note_rounded,
-      title: '记录训练',
-      subtitle: '手动添加训练记录',
-      buttonLabel: '添加',
-      onTap: () => context.push('/plan/fitness/add'),
+    return Row(
+      children: [
+        Expanded(
+          child: _FitnessEntryCard(
+            icon: Icons.timer_rounded,
+            title: '开始训练',
+            subtitle: '计时记录',
+            color: colors.fitness,
+            onTap: () => context.push('/plan/fitness/timer'),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _FitnessEntryCard(
+            icon: Icons.edit_note_rounded,
+            title: '记录训练',
+            subtitle: '手动添加',
+            color: colors.fitness,
+            onTap: () => context.push('/plan/fitness/add'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -295,9 +310,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
       suggestion: '建议每周训练 3~5 次',
       color: colors.fitness,
       onSave: (value) async {
-        ref.read(weeklyFitnessGoalProvider.notifier).state = value;
-        final repo = ref.read(settingRepositoryProvider);
-        await repo.setSetting('weekly_fitness_goal', value.toString());
+        await ref.read(settingsFacadeProvider).setWeeklyFitnessGoal(value);
       },
     );
   }
@@ -306,228 +319,79 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
     final colors = context.growthColors;
     final chartData = ref.watch(fitnessChartDataProvider(_selectedRange));
 
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colors.paper.withValues(alpha: 0.98),
-            colors.fitness.withValues(alpha: 0.04),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.fitness.withValues(alpha: 0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // ── 标题行（可点击跳转详情）──
-            Semantics(
-              button: true,
-              label: '查看身体数据趋势详情',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => context.push('/plan/fitness/body-metric/detail'),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: colors.softOrange,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.show_chart_rounded,
-                        size: 15,
-                        color: colors.fitness,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      '健身趋势',
-                      style: AppTextStyles.cardTitle.copyWith(
-                        color: colors.textPrimary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Icon(
-                      Icons.chevron_right,
-                      color: colors.textTertiary,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            // ── 范围选择器（独立，不被外层吞掉点击）──
-            _buildRangeSelector(),
-            const SizedBox(height: 12),
-            // ── 图例 ──
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: 12,
-              runSpacing: 6,
-              children: [
-                _buildChartLegend(colors.fitness, '锻炼(分钟)'),
-                _buildChartLegend(colors.warning, '消耗(kcal)'),
-                _buildChartLegend(colors.textTertiary, '体重(kg)'),
-              ],
-            ),
-            const SizedBox(height: 12),
-            // ── 图表（可点击跳转详情）──
-            Semantics(
-              button: true,
-              label: '查看身体数据趋势详情',
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () => context.push('/plan/fitness/body-metric/detail'),
-                child: chartData.when(
-                  data: (data) {
-                    if (data.isEmpty) {
-                      return _buildWeightEmptyState();
-                    }
-                    return ClipRect(
-                      child: SizedBox(
-                        height: 180,
-                        child: _FitnessTrendChart(data: data),
-                      ),
-                    );
-                  },
-                  loading: () => SizedBox(
-                    height: 180,
-                    child: Center(
-                      child: CircularProgressIndicator(color: colors.fitness),
-                    ),
-                  ),
-                  error: (_, _) => _buildWeightEmptyState(),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildChartLegend(Color color, String label) {
-    final colors = context.growthColors;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: 12,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(1.5),
+        _buildRangeSelector(),
+        const SizedBox(height: AppSpacing.md),
+        Semantics(
+          button: true,
+          label: '查看身体数据趋势详情',
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => context.push('/plan/fitness/body-metric/detail'),
+            child: GrowthChartCard(
+              title: '健身趋势',
+              subtitle: _rangeSubtitle(),
+              icon: Icons.show_chart_rounded,
+              color: colors.fitness,
+              legend: [
+                GrowthChartLegendItem(color: colors.fitness, label: '锻炼(分钟)'),
+                GrowthChartLegendItem(color: colors.warning, label: '消耗(kcal)'),
+                GrowthChartLegendItem(
+                  color: colors.textTertiary,
+                  label: '体重(kg)',
+                ),
+              ],
+              child: chartData.when(
+                data: (data) {
+                  if (data.isEmpty) {
+                    return _buildWeightEmptyState();
+                  }
+                  return _FitnessTrendChart(data: data, range: _selectedRange);
+                },
+                loading: () => SizedBox(
+                  height: 244,
+                  child: Center(
+                    child: CircularProgressIndicator(color: colors.fitness),
+                  ),
+                ),
+                error: (_, _) => _buildWeightEmptyState(),
+              ),
+            ),
           ),
         ),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
       ],
     );
   }
 
   Widget _buildRangeSelector() {
-    final colors = context.growthColors;
-    const ranges = [
-      {'label': '周', 'days': 7},
-      {'label': '月', 'days': 30},
-      {'label': '年', 'days': 365},
-    ];
-
-    return Container(
-      height: 44,
-      decoration: BoxDecoration(
-        color: colors.softOrange.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      padding: const EdgeInsets.all(2),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: ranges.map((range) {
-          final isSelected = _selectedRange == range['days'];
-          final label = range['label'] as String;
-          return Semantics(
-            button: true,
-            label: '切换到$label趋势',
-            selected: isSelected,
-            child: GestureDetector(
-              onTap: () =>
-                  setState(() => _selectedRange = range['days'] as int),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected ? colors.fitness : Colors.transparent,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                    color: isSelected
-                        ? colors.textOnAccent
-                        : colors.textSecondary,
-                  ),
-                ),
-              ),
-            ),
-          );
-        }).toList(),
-      ),
+    return GrowthChartRangeSelector<int>(
+      color: context.growthColors.fitness,
+      selected: _selectedRange,
+      options: const [
+        GrowthChartRangeOption(value: 7, label: '周'),
+        GrowthChartRangeOption(value: 30, label: '月'),
+        GrowthChartRangeOption(value: 365, label: '年'),
+      ],
+      onChanged: (value) => setState(() => _selectedRange = value),
     );
   }
 
   Widget _buildWeightEmptyState() {
     final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colors.card,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: colors.border),
-      ),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(
-              Icons.show_chart_rounded,
-              size: 40,
-              color: colors.textTertiary.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '体重数据积累中',
-              style: AppTextStyles.caption.copyWith(
-                color: colors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '记录至少 2 次体重后显示趋势',
-              style: AppTextStyles.caption.copyWith(color: colors.textTertiary),
-            ),
-          ],
-        ),
-      ),
+    return SizedBox(
+      height: 244,
+      child: GrowthChartEmpty(color: colors.fitness, label: '记录后显示健身趋势'),
     );
+  }
+
+  String _rangeSubtitle() {
+    return switch (_selectedRange) {
+      7 => '近 7 天',
+      30 => '近 30 天',
+      _ => '本年',
+    };
   }
 
   Widget _buildEmptyState() {
@@ -653,24 +517,9 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
   }
 
   Future<void> _saveDailyGoal(int minutes) async {
-    final goals = ref.read(dailyGoalsProvider);
-    var found = false;
-    final newGoals = goals.map((goal) {
-      if (goal.name == '健身') {
-        found = true;
-        return DailyGoal(name: '健身', target: minutes, unit: '分钟');
-      }
-      return goal;
-    }).toList();
-    if (!found) {
-      newGoals.add(DailyGoal(name: '健身', target: minutes, unit: '分钟'));
-    }
-
-    ref.read(dailyGoalsProvider.notifier).state = newGoals;
-
-    final repo = ref.read(settingRepositoryProvider);
-    final jsonStr = newGoals.map((goal) => goal.toJson()).toList();
-    await repo.setSetting('daily_goals', jsonEncode(jsonStr));
+    await ref
+        .read(settingsFacadeProvider)
+        .updateDailyGoal(name: '健身', target: minutes, unit: '分钟');
   }
 
   void _showAddRecordMenu(BuildContext context) {
@@ -834,7 +683,7 @@ class _FitnessPageState extends ConsumerState<FitnessPage> {
         ref.invalidate(recentFitnessRecordsProvider);
         ref.invalidate(todayFitnessMinutesProvider);
         ref.invalidate(weeklyFitnessCountProvider);
-        ref.invalidate(dashboardProvider);
+        ref.read(fitnessDashboardFacadeProvider).refreshDashboard();
         ref.invalidate(fitnessChartDataProvider(7));
         ref.invalidate(fitnessChartDataProvider(30));
         ref.invalidate(fitnessChartDataProvider(365));

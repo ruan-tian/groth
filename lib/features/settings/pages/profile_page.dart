@@ -1,15 +1,19 @@
+import 'dart:io';
+
 import 'package:drift/drift.dart' hide Column;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart'
-    hide settingRepositoryProvider;
-import '../../../shared/providers/fitness_provider.dart';
-import '../../../shared/providers/repository_providers.dart';
+import '../models/settings_data.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
+import '../../../shared/providers/settings_facade.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/growth_date_picker.dart';
 import '../widgets/profile_avatar_section.dart';
 import '../widgets/profile_info_tiles.dart';
@@ -31,13 +35,13 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   DateTime _birthday = DateTime(2000, 6, 15);
   String _gender = 'male';
   String? _avatarPath;
+  String? _profileSnapshotKey;
 
   late AnimationController _saveAnimController;
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
     _saveAnimController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -54,43 +58,101 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
   // ── 数据持久化 ──────────────────────────────────────────────────────────────
 
-  Future<void> _loadProfile() async {
-    final repo = ref.read(settingRepositoryProvider);
-    final nickname = await repo.getSetting('nickname');
-    final birthday = await repo.getSetting('birthday');
-    final gender = await repo.getSetting('gender');
-    final height = await repo.getSetting('height');
-    final avatarPath = await repo.getSetting('avatar_path');
-
-    if (mounted) {
-      setState(() {
-        if (nickname != null) _nicknameController.text = nickname;
-        if (birthday != null) {
-          _birthday = DateTime.tryParse(birthday) ?? _birthday;
-        }
-        if (gender != null) _gender = gender;
-        if (height != null) _heightController.text = height;
-        if (avatarPath != null) _avatarPath = avatarPath;
-      });
-    }
+  void _applyProfileSnapshot(UserProfileSnapshot snapshot) {
+    final nextKey = snapshot.cacheKey;
+    if (_profileSnapshotKey == nextKey) return;
+    _profileSnapshotKey = nextKey;
+    _nicknameController.text = snapshot.nickname;
+    _heightController.text = snapshot.heightText;
+    _birthday = snapshot.birthday;
+    _gender = snapshot.gender;
+    _avatarPath = snapshot.avatarPath;
   }
 
   Future<void> _saveField(String key, String value) async {
-    final repo = ref.read(settingRepositoryProvider);
-    await repo.setSetting(key, value);
+    await ref.read(settingsFacadeProvider).setUserProfileField(key, value);
     HapticFeedback.lightImpact();
   }
 
   // ── 编辑动作回调 ────────────────────────────────────────────────────────────
 
-  void _onAvatarUpdated(String path) {
-    setState(() => _avatarPath = path);
-    _saveField('avatar_path', path);
+  Future<void> _showAvatarPicker() async {
+    final action = await showAvatarPickerSheet(
+      context,
+      avatarPath: _avatarPath,
+    );
+    if (!mounted || action == null) return;
+
+    switch (action) {
+      case AvatarPickerAction.camera:
+        await _pickAndSaveAvatar(ImageSource.camera);
+        break;
+      case AvatarPickerAction.gallery:
+        await _pickAndSaveAvatar(ImageSource.gallery);
+        break;
+      case AvatarPickerAction.delete:
+        await _deleteAvatar();
+        break;
+    }
   }
 
-  void _onAvatarDeleted() {
+  Future<void> _pickAndSaveAvatar(ImageSource source) async {
+    final colors = context.growthColors;
+    try {
+      final pickedFile = await ImagePicker().pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 85,
+        requestFullMetadata: false,
+      );
+      if (pickedFile == null) return;
+
+      final appDir = await getApplicationDocumentsDirectory();
+      final avatarDir = Directory('${appDir.path}/avatars');
+      if (!await avatarDir.exists()) {
+        await avatarDir.create(recursive: true);
+      }
+
+      final fileName = 'avatar_${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final savedFile = await File(
+        pickedFile.path,
+      ).copy('${avatarDir.path}/$fileName');
+
+      await ref.read(settingsFacadeProvider).setUserAvatarPath(savedFile.path);
+      if (!mounted) return;
+      setState(() => _avatarPath = savedFile.path);
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('\u5934\u50cf\u5df2\u66f4\u65b0'),
+          backgroundColor: colors.success,
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            '\u9009\u62e9\u56fe\u7247\u5931\u8d25\uff0c\u8bf7\u91cd\u8bd5',
+          ),
+        ),
+      );
+    }
+  }
+
+  Future<void> _deleteAvatar() async {
+    final current = _avatarPath;
+    if (current != null) {
+      final file = File(current);
+      if (await file.exists()) {
+        await file.delete();
+      }
+    }
+    await ref.read(settingsFacadeProvider).setUserAvatarPath(null);
+    if (!mounted) return;
     setState(() => _avatarPath = null);
-    _saveField('avatar_path', '');
+    HapticFeedback.lightImpact();
   }
 
   Future<void> _showNicknameEditor() async {
@@ -203,21 +265,19 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
   }
 
   Future<void> _saveBodyMetric({double? weight, double? bodyFat}) async {
-    final db = ref.read(databaseProvider);
+    final repo = ref.read(fitnessRepositoryProvider);
     final now = DateTime.now();
     final recordDate =
         '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
 
-    await db
-        .into(db.bodyMetrics)
-        .insert(
-          BodyMetricsCompanion.insert(
-            recordDate: recordDate,
-            weight: Value(weight),
-            bodyFat: Value(bodyFat),
-            createdAt: now.millisecondsSinceEpoch,
-          ),
-        );
+    await repo.insertBodyMetric(
+      BodyMetricsCompanion.insert(
+        recordDate: recordDate,
+        weight: Value(weight),
+        bodyFat: Value(bodyFat),
+        createdAt: now.millisecondsSinceEpoch,
+      ),
+    );
 
     HapticFeedback.lightImpact();
     if (mounted) {
@@ -254,9 +314,12 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
 
   @override
   Widget build(BuildContext context) {
+    final profile = ref.watch(userProfileSnapshotProvider);
     final latestWeight = ref.watch(latestBodyMetricProvider);
     final dashboard = ref.watch(dashboardProvider);
     final colors = context.growthColors;
+
+    profile.whenData(_applyProfileSnapshot);
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -287,12 +350,7 @@ class _ProfilePageState extends ConsumerState<ProfilePage>
               avatarPath: _avatarPath,
               nickname: _nicknameController.text,
               dashboard: dashboard,
-              onAvatarTap: () => showAvatarPickerSheet(
-                context,
-                avatarPath: _avatarPath,
-                onAvatarUpdated: _onAvatarUpdated,
-                onAvatarDeleted: _onAvatarDeleted,
-              ),
+              onAvatarTap: _showAvatarPicker,
               onNicknameTap: _showNicknameEditor,
             ),
             const SizedBox(height: 32),

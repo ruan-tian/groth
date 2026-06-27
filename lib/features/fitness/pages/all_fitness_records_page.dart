@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../../core/constants/record_icon_assets.dart';
+import '../models/fitness_data.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../providers/fitness_dashboard_facade.dart';
+import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/sort_button.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
@@ -36,17 +38,13 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
         backgroundColor: context.growthColors.background,
         surfaceTintColor: Colors.transparent,
         actions: [
-          PopupMenuButton<SortOption>(
-            icon: Icon(Icons.sort, color: context.growthColors.textSecondary),
-            onSelected: (option) {
+          SortButton<SortOption>.legacy(
+            currentSort: _sortOption,
+            onSortChanged: (option) {
               setState(() => _sortOption = option);
               ref.read(fitnessSortProvider.notifier).state = option;
             },
-            itemBuilder: (context) => [
-              _buildSortItem(SortOption.newest, '最新优先'),
-              _buildSortItem(SortOption.oldest, '最早优先'),
-              _buildSortItem(SortOption.highestExp, '经验值最高'),
-            ],
+            accentColor: context.growthColors.fitness,
           ),
         ],
       ),
@@ -57,25 +55,6 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('加载失败: $e')),
-      ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 排序菜单
-  // ---------------------------------------------------------------------------
-
-  PopupMenuItem<SortOption> _buildSortItem(SortOption option, String text) {
-    return PopupMenuItem(
-      value: option,
-      child: Row(
-        children: [
-          Text(text, style: AppTextStyles.body),
-          if (_sortOption == option) ...[
-            const Spacer(),
-            Icon(Icons.check, size: 16, color: context.growthColors.fitness),
-          ],
-        ],
       ),
     );
   }
@@ -276,7 +255,7 @@ class _AllFitnessRecordsPageState extends ConsumerState<AllFitnessRecordsPage> {
         ref.invalidate(recentFitnessRecordsProvider);
         ref.invalidate(todayFitnessMinutesProvider);
         ref.invalidate(weeklyFitnessCountProvider);
-        ref.invalidate(dashboardProvider);
+        ref.read(fitnessDashboardFacadeProvider).refreshDashboard();
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
@@ -373,7 +352,17 @@ class _RecordCard extends StatelessWidget {
               color: fitnessFaded,
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
-            child: Icon(Icons.fitness_center, color: fitness, size: 24),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.sm),
+              child: Image.asset(
+                RecordIconAssets.fitness,
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+                errorBuilder: (_, _, _) =>
+                    Icon(Icons.fitness_center, color: fitness, size: 24),
+              ),
+            ),
           ),
           const SizedBox(width: AppSpacing.md),
 

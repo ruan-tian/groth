@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_card_repository.dart';
 
 KnowledgeCardsCompanion _card({
   String deckKey = 'computer',

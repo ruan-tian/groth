@@ -128,13 +128,6 @@ class _DetailBody extends ConsumerWidget {
                     ),
                   ),
                 ],
-
-                // ── 学习趋势 ──
-                const SizedBox(height: AppSpacing.xl),
-                _buildSectionTitle(context, '学习趋势'),
-                const SizedBox(height: AppSpacing.md),
-                _StudyTrendChart(record: record),
-                const SizedBox(height: AppSpacing.xl),
               ],
             ),
           ),
@@ -428,35 +421,6 @@ class _DetailBody extends ConsumerWidget {
           child,
         ],
       ),
-    );
-  }
-
-  // ---------------------------------------------------------------------------
-  // 区块标题（无卡片容器）
-  // ---------------------------------------------------------------------------
-
-  Widget _buildSectionTitle(BuildContext context, String title) {
-    final colors = context.growthColors;
-    return Row(
-      children: [
-        Container(
-          width: 4,
-          height: 18,
-          decoration: BoxDecoration(
-            color: colors.study,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: colors.textPrimary,
-          ),
-        ),
-      ],
     );
   }
 

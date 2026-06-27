@@ -2,7 +2,7 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/study_repository.dart';
+import 'package:growth_os/features/study/repositories/study_repository.dart';
 
 /// Helper: build a [StudyRecordsCompanion] for insertion.
 StudyRecordsCompanion _buildCompanion({
@@ -60,16 +60,16 @@ void main() {
     });
 
     test('inserted record can be retrieved by id', () async {
-      final companion = _buildCompanion(title: 'Dart 进阶', durationMinutes: 45);
+      final companion = _buildCompanion(
+        title: 'Dart advanced',
+        durationMinutes: 45,
+      );
       final id = await repo.insertStudyRecord(companion);
 
-      final records = await (db.select(db.studyRecords)
-            ..where((t) => t.id.equals(id)))
-          .get();
+      final record = await repo.getStudyRecordById(id);
 
-      expect(records, hasLength(1));
-      expect(records.first.title, equals('Dart 进阶'));
-      expect(records.first.durationMinutes, equals(45));
+      expect(record.title, equals('Dart advanced'));
+      expect(record.durationMinutes, equals(45));
     });
 
     test('inserts multiple records with auto-increment ids', () async {
@@ -80,6 +80,31 @@ void main() {
       expect(id1, lessThan(id2));
       expect(id2, lessThan(id3));
     });
+
+    test(
+      'saves record exp and exp log in one repository transaction',
+      () async {
+        final id = await repo.saveStudyRecordWithExp(
+          record: _buildCompanion(title: '事务保存'),
+          exp: 16,
+          reason: '学习: 事务保存 (60 min)',
+          createdAt: DateTime.now().millisecondsSinceEpoch,
+        );
+
+        final record = await (db.select(
+          db.studyRecords,
+        )..where((t) => t.id.equals(id))).getSingle();
+        final logs =
+            await (db.select(db.growthExpLogs)..where(
+                  (t) => t.sourceType.equals('study') & t.sourceId.equals(id),
+                ))
+                .get();
+
+        expect(record.expGained, 16);
+        expect(logs, hasLength(1));
+        expect(logs.single.expValue, 16);
+      },
+    );
   });
 
   // ===========================================================================
@@ -96,7 +121,9 @@ void main() {
         id: Value(id),
         mode: const Value('professional'),
         title: const Value('更新后标题'),
-        startTime: Value(DateTime.now().millisecondsSinceEpoch - 60 * 60 * 1000),
+        startTime: Value(
+          DateTime.now().millisecondsSinceEpoch - 60 * 60 * 1000,
+        ),
         endTime: Value(DateTime.now().millisecondsSinceEpoch),
         durationMinutes: const Value(60),
         createdAt: Value(DateTime.now().millisecondsSinceEpoch),
@@ -104,9 +131,9 @@ void main() {
       );
       await repo.updateStudyRecord(updated);
 
-      final record = await (db.select(db.studyRecords)
-            ..where((t) => t.id.equals(id)))
-          .getSingle();
+      final record = await (db.select(
+        db.studyRecords,
+      )..where((t) => t.id.equals(id))).getSingle();
 
       expect(record.title, equals('更新后标题'));
       expect(record.durationMinutes, equals(60));
@@ -120,15 +147,13 @@ void main() {
 
   group('updateStudyRecordExp', () {
     test('updates only the expGained field', () async {
-      final id = await repo.insertStudyRecord(
-        _buildCompanion(expGained: 0),
-      );
+      final id = await repo.insertStudyRecord(_buildCompanion(expGained: 0));
 
       await repo.updateStudyRecordExp(id, 15);
 
-      final record = await (db.select(db.studyRecords)
-            ..where((t) => t.id.equals(id)))
-          .getSingle();
+      final record = await (db.select(
+        db.studyRecords,
+      )..where((t) => t.id.equals(id))).getSingle();
 
       expect(record.expGained, equals(15));
       // Title should remain unchanged
@@ -145,9 +170,9 @@ void main() {
       final id = await repo.insertStudyRecord(_buildCompanion());
       await repo.deleteStudyRecord(id);
 
-      final records = await (db.select(db.studyRecords)
-            ..where((t) => t.id.equals(id)))
-          .get();
+      final records = await (db.select(
+        db.studyRecords,
+      )..where((t) => t.id.equals(id))).get();
 
       expect(records, isEmpty);
     });
@@ -167,6 +192,72 @@ void main() {
       expect(remaining, hasLength(1));
       expect(remaining.first.id, equals(id2));
     });
+
+    test(
+      'clears focus session link before deleting linked study record',
+      () async {
+        final id = await repo.insertStudyRecord(_buildCompanion());
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final focusId = await db
+            .into(db.focusSessions)
+            .insert(
+              FocusSessionsCompanion.insert(
+                type: 'pomodoro',
+                title: 'Linked focus',
+                relatedStudyId: Value(id),
+                startTime: now - 25 * 60 * 1000,
+                endTime: now,
+                durationMinutes: 25,
+                createdAt: now,
+              ),
+            );
+
+        await repo.deleteStudyRecord(id);
+
+        final records = await (db.select(
+          db.studyRecords,
+        )..where((t) => t.id.equals(id))).get();
+        final focus = await (db.select(
+          db.focusSessions,
+        )..where((t) => t.id.equals(focusId))).getSingle();
+
+        expect(records, isEmpty);
+        expect(focus.relatedStudyId, equals(null));
+      },
+    );
+
+    test(
+      'clears knowledge card source link before deleting linked study record',
+      () async {
+        final id = await repo.insertStudyRecord(_buildCompanion());
+        final now = DateTime.now().millisecondsSinceEpoch;
+        final cardId = await db
+            .into(db.knowledgeCards)
+            .insert(
+              KnowledgeCardsCompanion.insert(
+                title: 'Linked card',
+                question: 'What should remain?',
+                answer: 'The card should remain after deleting the study log.',
+                sourceStudyId: Value(id),
+                dueAt: now,
+                createdAt: now,
+                updatedAt: now,
+              ),
+            );
+
+        await repo.deleteStudyRecord(id);
+
+        final records = await (db.select(
+          db.studyRecords,
+        )..where((t) => t.id.equals(id))).get();
+        final card = await (db.select(
+          db.knowledgeCards,
+        )..where((t) => t.id.equals(cardId))).getSingle();
+
+        expect(records, isEmpty);
+        expect(card.sourceStudyId, equals(null));
+      },
+    );
   });
 
   // ===========================================================================
@@ -178,12 +269,14 @@ void main() {
       final now = DateTime(2026, 6, 5, 14, 30);
       final todayMs = now.millisecondsSinceEpoch;
 
-      await repo.insertStudyRecord(_buildCompanion(
-        title: '今日学习',
-        createdAtMs: todayMs,
-        startTimeMs: todayMs - 3600000,
-        endTimeMs: todayMs,
-      ));
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: '今日学习',
+          createdAtMs: todayMs,
+          startTimeMs: todayMs - 3600000,
+          endTimeMs: todayMs,
+        ),
+      );
 
       final records = await repo.getStudyRecordsByDate(now);
       expect(records, hasLength(1));
@@ -194,18 +287,22 @@ void main() {
       final today = DateTime(2026, 6, 5, 12, 0);
       final yesterday = DateTime(2026, 6, 4, 12, 0);
 
-      await repo.insertStudyRecord(_buildCompanion(
-        title: '今日',
-        createdAtMs: today.millisecondsSinceEpoch,
-        startTimeMs: today.millisecondsSinceEpoch - 3600000,
-        endTimeMs: today.millisecondsSinceEpoch,
-      ));
-      await repo.insertStudyRecord(_buildCompanion(
-        title: '昨日',
-        createdAtMs: yesterday.millisecondsSinceEpoch,
-        startTimeMs: yesterday.millisecondsSinceEpoch - 3600000,
-        endTimeMs: yesterday.millisecondsSinceEpoch,
-      ));
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: '今日',
+          createdAtMs: today.millisecondsSinceEpoch,
+          startTimeMs: today.millisecondsSinceEpoch - 3600000,
+          endTimeMs: today.millisecondsSinceEpoch,
+        ),
+      );
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: '昨日',
+          createdAtMs: yesterday.millisecondsSinceEpoch,
+          startTimeMs: yesterday.millisecondsSinceEpoch - 3600000,
+          endTimeMs: yesterday.millisecondsSinceEpoch,
+        ),
+      );
 
       final records = await repo.getStudyRecordsByDate(today);
       expect(records, hasLength(1));
@@ -222,18 +319,22 @@ void main() {
       final date = DateTime(2026, 6, 5);
       final baseMs = date.millisecondsSinceEpoch;
 
-      await repo.insertStudyRecord(_buildCompanion(
-        title: '较早',
-        createdAtMs: baseMs + 3600000, // 01:00
-        startTimeMs: baseMs,
-        endTimeMs: baseMs + 3600000,
-      ));
-      await repo.insertStudyRecord(_buildCompanion(
-        title: '较晚',
-        createdAtMs: baseMs + 7200000, // 02:00
-        startTimeMs: baseMs + 3600000,
-        endTimeMs: baseMs + 7200000,
-      ));
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: '较早',
+          createdAtMs: baseMs + 3600000, // 01:00
+          startTimeMs: baseMs,
+          endTimeMs: baseMs + 3600000,
+        ),
+      );
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: '较晚',
+          createdAtMs: baseMs + 7200000, // 02:00
+          startTimeMs: baseMs + 3600000,
+          endTimeMs: baseMs + 7200000,
+        ),
+      );
 
       final records = await repo.getStudyRecordsByDate(date);
       expect(records, hasLength(2));
@@ -252,24 +353,30 @@ void main() {
       final june3 = DateTime(2026, 6, 3, 10, 0);
       final june5 = DateTime(2026, 6, 5, 10, 0);
 
-      await repo.insertStudyRecord(_buildCompanion(
-        title: 'June 1',
-        createdAtMs: june1.millisecondsSinceEpoch,
-        startTimeMs: june1.millisecondsSinceEpoch - 3600000,
-        endTimeMs: june1.millisecondsSinceEpoch,
-      ));
-      await repo.insertStudyRecord(_buildCompanion(
-        title: 'June 3',
-        createdAtMs: june3.millisecondsSinceEpoch,
-        startTimeMs: june3.millisecondsSinceEpoch - 3600000,
-        endTimeMs: june3.millisecondsSinceEpoch,
-      ));
-      await repo.insertStudyRecord(_buildCompanion(
-        title: 'June 5',
-        createdAtMs: june5.millisecondsSinceEpoch,
-        startTimeMs: june5.millisecondsSinceEpoch - 3600000,
-        endTimeMs: june5.millisecondsSinceEpoch,
-      ));
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: 'June 1',
+          createdAtMs: june1.millisecondsSinceEpoch,
+          startTimeMs: june1.millisecondsSinceEpoch - 3600000,
+          endTimeMs: june1.millisecondsSinceEpoch,
+        ),
+      );
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: 'June 3',
+          createdAtMs: june3.millisecondsSinceEpoch,
+          startTimeMs: june3.millisecondsSinceEpoch - 3600000,
+          endTimeMs: june3.millisecondsSinceEpoch,
+        ),
+      );
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          title: 'June 5',
+          createdAtMs: june5.millisecondsSinceEpoch,
+          startTimeMs: june5.millisecondsSinceEpoch - 3600000,
+          endTimeMs: june5.millisecondsSinceEpoch,
+        ),
+      );
 
       // Range: June 1 ~ June 3 (inclusive)
       final records = await repo.getStudyRecordsByRange(
@@ -299,12 +406,14 @@ void main() {
     test('returns records ordered by createdAt descending', () async {
       final base = DateTime(2026, 6, 5).millisecondsSinceEpoch;
       for (var i = 0; i < 5; i++) {
-        await repo.insertStudyRecord(_buildCompanion(
-          title: 'Record $i',
-          createdAtMs: base + i * 3600000,
-          startTimeMs: base + i * 3600000 - 1800000,
-          endTimeMs: base + i * 3600000,
-        ));
+        await repo.insertStudyRecord(
+          _buildCompanion(
+            title: 'Record $i',
+            createdAtMs: base + i * 3600000,
+            startTimeMs: base + i * 3600000 - 1800000,
+            endTimeMs: base + i * 3600000,
+          ),
+        );
       }
 
       final records = await repo.getRecentStudyRecords(limit: 3);
@@ -316,12 +425,14 @@ void main() {
     test('respects limit parameter', () async {
       final base = DateTime(2026, 6, 5).millisecondsSinceEpoch;
       for (var i = 0; i < 10; i++) {
-        await repo.insertStudyRecord(_buildCompanion(
-          title: 'R$i',
-          createdAtMs: base + i * 3600000,
-          startTimeMs: base + i * 3600000 - 1800000,
-          endTimeMs: base + i * 3600000,
-        ));
+        await repo.insertStudyRecord(
+          _buildCompanion(
+            title: 'R$i',
+            createdAtMs: base + i * 3600000,
+            startTimeMs: base + i * 3600000 - 1800000,
+            endTimeMs: base + i * 3600000,
+          ),
+        );
       }
 
       final records = await repo.getRecentStudyRecords(limit: 5);
@@ -348,24 +459,30 @@ void main() {
       final date = DateTime(2026, 6, 5, 12, 0);
       final baseMs = date.millisecondsSinceEpoch;
 
-      await repo.insertStudyRecord(_buildCompanion(
-        durationMinutes: 30,
-        createdAtMs: baseMs,
-        startTimeMs: baseMs - 1800000,
-        endTimeMs: baseMs,
-      ));
-      await repo.insertStudyRecord(_buildCompanion(
-        durationMinutes: 45,
-        createdAtMs: baseMs + 3600000,
-        startTimeMs: baseMs + 1800000,
-        endTimeMs: baseMs + 3600000,
-      ));
-      await repo.insertStudyRecord(_buildCompanion(
-        durationMinutes: 25,
-        createdAtMs: baseMs + 7200000,
-        startTimeMs: baseMs + 5400000,
-        endTimeMs: baseMs + 7200000,
-      ));
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          durationMinutes: 30,
+          createdAtMs: baseMs,
+          startTimeMs: baseMs - 1800000,
+          endTimeMs: baseMs,
+        ),
+      );
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          durationMinutes: 45,
+          createdAtMs: baseMs + 3600000,
+          startTimeMs: baseMs + 1800000,
+          endTimeMs: baseMs + 3600000,
+        ),
+      );
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          durationMinutes: 25,
+          createdAtMs: baseMs + 7200000,
+          startTimeMs: baseMs + 5400000,
+          endTimeMs: baseMs + 7200000,
+        ),
+      );
 
       final total = await repo.getTotalStudyMinutesByDate(date);
       expect(total, equals(100)); // 30 + 45 + 25
@@ -375,18 +492,22 @@ void main() {
       final date = DateTime(2026, 6, 5, 12, 0);
       final other = DateTime(2026, 6, 4, 12, 0);
 
-      await repo.insertStudyRecord(_buildCompanion(
-        durationMinutes: 60,
-        createdAtMs: date.millisecondsSinceEpoch,
-        startTimeMs: date.millisecondsSinceEpoch - 3600000,
-        endTimeMs: date.millisecondsSinceEpoch,
-      ));
-      await repo.insertStudyRecord(_buildCompanion(
-        durationMinutes: 120,
-        createdAtMs: other.millisecondsSinceEpoch,
-        startTimeMs: other.millisecondsSinceEpoch - 7200000,
-        endTimeMs: other.millisecondsSinceEpoch,
-      ));
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          durationMinutes: 60,
+          createdAtMs: date.millisecondsSinceEpoch,
+          startTimeMs: date.millisecondsSinceEpoch - 3600000,
+          endTimeMs: date.millisecondsSinceEpoch,
+        ),
+      );
+      await repo.insertStudyRecord(
+        _buildCompanion(
+          durationMinutes: 120,
+          createdAtMs: other.millisecondsSinceEpoch,
+          startTimeMs: other.millisecondsSinceEpoch - 7200000,
+          endTimeMs: other.millisecondsSinceEpoch,
+        ),
+      );
 
       final total = await repo.getTotalStudyMinutesByDate(date);
       expect(total, equals(60));

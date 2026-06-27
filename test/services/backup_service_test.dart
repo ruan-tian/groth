@@ -4,8 +4,8 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
-import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_card_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_source_repository.dart';
 import 'package:growth_os/core/services/backup_service.dart';
 
 void main() {
@@ -463,6 +463,399 @@ void main() {
           contains('Unsupported backup version'),
         ),
       ),
+    );
+  });
+
+  test('exports and restores V3 knowledge tables', () async {
+    // Create V3 tables manually (they're created by raw SQL in migration)
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'custom',
+        note TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_materials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        source_type TEXT NOT NULL DEFAULT 'text',
+        source_path TEXT,
+        url TEXT,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'ready',
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_cards_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        material_id INTEGER,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        explanation TEXT,
+        card_type TEXT NOT NULL DEFAULT 'recall',
+        importance INTEGER NOT NULL DEFAULT 3,
+        difficulty INTEGER NOT NULL DEFAULT 3,
+        source_title TEXT,
+        source_excerpt TEXT,
+        tags_json TEXT,
+        mastery_level INTEGER NOT NULL DEFAULT 0,
+        review_count INTEGER NOT NULL DEFAULT 0,
+        correct_streak INTEGER NOT NULL DEFAULT 0,
+        due_at INTEGER NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_review_logs_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        card_id INTEGER NOT NULL,
+        rating INTEGER NOT NULL,
+        reviewed_at INTEGER NOT NULL,
+        next_due_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        referenced_material_ids_json TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        sources_json TEXT,
+        saved_as_card INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    // Insert V3 data into source
+    await sourceDb.customInsert(
+      "INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES ('测试空间', 'custom', '备注', 0, 0, 1000, 1000)",
+    );
+    final spaces = await sourceDb.customSelect('SELECT * FROM knowledge_spaces_v3').get();
+    expect(spaces, hasLength(1));
+
+    final spaceId = spaces.first.data['id'];
+
+    await sourceDb.customInsert(
+      "INSERT INTO knowledge_materials (space_id, title, content, source_type, status, is_archived, order_index, created_at, updated_at) VALUES ($spaceId, '资料', '内容', 'text', 'ready', 0, 0, 1000, 1000)",
+    );
+
+    // Export
+    final json = await BackupService(sourceDb).exportToJson();
+    final payload = jsonDecode(json) as Map<String, dynamic>;
+
+    expect(payload['data']['knowledge_spaces_v3'], hasLength(1));
+    expect(payload['data']['knowledge_materials'], hasLength(1));
+
+    // Create V3 tables in target
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'custom',
+        note TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_materials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        source_type TEXT NOT NULL DEFAULT 'text',
+        source_path TEXT,
+        url TEXT,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'ready',
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_cards_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        material_id INTEGER,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        explanation TEXT,
+        card_type TEXT NOT NULL DEFAULT 'recall',
+        importance INTEGER NOT NULL DEFAULT 3,
+        difficulty INTEGER NOT NULL DEFAULT 3,
+        source_title TEXT,
+        source_excerpt TEXT,
+        tags_json TEXT,
+        mastery_level INTEGER NOT NULL DEFAULT 0,
+        review_count INTEGER NOT NULL DEFAULT 0,
+        correct_streak INTEGER NOT NULL DEFAULT 0,
+        due_at INTEGER NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_review_logs_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        card_id INTEGER NOT NULL,
+        rating INTEGER NOT NULL,
+        reviewed_at INTEGER NOT NULL,
+        next_due_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        referenced_material_ids_json TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        sources_json TEXT,
+        saved_as_card INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    // Restore to target
+    await BackupService(targetDb).importFromJson(json);
+
+    // Verify V3 data in target
+    final restoredSpaces = await targetDb.customSelect('SELECT * FROM knowledge_spaces_v3').get();
+    expect(restoredSpaces, hasLength(1));
+    expect(restoredSpaces.first.data['name'], '测试空间');
+
+    final restoredMaterials = await targetDb.customSelect('SELECT * FROM knowledge_materials').get();
+    expect(restoredMaterials, hasLength(1));
+    expect(restoredMaterials.first.data['title'], '资料');
+  });
+
+  test('restore throws when V3 table operations fail', () async {
+    // Create V3 tables
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'custom',
+        note TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_materials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        source_type TEXT NOT NULL DEFAULT 'text',
+        source_path TEXT,
+        url TEXT,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'ready',
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_cards_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        material_id INTEGER,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        explanation TEXT,
+        card_type TEXT NOT NULL DEFAULT 'recall',
+        importance INTEGER NOT NULL DEFAULT 3,
+        difficulty INTEGER NOT NULL DEFAULT 3,
+        source_title TEXT,
+        source_excerpt TEXT,
+        tags_json TEXT,
+        mastery_level INTEGER NOT NULL DEFAULT 0,
+        review_count INTEGER NOT NULL DEFAULT 0,
+        correct_streak INTEGER NOT NULL DEFAULT 0,
+        due_at INTEGER NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_review_logs_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        card_id INTEGER NOT NULL,
+        rating INTEGER NOT NULL,
+        reviewed_at INTEGER NOT NULL,
+        next_due_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        referenced_material_ids_json TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await sourceDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        sources_json TEXT,
+        saved_as_card INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    // Insert valid V3 data
+    await sourceDb.customInsert(
+      "INSERT INTO knowledge_spaces_v3 (name, type, note, sort_order, is_archived, created_at, updated_at) VALUES ('空间', 'custom', '', 0, 0, 1000, 1000)",
+    );
+
+    final json = await BackupService(sourceDb).exportToJson();
+
+    // Corrupt the V3 data to cause insert failure
+    final payload = jsonDecode(json) as Map<String, dynamic>;
+    final data = payload['data'] as Map<String, dynamic>;
+    data['knowledge_spaces_v3'] = [
+      {'id': 'not_a_number', 'name': 123},
+    ];
+    final corruptedJson = jsonEncode(payload);
+
+    // Create V3 tables in target
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_spaces_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL DEFAULT 'custom',
+        note TEXT,
+        sort_order INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_materials (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        content TEXT NOT NULL,
+        source_type TEXT NOT NULL DEFAULT 'text',
+        source_path TEXT,
+        url TEXT,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        status TEXT NOT NULL DEFAULT 'ready',
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_cards_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        material_id INTEGER,
+        question TEXT NOT NULL,
+        answer TEXT NOT NULL,
+        explanation TEXT,
+        card_type TEXT NOT NULL DEFAULT 'recall',
+        importance INTEGER NOT NULL DEFAULT 3,
+        difficulty INTEGER NOT NULL DEFAULT 3,
+        source_title TEXT,
+        source_excerpt TEXT,
+        tags_json TEXT,
+        mastery_level INTEGER NOT NULL DEFAULT 0,
+        review_count INTEGER NOT NULL DEFAULT 0,
+        correct_streak INTEGER NOT NULL DEFAULT 0,
+        due_at INTEGER NOT NULL,
+        order_index INTEGER NOT NULL DEFAULT 0,
+        is_archived INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS knowledge_review_logs_v3 (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        card_id INTEGER NOT NULL,
+        rating INTEGER NOT NULL,
+        reviewed_at INTEGER NOT NULL,
+        next_due_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_sessions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        space_id INTEGER NOT NULL,
+        title TEXT NOT NULL,
+        referenced_material_ids_json TEXT,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL
+      )
+    ''');
+    await targetDb.customStatement('''
+      CREATE TABLE IF NOT EXISTS tiantian_qa_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id INTEGER NOT NULL,
+        role TEXT NOT NULL,
+        content TEXT NOT NULL,
+        sources_json TEXT,
+        saved_as_card INTEGER NOT NULL DEFAULT 0,
+        created_at INTEGER NOT NULL
+      )
+    ''');
+
+    // Restore should throw because V3 insert fails
+    expect(
+      () => BackupService(targetDb).importFromJson(corruptedJson),
+      throwsA(isA<BackupRestoreException>()),
     );
   });
 }

@@ -31,10 +31,52 @@ class BackupRestoreException implements Exception {
   }
 }
 
+class BackupOverview {
+  const BackupOverview({
+    required this.totalSizeInBytes,
+    required this.lastBackupTime,
+  });
+
+  final int totalSizeInBytes;
+  final DateTime? lastBackupTime;
+}
+
 class BackupService {
   BackupService(this._db);
 
   final AppDatabase _db;
+
+  Future<List<BackupRecord>> getBackupRecords() {
+    return (_db.select(
+      _db.backupRecords,
+    )..orderBy([(t) => OrderingTerm.desc(t.createdAt)])).get();
+  }
+
+  Future<BackupOverview> getBackupOverview() async {
+    final records = await getBackupRecords();
+    var totalSize = 0;
+    for (final record in records) {
+      totalSize += record.fileSize ?? 0;
+    }
+
+    return BackupOverview(
+      totalSizeInBytes: totalSize,
+      lastBackupTime: records.isEmpty
+          ? null
+          : DateTime.fromMillisecondsSinceEpoch(records.first.createdAt),
+    );
+  }
+
+  Future<void> deleteBackup(BackupRecord record) async {
+    final file = File(record.backupPath);
+    if (await file.exists()) {
+      await file.delete();
+    }
+
+    await (_db.delete(
+      _db.backupRecords,
+    )..where((t) => t.id.equals(record.id))).go();
+  }
 
   Future<String> exportToJson() async {
     final data = <String, List<Map<String, dynamic>>>{};
@@ -119,9 +161,7 @@ class BackupService {
       final dataJson = jsonEncode(decoded['data']);
       final computedChecksum = _calculateChecksum(dataJson);
       if (storedChecksum != computedChecksum) {
-        throw const BackupRestoreException(
-          message: '备份文件校验失败，数据可能已损坏。',
-        );
+        throw const BackupRestoreException(message: '备份文件校验失败，数据可能已损坏。');
       }
     }
 
@@ -152,12 +192,15 @@ class BackupService {
         'tiantian_qa_sessions',
         'tiantian_qa_messages',
       ];
+      final existingV3Tables = await _existingRawTables(v3Tables);
       // Delete existing V3 data in reverse FK order
       for (final tableName in v3Tables.reversed) {
+        if (!existingV3Tables.contains(tableName)) continue;
         await _db.customStatement('DELETE FROM $tableName');
       }
       // Insert in FK order
       for (final tableName in v3Tables) {
+        if (!existingV3Tables.contains(tableName)) continue;
         final rawRows = decoded['data'][tableName];
         if (rawRows is! List) continue;
         for (final raw in rawRows) {
@@ -172,6 +215,20 @@ class BackupService {
         }
       }
     });
+  }
+
+  Future<Set<String>> _existingRawTables(List<String> tableNames) async {
+    final existing = <String>{};
+    for (final tableName in tableNames) {
+      final rows = await _db
+          .customSelect(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = ?",
+            variables: [Variable.withString(tableName)],
+          )
+          .get();
+      if (rows.isNotEmpty) existing.add(tableName);
+    }
+    return existing;
   }
 
   Future<String> saveBackupToFile() async {

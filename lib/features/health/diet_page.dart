@@ -1,16 +1,18 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/constants/record_icon_assets.dart';
+
 import '../../../app/design/design.dart';
 import '../../../core/constants/date_constants.dart';
 import '../../../core/database/app_database.dart';
 import '../../../core/utils/date_utils.dart';
-import '../../../shared/providers/diet_provider.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import 'providers/diet_provider.dart';
+import '../dashboard/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
@@ -64,16 +66,10 @@ class _DietPageState extends ConsumerState<DietPage> {
       appBar: widget.isEmbedded
           ? null
           : AppBar(
-              title: Text(
-                '饮食记录',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
-              ),
+              title: Text('饮食记录', style: AppTextStyles.pageTitle),
               centerTitle: false,
               backgroundColor: colors.paper,
+              surfaceTintColor: Colors.transparent,
               elevation: 0,
             ),
       body: ModulePageSurface(
@@ -89,40 +85,31 @@ class _DietPageState extends ConsumerState<DietPage> {
             ref.invalidate(dailyCalorieWaterProvider(365));
           },
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ── 甜甜提醒 ──
+                // [1] 宠物陪伴
                 PlanModuleVisualHeader(
                   module: PlanModuleType.diet,
                   color: colors.diet,
                 ),
                 const SizedBox(height: 12),
-                _buildDrinkRecommendationEntry(),
-                const SizedBox(height: 12),
-                PlanModuleActionImageCard(
-                  module: PlanModuleType.diet,
-                  color: colors.diet,
-                  onTap: () => context.push('/plan/diet/water-reminder'),
-                ),
-                const SizedBox(height: 16),
-
-                // ── 今日统计（可设定目标） ──
+                // [2] 今日饮食 HeroCard
                 _buildTodayStats(todayRecords, todayCount, todayScore),
                 const SizedBox(height: 16),
-
-                // ── 饮水量追踪 ──
+                // [3] 双列入口: 喝点什么 / 记录饮食
+                _buildDualDietEntries(context),
+                const SizedBox(height: 16),
+                // [4] 饮水量追踪
                 _buildWaterTracker(),
-                const SizedBox(height: 16),
-
-                // ── 卡路里和饮水量变化图表 ──
+                const SizedBox(height: 20),
+                // [5] 卡路里和饮水量图表
                 _buildCalorieWaterChart(),
-                const SizedBox(height: 16),
-
-                // ── 最近饮食记录 ──
+                const SizedBox(height: 20),
+                // [6] 最近饮食记录
                 _buildRecentRecordsInline(),
-                const SizedBox(height: 80),
+                const SizedBox(height: 96),
               ],
             ),
           ),
@@ -145,121 +132,81 @@ class _DietPageState extends ConsumerState<DietPage> {
     final drink = DrinkCatalog.todayRecommendation();
     final colors = context.growthColors;
 
-    return GrowthCard(
-      onTap: () => context.push('/plan/diet/drink-recommendation'),
-      semanticLabel: '今天想喝点什么',
-      padding: EdgeInsets.zero,
-      borderRadius: 22,
-      borderColor: colors.diet.withValues(alpha: 0.16),
-      backgroundColor: colors.card,
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(22),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => context.push('/plan/diet/drink-recommendation'),
+        borderRadius: BorderRadius.circular(AppRadius.xl),
         child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                colors.softGold,
-                colors.diet.withValues(alpha: 0.12),
-                colors.card,
-              ],
-            ),
+            color: colors.card,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: colors.diet.withValues(alpha: 0.16)),
+            boxShadow: AppShadows.sm,
           ),
-          child: Row(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 15, 10, 15),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            width: 30,
-                            height: 30,
-                            decoration: BoxDecoration(
-                              color: colors.diet.withValues(alpha: 0.13),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.local_cafe_rounded,
-                              color: colors.diet,
-                              size: 18,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            '今天想喝点什么',
-                            style: AppTextStyles.cardTitle.copyWith(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${drink.brand} · ${drink.name}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.body.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: colors.textPrimary,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        '随机挑一杯今日饮品灵感',
-                        style: AppTextStyles.caption.copyWith(
-                          color: colors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: colors.diet.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.smd),
+                ),
+                child: Icon(
+                  Icons.local_cafe_rounded,
+                  color: colors.diet,
+                  size: 22,
                 ),
               ),
-              SizedBox(
-                width: 108,
-                height: 112,
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Positioned.fill(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: colors.diet.withValues(alpha: 0.08),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(10),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(18),
-                        child: Image.asset(
-                          drink.imagePath,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return ColoredBox(
-                              color: colors.softOrange,
-                              child: Icon(
-                                Icons.local_drink_outlined,
-                                color: colors.diet,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                '今天想喝点什么',
+                style: AppTextStyles.cardTitle.copyWith(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 2),
+              Text(
+                '${drink.brand} · ${drink.name}',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.caption.copyWith(
+                  color: colors.textSecondary,
                 ),
               ),
             ],
           ),
         ),
       ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------
+  // 双列饮食入口
+  // ---------------------------------------------------------------------------
+
+  Widget _buildDualDietEntries(BuildContext context) {
+    final colors = context.growthColors;
+    return Row(
+      children: [
+        Expanded(child: _buildDrinkRecommendationEntry()),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _DietEntryCard(
+            icon: Icons.restaurant_rounded,
+            title: '记录饮食',
+            subtitle: '添加今日餐食',
+            color: colors.diet,
+            onTap: () => context.push('/plan/diet/add'),
+          ),
+        ),
+      ],
     );
   }
 
@@ -299,6 +246,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                     icon: Icons.restaurant_rounded,
                     iconColor: colors.textOnAccent,
                     iconBackgroundColor: colors.diet,
+                    imageAsset: RecordIconAssets.dietByMealType(r.mealType),
                     title: r.foodText,
                     subtitle:
                         '${_mealTypeLabel(r.mealType)} · ${_portionLabel(r.portionLevel)}',
@@ -603,12 +551,12 @@ class _DietPageState extends ConsumerState<DietPage> {
                 width: 36,
                 height: 36,
                 decoration: BoxDecoration(
-                  color: colors.primary.withValues(alpha: 0.14),
+                  color: colors.diet.withValues(alpha: 0.14),
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Icon(
                   Icons.water_drop_rounded,
-                  color: colors.primary,
+                  color: colors.diet,
                   size: 20,
                 ),
               ),
@@ -649,19 +597,19 @@ class _DietPageState extends ConsumerState<DietPage> {
                     ),
                     decoration: BoxDecoration(
                       color: Color.alphaBlend(
-                        colors.primary.withValues(alpha: 0.10),
+                        colors.diet.withValues(alpha: 0.10),
                         colors.card,
                       ),
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(
-                        color: colors.primary.withValues(alpha: 0.22),
+                        color: colors.diet.withValues(alpha: 0.22),
                       ),
                     ),
                     child: Text(
                       '\u76ee\u6807 ${waterGoal}ml',
                       style: TextStyle(
                         fontSize: 11,
-                        color: colors.primary,
+                        color: colors.diet,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -677,10 +625,10 @@ class _DietPageState extends ConsumerState<DietPage> {
               value: progress,
               minHeight: 12,
               backgroundColor: Color.alphaBlend(
-                colors.primary.withValues(alpha: 0.14),
+                colors.diet.withValues(alpha: 0.14),
                 colors.card,
               ),
-              valueColor: AlwaysStoppedAnimation<Color>(colors.primary),
+              valueColor: AlwaysStoppedAnimation<Color>(colors.diet),
             ),
           ),
           const SizedBox(height: 8),
@@ -692,7 +640,7 @@ class _DietPageState extends ConsumerState<DietPage> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w900,
-                  color: colors.primary,
+                  color: colors.diet,
                 ),
               ),
               Text(
@@ -730,9 +678,9 @@ class _DietPageState extends ConsumerState<DietPage> {
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: colors.primary.withValues(alpha: 0.14),
+            color: colors.diet.withValues(alpha: 0.14),
             borderRadius: BorderRadius.circular(AppRadius.sm),
-            border: Border.all(color: colors.primary.withValues(alpha: 0.24)),
+            border: Border.all(color: colors.diet.withValues(alpha: 0.24)),
           ),
           child: FittedBox(
             fit: BoxFit.scaleDown,
@@ -740,14 +688,14 @@ class _DietPageState extends ConsumerState<DietPage> {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.add_rounded, size: 14, color: colors.primary),
+                Icon(Icons.add_rounded, size: 14, color: colors.diet),
                 const SizedBox(width: 4),
                 Text(
                   label,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w800,
-                    color: colors.primary,
+                    color: colors.diet,
                   ),
                 ),
               ],
@@ -773,159 +721,57 @@ class _DietPageState extends ConsumerState<DietPage> {
     final nutritionData = ref.watch(dailyCalorieWaterProvider(_selectedRange));
     final colors = context.growthColors;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [colors.card, colors.diet.withValues(alpha: 0.06)],
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.diet.withValues(alpha: 0.14)),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.2),
-            blurRadius: 24,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 标题行
-          Row(
-            children: [
-              Container(
-                width: 28,
-                height: 28,
-                decoration: BoxDecoration(
-                  color: colors.diet.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppRadius.smd),
-                ),
-                child: Icon(
-                  Icons.show_chart_rounded,
-                  color: colors.diet,
-                  size: 16,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildRangeSelector(),
+        const SizedBox(height: AppSpacing.md),
+        GrowthChartCard(
+          title: '饮食趋势',
+          subtitle: _rangeSubtitle(),
+          icon: Icons.show_chart_rounded,
+          color: colors.diet,
+          legend: [
+            GrowthChartLegendItem(color: colors.diet, label: '卡路里(kcal)'),
+            GrowthChartLegendItem(color: colors.primary, label: '饮水量(ml)'),
+          ],
+          child: SizedBox(
+            height: 244,
+            child: nutritionData.when(
+              data: (data) => _CalorieWaterChart(
+                calorieMap: data.calorieMap,
+                waterMap: data.waterMap,
+                days: _selectedRange,
               ),
-              const SizedBox(width: 10),
-              Text(
-                _selectedRange == 7
-                    ? '本周趋势'
-                    : _selectedRange == 30
-                    ? '本月趋势'
-                    : '今年趋势',
-                style: AppTextStyles.cardTitle.copyWith(
-                  color: colors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 时间范围选择器
-          _buildRangeSelector(),
-          const SizedBox(height: 12),
-
-          // 图例
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _buildLegend(colors.diet, '卡路里'),
-              const SizedBox(width: 24),
-              _buildLegend(colors.primary, '饮水量'),
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // 图表
-          ClipRect(
-            child: SizedBox(
-              height: 220,
-              child: nutritionData.when(
-                data: (data) => _CalorieWaterChart(
-                  calorieMap: data.calorieMap,
-                  waterMap: data.waterMap,
-                  days: _selectedRange,
-                ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (e, _) => Center(child: Text('加载失败: $e')),
-              ),
+              loading: () =>
+                  Center(child: CircularProgressIndicator(color: colors.diet)),
+              error: (_, _) => GrowthChartEmpty(color: colors.diet),
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
   Widget _buildRangeSelector() {
-    final colors = context.growthColors;
-    return Container(
-      decoration: BoxDecoration(
-        color: colors.surfaceVariant.withValues(alpha: 0.72),
-        borderRadius: BorderRadius.circular(AppRadius.mlg),
-        border: Border.all(color: colors.diet.withValues(alpha: 0.10)),
-      ),
-      padding: const EdgeInsets.all(2),
-      child: Row(
-        children: [
-          _buildRangeChip('周', 7),
-          _buildRangeChip('月', 30),
-          _buildRangeChip('年', 365),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRangeChip(String label, int value) {
-    final isSelected = _selectedRange == value;
-    final colors = context.growthColors;
-    return Expanded(
-      child: Semantics(
-        button: true,
-        label: '显示$label数据',
-        selected: isSelected,
-        child: GestureDetector(
-          onTap: () => setState(() => _selectedRange = value),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? colors.diet : Colors.transparent,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                color: isSelected ? colors.textOnAccent : colors.textTertiary,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLegend(Color color, String label) {
-    final colors = context.growthColors;
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 3,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
-        const SizedBox(width: 6),
-        Text(label, style: TextStyle(fontSize: 11, color: colors.textTertiary)),
+    return GrowthChartRangeSelector<int>(
+      color: context.growthColors.diet,
+      selected: _selectedRange,
+      options: const [
+        GrowthChartRangeOption(value: 7, label: '周'),
+        GrowthChartRangeOption(value: 30, label: '月'),
+        GrowthChartRangeOption(value: 365, label: '年'),
       ],
+      onChanged: (value) => setState(() => _selectedRange = value),
     );
+  }
+
+  String _rangeSubtitle() {
+    return switch (_selectedRange) {
+      7 => '近 7 天',
+      30 => '本月',
+      _ => '本年',
+    };
   }
 
   // ---------------------------------------------------------------------------
@@ -962,9 +808,7 @@ class _DietPageState extends ConsumerState<DietPage> {
       suggestion: '建议每天摄入 1500~2500 kcal',
       color: colors.diet,
       onSave: (value) async {
-        ref.read(dailyCalorieGoalProvider.notifier).state = value;
-        final repo = ref.read(settingRepositoryProvider);
-        await repo.setSetting('daily_calorie_goal', value.toString());
+        await ref.read(settingsFacadeProvider).setDailyCalorieGoal(value);
       },
     );
   }

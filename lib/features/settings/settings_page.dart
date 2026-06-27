@@ -1,16 +1,18 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:io';
 
 import '../../app/design/design.dart';
-import '../../shared/providers/dashboard_provider.dart'
-    hide settingRepositoryProvider;
-import '../../shared/providers/repository_providers.dart';
-import '../../shared/providers/pet_diary_provider.dart';
+import '../../core/services/exp_service.dart';
+import '../fitness/utils/fitness_timer_assets.dart';
+import '../dashboard/providers/dashboard_provider.dart';
+import '../pet/providers/pet_diary_provider.dart';
+import '../../shared/providers/settings_facade.dart';
 import '../../shared/providers/settings_provider.dart';
+import '../../shared/widgets/common/goal_edit_sheet.dart';
+import '../../shared/widgets/common/growth_confirm_dialog.dart';
 import 'widgets/settings_page_sections.dart';
 
 part 'widgets/settings_page_sheets.dart';
@@ -19,27 +21,9 @@ part 'widgets/settings_page_sheets.dart';
 // AI 连接状态 Provider
 // =============================================================================
 
-final aiConnectionStatusProvider = FutureProvider<bool>((ref) async {
-  final repo = ref.watch(aiConfigRepositoryProvider);
-  final config = await repo.getEnabledAiConfig();
-  return config != null;
-});
-
 // =============================================================================
 // 最后备份时间 Provider
 // =============================================================================
-
-final lastBackupTimeProvider = FutureProvider<DateTime?>((ref) async {
-  final repo = ref.watch(settingRepositoryProvider);
-  final value = await repo.getSetting('last_backup_time');
-  if (value != null) {
-    final timestamp = int.tryParse(value);
-    if (timestamp != null) {
-      return DateTime.fromMillisecondsSinceEpoch(timestamp);
-    }
-  }
-  return null;
-});
 
 // =============================================================================
 // SettingsPage（褐色渐变风格）
@@ -89,7 +73,8 @@ class SettingsPage extends ConsumerWidget {
               levelNameFor: _getLevelName,
               nextLevelExpFor: _calcNextLevelExp,
               onProfileTap: () => context.push('/settings/profile'),
-              onLevelTap: (data) => _showLevelDetailSheet(context, data),
+              onLevelTap: (data) => _showLevelDetailSheet(context, ref, data),
+              onAvatarTap: () => context.push('/settings/profile'),
             ),
             const SizedBox(height: 24),
 
@@ -189,29 +174,19 @@ class SettingsPage extends ConsumerWidget {
     final current = ref.read(autoAiAnalysisProvider);
     if (current) {
       // 关闭
-      ref.read(autoAiAnalysisProvider.notifier).state = false;
-      await ref
-          .read(settingRepositoryProvider)
-          .setSetting('auto_ai_analysis', 'false');
+      await ref.read(settingsFacadeProvider).setAutoAiAnalysisEnabled(false);
       // 同时关闭日记上传
-      ref.read(journalUploadProvider.notifier).state = false;
-      await ref
-          .read(settingRepositoryProvider)
-          .setSetting('journal_upload', 'false');
     } else {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
         context,
-        title: '🤖 开启 AI 自动分析',
-        content:
-            '开启后，每次打开 app 会自动分析你的学习、健身、饮食、睡眠数据。\n\n'
-            '⚠️ 数据将会发送到你配置的 AI 服务商服务器（如 DeepSeek、OpenAI 等）。\n\n'
-            '📝 日记内容默认不会被上传。如需上传日记，请在开启后单独设置。',
+        title: '开启 AI 自动分析',
+        content: '开启后，每次打开 app 会自动分析你的学习、健身、饮食、睡眠数据。',
+        privacyNotice:
+            '数据将会发送到你配置的 AI 服务商服务器（如 DeepSeek、OpenAI 等）。\n\n日记内容默认不会被上传。如需上传日记，请在开启后单独设置。',
+        image: 'assets/images/dialogs/ai_privacy.webp',
         onConfirm: () async {
-          ref.read(autoAiAnalysisProvider.notifier).state = true;
-          await ref
-              .read(settingRepositoryProvider)
-              .setSetting('auto_ai_analysis', 'true');
+          await ref.read(settingsFacadeProvider).setAutoAiAnalysisEnabled(true);
         },
       );
     }
@@ -225,24 +200,18 @@ class SettingsPage extends ConsumerWidget {
     final current = ref.read(journalUploadProvider);
     if (current) {
       // 关闭
-      ref.read(journalUploadProvider.notifier).state = false;
-      await ref
-          .read(settingRepositoryProvider)
-          .setSetting('journal_upload', 'false');
+      await ref.read(settingsFacadeProvider).setJournalUploadEnabled(false);
     } else {
       // 开启 - 显示隐私提醒
       _showPrivacyDialog(
         context,
-        title: '📔 开启日记上传分析',
-        content:
-            '开启后，AI 会分析你的日记内容，为你提供更个性化的成长建议。\n\n'
-            '⚠️ 日记内容将会发送到你配置的 AI 服务商服务器。请确保你信任该服务商。\n\n'
-            '💡 建议：不要在日记中记录密码、银行卡等敏感信息。',
+        title: '开启日记上传分析',
+        content: '开启后，AI 会分析你的日记内容，为你提供更个性化的成长建议。',
+        privacyNotice:
+            '日记内容将会发送到你配置的 AI 服务商服务器。请确保你信任该服务商。\n\n建议：不要在日记中记录密码、银行卡等敏感信息。',
+        image: 'assets/images/dialogs/journal_writing.webp',
         onConfirm: () async {
-          ref.read(journalUploadProvider.notifier).state = true;
-          await ref
-              .read(settingRepositoryProvider)
-              .setSetting('journal_upload', 'true');
+          await ref.read(settingsFacadeProvider).setJournalUploadEnabled(true);
         },
       );
     }
@@ -259,10 +228,10 @@ class SettingsPage extends ConsumerWidget {
     _showPrivacyDialog(
       context,
       title: '开启甜甜自动写日记',
-      content:
-          '开启后，每天早上 6 点后首次打开 App 时，甜甜会检查今天是否已有小日记。\n\n'
-          '只会发送昨天的本地统计摘要，例如学习时长、健身时长、睡眠/饮食摘要、经验变化、任务完成情况、天气和日期。\n\n'
-          '不会发送你的完整日记正文，也不会把小猫日记计入成长经验。',
+      content: '开启后，每天早上 6 点后首次打开 App 时，甜甜会检查今天是否已有小日记。',
+      privacyNotice:
+          '只会发送昨天的本地统计摘要，例如学习时长、健身时长、睡眠/饮食摘要、经验变化、任务完成情况、天气和日期。\n\n不会发送你的完整日记正文，也不会把小猫日记计入成长经验。',
+      image: 'assets/images/dialogs/common_happy.webp',
       onConfirm: () async {
         final service = ref.read(petDiaryServiceProvider);
         await service.markPrivacyConfirmed();
@@ -276,43 +245,20 @@ class SettingsPage extends ConsumerWidget {
     BuildContext context, {
     required String title,
     required String content,
-    required VoidCallback onConfirm,
+    required GrowthConfirmCallback onConfirm,
+    String? image,
+    String? privacyNotice,
   }) {
-    showDialog(
+    GrowthConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(
-          title,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        content: Text(
-          content,
-          style: const TextStyle(fontSize: 14, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              '取消',
-              style: TextStyle(color: context.growthColors.textSecondary),
-            ),
-          ),
-          FilledButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              onConfirm();
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: context.growthColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            child: const Text('确认开启'),
-          ),
-        ],
-      ),
+      image: image ?? 'assets/images/dialogs/ai_privacy.webp',
+      title: title,
+      message: content,
+      privacyNotice: privacyNotice ?? '数据将会发送到你配置的 AI 服务商服务器，请确保你信任该服务商。',
+      primaryText: '确认开启',
+      secondaryText: '取消',
+      onPrimary: onConfirm,
+      mode: GrowthConfirmMode.normal,
     );
   }
 
@@ -405,10 +351,7 @@ class SettingsPage extends ConsumerWidget {
     return GestureDetector(
       onTap: () async {
         HapticFeedback.lightImpact();
-        ref.read(themeModeProvider.notifier).state = mode;
-        await ref
-            .read(settingRepositoryProvider)
-            .setSetting('theme_mode', mode.name);
+        await ref.read(settingsFacadeProvider).setThemeMode(mode);
         if (context.mounted) Navigator.pop(context);
       },
       child: Container(
@@ -526,7 +469,7 @@ class SettingsPage extends ConsumerWidget {
         key: 'daily_water_goal',
         label: '每日饮水量',
         icon: Icons.water_drop_rounded,
-        color: context.growthColors.softBlue,
+        color: context.growthColors.study,
         value: ref.read(dailyWaterGoalProvider),
         unit: 'ml',
       ),
@@ -577,115 +520,92 @@ class SettingsPage extends ConsumerWidget {
     WidgetRef ref,
     List<_GoalItem> updatedGoals,
   ) async {
-    final repo = ref.read(settingRepositoryProvider);
+    int valueFor(String key, int fallback) {
+      return updatedGoals
+              .where((goal) => goal.key == key)
+              .map((goal) => goal.value)
+              .firstOrNull ??
+          fallback;
+    }
 
-    // Rebuild daily goals list (学习 / 健身 / 写日记)
     final newDailyGoals = <DailyGoal>[];
-    for (final g in updatedGoals) {
-      switch (g.key) {
+    for (final goal in updatedGoals) {
+      switch (goal.key) {
         case 'daily_study_goal':
-          newDailyGoals.add(DailyGoal(name: '学习', target: g.value, unit: '分钟'));
+          newDailyGoals.add(
+            DailyGoal(
+              name: '\u5b66\u4e60',
+              target: goal.value,
+              unit: '\u5206\u949f',
+            ),
+          );
           break;
         case 'daily_fitness_goal':
-          newDailyGoals.add(DailyGoal(name: '健身', target: g.value, unit: '分钟'));
+          newDailyGoals.add(
+            DailyGoal(
+              name: '\u5065\u8eab',
+              target: goal.value,
+              unit: '\u5206\u949f',
+            ),
+          );
           break;
         case 'daily_journal_goal':
-          newDailyGoals.add(DailyGoal(name: '写日记', target: g.value, unit: '篇'));
+          newDailyGoals.add(
+            DailyGoal(
+              name: '\u5199\u65e5\u8bb0',
+              target: goal.value,
+              unit: '\u7bc7',
+            ),
+          );
           break;
       }
     }
 
-    if (newDailyGoals.isNotEmpty) {
-      ref.read(dailyGoalsProvider.notifier).state = newDailyGoals;
-      await repo.setSetting(
-        'daily_goals',
-        jsonEncode(newDailyGoals.map((g) => g.toJson()).toList()),
-      );
-    }
-
-    // Weekly fitness goal
-    final weeklyItem = updatedGoals
-        .where((g) => g.key == 'weekly_fitness_goal')
-        .firstOrNull;
-    if (weeklyItem != null) {
-      ref.read(weeklyFitnessGoalProvider.notifier).state = weeklyItem.value;
-      await repo.setSetting('weekly_fitness_goal', weeklyItem.value.toString());
-    }
-
-    // Persist remaining goals individually
-    final otherKeys = {'target_weight', 'total_study_hours'};
-    for (final g in updatedGoals) {
-      if (otherKeys.contains(g.key)) {
-        await repo.setSetting(g.key, g.value.toString());
-        // 更新全局 Provider
-        if (g.key == 'target_weight') {
-          ref.read(targetWeightProvider.notifier).state = g.value.toDouble();
-        }
-        if (g.key == 'total_study_hours') {
-          ref.read(totalStudyHoursProvider.notifier).state = g.value;
-        }
-      }
-      // 更新全局 Provider
-      if (g.key == 'daily_sleep_goal') {
-        ref.read(sleepGoalProvider.notifier).state = g.value;
-        await repo.setSetting('sleep_goal_hours', g.value.toString());
-      }
-      if (g.key == 'daily_calorie_goal') {
-        ref.read(dailyCalorieGoalProvider.notifier).state = g.value;
-        await repo.setSetting('daily_calorie_goal', g.value.toString());
-      }
-      if (g.key == 'daily_water_goal') {
-        ref.read(dailyWaterGoalProvider.notifier).state = g.value;
-        await repo.setSetting('daily_water_goal', g.value.toString());
-      }
-    }
+    await ref
+        .read(settingsFacadeProvider)
+        .saveGoals(
+          SettingsGoalSnapshot(
+            dailyGoals: newDailyGoals.isEmpty
+                ? ref.read(dailyGoalsProvider)
+                : newDailyGoals,
+            weeklyFitnessGoal: valueFor(
+              'weekly_fitness_goal',
+              ref.read(weeklyFitnessGoalProvider),
+            ),
+            sleepGoalHours: valueFor(
+              'sleep_goal_hours',
+              ref.read(sleepGoalProvider),
+            ),
+            dailyCalorieGoal: valueFor(
+              'daily_calorie_goal',
+              ref.read(dailyCalorieGoalProvider),
+            ),
+            dailyWaterGoal: valueFor(
+              'daily_water_goal',
+              ref.read(dailyWaterGoalProvider),
+            ),
+            targetWeightKg: valueFor(
+              'target_weight',
+              ref.read(targetWeightProvider).round(),
+            ).toDouble(),
+            totalStudyHours: valueFor(
+              'total_study_hours',
+              ref.read(totalStudyHoursProvider),
+            ),
+          ),
+        );
   }
 
   void _showAboutDialog(BuildContext context) {
-    showDialog(
+    GrowthConfirmDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Row(
-          children: [
-            Container(
-              width: 40,
-              height: 40,
-              decoration: BoxDecoration(
-                color: context.growthColors.softOrange,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Text('🐱', style: TextStyle(fontSize: 24)),
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Growth OS',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: context.growthColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-        content: Text(
-          'Growth OS 是一款陪伴你持续成长的操作系统。\n\n通过数据记录、智能分析与温暖陪伴，帮你把每一天都活成进步的版本。',
-          style: TextStyle(
-            fontSize: 14,
-            color: context.growthColors.textSecondary,
-            height: 1.5,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(
-              '确定',
-              style: TextStyle(color: context.growthColors.primary),
-            ),
-          ),
-        ],
-      ),
+      image: 'assets/images/dialogs/app_icon.webp',
+      title: 'Growth OS',
+      subtitle: '版本 0.1.0',
+      message: 'Growth OS 是一款陪伴你持续成长的操作系统。\n\n通过数据记录、智能分析与温暖陪伴，帮你把每一天都活成进步的版本。',
+      primaryText: '确定',
+      onPrimary: () {},
+      mode: GrowthConfirmMode.info,
     );
   }
 
@@ -693,7 +613,8 @@ class SettingsPage extends ConsumerWidget {
   // 等级详情弹窗
   // ---------------------------------------------------------------------------
 
-  void _showLevelDetailSheet(BuildContext context, DashboardData data) {
+  void _showLevelDetailSheet(BuildContext context, WidgetRef ref, DashboardData data) {
+    final avatarPath = ref.read(userAvatarPathProvider);
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -702,6 +623,7 @@ class SettingsPage extends ConsumerWidget {
         currentLevel: data.currentLevel,
         totalExp: data.totalExp,
         expProgress: data.expProgress,
+        avatarPath: avatarPath,
       ),
     );
   }

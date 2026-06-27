@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../features/music/models/music_player_state.dart';
-import '../../../features/music/providers/music_player_provider.dart';
-import '../../../features/music/utils/music_assets.dart';
 import '../../../shared/providers/focus_audio_provider.dart';
+import '../providers/focus_music_facade.dart';
 import '../utils/focus_options.dart';
 
 class FocusSoundPanel extends ConsumerWidget {
@@ -27,16 +24,22 @@ class FocusSoundPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
     final audioState = ref.watch(focusAudioStateProvider);
-    final current = audioState.currentSoundType ?? initialSoundType;
+    final selectedSound = initialSoundType.isEmpty ? 'none' : initialSoundType;
+    final current = selectedSound == 'none'
+        ? (audioState.currentSoundType ?? selectedSound)
+        : selectedSound;
+    final noiseFallback = current != 'none' && current != 'music'
+        ? current
+        : 'white_noise';
     final musicMode = current == 'music';
 
     return Container(
-      padding: EdgeInsets.all(compact ? 16 : 20),
+      padding: EdgeInsets.all(compact ? 12 : 20),
       decoration: BoxDecoration(
         color: (dark ? colors.card : colors.paper).withValues(
           alpha: dark ? 0.88 : 0.82,
         ),
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(compact ? 20 : 24),
         border: Border.all(color: colors.border.withValues(alpha: 0.76)),
         boxShadow: [
           BoxShadow(
@@ -54,14 +57,14 @@ class FocusSoundPanel extends ConsumerWidget {
               Icon(
                 Icons.music_note_rounded,
                 color: colors.textPrimary,
-                size: 20,
+                size: compact ? 17 : 20,
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: compact ? 6 : 8),
               Text(
                 '专注声音',
                 style: TextStyle(
                   color: colors.textPrimary,
-                  fontSize: compact ? 15 : 18,
+                  fontSize: compact ? 14 : 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -74,25 +77,20 @@ class FocusSoundPanel extends ConsumerWidget {
                     : '安静模式',
                 style: TextStyle(
                   color: colors.textSecondary,
-                  fontSize: compact ? 11 : 13,
+                  fontSize: compact ? 10.5 : 13,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: compact ? 8 : 12),
           _AudioModeSwitch(
             musicMode: musicMode,
-            onNoise: () {
-              ref.read(musicPlayerProvider.notifier).pause();
-              onSoundChanged?.call(null);
-            },
-            onMusic: () {
-              ref.read(focusAudioStateProvider.notifier).stopNoise();
-              onSoundChanged?.call('music');
-            },
+            compact: compact,
+            onNoise: () => onSoundChanged?.call(noiseFallback),
+            onMusic: () => onSoundChanged?.call('music'),
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: compact ? 10 : 14),
           if (musicMode)
             _FocusMusicPanel(compact: compact, onSoundChanged: onSoundChanged)
           else
@@ -110,11 +108,13 @@ class FocusSoundPanel extends ConsumerWidget {
 class _AudioModeSwitch extends StatelessWidget {
   const _AudioModeSwitch({
     required this.musicMode,
+    required this.compact,
     required this.onNoise,
     required this.onMusic,
   });
 
   final bool musicMode;
+  final bool compact;
   final VoidCallback onNoise;
   final VoidCallback onMusic;
 
@@ -122,7 +122,7 @@ class _AudioModeSwitch extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      padding: const EdgeInsets.all(4),
+      padding: EdgeInsets.all(compact ? 3 : 4),
       decoration: BoxDecoration(
         color: colors.surfaceVariant.withValues(alpha: 0.58),
         borderRadius: BorderRadius.circular(999),
@@ -133,12 +133,14 @@ class _AudioModeSwitch extends StatelessWidget {
             label: '白噪音',
             selected: !musicMode,
             activeColor: colors.focus,
+            compact: compact,
             onTap: onNoise,
           ),
           _ModeButton(
             label: '本地音乐',
             selected: musicMode,
             activeColor: colors.focus,
+            compact: compact,
             onTap: onMusic,
           ),
         ],
@@ -152,12 +154,14 @@ class _ModeButton extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.activeColor,
+    required this.compact,
     required this.onTap,
   });
 
   final String label;
   final bool selected;
   final Color activeColor;
+  final bool compact;
   final VoidCallback onTap;
 
   @override
@@ -169,7 +173,7 @@ class _ModeButton extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
-          padding: const EdgeInsets.symmetric(vertical: 8),
+          padding: EdgeInsets.symmetric(vertical: compact ? 6 : 8),
           decoration: BoxDecoration(
             color: selected
                 ? activeColor.withValues(alpha: 0.18)
@@ -181,7 +185,7 @@ class _ModeButton extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               color: selected ? activeColor : colors.textSecondary,
-              fontSize: 12,
+              fontSize: compact ? 11 : 12,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -209,47 +213,41 @@ class _NoisePanel extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
-          spacing: compact ? 8 : 10,
-          runSpacing: compact ? 8 : 10,
+          spacing: compact ? 6 : 10,
+          runSpacing: compact ? 6 : 10,
           children: focusSoundOptions
               .map((sound) {
                 final selected = current == sound.value;
                 return _SessionSoundTile(
+                  value: sound.value,
                   label: sound.label,
                   asset: sound.asset,
                   selected: selected,
                   compact: compact,
                   onTap: () {
-                    ref.read(musicPlayerProvider.notifier).pause();
-                    if (sound.value == 'none') {
-                      ref.read(focusAudioStateProvider.notifier).stopNoise();
-                      onSoundChanged?.call(null);
-                    } else {
-                      ref
-                          .read(focusAudioStateProvider.notifier)
-                          .changeSound(sound.value);
-                      onSoundChanged?.call(sound.value);
-                    }
+                    onSoundChanged?.call(
+                      sound.value == 'none' ? null : sound.value,
+                    );
                   },
                 );
               })
               .toList(growable: false),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: compact ? 8 : 14),
         Row(
           children: [
             Text(
               '音量',
               style: TextStyle(
                 color: colors.textPrimary,
-                fontSize: 14,
+                fontSize: compact ? 12 : 14,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: compact ? 6 : 10),
             Icon(
               Icons.volume_down_rounded,
-              size: 18,
+              size: compact ? 16 : 18,
               color: colors.textSecondary,
             ),
             Expanded(
@@ -269,7 +267,7 @@ class _NoisePanel extends ConsumerWidget {
               '${(ref.watch(focusAudioStateProvider).volume * 100).round()}%',
               style: TextStyle(
                 color: colors.textPrimary,
-                fontSize: 14,
+                fontSize: compact ? 12 : 14,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -289,31 +287,31 @@ class _FocusMusicPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
-    final state = ref.watch(musicPlayerProvider);
-    final controller = ref.read(musicPlayerProvider.notifier);
+    final facade = ref.watch(focusMusicFacadeProvider);
+    final state = facade.watchState();
     final track = state.currentTrack;
 
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          padding: EdgeInsets.all(compact ? 8 : 10),
           decoration: BoxDecoration(
             color: colors.surface.withValues(alpha: 0.68),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(compact ? 16 : 20),
             border: Border.all(color: colors.border.withValues(alpha: 0.7)),
           ),
           child: Row(
             children: [
               ClipRRect(
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(compact ? 12 : 14),
                 child: Image.asset(
-                  track?.coverAsset ?? MusicAssets.coverDefault,
-                  width: compact ? 44 : 52,
-                  height: compact ? 44 : 52,
+                  track?.coverAsset ?? facade.defaultCoverAsset,
+                  width: compact ? 36 : 52,
+                  height: compact ? 36 : 52,
                   fit: BoxFit.cover,
                 ),
               ),
-              const SizedBox(width: 10),
+              SizedBox(width: compact ? 8 : 10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,16 +322,16 @@ class _FocusMusicPanel extends ConsumerWidget {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         color: colors.textPrimary,
-                        fontSize: compact ? 13 : 15,
+                        fontSize: compact ? 12 : 15,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    SizedBox(height: compact ? 2 : 4),
                     Text(
                       '${state.selectedCollection.label} · ${state.selectedTracks.length} 首',
                       style: TextStyle(
                         color: colors.textSecondary,
-                        fontSize: compact ? 11 : 12,
+                        fontSize: compact ? 10.5 : 12,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -347,41 +345,43 @@ class _FocusMusicPanel extends ConsumerWidget {
                 onTap: () {
                   onSoundChanged?.call('music');
                   ref.read(focusAudioStateProvider.notifier).stopNoise();
-                  controller.togglePlayPause();
+                  facade.togglePlayPause();
                 },
               ),
             ],
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: compact ? 8 : 10),
         Row(
           children: [
             _FocusMusicButton(
               icon: Icons.skip_previous_rounded,
-              onTap: state.hasTracks ? controller.playPrevious : null,
+              onTap: state.hasTracks ? facade.playPrevious : null,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: compact ? 6 : 8),
             _FocusMusicButton(
               icon: Icons.skip_next_rounded,
-              onTap: state.hasTracks ? controller.playNext : null,
+              onTap: state.hasTracks ? facade.playNext : null,
             ),
-            const SizedBox(width: 8),
+            SizedBox(width: compact ? 6 : 8),
             Expanded(child: _FocusCollectionButton(state: state)),
-            const SizedBox(width: 8),
+            SizedBox(width: compact ? 6 : 8),
             _FocusMusicButton(
               icon: state.isImporting
                   ? Icons.hourglass_empty_rounded
                   : Icons.add_rounded,
-              onTap: state.isImporting ? null : controller.importTracks,
+              onTap: state.isImporting
+                  ? null
+                  : () => facade.controller.importTracks(),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: compact ? 6 : 10),
         Row(
           children: [
             Icon(
               Icons.volume_down_rounded,
-              size: 18,
+              size: compact ? 16 : 18,
               color: colors.textSecondary,
             ),
             Expanded(
@@ -392,14 +392,14 @@ class _FocusMusicPanel extends ConsumerWidget {
                 divisions: 20,
                 activeColor: colors.focus,
                 inactiveColor: colors.border.withValues(alpha: 0.55),
-                onChanged: controller.setVolume,
+                onChanged: facade.setVolume,
               ),
             ),
             Text(
               '${(state.volume * 100).round()}%',
               style: TextStyle(
                 color: colors.textPrimary,
-                fontSize: 13,
+                fontSize: compact ? 12 : 13,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -472,6 +472,7 @@ class _FocusMusicButton extends StatelessWidget {
 
 class _SessionSoundTile extends StatelessWidget {
   const _SessionSoundTile({
+    required this.value,
     required this.label,
     required this.asset,
     required this.selected,
@@ -479,6 +480,7 @@ class _SessionSoundTile extends StatelessWidget {
     required this.onTap,
   });
 
+  final String value;
   final String label;
   final String asset;
   final bool selected;
@@ -490,47 +492,55 @@ class _SessionSoundTile extends StatelessWidget {
     final colors = context.growthColors;
     final selectedColor = colors.focus;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: compact ? 74 : 84,
-        padding: EdgeInsets.symmetric(
-          vertical: compact ? 8 : 10,
-          horizontal: 6,
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: label,
+      child: GestureDetector(
+        key: ValueKey(
+          'focus_sound_tile_${value}_${selected ? 'selected' : 'idle'}',
         ),
-        decoration: BoxDecoration(
-          color: selected
-              ? selectedColor.withValues(alpha: 0.14)
-              : colors.surface.withValues(alpha: 0.64),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: selected
-                ? selectedColor
-                : colors.border.withValues(alpha: 0.7),
-            width: selected ? 1.6 : 1,
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: compact ? 62 : 84,
+          padding: EdgeInsets.symmetric(
+            vertical: compact ? 6 : 10,
+            horizontal: compact ? 4 : 6,
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              asset,
-              width: compact ? 32 : 38,
-              height: compact ? 32 : 38,
+          decoration: BoxDecoration(
+            color: selected
+                ? selectedColor.withValues(alpha: 0.14)
+                : colors.surface.withValues(alpha: 0.64),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: selected
+                  ? selectedColor
+                  : colors.border.withValues(alpha: 0.7),
+              width: selected ? 1.6 : 1,
             ),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: selected ? selectedColor : colors.textSecondary,
-                fontSize: compact ? 11 : 12,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Image.asset(
+                asset,
+                width: compact ? 26 : 38,
+                height: compact ? 26 : 38,
               ),
-            ),
-          ],
+              SizedBox(height: compact ? 4 : 5),
+              Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: selected ? selectedColor : colors.textSecondary,
+                  fontSize: compact ? 10 : 12,
+                  fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -560,7 +570,8 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   @override
   void initState() {
     super.initState();
-    final collection = ref.read(musicPlayerProvider).selectedCollection;
+    final facade = ref.read(focusMusicFacadeProvider);
+    final collection = facade.selectedCollection;
     _pageController = PageController(initialPage: collection.index);
   }
 
@@ -573,8 +584,8 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final state = ref.watch(musicPlayerProvider);
-    final controller = ref.read(musicPlayerProvider.notifier);
+    final facade = ref.watch(focusMusicFacadeProvider);
+    final state = facade.watchState();
     final tracks = state.selectedTracks;
 
     return Container(
@@ -624,23 +635,20 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
           const SizedBox(height: 12),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
-            child: _buildCollectionTabs(state, controller),
+            child: _buildCollectionTabs(state, facade),
           ),
           const SizedBox(height: 12),
           Expanded(
             child: tracks.isEmpty
                 ? _buildEmptyState()
-                : _buildTrackList(tracks, state, controller),
+                : _buildTrackList(tracks, state, facade),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildCollectionTabs(
-    MusicPlayerState state,
-    MusicPlayerController controller,
-  ) {
+  Widget _buildCollectionTabs(MusicPlayerState state, FocusMusicFacade facade) {
     final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.all(4),
@@ -655,7 +663,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
               return Expanded(
                 child: GestureDetector(
                   onTap: () {
-                    controller.selectCollection(collection);
+                    facade.controller.selectCollection(collection);
                     _pageController.animateToPage(
                       collection.index,
                       duration: const Duration(milliseconds: 250),
@@ -726,7 +734,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   Widget _buildTrackList(
     List<MusicTrack> tracks,
     MusicPlayerState state,
-    MusicPlayerController controller,
+    FocusMusicFacade facade,
   ) {
     return ListView.separated(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -735,7 +743,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
       itemBuilder: (context, index) {
         final track = tracks[index];
         final selected = track.id == state.currentTrackId;
-        return _buildTrackTile(track, selected, controller);
+        return _buildTrackTile(track, selected, facade);
       },
     );
   }
@@ -743,12 +751,12 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
   Widget _buildTrackTile(
     MusicTrack track,
     bool selected,
-    MusicPlayerController controller,
+    FocusMusicFacade facade,
   ) {
     final colors = context.growthColors;
     return GestureDetector(
       onTap: () {
-        controller.playTrack(track);
+        facade.controller.playTrack(track);
         Navigator.pop(context);
       },
       child: Container(
@@ -769,7 +777,7 @@ class _FocusMusicListSheetState extends ConsumerState<_FocusMusicListSheet> {
             ClipRRect(
               borderRadius: BorderRadius.circular(10),
               child: Image.asset(
-                track.coverAsset ?? MusicAssets.coverDefault,
+                track.coverAsset ?? facade.defaultCoverAsset,
                 width: 44,
                 height: 44,
                 fit: BoxFit.cover,

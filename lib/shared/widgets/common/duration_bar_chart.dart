@@ -2,12 +2,16 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 
 import '../../../app/design/design.dart';
-
+import '../../../core/utils/chart_goal_line.dart';
 import '../../../core/utils/chart_scale_utils.dart';
 
 /// 时长类柱状图（自适应分钟/小时）
 ///
 /// 自动根据数据量级切换分钟和小时显示。
+///
+/// 增强功能（可选）：
+/// - [goalValue] 目标参考线（虚线）
+/// - [goalLabel] 目标线标签
 class DurationBarChart extends StatelessWidget {
   const DurationBarChart({
     super.key,
@@ -15,12 +19,20 @@ class DurationBarChart extends StatelessWidget {
     required this.labels,
     this.barColor,
     this.height = 220,
+    this.goalValue,
+    this.goalLabel,
   });
 
   final List<num> valuesInMinutes;
   final List<String> labels;
   final Color? barColor;
   final double height;
+
+  /// 目标值（分钟），显示为虚线参考线
+  final num? goalValue;
+
+  /// 目标线标签（如 '目标' 或 '60min'）
+  final String? goalLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +67,17 @@ class DurationBarChart extends StatelessWidget {
                 getDrawingHorizontalLine: (value) =>
                     FlLine(color: colors.divider, strokeWidth: 0.8),
               ),
+              extraLinesData: goalValue != null
+                  ? ExtraLinesData(
+                      horizontalLines: [
+                        ChartGoalLine.create(
+                          goalValue: scale.convertMinutes(goalValue!),
+                          colors: colors,
+                          label: goalLabel,
+                        ),
+                      ],
+                    )
+                  : null,
               borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
                 topTitles: const AxisTitles(

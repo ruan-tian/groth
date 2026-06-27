@@ -5,16 +5,29 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
+import '../models/health_data.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
-import '../../../shared/providers/dashboard_provider.dart'
-    show dashboardProvider, databaseProvider;
-import '../../../shared/providers/diet_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart'
+    show dashboardProvider;
+import '../../health/providers/diet_provider.dart';
 import '../../../shared/providers/repository_providers.dart'
     show dietRepositoryProvider, expRepositoryProvider;
 import '../../../shared/providers/service_providers.dart'
     show expServiceProvider;
+
+const _dietAssetRoot = 'assets/images/diet_record';
+const _dietHeroAsset = '$_dietAssetRoot/diet_hero.webp';
+const _dietFooterAsset = '$_dietAssetRoot/diet_deco_2.webp';
+const _drumstickOnAsset = '$_dietAssetRoot/drumstick_on.webp';
+const _drumstickOffAsset = '$_dietAssetRoot/drumstick_off.webp';
+
+const _diet = Color(0xFFE3A21A);
+const _dietDeep = Color(0xFFB06E00);
+const _dietDark = Color(0xFF66430D);
+const _dietMist = Color(0xFFFFFBF0);
+const _dietSoft = Color(0xFFFFF2CC);
+const _dietLine = Color(0xFFF2DEAA);
 
 class AddDietRecordPage extends ConsumerStatefulWidget {
   const AddDietRecordPage({super.key});
@@ -119,7 +132,6 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       );
 
       final expService = ref.read(expServiceProvider);
-      final db = ref.read(databaseProvider);
       final repo = ref.read(dietRepositoryProvider);
       final expRepo = ref.read(expRepositoryProvider);
       final oldTotal = await expRepo.getTotalExp();
@@ -133,22 +145,12 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             _proteinLevel == 'medium' || _proteinLevel == 'high',
       );
 
-      late final int recordId;
-      await db.transaction(() async {
-        recordId = await repo.insertDietRecord(companion);
-
-        if (dietExp > 0) {
-          await expRepo.insertExpLog(
-            GrowthExpLogsCompanion.insert(
-              sourceType: 'diet',
-              sourceId: recordId,
-              expValue: dietExp,
-              reason: '饮食: ${_foodController.text.trim()}',
-              createdAt: now.millisecondsSinceEpoch,
-            ),
-          );
-        }
-      });
+      await repo.saveDietRecordWithExp(
+        record: companion,
+        exp: dietExp,
+        reason: 'diet: ${_foodController.text.trim()}',
+        createdAt: now.millisecondsSinceEpoch,
+      );
 
       if (dietExp > 0) {
         final newLevel = expService.calculateLevel(oldTotal + dietExp);
@@ -195,57 +197,67 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.growthColors;
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        title: Text(
-          '记录饮食',
-          style: AppTextStyles.pageTitle.copyWith(color: colors.textPrimary),
+      backgroundColor: _dietMist,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Colors.white,
+              _dietMist,
+              _dietSoft.withValues(alpha: 0.64),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-          color: colors.textPrimary,
-          onPressed: () => context.pop(),
-        ),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxWidth = constraints.maxWidth > 720
+                  ? 640.0
+                  : double.infinity;
+              return SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  112,
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 22),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _DietHeader(
+                          onBack: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              Navigator.of(context).maybePop();
+                            }
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildDietHeroCard(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildMealTypeSelector(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildFoodCard(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildNutritionCard(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildHealthScoreSelector(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildNoteField(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildSaveButton(),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildDietHeroCard(),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildMealTypeSelector(),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildFoodCard(),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildNutritionCard(),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildHealthScoreSelector(),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildNoteField(),
-                  ],
-                ),
-              ),
-            ),
-            _buildSaveButton(),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -254,67 +266,79 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
   Widget _buildDietHeroCard() {
     final colors = context.growthColors;
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [colors.diet, Color.lerp(colors.diet, colors.warning, 0.42)!],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        boxShadow: AppShadows.colored(colors.diet, blurRadius: 26, offsetY: 12),
+        color: colors.card.withValues(alpha: 0.84),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        border: Border.all(color: _dietLine.withValues(alpha: 0.60)),
+        boxShadow: [
+          BoxShadow(
+            color: _dietDeep.withValues(alpha: 0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Positioned(
-            right: -22,
-            top: -22,
-            child: Icon(
-              Icons.restaurant_rounded,
-              size: 118,
-              color: colors.textOnAccent.withValues(alpha: 0.14),
+            right: -8,
+            bottom: -12,
+            child: Image.asset(
+              _dietFooterAsset,
+              width: 112,
+              fit: BoxFit.contain,
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.textOnAccent.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                ),
-                child: Text(
-                  _mealLabel,
-                  style: AppTextStyles.caption.copyWith(
-                    color: colors.textOnAccent,
-                    fontWeight: FontWeight.w800,
-                  ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _dietSoft.withValues(alpha: 0.82),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        border: Border.all(color: _dietLine),
+                      ),
+                      child: Text(
+                        _mealLabel,
+                        style: AppTextStyles.caption.copyWith(
+                          color: _dietDeep,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      _foodPreview,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.numberLarge.copyWith(
+                        color: _dietDark,
+                        fontSize: 28,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      '健康 $_healthScore 分 · $_healthText · 预计 +$_estimatedDietExp EXP',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.body.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                _foodPreview,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.numberLarge.copyWith(
-                  color: colors.textOnAccent,
-                  fontSize: 28,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                '健康 $_healthScore 星 · $_healthText · 预计 +$_estimatedDietExp EXP',
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.body.copyWith(
-                  color: colors.textOnAccent.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
+              const SizedBox(width: 96),
             ],
           ),
         ],
@@ -399,7 +423,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           curve: AppMotion.standard,
           padding: const EdgeInsets.symmetric(vertical: AppSpacing.sm),
           decoration: BoxDecoration(
-            color: isSelected ? colors.diet : Colors.transparent,
+            color: isSelected ? _diet : Colors.transparent,
             borderRadius: BorderRadius.circular(AppRadius.full),
           ),
           child: Column(
@@ -430,9 +454,9 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: _dietMist.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(AppRadius.xl),
-        border: Border.all(color: colors.diet.withValues(alpha: 0.14)),
+        border: Border.all(color: _dietLine.withValues(alpha: 0.78)),
       ),
       child: TextField(
         controller: _foodController,
@@ -450,7 +474,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           prefixIcon: Icon(
             Icons.restaurant_rounded,
             size: 18,
-            color: colors.diet.withValues(alpha: 0.72),
+            color: _dietDeep.withValues(alpha: 0.72),
           ),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -494,7 +518,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           '适中',
           _calorieLevel,
           (value) => setState(() => _calorieLevel = value),
-          color: colors.diet,
+          color: _diet,
         ),
         _buildDietSegmentChip(
           'high',
@@ -523,7 +547,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           '适中',
           _proteinLevel,
           (value) => setState(() => _proteinLevel = value),
-          color: colors.diet,
+          color: _diet,
         ),
         _buildDietSegmentChip(
           'high',
@@ -537,12 +561,11 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
   }
 
   Widget _buildSegmentSurface({required List<Widget> children}) {
-    final colors = context.growthColors;
     return Container(
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: _dietMist.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: colors.diet.withValues(alpha: 0.12)),
+        border: Border.all(color: _dietLine.withValues(alpha: 0.78)),
       ),
       padding: const EdgeInsets.all(4),
       child: Row(
@@ -559,7 +582,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
     Color? color,
   }) {
     final colors = context.growthColors;
-    final selectedColor = color ?? colors.diet;
+    final selectedColor = color ?? _diet;
     final isSelected = value == groupValue;
     return Semantics(
       button: true,
@@ -604,14 +627,14 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.card,
+        color: colors.card.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.diet.withValues(alpha: 0.1)),
+        border: Border.all(color: _dietLine.withValues(alpha: 0.56)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.22),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: _dietDeep.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -625,10 +648,10 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colors.softGold,
+                  color: _dietSoft,
                   borderRadius: BorderRadius.circular(AppRadius.mlg),
                 ),
-                child: Icon(icon, color: colors.diet, size: 21),
+                child: Icon(icon, color: _dietDeep, size: 21),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -662,45 +685,49 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
   }
 
   Widget _buildHealthScoreSelector() {
-    final colors = context.growthColors;
     return _buildFormCard(
       title: '健康评分',
       subtitle: _healthText,
-      icon: Icons.star_rounded,
+      icon: Icons.restaurant_rounded,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.lg),
         decoration: BoxDecoration(
-          color: colors.surface,
+          color: _dietMist.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: colors.diet.withValues(alpha: 0.12)),
+          border: Border.all(color: _dietLine.withValues(alpha: 0.78)),
         ),
         child: Column(
           children: [
-            Wrap(
-              alignment: WrapAlignment.center,
-              spacing: AppSpacing.xs,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: List.generate(5, (index) {
                 final score = index + 1;
-                final isSelected = index < _healthScore;
+                final active = index < _healthScore;
                 return Semantics(
                   button: true,
                   label: '评分$score分',
-                  selected: isSelected,
+                  selected: active,
                   child: GestureDetector(
                     onTap: () {
                       HapticFeedback.selectionClick();
                       setState(() => _healthScore = score);
                     },
                     child: AnimatedScale(
-                      scale: isSelected ? 1 : 0.92,
-                      duration: AppMotion.fast,
-                      child: Icon(
-                        isSelected
-                            ? Icons.star_rounded
-                            : Icons.star_border_rounded,
-                        size: 38,
-                        color: isSelected ? colors.warning : colors.textHint,
+                      scale: active ? 1 : 0.88,
+                      duration: const Duration(milliseconds: 190),
+                      curve: Curves.easeOutCubic,
+                      child: AnimatedOpacity(
+                        opacity: active ? 1 : 0.58,
+                        duration: const Duration(milliseconds: 180),
+                        child: SizedBox(
+                          width: 42,
+                          height: 42,
+                          child: Image.asset(
+                            active ? _drumstickOnAsset : _drumstickOffAsset,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -711,7 +738,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             Text(
               _healthText,
               style: AppTextStyles.cardTitle.copyWith(
-                color: colors.diet,
+                color: _dietDeep,
                 fontWeight: FontWeight.w800,
               ),
             ),
@@ -727,14 +754,14 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          color: colors.card,
+          color: colors.card.withValues(alpha: 0.84),
           borderRadius: BorderRadius.circular(AppRadius.xxxl),
-          border: Border.all(color: colors.diet.withValues(alpha: 0.1)),
+          border: Border.all(color: _dietLine.withValues(alpha: 0.56)),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.22),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
+              color: _dietDeep.withValues(alpha: 0.06),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
             ),
           ],
         ),
@@ -749,16 +776,16 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          iconColor: colors.diet,
+          iconColor: _dietDeep,
           collapsedIconColor: colors.textSecondary,
           leading: Container(
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: colors.softGold,
+              color: _dietSoft,
               borderRadius: BorderRadius.circular(AppRadius.mlg),
             ),
-            child: Icon(Icons.note_alt_rounded, color: colors.diet, size: 21),
+            child: Icon(Icons.note_alt_rounded, color: _dietDeep, size: 21),
           ),
           title: Text(
             '补充说明',
@@ -778,9 +805,9 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
           children: [
             Container(
               decoration: BoxDecoration(
-                color: colors.surface,
+                color: _dietMist.withValues(alpha: 0.72),
                 borderRadius: BorderRadius.circular(AppRadius.xl),
-                border: Border.all(color: colors.diet.withValues(alpha: 0.14)),
+                border: Border.all(color: _dietLine.withValues(alpha: 0.78)),
               ),
               child: TextField(
                 controller: _noteController,
@@ -799,7 +826,7 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
                   prefixIcon: Icon(
                     Icons.note_outlined,
                     size: 18,
-                    color: colors.diet.withValues(alpha: 0.72),
+                    color: _dietDeep.withValues(alpha: 0.72),
                   ),
                   border: InputBorder.none,
                   contentPadding: const EdgeInsets.symmetric(
@@ -817,104 +844,240 @@ class _AddDietRecordPageState extends ConsumerState<AddDietRecordPage> {
 
   Widget _buildSaveButton() {
     final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.96),
-        border: Border(
-          top: BorderSide(color: colors.border.withValues(alpha: 0.9)),
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.card.withValues(alpha: 0.78),
+                borderRadius: BorderRadius.circular(AppRadius.xxl),
+                border: Border.all(color: _dietLine.withValues(alpha: 0.62)),
+              ),
+              child: Row(
+                children: [
+                  Image.asset(
+                    _dietHeroAsset,
+                    width: 58,
+                    height: 58,
+                    fit: BoxFit.contain,
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '$_mealLabel · $_healthScore 分 · $_healthText',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.cardTitle.copyWith(
+                            color: _dietDark,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '预计 +$_estimatedDietExp EXP，认真吃饭也算成长',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption.copyWith(
+                            color: _dietDeep,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Semantics(
+              button: true,
+              label: '保存饮食记录',
+              child: GestureDetector(
+                onTap: _isSaving ? null : _save,
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 190),
+                  curve: Curves.easeOutCubic,
+                  scale: _isSaving ? 0.98 : 1,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    width: double.infinity,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: _isSaving
+                          ? null
+                          : const LinearGradient(
+                              colors: [_diet, _dietDeep],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                      color: _isSaving ? _diet.withValues(alpha: 0.54) : null,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      boxShadow: _isSaving
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: _dietDeep.withValues(alpha: 0.18),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                    ),
+                    child: Center(
+                      child: _isSaving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  '保存饮食记录',
+                                  style: AppTextStyles.cardTitle.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.24),
-            blurRadius: 22,
-            offset: const Offset(0, -8),
-          ),
-        ],
       ),
-      child: Row(
+    );
+  }
+}
+
+class _DietHeader extends StatelessWidget {
+  const _DietHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 174,
+      child: Stack(
+        clipBehavior: Clip.none,
         children: [
-          Expanded(
+          Positioned(
+            right: 10,
+            bottom: 10,
+            child: Container(
+              width: 128,
+              height: 88,
+              decoration: BoxDecoration(
+                color: _dietSoft.withValues(alpha: 0.68),
+                borderRadius: BorderRadius.circular(AppRadius.xxxl),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.84)),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: -4,
+            child: Image.asset(_dietHeroAsset, width: 134, fit: BoxFit.contain),
+          ),
+          Positioned(
+            left: 0,
+            top: 6,
+            child: _DietCircleButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: onBack,
+            ),
+          ),
+          Positioned(
+            left: 2,
+            right: 136,
+            bottom: 22,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$_mealLabel · $_healthScore 星 · $_healthText',
+                  '记录饮食',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.cardTitle.copyWith(
-                    color: colors.textPrimary,
+                  style: AppTextStyles.pageTitle.copyWith(
+                    fontSize: 28,
+                    color: _dietDark,
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 8),
                 Text(
-                  '预计 +$_estimatedDietExp EXP',
-                  style: AppTextStyles.caption.copyWith(
-                    color: colors.diet,
-                    fontWeight: FontWeight.w800,
+                  '认真吃饭，也是在照顾未来的自己',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: _dietDeep.withValues(alpha: 0.72),
+                    height: 1.4,
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: AppSpacing.md),
-          Semantics(
-            button: true,
-            label: '保存饮食记录',
-            child: GestureDetector(
-              onTap: _isSaving ? null : _save,
-              child: AnimatedContainer(
-                duration: AppMotion.normal,
-                curve: AppMotion.standard,
-                width: 132,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: _isSaving
-                      ? colors.diet.withValues(alpha: 0.55)
-                      : colors.diet,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  boxShadow: _isSaving ? null : AppShadows.colored(colors.diet),
-                ),
-                child: Center(
-                  child: _isSaving
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: colors.textOnAccent,
-                          ),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_rounded,
-                              color: colors.textOnAccent,
-                              size: 20,
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Text(
-                              '保存',
-                              style: AppTextStyles.cardTitle.copyWith(
-                                color: colors.textOnAccent,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
-                        ),
-                ),
-              ),
-            ),
-          ),
         ],
+      ),
+    );
+  }
+}
+
+class _DietCircleButton extends StatelessWidget {
+  const _DietCircleButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Material(
+      color: colors.card.withValues(alpha: 0.76),
+      shape: const CircleBorder(),
+      elevation: 0,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: _dietLine.withValues(alpha: 0.72)),
+            boxShadow: [
+              BoxShadow(
+                color: _dietDeep.withValues(alpha: 0.10),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: _dietDark, size: 20),
+        ),
       ),
     );
   }

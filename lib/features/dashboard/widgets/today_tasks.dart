@@ -1,4 +1,4 @@
-import 'package:confetti/confetti.dart';
+﻿import 'package:confetti/confetti.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,7 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/design/design.dart';
 import '../../../core/constants/date_constants.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/task_provider.dart';
+import '../../plan/providers/task_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../shared/widgets/common/growth_date_picker.dart';
 import '../../../shared/widgets/common/growth_motion.dart';
 import '../../../core/domain/pet/pet_event.dart';
@@ -406,6 +407,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
   Widget _buildTaskSections(List<DailyTask> tasks) {
     final now = DateTime.now();
     final currentMinutes = now.hour * 60 + now.minute;
+    final isToday = _isToday;
 
     final inProgress = <DailyTask>[];
     final upcoming = <DailyTask>[];
@@ -414,7 +416,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     for (final task in tasks) {
       if (task.isCompleted) {
         completed.add(task);
-      } else {
+      } else if (isToday) {
         final startM = task.startHour * 60 + task.startMinute;
         final endM = task.endHour * 60 + task.endMinute;
         if (startM <= currentMinutes && endM >= currentMinutes) {
@@ -422,6 +424,8 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
         } else {
           upcoming.add(task);
         }
+      } else {
+        upcoming.add(task);
       }
     }
 
@@ -680,6 +684,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     ref.invalidate(tasksByDateProvider(selectedDate));
     ref.invalidate(todayTasksProvider);
     ref.invalidate(todayIncompleteTaskCountProvider);
+    ref.invalidate(dashboardProvider);
     HapticFeedback.mediumImpact();
 
     // 检查是否全部完成
@@ -705,6 +710,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     ref.invalidate(tasksByDateProvider(selectedDate));
     ref.invalidate(todayTasksProvider);
     ref.invalidate(todayIncompleteTaskCountProvider);
+    ref.invalidate(dashboardProvider);
     HapticFeedback.lightImpact();
   }
 
@@ -746,6 +752,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     ref.invalidate(tasksByDateProvider(selectedDate));
     ref.invalidate(todayTasksProvider);
     ref.invalidate(todayIncompleteTaskCountProvider);
+    ref.invalidate(dashboardProvider);
     HapticFeedback.lightImpact();
   }
 
@@ -758,6 +765,7 @@ class _TodayTasksState extends ConsumerState<TodayTasks>
     await repo.updateTaskPriority(task.id, priority.value);
     final selectedDate = ref.read(selectedTaskDateProvider);
     ref.invalidate(tasksByDateProvider(selectedDate));
+    ref.invalidate(dashboardProvider);
     HapticFeedback.lightImpact();
   }
 

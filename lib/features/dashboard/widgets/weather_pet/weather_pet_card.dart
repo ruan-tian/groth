@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/design/design.dart';
-import '../../../../shared/providers/weather_provider.dart';
+import '../../../health/providers/weather_provider.dart';
 import 'weather_assets.dart';
 import 'weather_card_data.dart';
 import 'weather_particle_layer.dart';
@@ -77,6 +78,7 @@ class _WeatherScene extends StatelessWidget {
               final w = constraints.maxWidth;
               final compact = w < 420;
               final layout = _WeatherLayout.forType(data.type, compact);
+              final palette = _WeatherCardPalette.forData(data);
 
               return Stack(
                 fit: StackFit.expand,
@@ -122,6 +124,12 @@ class _WeatherScene extends StatelessWidget {
                       errorBuilder: (_, _, _) => const SizedBox.shrink(),
                     ),
                   ),
+                  if (palette.sceneScrim != null)
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(gradient: palette.sceneScrim),
+                      ),
+                    ),
                   Positioned(
                     top: layout.lightTop * constraints.maxHeight,
                     right: layout.lightRight * w,
@@ -177,6 +185,7 @@ class _WeatherScene extends StatelessWidget {
                     child: _WeatherInfoBlock(
                       data: data,
                       extra: extra,
+                      palette: palette,
                       compact: compact,
                     ),
                   ),
@@ -185,8 +194,9 @@ class _WeatherScene extends StatelessWidget {
                     top: layout.bubbleTop * constraints.maxHeight,
                     width: layout.bubbleWidth * w,
                     child: _TipBubble(
-                      text: extra?.clothingSuggestion ?? data.tipText,
+                      text: _WeatherTipResolver.resolve(data, extra),
                       accentColor: data.accentColor,
+                      palette: palette,
                       tailAlignment: layout.bubbleTailAlignment,
                       compact: compact,
                     ),
@@ -205,11 +215,13 @@ class _WeatherInfoBlock extends StatelessWidget {
   const _WeatherInfoBlock({
     required this.data,
     required this.extra,
+    required this.palette,
     required this.compact,
   });
 
   final WeatherCardData data;
   final WeatherExtraState? extra;
+  final _WeatherCardPalette palette;
   final bool compact;
 
   @override
@@ -217,100 +229,129 @@ class _WeatherInfoBlock extends StatelessWidget {
     final aqi = extra?.aqiLabel;
     final clothing = extra?.clothingBadgeLabel;
 
-    return DefaultTextStyle(
-      style: const TextStyle(color: Color(0xFF4B4D83)),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${data.temperature}',
-                style: TextStyle(
-                  fontSize: compact ? 52 : 66,
-                  height: 0.92,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 0,
-                  color: data.accentColor,
-                ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(top: compact ? 5 : 8, left: 3),
-                child: Text(
-                  '°C',
+    return Container(
+      padding: palette.infoBackdrop == null
+          ? EdgeInsets.zero
+          : EdgeInsets.symmetric(
+              horizontal: compact ? 12 : 14,
+              vertical: compact ? 10 : 12,
+            ),
+      decoration: palette.infoBackdrop == null
+          ? null
+          : BoxDecoration(
+              color: palette.infoBackdrop,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: palette.infoBorder),
+            ),
+      child: DefaultTextStyle(
+        style: TextStyle(color: palette.primaryText),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${data.temperature}',
                   style: TextStyle(
-                    fontSize: compact ? 18 : 24,
+                    fontSize: compact ? 52 : 66,
+                    height: 0.92,
                     fontWeight: FontWeight.w800,
-                    color: data.accentColor.withValues(alpha: 0.86),
+                    letterSpacing: 0,
+                    color: palette.temperatureText,
                   ),
                 ),
-              ),
-              const SizedBox(width: 8),
-              Padding(
-                padding: EdgeInsets.only(top: compact ? 8 : 12),
-                child: Icon(
-                  _weatherIcon(data.type),
-                  size: compact ? 26 : 34,
-                  color: data.accentColor.withValues(alpha: 0.72),
+                Padding(
+                  padding: EdgeInsets.only(top: compact ? 5 : 8, left: 3),
+                  child: Text(
+                    '°C',
+                    style: TextStyle(
+                      fontSize: compact ? 18 : 24,
+                      fontWeight: FontWeight.w800,
+                      color: palette.temperatureText.withValues(alpha: 0.86),
+                    ),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 9),
-          Text(
-            data.weatherText,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: compact ? 24 : 30,
-              height: 1.05,
-              fontWeight: FontWeight.w800,
-              color: const Color(0xFF4B4D83),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Container(
-            width: compact ? 130 : 168,
-            height: 1,
-            color: data.accentColor.withValues(alpha: 0.2),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            data.rangeText,
-            style: TextStyle(
-              fontSize: compact ? 14 : 17,
-              fontWeight: FontWeight.w700,
-              color: data.accentColor.withValues(alpha: 0.82),
-            ),
-          ),
-          const SizedBox(height: 11),
-          Wrap(
-            spacing: 7,
-            runSpacing: 7,
-            children: [
-              if (aqi != null)
-                _ExtraChip(icon: '🌬️', label: aqi, color: data.accentColor),
-              if (clothing != null)
-                _ExtraChip(
-                  icon: '👔',
-                  label: clothing,
-                  color: data.accentColor,
+                const SizedBox(width: 8),
+                Padding(
+                  padding: EdgeInsets.only(top: compact ? 8 : 12),
+                  child: Icon(
+                    _weatherIcon(data.type),
+                    size: compact ? 26 : 34,
+                    color: palette.temperatureText.withValues(alpha: 0.72),
+                  ),
                 ),
-            ],
-          ),
-          const SizedBox(height: 13),
-          Wrap(
-            spacing: compact ? 8 : 12,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              _MetaRow(icon: Icons.location_on_rounded, text: data.city),
-              _MetaRow(icon: Icons.schedule_rounded, text: data.timeText),
-            ],
-          ),
-        ],
+              ],
+            ),
+            const SizedBox(height: 9),
+            Text(
+              data.weatherText,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: compact ? 24 : 30,
+                height: 1.05,
+                fontWeight: FontWeight.w800,
+                color: palette.primaryText,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Container(
+              width: compact ? 130 : 168,
+              height: 1,
+              color: palette.temperatureText.withValues(alpha: 0.2),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              data.rangeText,
+              style: TextStyle(
+                fontSize: compact ? 14 : 17,
+                fontWeight: FontWeight.w700,
+                color: palette.secondaryText,
+              ),
+            ),
+            const SizedBox(height: 11),
+            Wrap(
+              spacing: 7,
+              runSpacing: 7,
+              children: [
+                if (aqi != null)
+                  _ExtraChip(
+                    icon: '🌬️',
+                    label: aqi,
+                    color: data.accentColor,
+                    textColor: palette.chipText,
+                  ),
+                if (clothing != null)
+                  _ExtraChip(
+                    icon: '👔',
+                    label: clothing,
+                    color: data.accentColor,
+                    textColor: palette.chipText,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 13),
+            Wrap(
+              spacing: compact ? 8 : 12,
+              runSpacing: 4,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                _MetaRow(
+                  icon: Icons.location_on_rounded,
+                  text: data.city,
+                  color: palette.metaText,
+                ),
+                _MetaRow(
+                  icon: Icons.schedule_rounded,
+                  text: data.timeText,
+                  color: palette.metaText,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -340,11 +381,13 @@ class _ExtraChip extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.color,
+    this.textColor,
   });
 
   final String icon;
   final String label;
   final Color color;
+  final Color? textColor;
 
   @override
   Widget build(BuildContext context) {
@@ -373,7 +416,7 @@ class _ExtraChip extends StatelessWidget {
           fontSize: 12,
           height: 1.1,
           fontWeight: FontWeight.w800,
-          color: color,
+          color: textColor ?? color,
         ),
       ),
     );
@@ -381,17 +424,22 @@ class _ExtraChip extends StatelessWidget {
 }
 
 class _MetaRow extends StatelessWidget {
-  const _MetaRow({required this.icon, required this.text});
+  const _MetaRow({
+    required this.icon,
+    required this.text,
+    this.color = const Color(0xFF7774B8),
+  });
 
   final IconData icon;
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 15, color: const Color(0xFF7B78C8)),
+        Icon(icon, size: 15, color: color.withValues(alpha: 0.9)),
         const SizedBox(width: 4),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 116),
@@ -399,11 +447,11 @@ class _MetaRow extends StatelessWidget {
             text,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               height: 1.1,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF7774B8),
+              color: color,
             ),
           ),
         ),
@@ -416,12 +464,14 @@ class _TipBubble extends StatelessWidget {
   const _TipBubble({
     required this.text,
     required this.accentColor,
+    required this.palette,
     required this.tailAlignment,
     required this.compact,
   });
 
   final String text;
   final Color accentColor;
+  final _WeatherCardPalette palette;
   final Alignment tailAlignment;
   final bool compact;
 
@@ -429,8 +479,8 @@ class _TipBubble extends StatelessWidget {
   Widget build(BuildContext context) {
     return CustomPaint(
       painter: _BubbleTailPainter(
-        color: context.growthColors.card.withValues(alpha: 0.78),
-        borderColor: context.growthColors.card.withValues(alpha: 0.88),
+        color: palette.bubbleFill,
+        borderColor: palette.bubbleBorder,
         alignment: tailAlignment,
       ),
       child: Container(
@@ -439,11 +489,9 @@ class _TipBubble extends StatelessWidget {
           vertical: compact ? 8 : 11,
         ),
         decoration: BoxDecoration(
-          color: context.growthColors.card.withValues(alpha: 0.78),
+          color: palette.bubbleFill,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(
-            color: context.growthColors.card.withValues(alpha: 0.88),
-          ),
+          border: Border.all(color: palette.bubbleBorder),
           boxShadow: [
             BoxShadow(
               color: accentColor.withValues(alpha: 0.12),
@@ -457,11 +505,11 @@ class _TipBubble extends StatelessWidget {
           maxLines: compact ? 2 : 3,
           overflow: TextOverflow.ellipsis,
           textAlign: TextAlign.center,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             height: 1.45,
             fontWeight: FontWeight.w800,
-            color: Color(0xFF4B4D83),
+            color: palette.bubbleText,
           ),
         ),
       ),
@@ -515,6 +563,93 @@ class _BubbleTailPainter extends CustomPainter {
     return oldDelegate.color != color ||
         oldDelegate.borderColor != borderColor ||
         oldDelegate.alignment != alignment;
+  }
+}
+
+class _WeatherTipResolver {
+  const _WeatherTipResolver._();
+
+  static String resolve(WeatherCardData data, WeatherExtraState? extra) {
+    final suggestion = extra?.clothingSuggestion?.trim();
+    if (suggestion == null || suggestion.isEmpty) return data.tipText;
+    if (_shouldPreferLocalTip(data.temperature, suggestion)) {
+      return data.tipText;
+    }
+    return suggestion;
+  }
+
+  static bool _shouldPreferLocalTip(int temp, String suggestion) {
+    final coldWords = ['保暖', '添衣', '加衣', '多穿', '防寒', '厚外套'];
+    final hasColdSuggestion = coldWords.any(suggestion.contains);
+
+    if (temp >= 28) return true;
+    if (temp >= 24 && hasColdSuggestion) return true;
+    return false;
+  }
+}
+
+class _WeatherCardPalette {
+  const _WeatherCardPalette({
+    required this.temperatureText,
+    required this.primaryText,
+    required this.secondaryText,
+    required this.metaText,
+    required this.chipText,
+    required this.bubbleText,
+    required this.bubbleFill,
+    required this.bubbleBorder,
+    this.infoBackdrop,
+    this.infoBorder = Colors.transparent,
+    this.sceneScrim,
+  });
+
+  final Color temperatureText;
+  final Color primaryText;
+  final Color secondaryText;
+  final Color metaText;
+  final Color chipText;
+  final Color bubbleText;
+  final Color bubbleFill;
+  final Color bubbleBorder;
+  final Color? infoBackdrop;
+  final Color infoBorder;
+  final Gradient? sceneScrim;
+
+  factory _WeatherCardPalette.forData(WeatherCardData data) {
+    if (data.type == WeatherType.night) {
+      return _WeatherCardPalette(
+        temperatureText: const Color(0xFFFFF6DF),
+        primaryText: const Color(0xFFF8F3FF),
+        secondaryText: const Color(0xFFE7E0FF),
+        metaText: const Color(0xFFE2DCFF),
+        chipText: const Color(0xFFF8F3FF),
+        bubbleText: const Color(0xFF2B2959),
+        bubbleFill: const Color(0xFFFFFBFF).withValues(alpha: 0.9),
+        bubbleBorder: const Color(0xFFFFFBFF).withValues(alpha: 0.72),
+        infoBackdrop: const Color(0xFF171A43).withValues(alpha: 0.22),
+        infoBorder: const Color(0xFFFFFFFF).withValues(alpha: 0.18),
+        sceneScrim: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF181B48).withValues(alpha: 0.32),
+            Colors.transparent,
+            const Color(0xFF10243D).withValues(alpha: 0.18),
+          ],
+        ),
+      );
+    }
+
+    return _WeatherCardPalette(
+      temperatureText: data.accentColor,
+      primaryText: const Color(0xFF4B4D83),
+      secondaryText: data.accentColor.withValues(alpha: 0.82),
+      metaText: const Color(0xFF7774B8),
+      chipText: data.accentColor,
+      bubbleText: const Color(0xFF4B4D83),
+      bubbleFill: const Color(0xFFFFFFFF).withValues(alpha: 0.78),
+      bubbleBorder: const Color(0xFFFFFFFF).withValues(alpha: 0.88),
+    );
   }
 }
 
@@ -637,26 +772,32 @@ class _WeatherEmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: WeatherStyleConfig.aspectRatio,
-      child: Container(
-        decoration: WeatherStyleConfig.emptyDecoration,
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.cloud_outlined, size: 42, color: Color(0xFF8C7AE6)),
-              SizedBox(height: 12),
-              Text(
-                '暂无天气数据',
-                style: TextStyle(fontSize: 16, color: Color(0xFF6C6F8F)),
-              ),
-              SizedBox(height: 4),
-              Text(
-                '点击配置天气 API',
-                style: TextStyle(fontSize: 12, color: Color(0xFFA7ABC2)),
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        context.push('/settings/weather');
+      },
+      child: AspectRatio(
+        aspectRatio: WeatherStyleConfig.aspectRatio,
+        child: Container(
+          decoration: WeatherStyleConfig.emptyDecoration,
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.cloud_outlined, size: 42, color: Color(0xFF8C7AE6)),
+                SizedBox(height: 12),
+                Text(
+                  '暂无天气数据',
+                  style: TextStyle(fontSize: 16, color: Color(0xFF6C6F8F)),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  '点击配置天气 API',
+                  style: TextStyle(fontSize: 12, color: Color(0xFFA7ABC2)),
+                ),
+              ],
+            ),
           ),
         ),
       ),

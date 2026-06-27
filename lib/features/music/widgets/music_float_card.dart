@@ -1,30 +1,31 @@
 part of 'dashboard_music_float.dart';
 
 class _MusicFloatCard extends StatelessWidget {
-  const _MusicFloatCard({required this.state});
+  const _MusicFloatCard({
+    required this.state,
+    required this.side,
+    required this.isRevealed,
+    required this.onReveal,
+    required this.onOpenPlayer,
+    required this.onImport,
+  });
 
   final MusicPlayerState state;
+  final _MusicDockSide side;
+  final bool isRevealed;
+  final VoidCallback onReveal;
+  final VoidCallback onOpenPlayer;
+  final VoidCallback onImport;
 
   @override
   Widget build(BuildContext context) {
     final motionOff = AppMotion.reduceMotion(context);
-    final colors = context.growthColors;
     return AnimatedContainer(
       duration: AppMotion.duration(context, AppMotion.slow),
       curve: AppMotion.standard,
       clipBehavior: Clip.none,
       padding: EdgeInsets.zero,
-      decoration: BoxDecoration(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(999),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      decoration: const BoxDecoration(color: Colors.transparent),
       child: AnimatedSwitcher(
         duration: AppMotion.duration(context, AppMotion.normal),
         switchInCurve: AppMotion.standard,
@@ -43,183 +44,491 @@ class _MusicFloatCard extends StatelessWidget {
             ),
           );
         },
-        child: _CollapsedMusicCapsule(
-          key: const ValueKey('collapsed_music_capsule'),
-          state: state,
-        ),
+        child: isRevealed
+            ? _RevealedMusicRemote(
+                key: const ValueKey('revealed_music_remote'),
+                state: state,
+                side: side,
+                onOpenPlayer: onOpenPlayer,
+                onImport: onImport,
+              )
+            : _DockedMusicHandle(
+                key: const ValueKey('docked_music_handle'),
+                state: state,
+                side: side,
+                onReveal: onReveal,
+              ),
       ),
     );
   }
 }
 
-class _CollapsedMusicCapsule extends ConsumerWidget {
-  const _CollapsedMusicCapsule({super.key, required this.state});
-
-  final MusicPlayerState state;
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final colors = context.growthColors;
-    final controller = ref.read(musicPlayerProvider.notifier);
-    final track = state.currentTrack;
-    final hasTrack = track != null;
-    final isPlaying = state.isPlaying && hasTrack;
-    final asset = isPlaying
-        ? MusicAssets.capsulePlaying
-        : MusicAssets.capsuleIdle;
-    final artwork = MusicArtworkMapper.forTrack(track);
-    return GrowthEntrance(
-      duration: AppMotion.normal,
-      offset: const Offset(0, 8),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          if (isPlaying)
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(999),
-                  boxShadow: [
-                    BoxShadow(
-                      color: colors.primary.withValues(alpha: 0.20),
-                      blurRadius: 18,
-                      spreadRadius: 1,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          Positioned.fill(
-            child: Image.asset(
-              asset,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
-            ),
-          ),
-          Positioned(
-            left: 15,
-            right: 15,
-            top: isPlaying ? 82 : 58,
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 180),
-              opacity: isPlaying ? 1 : 0.55,
-              child: _CapsuleWaveVisualizer(
-                isPlaying: isPlaying,
-                color: colors.primary,
-              ),
-            ),
-          ),
-          Positioned(
-            left: 16,
-            right: 16,
-            bottom: 18,
-            child: _CapsulePlayButton(
-              isPlaying: isPlaying,
-              isLoading: state.isLoading || state.isImporting,
-              hasTrack: hasTrack,
-              accentAsset: artwork.decorations.first,
-              onTap: () {
-                if (state.isLoading || state.isImporting) return;
-                if (hasTrack) {
-                  controller.togglePlayPause();
-                } else {
-                  showMusicImportDestinationSheet(context, ref);
-                }
-              },
-            ),
-          ),
-          if (state.isImporting)
-            Positioned(
-              right: 5,
-              top: 10,
-              child: SizedBox(
-                width: 14,
-                height: 14,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: colors.primary.withValues(alpha: 0.76),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CapsulePlayButton extends StatelessWidget {
-  const _CapsulePlayButton({
-    required this.isPlaying,
-    required this.isLoading,
-    required this.hasTrack,
-    required this.accentAsset,
-    required this.onTap,
+class _DockedMusicHandle extends StatelessWidget {
+  const _DockedMusicHandle({
+    super.key,
+    required this.state,
+    required this.side,
+    required this.onReveal,
   });
 
-  final bool isPlaying;
-  final bool isLoading;
-  final bool hasTrack;
-  final String accentAsset;
-  final VoidCallback onTap;
+  final MusicPlayerState state;
+  final _MusicDockSide side;
+  final VoidCallback onReveal;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final icon = !hasTrack
-        ? Icons.add_rounded
-        : isPlaying
-        ? Icons.pause_rounded
-        : Icons.play_arrow_rounded;
-    final tooltip = !hasTrack ? '导入音乐' : (isPlaying ? '暂停' : '播放');
+    final hasTrack = state.currentTrack != null;
+    final isPlaying = state.isPlaying && hasTrack;
+    final radius = side == _MusicDockSide.left
+        ? const BorderRadius.horizontal(right: Radius.circular(22))
+        : const BorderRadius.horizontal(left: Radius.circular(22));
 
+    return Tooltip(
+      message: hasTrack ? '展开音乐控制' : '导入音乐',
+      child: GrowthPressable(
+        onTap: onReveal,
+        semanticLabel: hasTrack ? '展开音乐控制' : '导入音乐',
+        borderRadius: radius,
+        child: Align(
+          alignment: side == _MusicDockSide.left
+              ? Alignment.centerRight
+              : Alignment.centerLeft,
+          child: Container(
+            width: 42,
+            height: 62,
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              color: colors.card.withValues(alpha: 0.82),
+              border: Border.all(color: colors.border.withValues(alpha: 0.56)),
+              boxShadow: [
+                BoxShadow(
+                  color: colors.shadow.withValues(alpha: 0.18),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+                BoxShadow(
+                  color: colors.primary.withValues(
+                    alpha: isPlaying ? 0.20 : 0.09,
+                  ),
+                  blurRadius: 18,
+                  spreadRadius: -5,
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: radius,
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: colors.card.withValues(alpha: 0.94),
+                  ),
+                  child: Stack(
+                    children: [
+                      Positioned(
+                        top: 10,
+                        bottom: 10,
+                        left: side == _MusicDockSide.left ? null : 16,
+                        right: side == _MusicDockSide.left ? 16 : null,
+                        child: Container(
+                          width: 2,
+                          decoration: BoxDecoration(
+                            color: colors.border.withValues(alpha: 0.52),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                        ),
+                      ),
+                      Align(
+                        alignment: side == _MusicDockSide.left
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: SizedBox(
+                          width: 24,
+                          child: Center(
+                            child: hasTrack
+                                ? _MiniWaveBars(
+                                    isPlaying: isPlaying,
+                                    color: colors.primary,
+                                  )
+                                : Icon(
+                                    Icons.add_rounded,
+                                    size: 18,
+                                    color: colors.primary,
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RevealedMusicRemote extends ConsumerWidget {
+  const _RevealedMusicRemote({
+    super.key,
+    required this.state,
+    required this.side,
+    required this.onOpenPlayer,
+    required this.onImport,
+  });
+
+  final MusicPlayerState state;
+  final _MusicDockSide side;
+  final VoidCallback onOpenPlayer;
+  final VoidCallback onImport;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 180) {
+          return _DockedMusicHandle(
+            state: state,
+            side: side,
+            onReveal: state.currentTrack == null ? onImport : onOpenPlayer,
+          );
+        }
+
+        final colors = context.growthColors;
+        final controller = ref.read(musicPlayerProvider.notifier);
+        final track = state.currentTrack;
+        final hasTrack = track != null;
+        final isPlaying = state.isPlaying && hasTrack;
+        final progress = state.progress;
+        final radius = side == _MusicDockSide.left
+            ? const BorderRadius.horizontal(right: Radius.circular(999))
+            : const BorderRadius.horizontal(left: Radius.circular(999));
+
+        return Align(
+          alignment: side == _MusicDockSide.left
+              ? Alignment.centerLeft
+              : Alignment.centerRight,
+          child: GrowthPressable(
+            onTap: hasTrack ? onOpenPlayer : onImport,
+            semanticLabel: hasTrack ? '打开完整播放器' : '导入音乐',
+            borderRadius: radius,
+            child: Container(
+              height: 58,
+              decoration: BoxDecoration(
+                borderRadius: radius,
+                color: colors.card.withValues(alpha: 0.88),
+                border: Border.all(
+                  color: colors.border.withValues(alpha: 0.62),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colors.shadow.withValues(alpha: 0.20),
+                    blurRadius: 22,
+                    offset: const Offset(0, 10),
+                  ),
+                  BoxShadow(
+                    color: colors.primary.withValues(
+                      alpha: isPlaying ? 0.20 : 0.08,
+                    ),
+                    blurRadius: 18,
+                    spreadRadius: -6,
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: radius,
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      color: colors.card.withValues(alpha: 0.94),
+                    ),
+                    child: Row(
+                      textDirection: side == _MusicDockSide.left
+                          ? TextDirection.ltr
+                          : TextDirection.rtl,
+                      children: [
+                        SizedBox(width: side == _MusicDockSide.left ? 4 : 5),
+                        const _MiniGrip(),
+                        const SizedBox(width: 5),
+                        _MiniCover(track: track, isPlaying: isPlaying),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  track?.title ?? '甜甜音乐',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: colors.textPrimary,
+                                    fontSize: 11.5,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                                const SizedBox(height: 1),
+                                Text(
+                                  hasTrack
+                                      ? (isPlaying ? '正在播放' : '已暂停')
+                                      : '导入音乐',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    color: colors.textSecondary,
+                                    fontSize: 9.5,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(999),
+                                  child: LinearProgressIndicator(
+                                    minHeight: 2.5,
+                                    value: hasTrack
+                                        ? progress.clamp(0.0, 1.0)
+                                        : 0,
+                                    backgroundColor: colors.surfaceVariant,
+                                    valueColor: AlwaysStoppedAnimation(
+                                      colors.primary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Directionality(
+                          textDirection: TextDirection.ltr,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _MiniCircleButton(
+                                tooltip: hasTrack
+                                    ? (isPlaying ? '暂停' : '播放')
+                                    : '导入音乐',
+                                icon: state.isLoading || state.isImporting
+                                    ? Icons.hourglass_empty_rounded
+                                    : hasTrack
+                                    ? (isPlaying
+                                          ? Icons.pause_rounded
+                                          : Icons.play_arrow_rounded)
+                                    : Icons.add_rounded,
+                                filled: true,
+                                onTap: state.isLoading || state.isImporting
+                                    ? null
+                                    : hasTrack
+                                    ? controller.togglePlayPause
+                                    : onImport,
+                              ),
+                              const SizedBox(width: 4),
+                              _MiniCircleButton(
+                                tooltip: '下一首',
+                                icon: Icons.skip_next_rounded,
+                                onTap: hasTrack ? controller.playNext : null,
+                              ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: side == _MusicDockSide.left ? 7 : 4),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _MiniGrip extends StatelessWidget {
+  const _MiniGrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return SizedBox(
+      width: 5,
+      height: 32,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: List.generate(
+          3,
+          (index) => Container(
+            width: 2.5,
+            height: 2.5,
+            margin: const EdgeInsets.symmetric(vertical: 2.5),
+            decoration: BoxDecoration(
+              color: colors.textTertiary.withValues(alpha: 0.46),
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniCover extends StatelessWidget {
+  const _MiniCover({required this.track, required this.isPlaying});
+
+  final MusicTrack? track;
+  final bool isPlaying;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Container(
+      width: 38,
+      height: 38,
+      padding: const EdgeInsets.all(2),
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: colors.card,
+        border: Border.all(
+          color: isPlaying
+              ? colors.primary.withValues(alpha: 0.38)
+              : colors.border,
+        ),
+      ),
+      child: ClipOval(
+        child: track == null
+            ? DecoratedBox(
+                decoration: BoxDecoration(
+                  color: colors.surfaceVariant.withValues(alpha: 0.86),
+                ),
+                child: Icon(Icons.music_note_rounded, color: colors.primary),
+              )
+            : Image.asset(
+                MusicArtworkMapper.coverForTrack(track),
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+              ),
+      ),
+    );
+  }
+}
+
+class _MiniCircleButton extends StatelessWidget {
+  const _MiniCircleButton({
+    required this.tooltip,
+    required this.icon,
+    required this.onTap,
+    this.filled = false,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback? onTap;
+  final bool filled;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Tooltip(
       message: tooltip,
       child: GrowthPressable(
-        onTap: isLoading ? null : onTap,
+        onTap: onTap,
         semanticLabel: tooltip,
         borderRadius: BorderRadius.circular(999),
         child: Container(
-          height: 34,
+          width: filled ? 28 : 26,
+          height: filled ? 28 : 26,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: colors.card.withValues(alpha: 0.92),
-            border: Border.all(
-              color: colors.primary.withValues(alpha: 0.28),
-              width: 1.2,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.18),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-            ],
+            color: filled
+                ? colors.primary
+                : colors.surfaceVariant.withValues(alpha: 0.82),
+            border: filled
+                ? null
+                : Border.all(color: colors.border.withValues(alpha: 0.72)),
           ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              Positioned(
-                right: -1,
-                top: -2,
-                child: Opacity(
-                  opacity: 0.22,
-                  child: Image.asset(accentAsset, width: 18, height: 18),
-                ),
-              ),
-              if (isLoading)
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: colors.primary.withValues(alpha: 0.78),
-                  ),
-                )
-              else
-                Icon(icon, color: colors.primary, size: 24),
-            ],
+          child: Icon(
+            icon,
+            size: filled ? 18 : 17,
+            color: onTap == null
+                ? colors.textHint
+                : filled
+                ? colors.textOnAccent
+                : colors.primary,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _MiniWaveBars extends StatefulWidget {
+  const _MiniWaveBars({required this.isPlaying, required this.color});
+
+  final bool isPlaying;
+  final Color color;
+
+  @override
+  State<_MiniWaveBars> createState() => _MiniWaveBarsState();
+}
+
+class _MiniWaveBarsState extends State<_MiniWaveBars>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(covariant _MiniWaveBars oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.isPlaying != widget.isPlaying) _sync();
+  }
+
+  void _sync() {
+    if (widget.isPlaying) {
+      _controller.repeat();
+    } else {
+      _controller.stop();
+      _controller.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 16,
+      height: 18,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: _CapsuleWavePainter(
+              phase: _controller.value,
+              isPlaying: widget.isPlaying,
+              color: widget.color,
+            ),
+          );
+        },
       ),
     );
   }
@@ -276,31 +585,17 @@ class _CapsuleWaveVisualizerState extends State<_CapsuleWaveVisualizer>
   Widget build(BuildContext context) {
     return SizedBox(
       height: 24,
-      child: Stack(
-        fit: StackFit.expand,
-        alignment: Alignment.center,
-        children: [
-          Opacity(
-            opacity: 0.16,
-            child: Image.asset(
-              MusicAssets.wavePlaying,
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: _CapsuleWavePainter(
+              phase: _controller.value,
+              isPlaying: widget.isPlaying,
+              color: widget.color,
             ),
-          ),
-          AnimatedBuilder(
-            animation: _controller,
-            builder: (context, _) {
-              return CustomPaint(
-                painter: _CapsuleWavePainter(
-                  phase: _controller.value,
-                  isPlaying: widget.isPlaying,
-                  color: widget.color,
-                ),
-              );
-            },
-          ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -324,8 +619,8 @@ class _CapsuleWavePainter extends CustomPainter {
       ..style = PaintingStyle.fill;
     final centerY = size.height / 2;
     final width = size.width;
-    final barWidth = math.max(2.2, width / 13);
-    final gap = math.max(1.4, width / 30);
+    final barWidth = math.max(1.4, width / 13);
+    final gap = math.max(0.8, width / 30);
     final total = barWidth * 7 + gap * 6;
     final startX = (width - total) / 2;
 
@@ -375,38 +670,22 @@ class _MusicPlayerSheet extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [colors.card, colors.softPurple],
-          ),
+          color: colors.card.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: colors.border, width: 1.1),
+          border: Border.all(
+            color: colors.border.withValues(alpha: 0.78),
+            width: 1.0,
+          ),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.28),
-              blurRadius: 28,
-              offset: const Offset(0, 12),
+              color: colors.shadow.withValues(alpha: 0.20),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: Stack(
           children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.30,
-                child: Image.asset(MusicAssets.playerBgSoft, fit: BoxFit.cover),
-              ),
-            ),
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.22,
-                child: Image.asset(
-                  MusicAssets.playerBgStars,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
             SafeArea(
               top: false,
               child: Column(
@@ -415,7 +694,7 @@ class _MusicPlayerSheet extends ConsumerWidget {
                     width: 38,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: colors.border,
+                      color: colors.border.withValues(alpha: 0.70),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -470,18 +749,10 @@ class _ExpandedMusicCard extends ConsumerWidget {
         children: [
           // ── Decorations ──
           Positioned(
-            right: -20,
-            top: -20,
-            child: Opacity(
-              opacity: 0.25,
-              child: Image.asset(MusicAssets.playerDecoSparkle, width: 80),
-            ),
-          ),
-          Positioned(
             left: -15,
             top: 60,
             child: Opacity(
-              opacity: 0.15,
+              opacity: 0.10,
               child: Image.asset(MusicAssets.playerDecoWave, width: 96),
             ),
           ),
@@ -489,7 +760,7 @@ class _ExpandedMusicCard extends ConsumerWidget {
             right: 10,
             bottom: 40,
             child: Opacity(
-              opacity: 0.2,
+              opacity: 0.12,
               child: Image.asset(MusicAssets.playerDecoNote, width: 46),
             ),
           ),
@@ -897,9 +1168,9 @@ class _MusicLibraryEntryCard extends StatelessWidget {
         height: 76,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: colors.card.withValues(alpha: 0.82),
+          color: colors.card.withValues(alpha: 0.90),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colors.border),
+          border: Border.all(color: colors.border.withValues(alpha: 0.76)),
           boxShadow: [
             BoxShadow(
               color: colors.shadow.withValues(alpha: 0.12),
@@ -915,11 +1186,12 @@ class _MusicLibraryEntryCard extends StatelessWidget {
               height: 46,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [colors.primaryLight, colors.primary],
+                color: colors.primary.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.18),
                 ),
               ),
-              child: Icon(Icons.music_note_rounded, color: colors.textOnAccent),
+              child: Icon(Icons.music_note_rounded, color: colors.primary),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1455,17 +1727,20 @@ class _RoundIconButton extends StatelessWidget {
           width: filled ? 44 : 38,
           height: filled ? 44 : 38,
           decoration: BoxDecoration(
-            color: filled ? colors.primary : colors.card,
+            color: filled
+                ? colors.primary
+                : colors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(999),
-            boxShadow: filled
-                ? [
-                    BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.22),
-                      blurRadius: 14,
-                      offset: const Offset(0, 7),
-                    ),
-                  ]
-                : null,
+            border: filled
+                ? null
+                : Border.all(color: colors.border.withValues(alpha: 0.70)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: filled ? 0.18 : 0.08),
+                blurRadius: filled ? 13 : 10,
+                offset: Offset(0, filled ? 6 : 4),
+              ),
+            ],
           ),
           child: Icon(
             icon,

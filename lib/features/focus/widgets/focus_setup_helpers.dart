@@ -5,9 +5,10 @@ part of '../focus_page.dart';
 // ---------------------------------------------------------------------------
 
 class _TopBar extends StatelessWidget {
-  const _TopBar({required this.compact});
+  const _TopBar({required this.compact, required this.onHistory});
 
   final bool compact;
+  final VoidCallback onHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -31,11 +32,7 @@ class _TopBar extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.history_rounded),
-            color: colors.focus,
-          ),
+          _FocusHistoryButton(compact: true, onTap: onHistory),
         ],
       ),
     );
@@ -47,7 +44,9 @@ class _TopBar extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _LandscapeHeader extends StatelessWidget {
-  const _LandscapeHeader();
+  const _LandscapeHeader({required this.onHistory});
+
+  final VoidCallback onHistory;
 
   @override
   Widget build(BuildContext context) {
@@ -77,8 +76,56 @@ class _LandscapeHeader extends StatelessWidget {
           ],
         ),
         const Spacer(),
+        _FocusHistoryButton(compact: false, onTap: onHistory),
+        const SizedBox(width: 12),
         Image.asset(FocusAssets.particleHeart, width: 34, height: 34),
       ],
+    );
+  }
+}
+
+class _FocusHistoryButton extends StatelessWidget {
+  const _FocusHistoryButton({required this.compact, required this.onTap});
+
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Ink(
+          padding: EdgeInsets.symmetric(
+            horizontal: compact ? 10 : 12,
+            vertical: compact ? 7 : 8,
+          ),
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.78),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: colors.focus.withValues(alpha: 0.16)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.history_rounded, size: 17, color: colors.focus),
+              const SizedBox(width: 6),
+              Text(
+                compact ? '记录' : '专注记录',
+                style: TextStyle(
+                  color: colors.focus,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -180,12 +227,12 @@ class _TodayFocusCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     return Container(
-      height: compact ? 190 : 176,
+      height: compact ? 168 : 154,
       padding: EdgeInsets.fromLTRB(
-        compact ? 32 : 24,
-        22,
-        compact ? 28 : 18,
-        18,
+        compact ? 28 : 22,
+        compact ? 18 : 16,
+        compact ? 24 : 18,
+        compact ? 16 : 14,
       ),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(26),
@@ -210,14 +257,18 @@ class _TodayFocusCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.schedule_rounded, color: colors.focus, size: 22),
+                    Icon(Icons.schedule_rounded, color: colors.focus, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      '今日累计专注时长',
-                      style: TextStyle(
-                        color: colors.textSecondary,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      child: Text(
+                        '今日累计专注时长',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: colors.textSecondary,
+                          fontSize: compact ? 15 : 16,
+                          fontWeight: FontWeight.w800,
+                        ),
                       ),
                     ),
                   ],
@@ -232,12 +283,14 @@ class _TodayFocusCard extends StatelessWidget {
                   ),
                   error: (_, _) => const Text('--'),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Text(
                   '继续保持，专注的你真棒！',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: colors.textTertiary,
-                    fontSize: 14,
+                    fontSize: compact ? 13 : 14,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -245,7 +298,7 @@ class _TodayFocusCard extends StatelessWidget {
             ),
           ),
           if (!compact)
-            Image.asset(FocusAssets.catIdle, width: 118, height: 118),
+            Image.asset(FocusAssets.catIdle, width: 106, height: 106),
         ],
       ),
     );
@@ -276,7 +329,7 @@ class _BigMinutes extends StatelessWidget {
             '$hours',
             style: TextStyle(
               color: colors.focus,
-              fontSize: 54,
+              fontSize: 48,
               fontWeight: FontWeight.w900,
               height: 0.95,
             ),
@@ -287,7 +340,7 @@ class _BigMinutes extends StatelessWidget {
               '小时',
               style: TextStyle(
                 color: colors.focus,
-                fontSize: 24,
+                fontSize: 21,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -296,7 +349,7 @@ class _BigMinutes extends StatelessWidget {
             '$mins',
             style: TextStyle(
               color: colors.focus,
-              fontSize: 54,
+              fontSize: 48,
               fontWeight: FontWeight.w900,
               height: 0.95,
             ),
@@ -307,7 +360,7 @@ class _BigMinutes extends StatelessWidget {
               '分',
               style: TextStyle(
                 color: colors.focus,
-                fontSize: 24,
+                fontSize: 21,
                 fontWeight: FontWeight.w900,
               ),
             ),

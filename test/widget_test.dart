@@ -10,11 +10,11 @@ import 'package:growth_os/core/services/statistics_service.dart';
 import 'package:growth_os/core/domain/pet/pet_display_intent.dart';
 import 'package:growth_os/core/domain/pet/pet_priority.dart';
 import 'package:growth_os/core/constants/pet_assets.dart';
-import 'package:growth_os/shared/providers/dashboard_provider.dart';
-import 'package:growth_os/shared/providers/pet_orchestrator_provider.dart';
-import 'package:growth_os/shared/providers/pet_projection_provider.dart';
-import 'package:growth_os/shared/providers/task_provider.dart';
-import 'package:growth_os/shared/providers/weather_provider.dart';
+import 'package:growth_os/features/dashboard/providers/dashboard_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_orchestrator_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_projection_provider.dart';
+import 'package:growth_os/features/plan/providers/task_provider.dart';
+import 'package:growth_os/features/health/providers/weather_provider.dart';
 
 void main() {
   testWidgets('App renders without crashing', (WidgetTester tester) async {

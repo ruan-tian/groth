@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_facade.dart';
 import '../../../shared/providers/settings_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
 import 'dashboard_card.dart';
 import 'add_card_sheet.dart';
 
@@ -57,12 +58,12 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       case 'journal':
         return data.todayJournalCount;
       case 'water':
-        final waterMap = ref.read(dailyWaterIntakeProvider);
+        final waterMap = ref.watch(dailyWaterIntakeProvider);
         return getTodayWaterIntake(waterMap);
       case 'focus':
         return data.todayFocusMinutes;
       case 'weight':
-        final latestMetric = ref.read(latestBodyMetricProvider).valueOrNull;
+        final latestMetric = ref.watch(latestBodyMetricProvider).valueOrNull;
         return latestMetric?.weight?.round() ?? 0;
       default:
         return 0;
@@ -74,7 +75,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
   /// 学习/健身/写日记 从 [dailyGoalsProvider] 读取用户自定义目标，
   /// 其余卡片使用默认值或各自独立的 Provider。
   int _getCardTarget(String cardId) {
-    final dailyGoals = ref.read(dailyGoalsProvider);
+    final dailyGoals = ref.watch(dailyGoalsProvider);
 
     switch (cardId) {
       case 'study':
@@ -95,7 +96,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       case 'diet':
         return 3;
       case 'sleep':
-        return 480;
+        return ref.watch(sleepGoalProvider) * 60;
       case 'journal':
         return dailyGoals
             .firstWhere(
@@ -104,7 +105,7 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
             )
             .target;
       case 'water':
-        return ref.read(dailyWaterGoalProvider);
+        return ref.watch(dailyWaterGoalProvider);
       case 'focus':
         return 60;
       case 'weight':
@@ -126,11 +127,13 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
       duration: const Duration(milliseconds: 300),
     );
 
-    _deleteController!.forward().then((_) {
+    _deleteController!.forward().then((_) async {
       // 动画完成后移除卡片
       final currentIds = ref.read(dashboardCardIdsProvider);
       final newIds = currentIds.where((id) => id != cardId).toList();
-      saveDashboardCardIds(ref, newIds);
+      await ref.read(settingsFacadeProvider).saveDashboardCardIds(newIds);
+
+      if (!mounted) return;
 
       setState(() {
         _deletingCardId = null;
@@ -197,17 +200,16 @@ class _TodayOverviewState extends ConsumerState<TodayOverview>
 
   /// 显示添加卡片弹窗
   void _showAddCardSheet() {
-    final currentIds = ref.read(dashboardCardIdsProvider);
-
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (context) => AddCardSheet(
-        currentCardIds: currentIds,
-        onCardAdded: (cardId) {
+        currentCardIds: ref.read(dashboardCardIdsProvider),
+        onCardAdded: (cardId) async {
+          final currentIds = ref.read(dashboardCardIdsProvider);
           final newIds = [...currentIds, cardId];
-          saveDashboardCardIds(ref, newIds);
+          await ref.read(settingsFacadeProvider).saveDashboardCardIds(newIds);
         },
       ),
     );

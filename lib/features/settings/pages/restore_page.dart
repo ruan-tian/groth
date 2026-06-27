@@ -8,16 +8,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/task_provider.dart';
-import '../../../shared/providers/study_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
-import '../../../shared/providers/journal_provider.dart';
-import '../../../shared/providers/focus_provider.dart';
-import '../../../shared/providers/sleep_provider.dart';
-import '../../../shared/providers/diet_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart'
+    hide backupRecordsProvider, backupServiceProvider;
+import '../../plan/providers/task_provider.dart';
+import '../../study/providers/study_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
+import '../../journal/providers/journal_provider.dart';
+import '../../focus/providers/focus_provider.dart';
+import '../../health/providers/sleep_provider.dart';
+import '../../health/providers/diet_provider.dart';
 import '../../../shared/providers/settings_provider.dart';
-import 'backup_page.dart';
+import '../../../shared/providers/service_providers.dart'
+    show backupRecordsProvider, backupServiceProvider;
 
 /// 恢复页面（褐色渐变风格）
 class RestorePage extends ConsumerStatefulWidget {

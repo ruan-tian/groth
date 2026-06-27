@@ -4,7 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../../../shared/providers/settings_provider.dart';
 import '../../../shared/widgets/common/error_retry_widget.dart';
 import '../../../features/fitness/utils/fitness_timer_assets.dart';
 
@@ -17,6 +18,7 @@ class SettingsProfileCard extends StatelessWidget {
     required this.nextLevelExpFor,
     required this.onProfileTap,
     required this.onLevelTap,
+    this.onAvatarTap,
     super.key,
   });
 
@@ -27,6 +29,7 @@ class SettingsProfileCard extends StatelessWidget {
   final int Function(int currentLevel) nextLevelExpFor;
   final VoidCallback onProfileTap;
   final ValueChanged<DashboardData> onLevelTap;
+  final VoidCallback? onAvatarTap;
 
   @override
   Widget build(BuildContext context) {
@@ -35,14 +38,14 @@ class SettingsProfileCard extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [colors.primaryLight, colors.primary],
+          colors: [colors.paper, colors.surfaceTint],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: colors.primary.withValues(alpha: 0.18),
+            color: colors.border.withValues(alpha: 0.5),
             blurRadius: 20,
             offset: const Offset(0, 8),
           ),
@@ -57,7 +60,10 @@ class SettingsProfileCard extends StatelessWidget {
               onTap: onProfileTap,
               child: Row(
                 children: [
-                  _SettingsAvatar(avatarPath: avatarPath),
+                  GestureDetector(
+                    onTap: onAvatarTap,
+                    child: _SettingsAvatar(avatarPath: avatarPath),
+                  ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
@@ -68,7 +74,7 @@ class SettingsProfileCard extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w600,
-                            color: colors.textOnAccent,
+                            color: colors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -84,8 +90,8 @@ class SettingsProfileCard extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: colors.textOnAccent.withValues(
-                                    alpha: 0.18,
+                                  color: colors.primary.withValues(
+                                    alpha: 0.08,
                                   ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
@@ -97,14 +103,14 @@ class SettingsProfileCard extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 13,
                                         fontWeight: FontWeight.w500,
-                                        color: colors.textOnAccent,
+                                        color: colors.primary,
                                       ),
                                     ),
                                     const SizedBox(width: 4),
                                     Icon(
                                       Icons.info_outline_rounded,
                                       size: 14,
-                                      color: colors.textOnAccent.withValues(
+                                      color: colors.primary.withValues(
                                         alpha: 0.76,
                                       ),
                                     ),
@@ -122,7 +128,7 @@ class SettingsProfileCard extends StatelessWidget {
                   Icon(
                     Icons.arrow_forward_ios_rounded,
                     size: 16,
-                    color: colors.textOnAccent.withValues(alpha: 0.72),
+                    color: colors.textTertiary,
                   ),
                 ],
               ),
@@ -142,14 +148,14 @@ class SettingsProfileCard extends StatelessWidget {
                         'EXP ${data.totalExp}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: colors.textOnAccent.withValues(alpha: 0.76),
+                          color: colors.textTertiary,
                         ),
                       ),
                       Text(
                         '$nextLevelExp EXP',
                         style: TextStyle(
                           fontSize: 12,
-                          color: colors.textOnAccent.withValues(alpha: 0.76),
+                          color: colors.textTertiary,
                         ),
                       ),
                     ],
@@ -160,11 +166,11 @@ class SettingsProfileCard extends StatelessWidget {
                     child: LinearProgressIndicator(
                       value: progress.clamp(0.0, 1.0),
                       minHeight: 6,
-                      backgroundColor: colors.textOnAccent.withValues(
-                        alpha: 0.18,
+                      backgroundColor: colors.primary.withValues(
+                        alpha: 0.1,
                       ),
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        colors.textOnAccent,
+                        colors.primary,
                       ),
                     ),
                   ),
@@ -336,7 +342,7 @@ class SettingsGroup extends StatelessWidget {
           const _SettingsDivider(),
           SettingsTile(
             icon: Icons.auto_awesome_rounded,
-            iconColor: colors.primary,
+            iconColor: colors.study,
             title: 'AI 自动分析',
             subtitle: autoAiAnalysisEnabled ? '已开启' : '已关闭',
             onTap: onAiAnalysisTap,
@@ -487,16 +493,16 @@ class _SettingsAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final path = avatarPath;
+    final path = normalizeUserAvatarPath(avatarPath);
 
     return Container(
       width: 72,
       height: 72,
       decoration: BoxDecoration(
-        color: colors.textOnAccent.withValues(alpha: 0.18),
+        color: colors.card,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: colors.textOnAccent.withValues(alpha: 0.3),
+          color: colors.border,
           width: 2,
         ),
       ),

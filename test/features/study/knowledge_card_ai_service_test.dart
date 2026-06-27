@@ -5,12 +5,12 @@ import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/ai_config_repository.dart';
-import 'package:growth_os/core/repositories/knowledge_card_repository.dart';
-import 'package:growth_os/core/repositories/knowledge_source_repository.dart';
+import 'package:growth_os/features/ai/repositories/ai_config_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_card_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_source_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
-import 'package:growth_os/features/study/services/knowledge_card_ai_service.dart';
+import 'package:growth_os/features/knowledge/services/knowledge_card_ai_service.dart';
 
 class _StubAiService extends AiService {
   _StubAiService(this.response);

@@ -79,7 +79,7 @@ class WeatherCardData {
       city: city,
       timeText:
           '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
-      tipText: style.tipText,
+      tipText: _tipFor(type, temp, style.tipText),
       petAssetPath: style.petAssetPath,
       sceneAssetPath: style.sceneAssetPath,
       foregroundAssetPath: style.foregroundAssetPath,
@@ -219,7 +219,7 @@ class WeatherCardData {
         );
       case WeatherType.cloudy:
         return const _WeatherStyle(
-          tipText: '有点阴天，注意保暖~',
+          tipText: '阴天也要保持好心情~',
           petAssetPath: WeatherAssets.catCloudy,
           sceneAssetPath: WeatherAssets.bgCloudy,
           foregroundAssetPath: WeatherAssets.fgCloudyGrass,
@@ -348,6 +348,44 @@ class WeatherCardData {
           foregroundOpacity: 0.82,
         );
     }
+  }
+
+  static String _tipFor(WeatherType type, int temp, String fallback) {
+    if (temp >= 30) {
+      if (type == WeatherType.rainy || type == WeatherType.heavyRain) {
+        return '又热又湿，带伞也别忘了补水~';
+      }
+      if (type == WeatherType.night) {
+        return '夜里也偏热，通风补水更舒服~';
+      }
+      return '天气偏热，穿轻薄点，多喝水~';
+    }
+
+    if (temp >= 24) {
+      if (type == WeatherType.cloudy) {
+        return '阴天但不冷，轻薄穿搭就好~';
+      }
+      if (type == WeatherType.windy) {
+        return '风里也有暖意，注意防晒补水~';
+      }
+      if (type == WeatherType.night) {
+        return '今晚温度不低，睡前保持通风~';
+      }
+    }
+
+    if (temp <= 8) {
+      return '天气偏冷，多穿一点再出门~';
+    }
+
+    if (temp <= 15 &&
+        (type == WeatherType.cloudy ||
+            type == WeatherType.rainy ||
+            type == WeatherType.windy ||
+            type == WeatherType.night)) {
+      return '有点凉，外出带件薄外套~';
+    }
+
+    return fallback;
   }
 }
 

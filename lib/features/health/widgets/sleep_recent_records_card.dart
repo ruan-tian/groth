@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
+import '../../../core/constants/record_icon_assets.dart';
 import '../../../core/database/app_database.dart';
 import '../../../shared/widgets/common/common_widgets.dart';
 import '../../../shared/widgets/swipe_delete_tile.dart';
@@ -58,6 +59,7 @@ class SleepRecentRecordsCard extends StatelessWidget {
                     icon: Icons.nightlight_round,
                     iconColor: context.growthColors.textOnAccent,
                     iconBackgroundColor: context.growthColors.sleep,
+                    imageAsset: RecordIconAssets.sleep,
                     title: '${r.sleepDate} 睡眠记录',
                     subtitle:
                         '${r.sleepTime} - ${r.wakeTime} · ${formatSleepDuration(r.durationMinutes)}',

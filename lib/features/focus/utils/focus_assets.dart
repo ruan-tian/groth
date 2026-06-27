@@ -1,4 +1,4 @@
-import '../../../shared/providers/focus_provider.dart';
+import '../providers/focus_provider.dart';
 
 class FocusAssets {
   FocusAssets._();

@@ -5,8 +5,8 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:growth_os/core/constants/pet_assets.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/exp_repository.dart';
-import 'package:growth_os/core/repositories/pet_repository.dart';
+import 'package:growth_os/features/pet/repositories/exp_repository.dart';
+import 'package:growth_os/features/pet/repositories/pet_repository.dart';
 import 'package:growth_os/core/services/statistics_service.dart';
 import 'package:growth_os/features/fitness/fitness_page.dart';
 import 'package:growth_os/features/health/diet_page.dart';
@@ -15,14 +15,14 @@ import 'package:growth_os/features/pet/services/pet_orchestrator.dart';
 import 'package:growth_os/features/plan/widgets/plan_module_visuals.dart';
 import 'package:growth_os/features/study/study_page.dart';
 import 'package:growth_os/shared/providers/database_provider.dart';
-import 'package:growth_os/shared/providers/diet_provider.dart';
-import 'package:growth_os/shared/providers/fitness_provider.dart';
-import 'package:growth_os/shared/providers/pet_ai_result_provider.dart';
-import 'package:growth_os/shared/providers/pet_orchestrator_provider.dart';
-import 'package:growth_os/shared/providers/pet_projection_provider.dart';
+import 'package:growth_os/features/health/providers/diet_provider.dart';
+import 'package:growth_os/features/fitness/providers/fitness_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_ai_result_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_orchestrator_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_projection_provider.dart';
 import 'package:growth_os/shared/providers/settings_provider.dart';
-import 'package:growth_os/shared/providers/sleep_provider.dart';
-import 'package:growth_os/shared/providers/study_provider.dart';
+import 'package:growth_os/features/health/providers/sleep_provider.dart';
+import 'package:growth_os/features/study/providers/study_provider.dart';
 import 'package:growth_os/shared/widgets/common/common_widgets.dart';
 
 class _NoopPetOrchestrator extends PetOrchestrator {
@@ -165,7 +165,6 @@ void main() {
 
         expect(find.byType(ModulePageSurface), findsOneWidget);
         expect(find.byType(PlanModuleVisualHeader), findsOneWidget);
-        expect(find.byType(PlanModuleActionImageCard), findsOneWidget);
         if (page is DietPage) {
           expect(find.text('今天想喝点什么'), findsOneWidget);
         }

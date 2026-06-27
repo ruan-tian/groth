@@ -32,7 +32,6 @@ class _CalorieWaterChart extends StatefulWidget {
 }
 
 class _CalorieWaterChartState extends State<_CalorieWaterChart> {
-  int? _touchedIndex;
   List<_ChartPoint>? _cachedPoints;
 
   @override
@@ -96,22 +95,26 @@ class _CalorieWaterChartState extends State<_CalorieWaterChart> {
 
     for (int w = 0; w < 4; w++) {
       final weekStart = monthStart.add(Duration(days: w * 7));
-      // 不超过今天
-      final weekEnd = weekStart.add(const Duration(days: 6));
+      final monthEnd = DateTime(now.year, now.month + 1, 0);
+      final weekEnd = w == 3
+          ? monthEnd
+          : weekStart.add(const Duration(days: 6));
       final actualEnd = weekEnd.isAfter(today) ? today : weekEnd;
 
       int totalCal = 0;
       int totalWater = 0;
-      var d = weekStart;
-      while (!d.isAfter(actualEnd)) {
-        final key = DateFormat('yyyy-MM-dd').format(d);
-        totalCal += widget.calorieMap[key] ?? 0;
-        totalWater += widget.waterMap[key] ?? 0;
-        d = d.add(const Duration(days: 1));
+      if (!actualEnd.isBefore(weekStart)) {
+        var d = weekStart;
+        while (!d.isAfter(actualEnd)) {
+          final key = DateFormat('yyyy-MM-dd').format(d);
+          totalCal += widget.calorieMap[key] ?? 0;
+          totalWater += widget.waterMap[key] ?? 0;
+          d = d.add(const Duration(days: 1));
+        }
       }
 
       final startLabel = DateFormat('M/d').format(weekStart);
-      final endLabel = DateFormat('M/d').format(actualEnd);
+      final endLabel = DateFormat('M/d').format(weekEnd);
 
       points.add(
         _ChartPoint(
@@ -170,286 +173,108 @@ class _CalorieWaterChartState extends State<_CalorieWaterChart> {
     final calorieColor = colors.diet;
     final waterColor = colors.primary;
     final points = _cachedPoints ??= _buildPoints();
-    if (points.isEmpty) {
-      return Center(
-        child: Text(
-          '暂无数据',
-          style: TextStyle(fontSize: 12, color: colors.textTertiary),
+    return GrowthMultiLineChart(
+      key: ValueKey('diet_${widget.days}_${points.length}'),
+      color: calorieColor,
+      height: 224,
+      series: [
+        GrowthChartSeries(
+          name: '卡路里',
+          unit: 'kcal',
+          color: calorieColor,
+          points: points
+              .map(
+                (point) => GrowthChartPoint(
+                  label: point.label,
+                  subLabel: point.subLabel,
+                  value: point.calorie.toDouble(),
+                  rawLabel: _formatCalorie(point.calorie),
+                ),
+              )
+              .toList(growable: false),
+          valueFormatter: (value) => _formatCalorie(value.round()),
         ),
-      );
-    }
-
-    // 计算 Y 轴范围
-    final maxCalorie = points
-        .map((p) => p.calorie)
-        .fold<int>(0, (a, b) => a > b ? a : b);
-    final maxWater = points
-        .map((p) => p.water)
-        .fold<int>(0, (a, b) => a > b ? a : b);
-    // 至少留 20% 余量，最小值 1000
-    final calTop = ((maxCalorie * 1.2).ceil() / 500).ceil() * 500;
-    final waterTop = maxWater > 0
-        ? ((maxWater * 1.2).ceil() / 500).ceil() * 500
-        : 2000;
-    final calTopD = calTop.toDouble();
-    final waterTopD = waterTop.toDouble();
-
-    // 归一化到 0-1
-    FlSpot calSpot(_ChartPoint p) =>
-        FlSpot(p.x, calTopD > 0 ? p.calorie / calTopD : 0);
-    FlSpot waterSpot(_ChartPoint p) =>
-        FlSpot(p.x, waterTopD > 0 ? p.water / waterTopD : 0);
-
-    final calSpots = points.map(calSpot).toList();
-    final waterSpots = points.map(waterSpot).toList();
-
-    return RepaintBoundary(
-      child: LineChart(
-        LineChartData(
-          minY: 0,
-          maxY: 1.0,
-          // ── 触摸交互 ──
-          lineTouchData: LineTouchData(
-            touchSpotThreshold: 20,
-            handleBuiltInTouches: true,
-            touchCallback: (event, response) {
-              setState(() {
-                if (event is FlPanEndEvent || event is FlLongPressEnd) {
-                  _touchedIndex = null;
-                } else if (response?.lineBarSpots != null &&
-                    response!.lineBarSpots!.isNotEmpty) {
-                  _touchedIndex = response.lineBarSpots!.first.x.toInt();
-                }
-              });
-            },
-            getTouchedSpotIndicator: (barData, spotIndexes) {
-              return spotIndexes.map((_) {
-                return TouchedSpotIndicatorData(
-                  FlLine(
-                    color:
-                        barData.color?.withValues(alpha: 0.3) ?? calorieColor,
-                    strokeWidth: 1,
-                    dashArray: [4, 4],
-                  ),
-                  FlDotData(
-                    show: true,
-                    getDotPainter: (spot, percent, bd, idx) =>
-                        FlDotCirclePainter(
-                          radius: 5,
-                          color: bd.color ?? calorieColor,
-                          strokeWidth: 2,
-                          strokeColor: colors.card,
-                        ),
-                  ),
-                );
-              }).toList();
-            },
-            touchTooltipData: LineTouchTooltipData(
-              tooltipBorderRadius: BorderRadius.circular(10),
-              tooltipPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 8,
-              ),
-              maxContentWidth: 200,
-              getTooltipColor: (_) => colors.card,
-              fitInsideHorizontally: true,
-              fitInsideVertically: true,
-              getTooltipItems: (touchedSpots) {
-                if (touchedSpots.isEmpty) return [];
-                final idx = touchedSpots.first.x.toInt();
-                if (idx < 0 || idx >= points.length) return [];
-                final p = points[idx];
-
-                final items = <LineTooltipItem>[];
-
-                // 卡路里
-                final calSpot = touchedSpots
-                    .where((s) => s.barIndex == 0)
-                    .firstOrNull;
-                if (calSpot != null) {
-                  items.add(
-                    LineTooltipItem(
-                      '${p.label} 卡路里 ${_formatCalorie(p.calorie)}',
-                      TextStyle(
-                        color: calorieColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  );
-                }
-
-                // 饮水量
-                final waterSpot = touchedSpots
-                    .where((s) => s.barIndex == 1)
-                    .firstOrNull;
-                if (waterSpot != null) {
-                  items.add(
-                    LineTooltipItem(
-                      '${p.label} 饮水 ${_formatWater(p.water)}',
-                      TextStyle(
-                        color: waterColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 12,
-                      ),
-                    ),
-                  );
-                }
-
-                return items;
-              },
-            ),
-          ),
-          lineBarsData: [
-            // 卡路里线
-            LineChartBarData(
-              spots: calSpots,
-              isCurved: true,
-              preventCurveOverShooting: true,
-              color: calorieColor,
-              barWidth: 2,
-              isStrokeCapRound: true,
-              dotData: FlDotData(
-                show: true,
-                getDotPainter: (spot, percent, barData, index) =>
-                    FlDotCirclePainter(
-                      radius: _touchedIndex == index ? 5 : 3,
-                      color: calorieColor,
-                      strokeWidth: 1.5,
-                      strokeColor: colors.card,
-                    ),
-              ),
-              belowBarData: BarAreaData(
-                show: true,
-                color: calorieColor.withValues(alpha: 0.06),
-              ),
-            ),
-            // 饮水量线
-            LineChartBarData(
-              spots: waterSpots,
-              isCurved: true,
-              preventCurveOverShooting: true,
-              color: waterColor,
-              barWidth: 2,
-              isStrokeCapRound: true,
-              dotData: FlDotData(
-                show: true,
-                getDotPainter: (spot, percent, barData, index) =>
-                    FlDotCirclePainter(
-                      radius: _touchedIndex == index ? 5 : 3,
-                      color: waterColor,
-                      strokeWidth: 1.5,
-                      strokeColor: colors.card,
-                    ),
-              ),
-              belowBarData: BarAreaData(
-                show: true,
-                color: waterColor.withValues(alpha: 0.06),
-              ),
-            ),
-          ],
-          titlesData: FlTitlesData(
-            // 左 Y 轴：卡路里
-            leftTitles: AxisTitles(
-              axisNameWidget: Text(
-                'kcal',
-                style: TextStyle(fontSize: 11, color: calorieColor),
-              ),
-              axisNameSize: 20,
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 38,
-                interval: 0.25,
-                getTitlesWidget: (value, meta) {
-                  final kcal = (value * calTopD).round();
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Text(
-                      _formatCalorie(kcal),
-                      style: TextStyle(fontSize: 11, color: calorieColor),
-                      textAlign: TextAlign.right,
-                    ),
-                  );
-                },
-              ),
-            ),
-            // 右 Y 轴：饮水量
-            rightTitles: AxisTitles(
-              axisNameWidget: Text(
-                'ml',
-                style: TextStyle(fontSize: 11, color: waterColor),
-              ),
-              axisNameSize: 20,
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 38,
-                interval: 0.25,
-                getTitlesWidget: (value, meta) {
-                  final ml = (value * waterTopD).round();
-                  return Text(
-                    _formatWater(ml),
-                    style: TextStyle(fontSize: 11, color: waterColor),
-                    textAlign: TextAlign.left,
-                  );
-                },
-              ),
-            ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            // X 轴：双行标签
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 40,
-                interval: 1,
-                getTitlesWidget: (value, meta) {
-                  final idx = value.toInt();
-                  if (idx < 0 || idx >= points.length) {
-                    return const SizedBox.shrink();
-                  }
-                  final p = points[idx];
-                  return SideTitleWidget(
-                    meta: meta,
-                    space: 4,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          p.label,
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500,
-                            color: colors.textPrimary,
-                          ),
-                        ),
-                        if (p.subLabel.isNotEmpty)
-                          Text(
-                            p.subLabel,
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: colors.textTertiary,
-                            ),
-                          ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: 0.25,
-            getDrawingHorizontalLine: (value) =>
-                FlLine(color: colors.divider, strokeWidth: 0.5),
-          ),
-          borderData: FlBorderData(show: false),
-          // ── 每个点上方的数值标签 ──
-          extraLinesData: ExtraLinesData(horizontalLines: []),
+        GrowthChartSeries(
+          name: '饮水',
+          unit: 'ml',
+          color: waterColor,
+          points: points
+              .map(
+                (point) => GrowthChartPoint(
+                  label: point.label,
+                  subLabel: point.subLabel,
+                  value: point.water.toDouble(),
+                  rawLabel: _formatWater(point.water),
+                ),
+              )
+              .toList(growable: false),
+          valueFormatter: (value) => _formatWater(value.round()),
         ),
-        duration: const Duration(milliseconds: 200),
+      ],
+    );
+  }
+}
+
+class _DietEntryCard extends StatelessWidget {
+  const _DietEntryCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: colors.border),
+            boxShadow: AppShadows.sm,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.smd),
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                title,
+                style: AppTextStyles.cardTitle.copyWith(
+                  color: colors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: AppTextStyles.caption.copyWith(
+                  color: colors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

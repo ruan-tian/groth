@@ -181,30 +181,35 @@ class _JournalPaperCard extends StatelessWidget {
           const Divider(color: JournalColors.pinkBorder, height: 28),
           Stack(
             children: [
-              CustomPaint(
-                painter: _PaperLinesPainter(),
-                child: TextField(
-                  controller: contentController,
-                  textInputAction: TextInputAction.newline,
-                  maxLength: 10000,
-                  minLines: 12,
-                  maxLines: null,
-                  keyboardType: TextInputType.multiline,
-                  style: const TextStyle(
-                    color: JournalColors.textDark,
-                    fontSize: 18,
-                    height: 2.05,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: '今天阳光特别好，记录一点平凡的小美好吧...',
-                    hintStyle: TextStyle(
-                      color: JournalColors.textMuted,
-                      fontSize: 17,
+              Builder(
+                builder: (context) {
+                  final scale = MediaQuery.textScalerOf(context).scale(18) / 18;
+                  return CustomPaint(
+                    painter: _PaperLinesPainter(spacing: 42 * scale),
+                    child: TextField(
+                      controller: contentController,
+                      textInputAction: TextInputAction.newline,
+                      maxLength: 10000,
+                      minLines: 12,
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      style: const TextStyle(
+                        color: JournalColors.textDark,
+                        fontSize: 18,
+                        height: 42 / 18,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: '今天阳光特别好，记录一点平凡的小美好吧...',
+                        hintStyle: TextStyle(
+                          color: JournalColors.textMuted,
+                          fontSize: 17,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.fromLTRB(2, 24, 2, 112),
+                      ),
                     ),
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.fromLTRB(2, 4, 2, 112),
-                  ),
-                ),
+                  );
+                },
               ),
               Positioned(
                 right: -8,
@@ -995,16 +1000,22 @@ class _ToolButton extends StatelessWidget {
 }
 
 class _PaperLinesPainter extends CustomPainter {
+  _PaperLinesPainter({required this.spacing});
+
+  final double spacing;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = JournalColors.pinkBorder.withValues(alpha: 0.64)
       ..strokeWidth = 1;
-    for (var y = 42.0; y < size.height - 34; y += 42) {
+    for (var y = spacing; y < size.height - 34; y += spacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_PaperLinesPainter oldDelegate) {
+    return oldDelegate.spacing != spacing;
+  }
 }

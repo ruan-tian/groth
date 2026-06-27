@@ -1,8 +1,6 @@
-import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
 import '../../../core/domain/pet/pet_ai_result.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../utils/pet_data_collector.dart';
@@ -11,7 +9,8 @@ import '../utils/pet_ai_result_parser.dart';
 import 'pet_ai_privacy_guard.dart';
 import '../../../core/services/pet_event_bus.dart';
 import '../../../shared/providers/settings_provider.dart';
-import '../../../shared/providers/pet_ai_result_provider.dart';
+import '../providers/pet_ai_result_provider.dart';
+import '../providers/pet_message_provider.dart';
 
 /// 宠物 AI 分析状态
 class PetAIState {
@@ -122,24 +121,18 @@ class PetAINotifier extends StateNotifier<PetAIState> {
       final result = PetAIResultParser.parse(raw, type: type);
 
       // 保存到数据库
-      final db = _ref.read(databaseProvider);
-      final now = DateTime.now().millisecondsSinceEpoch;
-      await db
-          .into(db.petMessages)
-          .insert(
-            PetMessagesCompanion.insert(
-              type: 'analysis',
-              title: result.title,
-              content: result.summary,
-              petMessage: result.petMessage,
-              sourceType: _getSourceType(type),
-              sourceRange: const Value('last_7_days'),
-              createdAt: now,
-              highlights: Value(result.highlights.join('|||')),
-              risks: Value(result.risks.join('|||')),
-              suggestions: Value(result.suggestions.join('|||')),
-            ),
-          );
+      final repo = _ref.read(petMessageRepositoryProvider);
+      await repo.insertAnalysisResult(
+        type: 'analysis',
+        title: result.title,
+        content: result.summary,
+        petMessage: result.petMessage,
+        sourceType: _getSourceType(type),
+        sourceRange: 'last_7_days',
+        highlights: result.highlights,
+        risks: result.risks,
+        suggestions: result.suggestions,
+      );
 
       // Invalidate the latest analysis provider so it refreshes
       _ref.invalidate(latestPetAnalysisProvider(_getSourceType(type)));

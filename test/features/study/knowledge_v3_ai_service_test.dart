@@ -4,11 +4,11 @@ import 'package:drift/drift.dart' show Value, driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/ai_config_repository.dart';
-import 'package:growth_os/core/repositories/knowledge_v3_repository.dart';
+import 'package:growth_os/features/ai/repositories/ai_config_repository.dart';
+import 'package:growth_os/features/knowledge/repositories/knowledge_v3_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
-import 'package:growth_os/features/study/services/knowledge_v3_ai_service.dart';
+import 'package:growth_os/features/knowledge/services/knowledge_v3_ai_service.dart';
 
 class _SequenceAiService extends AiService {
   _SequenceAiService(this.responses);
@@ -299,7 +299,7 @@ void main() {
   );
 
   test(
-    'generateCards retries truncated JSON and keeps partial success',
+    'generateCards uses outline plan cards pipeline with source metadata',
     () async {
       final keyDir = Directory.systemTemp.createTempSync(
         'growth_os_v3_ai_test_',
@@ -341,6 +341,12 @@ void main() {
       final material = (await repo.getMaterial(materialId))!;
       final ai = _SequenceAiService([
         '''
+{"summary":"操作系统基础","coreConcepts":["进程","线程"],"rules":[],"mistakes":[],"procedures":[],"comparisons":["进程和线程"],"examPoints":[],"cardablePoints":[{"concept":"进程与线程","knowledgePoint":"进程和线程的核心区别","reason":"高频基础概念","sourceChunkIds":["m$materialId-c1"]}]}
+''',
+        '''
+{"cardPlan":[{"concept":"进程与线程","knowledgePoint":"进程和线程的核心区别","reason":"高频基础概念","cardType":"comparison","targetCount":1,"evidenceChunkIds":["m$materialId-c1"],"examScene":"操作系统复习","commonMistake":"把资源分配和调度单位混为一谈"}]}
+''',
+        '''
 {
   "cards": [
     {
@@ -351,13 +357,16 @@ void main() {
       "importance": 5,
       "difficulty": 3,
       "sourceExcerpt": "进程是资源分配的基本单位，线程是 CPU 调度的基本单位。",
+      "sourceChunkId": "m$materialId-c1",
+      "concept": "进程与线程",
+      "knowledgePoint": "进程和线程的核心区别",
+      "grounded": true,
+      "status": "auto_approved",
       "tags": ["操作系统"]
     }
   ]
 }
 ''',
-        '{"cards": [',
-        '{"cards": [',
       ]);
       final service = KnowledgeV3AiService(
         aiConfigRepository: aiConfigRepository,
@@ -374,13 +383,18 @@ void main() {
       expect(ids, hasLength(1));
       expect(cards, hasLength(1));
       expect(cards.single.question, contains('进程和线程'));
+      expect(cards.single.sourceChunkId, 'm$materialId-c1');
+      expect(cards.single.grounded, isTrue);
+      expect(cards.single.status, 'auto_approved');
       final reviewQueue = await repo.getReviewQueue(
         space.id,
         mode: KnowledgeReviewModeV3.all,
       );
       expect(reviewQueue.map((card) => card.id), contains(cards.single.id));
-      expect(ai.calls, greaterThanOrEqualTo(2));
-      expect(ai.prompts.any((prompt) => prompt.contains('上一次输出可能不完整')), isTrue);
+      expect(ai.calls, 3);
+      expect(ai.prompts[0], contains('请先分析资料结构'));
+      expect(ai.prompts[1], contains('资料 outline JSON'));
+      expect(ai.prompts[2], contains('cardPlan JSON'));
     },
   );
 
@@ -423,6 +437,7 @@ void main() {
       );
       final material = (await repo.getMaterial(materialId))!;
       final ai = _SequenceAiService([
+        '{"broken": true}',
         '''
 {
   "cards": [
@@ -468,7 +483,7 @@ void main() {
       );
 
       expect(ids, hasLength(2));
-      expect(ai.calls, 2);
+      expect(ai.calls, 3);
       expect(ai.prompts.last, contains('查漏补卡请求'));
       final cards = await repo.getCards(space.id);
       expect(cards.map((card) => card.question), contains(contains('连续状态')));
@@ -597,5 +612,97 @@ void main() {
     expect(card!.answer.length, lessThanOrEqualTo(380));
     expect(card.answer, endsWith('...'));
     expect(card.explanation, contains('完整回答仍保留在甜甜问答记录中'));
+  });
+
+  test('saveAnswerAsCard uses first source only when multiple exist', () async {
+    final keyDir = Directory.systemTemp.createTempSync(
+      'growth_os_v3_ai_multi_source_test_',
+    );
+    KeyMaterialService.resetForTests(directory: keyDir);
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(() async {
+      await db.close();
+      KeyMaterialService.resetForTests();
+      if (keyDir.existsSync()) keyDir.deleteSync(recursive: true);
+    });
+
+    final repo = KnowledgeV3Repository(db);
+    final aiConfigRepository = AiConfigRepository(db);
+    final space = await repo.ensureDefaultSpace();
+    final material1 = (await repo.getMaterial(
+      await repo.importMaterial(
+        spaceId: space.id,
+        title: '资料A',
+        content: '内容A',
+      ),
+    ))!;
+    final material2 = (await repo.getMaterial(
+      await repo.importMaterial(
+        spaceId: space.id,
+        title: '资料B',
+        content: '内容B',
+      ),
+    ))!;
+
+    final service = KnowledgeV3AiService(
+      aiConfigRepository: aiConfigRepository,
+      repository: repo,
+      aiService: _SequenceAiService(const []),
+    );
+
+    final id = await service.saveAnswerAsCard(
+      space: space,
+      answer: TiantianAnswer(
+        sessionId: 0,
+        question: '问题',
+        answer: '答案',
+        sources: [material1, material2],
+      ),
+    );
+
+    final card = await repo.getCard(id);
+    expect(card, isNotNull);
+    expect(card!.materialId, material1.id);
+    expect(card.sourceTitle, '资料A');
+  });
+
+  test('saveAnswerAsCard writes fixed cardType and tags', () async {
+    final keyDir = Directory.systemTemp.createTempSync(
+      'growth_os_v3_ai_card_type_test_',
+    );
+    KeyMaterialService.resetForTests(directory: keyDir);
+    final db = AppDatabase(NativeDatabase.memory());
+    addTearDown(() async {
+      await db.close();
+      KeyMaterialService.resetForTests();
+      if (keyDir.existsSync()) keyDir.deleteSync(recursive: true);
+    });
+
+    final repo = KnowledgeV3Repository(db);
+    final aiConfigRepository = AiConfigRepository(db);
+    final space = await repo.ensureDefaultSpace();
+
+    final service = KnowledgeV3AiService(
+      aiConfigRepository: aiConfigRepository,
+      repository: repo,
+      aiService: _SequenceAiService(const []),
+    );
+
+    final id = await service.saveAnswerAsCard(
+      space: space,
+      answer: TiantianAnswer(
+        sessionId: 0,
+        question: '问题',
+        answer: '答案',
+        sources: [],
+      ),
+    );
+
+    final card = await repo.getCard(id);
+    expect(card, isNotNull);
+    expect(card!.cardType, 'qa');
+    expect(card.importance, 3);
+    expect(card.difficulty, 3);
+    expect(card.tagsJson, contains('甜甜问答'));
   });
 }

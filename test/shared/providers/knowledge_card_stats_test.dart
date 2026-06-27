@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/shared/providers/knowledge_card_provider.dart';
+import 'package:growth_os/features/knowledge/providers/knowledge_card_provider.dart';
 
 KnowledgeCard _card({
   required int now,

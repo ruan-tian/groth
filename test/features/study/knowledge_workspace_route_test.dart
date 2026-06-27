@@ -1,16 +1,16 @@
-import 'package:drift/native.dart';
+﻿import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/app/app.dart';
 import 'package:growth_os/app/router.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/exp_repository.dart';
-import 'package:growth_os/core/repositories/pet_repository.dart';
+import 'package:growth_os/features/pet/repositories/exp_repository.dart';
+import 'package:growth_os/features/pet/repositories/pet_repository.dart';
 import 'package:growth_os/features/health/services/health_reminder_scheduler.dart';
 import 'package:growth_os/features/pet/services/pet_orchestrator.dart';
-import 'package:growth_os/features/study/pages/knowledge_workspace_page.dart';
+import 'package:growth_os/features/knowledge/pages/knowledge_workspace_page.dart';
 import 'package:growth_os/shared/providers/database_provider.dart';
-import 'package:growth_os/shared/providers/pet_orchestrator_provider.dart';
+import 'package:growth_os/features/pet/providers/pet_orchestrator_provider.dart';
 import 'package:growth_os/shared/widgets/common/advanced_bottom_nav.dart';
 
 class _NoopPetOrchestrator extends PetOrchestrator {
@@ -99,9 +99,9 @@ void main() {
 
       expect(find.byType(KnowledgeWorkspacePage), findsOneWidget);
       expect(find.byType(AdvancedBottomNav), findsNothing);
-      expect(find.text('AI 导入'), findsNothing);
-      expect(find.text('全部复习'), findsNothing);
-      expect(find.text('目标模板'), findsNothing);
+      expect(find.text('AI 瀵煎叆'), findsNothing);
+      expect(find.text('鍏ㄩ儴澶嶄範'), findsNothing);
+      expect(find.text('鐩爣妯℃澘'), findsNothing);
     }
 
     goRouter.go('/plan/study/flash-review');
@@ -115,6 +115,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
     expect(find.byType(KnowledgeFlashReviewPage), findsOneWidget);
     expect(find.byType(AdvancedBottomNav), findsNothing);
-    expect(find.textContaining('渲染失败'), findsNothing);
+    expect(find.textContaining('娓叉煋澶辫触'), findsNothing);
   });
 }
+

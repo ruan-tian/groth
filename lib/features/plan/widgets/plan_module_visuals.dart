@@ -7,9 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/pet_ai_result_provider.dart';
-import '../../../shared/providers/pet_orchestrator_provider.dart';
-import '../../../shared/providers/pet_projection_provider.dart';
+import '../../pet/providers/pet_ai_result_provider.dart';
+import '../../pet/providers/pet_orchestrator_provider.dart';
+import '../../pet/providers/pet_projection_provider.dart';
 import '../../../core/domain/pet/pet_scene_model.dart';
 import '../../../core/constants/pet_assets.dart';
 import '../utils/plan_module_assets.dart';
@@ -120,18 +120,12 @@ class _PlanModuleVisualHeaderState
         child: Container(
           height: widget.height ?? 132,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(AppRadius.xxxl),
             border: Border.all(color: widget.color.withValues(alpha: 0.16)),
-            boxShadow: [
-              BoxShadow(
-                color: widget.color.withValues(alpha: 0.12),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
-              ),
-            ],
+            boxShadow: AppShadows.hero(widget.color),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(26),
+            borderRadius: BorderRadius.circular(AppRadius.xxxl),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -222,12 +216,12 @@ class _FloatingPetImageState extends State<_FloatingPetImage>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 3),
+      duration: const Duration(seconds: 4),
     )..repeat(reverse: true);
     _float = Tween<double>(
-      begin: -3,
-      end: 3,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+      begin: -2,
+      end: 2,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOutCubic));
   }
 
   @override
@@ -397,8 +391,8 @@ class _PetSpeechBubble extends StatelessWidget {
             border: Border.all(color: context.growthColors.card),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.10),
-                blurRadius: 14,
+                color: color.withValues(alpha: 0.08),
+                blurRadius: 12,
                 offset: const Offset(0, 5),
               ),
             ],
@@ -544,18 +538,12 @@ class PlanModuleActionImageCard extends StatelessWidget {
               return DecoratedBox(
                 decoration: BoxDecoration(
                   color: context.growthColors.card,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: color.withValues(alpha: 0.18)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.12),
-                      blurRadius: 20,
-                      offset: const Offset(0, 9),
-                    ),
-                  ],
+                  borderRadius: BorderRadius.circular(AppRadius.xxxl),
+                  border: Border.all(color: color.withValues(alpha: 0.16)),
+                  boxShadow: AppShadows.hero(color),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(28),
+                  borderRadius: BorderRadius.circular(AppRadius.xxxl),
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
@@ -578,35 +566,6 @@ class PlanModuleActionImageCard extends StatelessWidget {
                                 ],
                               ),
                             ),
-                          ),
-                        ),
-                      ),
-                      // 文字区渐变遮罩 — 左侧重白 → 右侧透明
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.centerLeft,
-                            end: Alignment.centerRight,
-                            colors: [
-                              context.growthColors.card.withValues(alpha: 0.82),
-                              context.growthColors.card.withValues(alpha: 0.55),
-                              Colors.transparent,
-                            ],
-                            stops: const [0, 0.45, 1],
-                          ),
-                        ),
-                      ),
-                      // 底部微弱渐变 — 增加层次感
-                      DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
-                            colors: [
-                              context.growthColors.card.withValues(alpha: 0.25),
-                              Colors.transparent,
-                            ],
-                            stops: const [0, 0.5],
                           ),
                         ),
                       ),
@@ -673,7 +632,7 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
-          decoration: _premiumCardDecoration(color),
+           decoration: _premiumCardDecoration(color, context),
           child: Row(
             children: [
               _SoftIconTile(color: color, icon: icon, size: 58),
@@ -687,9 +646,9 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         height: 1.12,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w700,
                         color: context.growthColors.textPrimary,
                         letterSpacing: 0,
                       ),
@@ -702,7 +661,7 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         height: 1.2,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w500,
                         color: context.growthColors.textSecondary,
                         letterSpacing: 0,
                       ),
@@ -721,8 +680,8 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(999),
                   boxShadow: [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.18),
-                      blurRadius: 14,
+                      color: color.withValues(alpha: 0.12),
+                      blurRadius: 12,
                       offset: const Offset(0, 6),
                     ),
                   ],
@@ -741,7 +700,7 @@ class PlanModuleRecordEntryCard extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 15,
                         height: 1,
-                        fontWeight: FontWeight.w800,
+                        fontWeight: FontWeight.w700,
                         color: context.growthColors.textOnAccent,
                         letterSpacing: 0,
                       ),
@@ -791,7 +750,7 @@ class PlanModuleWeeklyCard extends StatelessWidget {
         onLongPress: onLongPress,
         child: Container(
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 20),
-          decoration: _premiumCardDecoration(color),
+          decoration: _premiumCardDecoration(color, context),
           child: Column(
             children: [
               Row(
@@ -804,9 +763,9 @@ class PlanModuleWeeklyCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 22,
+                        fontSize: 20,
                         height: 1.1,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w700,
                         color: context.growthColors.textPrimary,
                         letterSpacing: 0,
                       ),
@@ -817,7 +776,7 @@ class PlanModuleWeeklyCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 19,
                       height: 1,
-                      fontWeight: FontWeight.w900,
+                      fontWeight: FontWeight.w700,
                       color: color,
                       letterSpacing: 0,
                     ),
@@ -894,25 +853,19 @@ class _SoftIconTile extends StatelessWidget {
       height: size,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(size * 0.30),
+        borderRadius: BorderRadius.circular(AppRadius.smd),
       ),
       child: Icon(icon, color: color, size: size * 0.46),
     );
   }
 }
 
-BoxDecoration _premiumCardDecoration(Color color) {
+BoxDecoration _premiumCardDecoration(Color color, BuildContext context) {
   return BoxDecoration(
-    color: AppColors.card.withValues(alpha: 0.96),
-    borderRadius: BorderRadius.circular(26),
-    border: Border.all(color: color.withValues(alpha: 0.13)),
-    boxShadow: [
-      BoxShadow(
-        color: color.withValues(alpha: 0.08),
-        blurRadius: 18,
-        offset: const Offset(0, 8),
-      ),
-    ],
+    color: context.growthColors.card,
+    borderRadius: BorderRadius.circular(AppRadius.xxxl),
+    border: Border.all(color: color.withValues(alpha: 0.12)),
+    boxShadow: AppShadows.hero(color),
   );
 }
 
@@ -947,7 +900,7 @@ class _ActionCardCopy extends StatelessWidget {
             color: context.growthColors.textPrimary,
             fontSize: compact ? 20 : 24,
             height: 1.12,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
             letterSpacing: 0,
           ),
         ),
@@ -960,7 +913,7 @@ class _ActionCardCopy extends StatelessWidget {
             color: context.growthColors.textSecondary,
             fontSize: compact ? 12 : 13,
             height: 1.35,
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w500,
             letterSpacing: 0,
           ),
         ),
@@ -976,8 +929,8 @@ class _ActionCardCopy extends StatelessWidget {
             border: Border.all(color: context.growthColors.card),
             boxShadow: [
               BoxShadow(
-                color: color.withValues(alpha: 0.16),
-                blurRadius: 14,
+                color: color.withValues(alpha: 0.12),
+                blurRadius: 12,
                 offset: const Offset(0, 5),
               ),
             ],
@@ -996,7 +949,7 @@ class _ActionCardCopy extends StatelessWidget {
                     color: color,
                     fontSize: compact ? 14 : 17,
                     height: 1,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w700,
                     letterSpacing: 0,
                   ),
                 ),

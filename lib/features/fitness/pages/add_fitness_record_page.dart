@@ -5,13 +5,27 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:growth_os/app/design/design.dart';
-import 'package:growth_os/core/database/app_database.dart';
+import '../models/fitness_data.dart';
 import 'package:growth_os/core/domain/pet/pet_event.dart';
 import 'package:growth_os/core/services/pet_event_bus.dart';
 import 'package:growth_os/features/fitness/models/activity_type.dart';
-import 'package:growth_os/shared/providers/dashboard_provider.dart';
-import 'package:growth_os/shared/providers/fitness_provider.dart';
+import 'package:growth_os/features/fitness/providers/fitness_dashboard_facade.dart';
+import 'package:growth_os/features/fitness/providers/fitness_provider.dart';
+import 'package:growth_os/shared/providers/repository_providers.dart';
+import 'package:growth_os/shared/providers/service_providers.dart';
 import 'package:growth_os/shared/widgets/common/common_widgets.dart';
+
+const _fitnessAssetRoot = 'assets/images/fitness_record';
+const _fitnessHeroAsset = '$_fitnessAssetRoot/fitness_record_hero.webp';
+const _fitnessFooterAsset = '$_fitnessAssetRoot/fitness_record_footer.webp';
+const _fitnessDumbbellsAsset = '$_fitnessAssetRoot/fitness_dumbbells.webp';
+
+const _fit = Color(0xFF18A884);
+const _fitDeep = Color(0xFF08735F);
+const _fitDark = Color(0xFF10493F);
+const _fitMist = Color(0xFFF2FBF7);
+const _fitSoft = Color(0xFFE2F6EF);
+const _fitLine = Color(0xFFCFE8DF);
 
 class AddFitnessRecordPage extends ConsumerStatefulWidget {
   const AddFitnessRecordPage({
@@ -137,54 +151,81 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = context.growthColors;
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: colors.background,
-      appBar: AppBar(
-        title: Text(
-          '添加运动记录',
-          style: AppTextStyles.pageTitle.copyWith(color: colors.textPrimary),
+      backgroundColor: _fitMist,
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.white, _fitMist, _fitSoft.withValues(alpha: 0.64)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-        centerTitle: false,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: IconThemeData(color: colors.textPrimary),
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
+        child: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final maxWidth = constraints.maxWidth > 720
+                  ? 640.0
+                  : double.infinity;
+              return SingleChildScrollView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: const EdgeInsets.fromLTRB(
-                  AppSpacing.lg,
-                  AppSpacing.sm,
-                  AppSpacing.lg,
-                  112,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildHeroCard(),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildActivityTypeCard(),
-                    const SizedBox(height: AppSpacing.lg),
-                    AnimatedSwitcher(
-                      duration: AppMotion.slow,
-                      switchInCurve: AppMotion.standard,
-                      switchOutCurve: AppMotion.standard,
-                      child: _buildActivityDetailCard(),
+                padding: const EdgeInsets.fromLTRB(18, 12, 18, 22),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxWidth),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _FitnessRecordHeader(
+                          onBack: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              Navigator.of(context).maybePop();
+                            }
+                          },
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildHeroCard(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildActivityTypeCard(),
+                        const SizedBox(height: AppSpacing.lg),
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          reverseDuration: const Duration(milliseconds: 180),
+                          switchInCurve: Curves.easeOutQuart,
+                          switchOutCurve: Curves.easeInQuad,
+                          transitionBuilder: (child, animation) {
+                            final curved = CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutQuart,
+                            );
+                            return FadeTransition(
+                              opacity: curved,
+                              child: SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, 0.025),
+                                  end: Offset.zero,
+                                ).animate(curved),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: _buildActivityDetailCard(),
+                        ),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildCommonInfoCard(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildFixedSaveBar(),
+                      ],
                     ),
-                    const SizedBox(height: AppSpacing.lg),
-                    _buildCommonInfoCard(),
-                  ],
+                  ),
                 ),
-              ),
-            ),
-            _buildFixedSaveBar(),
-          ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -194,94 +235,102 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     final colors = context.growthColors;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.xl),
+      padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            colors.fitness.withValues(alpha: 0.92),
-            Color.lerp(colors.fitness, colors.warning, 0.42)!,
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        boxShadow: AppShadows.colored(
-          colors.fitness,
-          blurRadius: 26,
-          offsetY: 12,
-        ),
+        color: colors.card.withValues(alpha: 0.84),
+        borderRadius: BorderRadius.circular(AppRadius.xxl),
+        border: Border.all(color: _fitLine.withValues(alpha: 0.58)),
+        boxShadow: [
+          BoxShadow(
+            color: _fitDeep.withValues(alpha: 0.07),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Stack(
+        clipBehavior: Clip.none,
         children: [
           Positioned(
-            right: -18,
-            top: -20,
-            child: Icon(
-              _selectedActivityType.icon,
-              size: 112,
-              color: colors.textOnAccent.withValues(alpha: 0.13),
+            right: -10,
+            bottom: -16,
+            child: Opacity(
+              opacity: 0.78,
+              child: Image.asset(
+                _fitnessDumbbellsAsset,
+                width: 118,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: AppSpacing.md,
-                  vertical: AppSpacing.xs,
-                ),
-                decoration: BoxDecoration(
-                  color: colors.textOnAccent.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                ),
-                child: Text(
-                  _selectedActivityType.label,
-                  style: AppTextStyles.caption.copyWith(
-                    color: colors.textOnAccent,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Text(
-                _durationSummary,
-                style: AppTextStyles.numberLarge.copyWith(
-                  color: colors.textOnAccent,
-                  fontSize: 32,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text(
-                _trainingSummary,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: AppTextStyles.body.copyWith(
-                  color: colors.textOnAccent.withValues(alpha: 0.9),
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: AppSpacing.lg),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  _buildHeroMetric(
-                    icon: Icons.bolt_rounded,
-                    label: '预计 +$_estimatedExp EXP',
-                  ),
-                  _buildHeroMetric(
-                    icon: Icons.local_fire_department_rounded,
-                    label: _selectedActivityType == ActivityType.strength
-                        ? (_modeIndex == 0 ? '简单记录' : '专业明细')
-                        : '快捷记录',
-                  ),
-                  if (_exercises.isNotEmpty)
-                    _buildHeroMetric(
-                      icon: Icons.format_list_numbered_rounded,
-                      label: '${_exercises.length} 个动作',
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSpacing.md,
+                        vertical: AppSpacing.xs,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _fitSoft.withValues(alpha: 0.82),
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        border: Border.all(color: _fitLine),
+                      ),
+                      child: Text(
+                        _selectedActivityType.label,
+                        style: AppTextStyles.caption.copyWith(
+                          color: _fitDeep,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
                     ),
-                ],
+                    const SizedBox(height: AppSpacing.lg),
+                    Text(
+                      _durationSummary,
+                      style: AppTextStyles.numberLarge.copyWith(
+                        color: _fitDark,
+                        fontSize: 32,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Text(
+                      _trainingSummary,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.body.copyWith(
+                        color: colors.textSecondary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: AppSpacing.lg),
+                    Wrap(
+                      spacing: AppSpacing.sm,
+                      runSpacing: AppSpacing.sm,
+                      children: [
+                        _buildHeroMetric(
+                          icon: Icons.bolt_rounded,
+                          label: '预计 +$_estimatedExp EXP',
+                        ),
+                        _buildHeroMetric(
+                          icon: Icons.local_fire_department_rounded,
+                          label: _selectedActivityType == ActivityType.strength
+                              ? (_modeIndex == 0 ? '简单记录' : '专业明细')
+                              : '快捷记录',
+                        ),
+                        if (_exercises.isNotEmpty)
+                          _buildHeroMetric(
+                            icon: Icons.format_list_numbered_rounded,
+                            label: '${_exercises.length} 个动作',
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 96),
             ],
           ),
         ],
@@ -290,27 +339,26 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Widget _buildHeroMetric({required IconData icon, required String label}) {
-    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.symmetric(
         horizontal: AppSpacing.md,
         vertical: AppSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: colors.textOnAccent.withValues(alpha: 0.18),
+        color: _fitMist.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(AppRadius.full),
-        border: Border.all(color: colors.textOnAccent.withValues(alpha: 0.22)),
+        border: Border.all(color: _fitLine.withValues(alpha: 0.82)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, color: colors.textOnAccent, size: 16),
+          Icon(icon, color: _fitDeep, size: 16),
           const SizedBox(width: AppSpacing.xs),
           Text(
             label,
             style: AppTextStyles.caption.copyWith(
-              color: colors.textOnAccent,
-              fontWeight: FontWeight.w700,
+              color: _fitDeep,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ],
@@ -359,24 +407,28 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
           });
         },
         child: AnimatedContainer(
-          duration: AppMotion.normal,
-          curve: AppMotion.standard,
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
           width: 104,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSpacing.md,
             vertical: AppSpacing.sm,
           ),
           decoration: BoxDecoration(
-            color: isSelected ? colors.fitness : colors.softOrange,
+            color: isSelected ? _fit : colors.card.withValues(alpha: 0.86),
             borderRadius: BorderRadius.circular(AppRadius.xxl),
             border: Border.all(
-              color: isSelected
-                  ? colors.fitness
-                  : colors.fitness.withValues(alpha: 0.12),
+              color: isSelected ? _fit : _fitLine.withValues(alpha: 0.72),
               width: isSelected ? 1.4 : 1,
             ),
             boxShadow: isSelected
-                ? AppShadows.colored(colors.fitness, blurRadius: 16, offsetY: 7)
+                ? [
+                    BoxShadow(
+                      color: _fitDeep.withValues(alpha: 0.14),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ]
                 : null,
           ),
           child: Column(
@@ -384,7 +436,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             children: [
               Icon(
                 type.icon,
-                color: isSelected ? colors.textOnAccent : colors.fitness,
+                color: isSelected ? colors.textOnAccent : _fitDeep,
                 size: 24,
               ),
               const SizedBox(height: 5),
@@ -457,7 +509,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
           tabs: const ['简单模式', '专业模式'],
           selectedIndex: _modeIndex,
           height: 44,
-          backgroundColor: colors.softOrange,
+          backgroundColor: _fitSoft,
           selectedColor: colors.textOnAccent,
           borderRadius: AppRadius.full,
           onChanged: (index) {
@@ -652,9 +704,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
       child: Container(
         decoration: BoxDecoration(
-          color: colors.softOrange.withValues(alpha: 0.55),
+          color: _fitSoft.withValues(alpha: 0.58),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: colors.fitness.withValues(alpha: 0.12)),
+          border: Border.all(color: _fitLine.withValues(alpha: 0.72)),
         ),
         child: ExpansionTile(
           initiallyExpanded: _advancedExpanded,
@@ -672,7 +724,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             AppSpacing.lg,
             AppSpacing.lg,
           ),
-          iconColor: colors.fitness,
+          iconColor: _fitDeep,
           collapsedIconColor: colors.textSecondary,
           title: Text(
             '进阶补充',
@@ -690,14 +742,14 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
               _buildRatingBlock(
                 title: '训练强度',
                 value: _intensity,
-                color: colors.fitness,
+                color: _fit,
                 onChanged: (value) => setState(() => _intensity = value),
               ),
               const SizedBox(height: AppSpacing.lg),
               _buildRatingBlock(
                 title: '疲劳程度',
                 value: _fatigue,
-                color: colors.warning,
+                color: const Color(0xFFF2B15A),
                 onChanged: (value) => setState(() => _fatigue = value),
               ),
               const SizedBox(height: AppSpacing.lg),
@@ -762,14 +814,14 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.card,
+        color: colors.card.withValues(alpha: 0.84),
         borderRadius: BorderRadius.circular(AppRadius.xxxl),
-        border: Border.all(color: colors.fitness.withValues(alpha: 0.1)),
+        border: Border.all(color: _fitLine.withValues(alpha: 0.56)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.22),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
+            color: _fitDeep.withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -783,10 +835,10 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: colors.softOrange,
+                  color: _fitSoft,
                   borderRadius: BorderRadius.circular(AppRadius.mlg),
                 ),
-                child: Icon(icon, color: colors.fitness, size: 21),
+                child: Icon(icon, color: _fitDeep, size: 21),
               ),
               const SizedBox(width: AppSpacing.md),
               Expanded(
@@ -843,12 +895,10 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             vertical: AppSpacing.sm,
           ),
           decoration: BoxDecoration(
-            color: selected ? colors.fitness : colors.softOrange,
+            color: selected ? _fit : _fitSoft.withValues(alpha: 0.68),
             borderRadius: BorderRadius.circular(AppRadius.full),
             border: Border.all(
-              color: selected
-                  ? colors.fitness
-                  : colors.fitness.withValues(alpha: 0.12),
+              color: selected ? _fit : _fitLine.withValues(alpha: 0.78),
             ),
           ),
           child: Row(
@@ -904,28 +954,28 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       decoration: InputDecoration(
         hintText: hint,
         hintStyle: AppTextStyles.body.copyWith(color: colors.textHint),
-        prefixIcon: Icon(icon, color: colors.fitness.withValues(alpha: 0.72)),
+        prefixIcon: Icon(icon, color: _fitDeep.withValues(alpha: 0.74)),
         suffixText: suffix,
         suffixStyle: AppTextStyles.caption.copyWith(
           color: colors.textSecondary,
         ),
         filled: true,
-        fillColor: colors.surface,
+        fillColor: _fitMist.withValues(alpha: 0.72),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSpacing.lg,
           vertical: AppSpacing.md,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          borderSide: BorderSide(color: colors.fitness.withValues(alpha: 0.12)),
+          borderSide: BorderSide(color: _fitLine.withValues(alpha: 0.78)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          borderSide: BorderSide(color: colors.fitness.withValues(alpha: 0.12)),
+          borderSide: BorderSide(color: _fitLine.withValues(alpha: 0.78)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadius.xl),
-          borderSide: BorderSide(color: colors.fitness, width: 1.3),
+          borderSide: const BorderSide(color: _fit, width: 1.3),
         ),
       ),
     );
@@ -952,15 +1002,15 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         width: double.infinity,
         padding: const EdgeInsets.all(AppSpacing.xl),
         decoration: BoxDecoration(
-          color: colors.softOrange.withValues(alpha: 0.6),
+          color: _fitSoft.withValues(alpha: 0.58),
           borderRadius: BorderRadius.circular(AppRadius.xxl),
-          border: Border.all(color: colors.fitness.withValues(alpha: 0.12)),
+          border: Border.all(color: _fitLine.withValues(alpha: 0.72)),
         ),
         child: Column(
           children: [
             Icon(
               Icons.fitness_center_rounded,
-              color: colors.fitness.withValues(alpha: 0.72),
+              color: _fitDeep.withValues(alpha: 0.72),
               size: 30,
             ),
             const SizedBox(height: AppSpacing.sm),
@@ -997,9 +1047,9 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       margin: const EdgeInsets.only(bottom: AppSpacing.sm),
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: _fitMist.withValues(alpha: 0.72),
         borderRadius: BorderRadius.circular(AppRadius.xxl),
-        border: Border.all(color: colors.fitness.withValues(alpha: 0.12)),
+        border: Border.all(color: _fitLine.withValues(alpha: 0.72)),
       ),
       child: Row(
         children: [
@@ -1007,16 +1057,13 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             width: 42,
             height: 42,
             decoration: BoxDecoration(
-              color: colors.softOrange,
+              color: _fitSoft,
               borderRadius: BorderRadius.circular(AppRadius.mlg),
             ),
             child: Center(
               child: Text(
                 '${index + 1}',
-                style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: colors.fitness,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w600, color: _fitDeep),
               ),
             ),
           ),
@@ -1053,7 +1100,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
   }
 
   Widget _buildAddExerciseButton() {
-    final colors = context.growthColors;
     return Semantics(
       button: true,
       label: '添加训练动作',
@@ -1065,19 +1111,19 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
         child: Container(
           height: 50,
           decoration: BoxDecoration(
-            color: colors.fitness.withValues(alpha: 0.1),
+            color: _fitSoft.withValues(alpha: 0.70),
             borderRadius: BorderRadius.circular(AppRadius.full),
-            border: Border.all(color: colors.fitness.withValues(alpha: 0.22)),
+            border: Border.all(color: _fitLine.withValues(alpha: 0.90)),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_rounded, color: colors.fitness),
+              const Icon(Icons.add_rounded, color: _fitDeep),
               const SizedBox(width: AppSpacing.sm),
               Text(
                 '添加动作明细',
                 style: AppTextStyles.cardTitle.copyWith(
-                  color: colors.fitness,
+                  color: _fitDeep,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1161,8 +1207,8 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             const SizedBox(height: AppSpacing.xl),
             SizedBox(
               width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () {
+              child: _FitSheetButton(
+                onTap: () {
                   if (nameController.text.trim().isEmpty) return;
                   setState(() {
                     _exercises.add(
@@ -1177,8 +1223,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
                   });
                   Navigator.pop(ctx);
                 },
-                icon: const Icon(Icons.add),
-                label: const Text('添加动作'),
               ),
             ),
           ],
@@ -1211,21 +1255,21 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: colors.textHint),
-            prefixIcon: Icon(icon, color: colors.textTertiary, size: 18),
+            prefixIcon: Icon(icon, color: _fitDeep, size: 18),
             isDense: true,
             filled: true,
-            fillColor: colors.surface,
+            fillColor: _fitMist.withValues(alpha: 0.72),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: colors.border),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderSide: BorderSide(color: _fitLine.withValues(alpha: 0.78)),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: colors.border),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderSide: BorderSide(color: _fitLine.withValues(alpha: 0.78)),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              borderSide: BorderSide(color: colors.fitness, width: 1.3),
+              borderRadius: BorderRadius.circular(AppRadius.xl),
+              borderSide: const BorderSide(color: _fit, width: 1.3),
             ),
           ),
         ),
@@ -1235,106 +1279,129 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
   Widget _buildFixedSaveBar() {
     final colors = context.growthColors;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(
-        AppSpacing.lg,
-        AppSpacing.md,
-        AppSpacing.lg,
-        AppSpacing.lg,
-      ),
-      decoration: BoxDecoration(
-        color: colors.card.withValues(alpha: 0.96),
-        border: Border(
-          top: BorderSide(color: colors.border.withValues(alpha: 0.9)),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: colors.shadow.withValues(alpha: 0.24),
-            blurRadius: 22,
-            offset: const Offset(0, -8),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _trainingSummary,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.cardTitle.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w800,
+    return SafeArea(
+      top: false,
+      child: Padding(
+        padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(AppSpacing.md),
+              decoration: BoxDecoration(
+                color: colors.card.withValues(alpha: 0.78),
+                borderRadius: BorderRadius.circular(AppRadius.xxl),
+                border: Border.all(color: _fitLine.withValues(alpha: 0.62)),
+              ),
+              child: Row(
+                children: [
+                  Image.asset(
+                    _fitnessFooterAsset,
+                    width: 58,
+                    height: 58,
+                    fit: BoxFit.contain,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '预计 +$_estimatedExp EXP',
-                  style: AppTextStyles.caption.copyWith(
-                    color: colors.fitness,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          Semantics(
-            button: true,
-            label: '保存运动记录',
-            child: GestureDetector(
-              onTap: _saving ? null : _save,
-              child: AnimatedContainer(
-                duration: AppMotion.normal,
-                curve: AppMotion.standard,
-                width: 132,
-                height: 52,
-                decoration: BoxDecoration(
-                  color: _saving
-                      ? colors.fitness.withValues(alpha: 0.55)
-                      : colors.fitness,
-                  borderRadius: BorderRadius.circular(AppRadius.full),
-                  boxShadow: _saving
-                      ? null
-                      : AppShadows.colored(colors.fitness),
-                ),
-                child: Center(
-                  child: _saving
-                      ? SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.2,
-                            color: colors.textOnAccent,
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _trainingSummary,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.cardTitle.copyWith(
+                            color: _fitDark,
+                            fontWeight: FontWeight.w800,
                           ),
-                        )
-                      : Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.check_rounded,
-                              color: colors.textOnAccent,
-                              size: 20,
-                            ),
-                            const SizedBox(width: AppSpacing.xs),
-                            Text(
-                              '保存',
-                              style: AppTextStyles.cardTitle.copyWith(
-                                color: colors.textOnAccent,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ],
                         ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '预计 +$_estimatedExp EXP，坚持的每一次都会算数',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.caption.copyWith(
+                            color: _fitDeep,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            Semantics(
+              button: true,
+              label: '保存运动记录',
+              child: GestureDetector(
+                onTap: _saving ? null : _save,
+                child: AnimatedScale(
+                  duration: const Duration(milliseconds: 190),
+                  curve: Curves.easeOutCubic,
+                  scale: _saving ? 0.98 : 1,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeOutCubic,
+                    width: double.infinity,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: _saving
+                          ? null
+                          : const LinearGradient(
+                              colors: [_fit, _fitDeep],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                      color: _saving ? _fit.withValues(alpha: 0.54) : null,
+                      borderRadius: BorderRadius.circular(AppRadius.xl),
+                      boxShadow: _saving
+                          ? null
+                          : [
+                              BoxShadow(
+                                color: _fitDeep.withValues(alpha: 0.18),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
+                    ),
+                    child: Center(
+                      child: _saving
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.4,
+                                color: Colors.white,
+                              ),
+                            )
+                          : Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.check_rounded,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: AppSpacing.xs),
+                                Text(
+                                  '保存运动记录',
+                                  style: AppTextStyles.cardTitle.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
+                    ),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -1398,7 +1465,6 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
 
     try {
       final repo = ref.read(fitnessRepositoryProvider);
-      final db = ref.read(databaseProvider);
       final now = DateTime.now();
       final expService = ref.read(expServiceProvider);
       final exp = expService.calculateFitnessExp(
@@ -1411,78 +1477,61 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
             : 0,
         hasFeeling: _feelingController.text.trim().isNotEmpty,
       );
+      final oldTotal = await ref.read(expRepositoryProvider).getTotalExp();
+      final exerciseCompanions = <FitnessExercisesCompanion>[
+        if (_selectedActivityType == ActivityType.strength && _modeIndex == 1)
+          for (final exercise in _exercises)
+            FitnessExercisesCompanion(
+              exerciseName: Value(exercise.name),
+              sets: Value(exercise.sets),
+              reps: Value(exercise.reps),
+              weight: Value(exercise.weight),
+              restSeconds: Value(exercise.restSeconds),
+              createdAt: Value(now.millisecondsSinceEpoch),
+            ),
+      ];
 
-      late final int recordId;
-      late final int oldTotal;
-      await db.transaction(() async {
-        recordId = await repo.insertFitnessRecord(
-          FitnessRecordsCompanion(
-            mode: Value(
-              _selectedActivityType == ActivityType.strength
-                  ? (_modeIndex == 0 ? 'simple' : 'professional')
-                  : 'simple',
-            ),
-            title: Value(_resolveTitle()),
-            bodyPart: Value(bodyPart),
-            activityType: Value(_selectedActivityType.name),
-            startTime: Value(_startTime.millisecondsSinceEpoch),
-            endTime: Value(_endTime.millisecondsSinceEpoch),
-            durationMinutes: Value(duration),
-            fatigueLevel: Value(
-              _selectedActivityType == ActivityType.strength
-                  ? (_modeIndex == 1 ? _fatigue : null)
-                  : _fatigue,
-            ),
-            intensityLevel: Value(
-              _selectedActivityType == ActivityType.strength
-                  ? (_modeIndex == 1 ? _intensity : null)
-                  : _intensity,
-            ),
-            feeling: Value(
-              _feelingController.text.trim().isEmpty
-                  ? null
-                  : _feelingController.text.trim(),
-            ),
-            note: Value(
-              _notesController.text.trim().isEmpty
-                  ? null
-                  : _notesController.text.trim(),
-            ),
-            createdAt: Value(now.millisecondsSinceEpoch),
-            updatedAt: Value(now.millisecondsSinceEpoch),
+      await repo.saveFitnessRecordWithExp(
+        record: FitnessRecordsCompanion(
+          mode: Value(
+            _selectedActivityType == ActivityType.strength
+                ? (_modeIndex == 0 ? 'simple' : 'professional')
+                : 'simple',
           ),
-        );
-
-        if (_selectedActivityType == ActivityType.strength && _modeIndex == 1) {
-          for (final exercise in _exercises) {
-            await repo.insertFitnessExercise(
-              FitnessExercisesCompanion(
-                fitnessRecordId: Value(recordId),
-                exerciseName: Value(exercise.name),
-                sets: Value(exercise.sets),
-                reps: Value(exercise.reps),
-                weight: Value(exercise.weight),
-                restSeconds: Value(exercise.restSeconds),
-                createdAt: Value(now.millisecondsSinceEpoch),
-              ),
-            );
-          }
-        }
-
-        await repo.updateFitnessRecordExp(recordId, exp);
-
-        final expRepo = ref.read(expRepositoryProvider);
-        oldTotal = await expRepo.getTotalExp();
-        await expRepo.insertExpLog(
-          GrowthExpLogsCompanion.insert(
-            sourceType: 'fitness',
-            sourceId: recordId,
-            expValue: exp,
-            reason: '${_selectedActivityType.label}: $bodyPart ($duration分钟)',
-            createdAt: now.millisecondsSinceEpoch,
+          title: Value(_resolveTitle()),
+          bodyPart: Value(bodyPart),
+          activityType: Value(_selectedActivityType.name),
+          startTime: Value(_startTime.millisecondsSinceEpoch),
+          endTime: Value(_endTime.millisecondsSinceEpoch),
+          durationMinutes: Value(duration),
+          fatigueLevel: Value(
+            _selectedActivityType == ActivityType.strength
+                ? (_modeIndex == 1 ? _fatigue : null)
+                : _fatigue,
           ),
-        );
-      });
+          intensityLevel: Value(
+            _selectedActivityType == ActivityType.strength
+                ? (_modeIndex == 1 ? _intensity : null)
+                : _intensity,
+          ),
+          feeling: Value(
+            _feelingController.text.trim().isEmpty
+                ? null
+                : _feelingController.text.trim(),
+          ),
+          note: Value(
+            _notesController.text.trim().isEmpty
+                ? null
+                : _notesController.text.trim(),
+          ),
+          createdAt: Value(now.millisecondsSinceEpoch),
+          updatedAt: Value(now.millisecondsSinceEpoch),
+        ),
+        exercises: exerciseCompanions,
+        exp: exp,
+        reason: '${_selectedActivityType.label}: $bodyPart ($duration min)',
+        createdAt: now.millisecondsSinceEpoch,
+      );
 
       final oldLevel = expService.calculateLevel(oldTotal);
       final newLevel = expService.calculateLevel(oldTotal + exp);
@@ -1495,7 +1544,7 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
       ref.invalidate(recentFitnessRecordsProvider);
       ref.invalidate(todayFitnessMinutesProvider);
       ref.invalidate(weeklyFitnessCountProvider);
-      ref.invalidate(dashboardProvider);
+      ref.read(fitnessDashboardFacadeProvider).refreshDashboard();
       ref.invalidate(fitnessChartDataProvider(7));
       ref.invalidate(fitnessChartDataProvider(30));
       ref.invalidate(fitnessChartDataProvider(365));
@@ -1523,6 +1572,167 @@ class _AddFitnessRecordPageState extends ConsumerState<AddFitnessRecordPage> {
     } finally {
       if (mounted) setState(() => _saving = false);
     }
+  }
+}
+
+class _FitnessRecordHeader extends StatelessWidget {
+  const _FitnessRecordHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 174,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            right: 10,
+            bottom: 10,
+            child: Container(
+              width: 128,
+              height: 88,
+              decoration: BoxDecoration(
+                color: _fitSoft.withValues(alpha: 0.68),
+                borderRadius: BorderRadius.circular(AppRadius.xxxl),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.84)),
+              ),
+            ),
+          ),
+          Positioned(
+            right: 0,
+            bottom: -4,
+            child: Image.asset(
+              _fitnessHeroAsset,
+              width: 134,
+              fit: BoxFit.contain,
+            ),
+          ),
+          Positioned(
+            left: 0,
+            top: 6,
+            child: _FitnessCircleButton(
+              icon: Icons.arrow_back_ios_new_rounded,
+              onTap: onBack,
+            ),
+          ),
+          Positioned(
+            left: 2,
+            right: 136,
+            bottom: 22,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '添加运动记录',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.pageTitle.copyWith(
+                    fontSize: 28,
+                    color: _fitDark,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  '记录每一次训练，让身体变化被看见',
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: _fitDeep.withValues(alpha: 0.72),
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FitnessCircleButton extends StatelessWidget {
+  const _FitnessCircleButton({required this.icon, required this.onTap});
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+
+    return Material(
+      color: colors.card.withValues(alpha: 0.76),
+      shape: const CircleBorder(),
+      elevation: 0,
+      child: InkWell(
+        customBorder: const CircleBorder(),
+        onTap: onTap,
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: _fitLine.withValues(alpha: 0.72)),
+            boxShadow: [
+              BoxShadow(
+                color: _fitDeep.withValues(alpha: 0.10),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Icon(icon, color: _fitDark, size: 20),
+        ),
+      ),
+    );
+  }
+}
+
+class _FitSheetButton extends StatelessWidget {
+  const _FitSheetButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 50,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [_fit, _fitDeep],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+          borderRadius: BorderRadius.circular(AppRadius.xl),
+          boxShadow: [
+            BoxShadow(
+              color: _fitDeep.withValues(alpha: 0.16),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.add_rounded, color: Colors.white, size: 20),
+            const SizedBox(width: AppSpacing.xs),
+            Text(
+              '添加动作',
+              style: AppTextStyles.cardTitle.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

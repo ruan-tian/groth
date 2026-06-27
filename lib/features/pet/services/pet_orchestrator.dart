@@ -6,8 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../../core/repositories/exp_repository.dart';
-import '../../../core/repositories/pet_repository.dart';
+import '../repositories/exp_repository.dart';
+import '../repositories/pet_repository.dart';
 import '../../../core/domain/pet/pet_display_intent.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/domain/pet/pet_intent.dart';

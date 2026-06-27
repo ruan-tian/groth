@@ -77,8 +77,8 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard>
                 Image.asset(
                   bannerPath,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) =>
-                      Container(color: JournalColors.pinkBg),
+                    errorBuilder: (_, _, _) =>
+                      Container(color: colors.softPink),
                 ),
                 // 第2层：渐变遮罩（左→右，左侧透明显示人物，右侧半透明白覆盖文字区）
                 DecoratedBox(
@@ -109,7 +109,7 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard>
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.w600,
-                            color: JournalColors.textDark,
+                            color: colors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -117,7 +117,7 @@ class _TiantianCompanionCardState extends ConsumerState<_TiantianCompanionCard>
                           '记录一下今天的成长吧！',
                           style: TextStyle(
                             fontSize: 12,
-                            color: JournalColors.textSecondary,
+                            color: colors.textSecondary,
                           ),
                         ),
                       ],
@@ -154,6 +154,7 @@ class _YearSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -166,10 +167,10 @@ class _YearSelector extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 8),
           child: Text(
             '$year年',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              color: JournalColors.textDark,
+              color: colors.textPrimary,
             ),
           ),
         ),
@@ -228,18 +229,24 @@ class _JournalHeatmapSectionState
         children: [
           Row(
             children: [
+              Icon(
+                Icons.calendar_month_rounded,
+                size: 18,
+                color: colors.journal,
+              ),
+              const SizedBox(width: 8),
               Text(
-                '📅 写作热力图',
+                '写作热力图',
                 style: AppTextStyles.cardTitle.copyWith(fontSize: 15),
               ),
               const SizedBox(width: 8),
               if (heatmap.isLoading)
-                const SizedBox(
+                SizedBox(
                   width: 14,
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: JournalColors.pinkMain,
+                    color: colors.journal,
                   ),
                 ),
               const Spacer(),
@@ -263,9 +270,10 @@ class _JournalHeatmapSectionState
                 ? Column(
                     key: ValueKey('heatmap_${selectedYear}_${data.length}'),
                     children: [
-                      HeatmapCalendar(
+                      GrowthHeatmapCalendar(
                         data: data,
-                        monthsToShow: 12,
+                        startDate: DateTime(selectedYear),
+                        endDate: DateTime(selectedYear, 12, 31),
                         baseColor: JournalColors.heat0,
                         maxColor: JournalColors.heat4,
                       ),
@@ -279,9 +287,9 @@ class _JournalHeatmapSectionState
                     child: Center(
                       child: Text(
                         '$selectedYear 年暂无写作记录',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: JournalColors.textMuted,
+                          color: colors.textTertiary,
                         ),
                       ),
                     ),
@@ -298,18 +306,19 @@ class _HeatmapLegend extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        const Text(
+        Text(
           '少',
-          style: TextStyle(fontSize: 10, color: JournalColors.textMuted),
+          style: TextStyle(fontSize: 10, color: colors.textTertiary),
         ),
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             '→',
-            style: TextStyle(fontSize: 10, color: JournalColors.textMuted),
+            style: TextStyle(fontSize: 10, color: colors.textTertiary),
           ),
         ),
         ...JournalColors.heatColors.map(
@@ -323,16 +332,16 @@ class _HeatmapLegend extends StatelessWidget {
             ),
           ),
         ),
-        const Padding(
+        Padding(
           padding: EdgeInsets.symmetric(horizontal: 4),
           child: Text(
             '→',
-            style: TextStyle(fontSize: 10, color: JournalColors.textMuted),
+            style: TextStyle(fontSize: 10, color: colors.textTertiary),
           ),
         ),
-        const Text(
+        Text(
           '多',
-          style: TextStyle(fontSize: 10, color: JournalColors.textMuted),
+          style: TextStyle(fontSize: 10, color: colors.textTertiary),
         ),
       ],
     );
@@ -352,6 +361,7 @@ class _ArrowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return Semantics(
       button: enabled,
       label: icon == Icons.chevron_left_rounded ? '上一年' : '下一年',
@@ -362,14 +372,14 @@ class _ArrowButton extends StatelessWidget {
           height: 28,
           decoration: BoxDecoration(
             color: enabled
-                ? JournalColors.pinkBg
-                : JournalColors.pinkBg.withValues(alpha: 0.4),
+                ? colors.softPink
+                : colors.softPink.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
             size: 18,
-            color: enabled ? JournalColors.textDark : JournalColors.textMuted,
+            color: enabled ? colors.textPrimary : colors.textTertiary,
           ),
         ),
       ),
@@ -463,10 +473,10 @@ class _StatsCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: JournalColors.pinkBg,
+              color: context.growthColors.softPink,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 20, color: JournalColors.pinkMain),
+            child: Icon(icon, size: 20, color: colors.journal),
           ),
           const SizedBox(height: 10),
           Row(
@@ -595,7 +605,7 @@ class _FolderEditSheet extends StatelessWidget {
             onPressed: () => Navigator.pop(context, controller.text),
             style: FilledButton.styleFrom(
               minimumSize: const Size.fromHeight(52),
-              backgroundColor: JournalColors.pinkMain,
+              backgroundColor: colors.journal,
               shape: const StadiumBorder(),
             ),
             child: const Text('保存'),
@@ -619,6 +629,7 @@ class _FolderActionSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _JournalSheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -631,9 +642,9 @@ class _FolderActionSheet extends StatelessWidget {
           const SizedBox(height: 14),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(
+            leading: Icon(
               Icons.edit_rounded,
-              color: JournalColors.pinkMain,
+              color: colors.journal,
             ),
             title: const Text('重命名'),
             onTap: onRename,
@@ -642,7 +653,7 @@ class _FolderActionSheet extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             leading: Icon(
               Icons.delete_outline_rounded,
-              color: context.growthColors.danger,
+              color: colors.danger,
             ),
             title: const Text('删除文件夹'),
             subtitle: const Text('日记会回到未分类'),
@@ -674,6 +685,7 @@ class _MoveJournalSheetState extends State<_MoveJournalSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return _JournalSheetShell(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -685,7 +697,7 @@ class _MoveJournalSheetState extends State<_MoveJournalSheet> {
             widget.journal.title,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: JournalColors.textSecondary),
+            style: TextStyle(color: colors.textSecondary),
           ),
           const SizedBox(height: 16),
           _MoveTargetTile(
@@ -742,18 +754,19 @@ class _MoveTargetTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.growthColors;
     return ListTile(
       contentPadding: EdgeInsets.zero,
       enabled: enabled,
       leading: Icon(
         selected ? Icons.folder_rounded : Icons.folder_outlined,
-        color: selected ? JournalColors.pinkMain : JournalColors.textMuted,
+        color: selected ? colors.journal : colors.textTertiary,
       ),
       title: Text(title),
       trailing: selected
-          ? const Icon(
+          ? Icon(
               Icons.check_circle_rounded,
-              color: JournalColors.pinkMain,
+              color: colors.journal,
             )
           : null,
       onTap: enabled ? onTap : null,
@@ -839,20 +852,20 @@ class _JournalListItem extends StatelessWidget {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: JournalColors.pinkBg,
+                  color: colors.softPink,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.asset(
-                    PetAssets.journalBook,
+                    RecordIconAssets.journal,
                     width: 28,
                     height: 28,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, _, _) => const Icon(
+                    errorBuilder: (_, _, _) => Icon(
                       Icons.pets_rounded,
                       size: 20,
-                      color: JournalColors.pinkMain,
+                      color: colors.journal,
                     ),
                   ),
                 ),
@@ -864,10 +877,10 @@ class _JournalListItem extends StatelessWidget {
                   children: [
                     Text(
                       journal.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w500,
-                        color: JournalColors.textDark,
+                        color: colors.textPrimary,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -875,46 +888,45 @@ class _JournalListItem extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       journal.content,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: JournalColors.textSecondary,
+                        color: colors.textSecondary,
                         height: 1.4,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
-                    Row(
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
                         Text(moodEmoji, style: const TextStyle(fontSize: 14)),
-                        const SizedBox(width: 6),
-                        if (journal.tags != null) ...[
-                          Flexible(child: _buildTagsPreview(journal.tags!)),
-                        ],
-                        const Spacer(),
+                        if (journal.tags != null)
+                          _buildTagsPreview(journal.tags!, context),
                         Text(
                           '${journal.wordCount}字',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: JournalColors.textMuted,
+                            color: colors.textTertiary,
                           ),
                         ),
-                        const SizedBox(width: 8),
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 7,
                             vertical: 3,
                           ),
                           decoration: BoxDecoration(
-                            color: JournalColors.pinkBg,
+                            color: colors.softPink,
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             '+${journal.expGained} EXP',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: JournalColors.pinkMain,
+                              color: colors.journal,
                             ),
                           ),
                         ),
@@ -930,12 +942,12 @@ class _JournalListItem extends StatelessWidget {
                     tooltip: '移动到文件夹',
                     onPressed: onMove,
                     icon: const Icon(Icons.folder_copy_outlined, size: 19),
-                    color: JournalColors.textMuted,
+                    color: colors.textTertiary,
                   ),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
                     size: 20,
-                    color: JournalColors.textMuted,
+                    color: colors.textTertiary,
                   ),
                 ],
               ),
@@ -951,32 +963,36 @@ class _JournalListItem extends StatelessWidget {
     try {
       final decoded = jsonDecode(tagsString);
       if (decoded is List) return decoded.cast<String>();
-    } catch (e) { debugPrint('parseTags failed: $e'); }
+    } catch (e) {
+      debugPrint('parseTags failed: $e');
+    }
     return tagsString.split(',').where((t) => t.trim().isNotEmpty).toList();
   }
 
-  Widget _buildTagsPreview(String tagsJson) {
+  Widget _buildTagsPreview(String tagsJson, BuildContext context) {
+    final colors = context.growthColors;
     final tags = _parseTagsSafe(tagsJson);
     if (tags.isEmpty) return const SizedBox.shrink();
 
-    return Row(
-      mainAxisSize: MainAxisSize.min,
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
       children: tags.take(2).map((tag) {
+        final label = tag.length > 10 ? '${tag.substring(0, 10)}…' : tag;
         return Container(
-          margin: const EdgeInsets.only(right: 6),
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
           decoration: BoxDecoration(
-            color: JournalColors.pinkBg,
+            color: colors.softPink,
             borderRadius: BorderRadius.circular(6),
           ),
           child: Text(
-            '#$tag',
+            '#$label',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.w500,
-              color: JournalColors.pinkMain,
+              color: colors.journal,
             ),
           ),
         );

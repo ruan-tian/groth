@@ -3,8 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../../core/constants/record_icon_assets.dart';
+import '../models/fitness_data.dart';
+import '../../fitness/providers/fitness_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
 
 /// 健身记录详情页 — 重新设计
@@ -662,10 +663,19 @@ class _ExerciseCard extends StatelessWidget {
                   color: colors.fitness.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Icon(
-                  Icons.sports_gymnastics,
-                  color: colors.fitness,
-                  size: 16,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: Image.asset(
+                    RecordIconAssets.fitness,
+                    width: 16,
+                    height: 16,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, _, _) => Icon(
+                      Icons.sports_gymnastics,
+                      color: colors.fitness,
+                      size: 16,
+                    ),
+                  ),
                 ),
               ),
               const SizedBox(width: 10),

@@ -74,340 +74,178 @@ class _ModeOption extends StatelessWidget {
   }
 }
 
-class _FitnessTrendChart extends StatefulWidget {
-  const _FitnessTrendChart({required this.data});
+class _FitnessTrendChart extends StatelessWidget {
+  const _FitnessTrendChart({required this.data, required this.range});
 
   final List<FitnessChartData> data;
-
-  @override
-  State<_FitnessTrendChart> createState() => _FitnessTrendChartState();
-}
-
-class _FitnessTrendChartState extends State<_FitnessTrendChart> {
-  int? _touchedIndex;
+  final int range; // 7, 30, or 365
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    return RepaintBoundary(
-      child: LineChart(
-        _buildChartData(colors),
-        duration: const Duration(milliseconds: 200),
-      ),
+    final weightPoints = data
+        .where((item) => item.weight != null)
+        .map(
+          (item) => GrowthChartPoint(
+            label: _dateLabel(item.date),
+            subLabel: _subLabel(item.date),
+            date: item.date,
+            value: item.weight!,
+            rawLabel: '${item.weight!.toStringAsFixed(1)}kg',
+          ),
+        )
+        .toList(growable: false);
+    return GrowthMultiLineChart(
+      key: ValueKey('fitness_${range}_${data.length}_${data.hashCode}'),
+      color: colors.fitness,
+      height: 224,
+      series: [
+        GrowthChartSeries(
+          name: '锻炼',
+          unit: 'min',
+          color: colors.fitness,
+          points: data
+              .map(
+                (item) => GrowthChartPoint(
+                  label: _dateLabel(item.date),
+                  subLabel: _subLabel(item.date),
+                  date: item.date,
+                  value: item.minutes.toDouble(),
+                  rawLabel: _formatMinutes(item.minutes.toDouble()),
+                ),
+              )
+              .toList(growable: false),
+          valueFormatter: _formatMinutes,
+        ),
+        GrowthChartSeries(
+          name: '消耗',
+          unit: 'kcal',
+          color: colors.warning,
+          points: data
+              .map(
+                (item) => GrowthChartPoint(
+                  label: _dateLabel(item.date),
+                  subLabel: _subLabel(item.date),
+                  date: item.date,
+                  value: item.calories.toDouble(),
+                  rawLabel: '${item.calories}kcal',
+                ),
+              )
+              .toList(growable: false),
+          valueFormatter: (value) => '${value.round()}kcal',
+        ),
+        if (weightPoints.isNotEmpty)
+          GrowthChartSeries(
+            name: '体重',
+            unit: 'kg',
+            color: colors.textTertiary,
+            points: weightPoints,
+            valueFormatter: (value) => '${value.toStringAsFixed(1)}kg',
+          ),
+      ],
     );
   }
 
-  LineChartData _buildChartData(AppThemeColors colors) {
-    final data = widget.data;
-    final minutesList = data.map((d) => d.minutes).toList();
-    final scale = buildDurationChartScale(minutesList);
-
-    final maxCalories = data
-        .map((d) => d.calories)
-        .fold<int>(0, (a, b) => a > b ? a : b);
-    final weights = data
-        .where((d) => d.weight != null)
-        .map((d) => d.weight!)
-        .toList();
-    final maxWeight = weights.isNotEmpty
-        ? weights.reduce((a, b) => a > b ? a : b)
-        : 0.0;
-    final minWeight = weights.isNotEmpty
-        ? weights.reduce((a, b) => a < b ? a : b)
-        : 0.0;
-
-    final caloriesTop = maxCalories > 0 ? maxCalories.toDouble() : 500.0;
-    final weightRange = maxWeight - minWeight;
-    final weightPadding = weightRange < 0.5 ? 1.0 : weightRange * 0.15;
-    final weightMin = (minWeight - weightPadding).floorToDouble();
-    final weightMax = (maxWeight + weightPadding).ceilToDouble();
-
-    // 首日日期，用于计算 X 轴日期差
-    final firstDate = data.first.date;
-
-    // 将日期转换为距首日的天数差（X 轴真实日期位置）
-    double dayX(DateTime date) => date
-        .difference(DateTime(firstDate.year, firstDate.month, firstDate.day))
-        .inDays
-        .toDouble();
-
-    FlSpot minutesSpot(FitnessChartData d) =>
-        FlSpot(dayX(d.date), scale.convertMinutes(d.minutes));
-
-    FlSpot caloriesSpot(FitnessChartData d) => FlSpot(
-      dayX(d.date),
-      caloriesTop > 0 ? (d.calories / caloriesTop) * scale.maxY : 0,
-    );
-
-    FlSpot weightSpot(FitnessChartData d) {
-      if (d.weight == null || weightMax == weightMin) {
-        return FlSpot(dayX(d.date), scale.maxY * 0.5);
-      }
-      return FlSpot(
-        dayX(d.date),
-        ((d.weight! - weightMin) / (weightMax - weightMin)) * scale.maxY,
-      );
+  /// Format main label based on range
+  String _dateLabel(DateTime date) {
+    if (range == 7) {
+      // Week view: show weekday name
+      return _weekdayName(date.weekday);
+    } else if (range == 30) {
+      // Month view: show M/d
+      return '${date.month}/${date.day}';
+    } else {
+      // Year view: show month
+      return '${date.month}月';
     }
+  }
 
-    final minutesSpots = <FlSpot>[];
-    final caloriesSpots = <FlSpot>[];
-    final weightSpots = <FlSpot>[];
-
-    for (int i = 0; i < data.length; i++) {
-      minutesSpots.add(minutesSpot(data[i]));
-      caloriesSpots.add(caloriesSpot(data[i]));
-      if (data[i].weight != null) {
-        weightSpots.add(weightSpot(data[i]));
-      }
+  /// Format sub-label based on range
+  String _subLabel(DateTime date) {
+    if (range == 7) {
+      // Week view: show M/d
+      return '${date.month}/${date.day}';
+    } else if (range == 30) {
+      // Month view: show weekday name
+      return _weekdayName(date.weekday);
+    } else {
+      // Year view: no sub-label
+      return '';
     }
+  }
 
-    return LineChartData(
-      minY: 0,
-      maxY: scale.maxY,
-      lineTouchData: LineTouchData(
-        touchSpotThreshold: 20,
-        handleBuiltInTouches: true,
-        touchCallback: (event, response) {
-          setState(() {
-            if (event is FlPanEndEvent || event is FlLongPressEnd) {
-              _touchedIndex = null;
-            } else if (response?.lineBarSpots != null &&
-                response!.lineBarSpots!.isNotEmpty) {
-              _touchedIndex = response.lineBarSpots!.first.x.toInt();
-            }
-          });
-        },
-        touchTooltipData: LineTouchTooltipData(
-          tooltipBorderRadius: BorderRadius.circular(10),
-          tooltipPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 8,
-          ),
-          maxContentWidth: 200,
-          getTooltipColor: (_) => colors.paper.withValues(alpha: 0.95),
-          fitInsideHorizontally: true,
-          fitInsideVertically: true,
-          getTooltipItems: (touchedSpots) {
-            if (touchedSpots.isEmpty) return [];
-            final dayOffset = touchedSpots.first.x.toInt();
-            final date = firstDate.add(Duration(days: dayOffset));
-            // 查找对应日期的数据
-            final d = data
-                .where(
-                  (item) =>
-                      item.date.year == date.year &&
-                      item.date.month == date.month &&
-                      item.date.day == date.day,
-                )
-                .firstOrNull;
-            if (d == null) return [];
-            final dateStr = '${d.date.month}/${d.date.day}';
+  static String _weekdayName(int weekday) {
+    const names = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+    return names[weekday - 1];
+  }
 
-            final items = <LineTooltipItem>[];
-            final minutesSpot = touchedSpots
-                .where((s) => s.barIndex == 0)
-                .firstOrNull;
-            if (minutesSpot != null) {
-              items.add(
-                LineTooltipItem(
-                  '$dateStr 锻炼 ${scale.formatTooltipValue(d.minutes.toDouble())}',
-                  TextStyle(
-                    color: colors.fitness,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              );
-            }
+  static String _formatMinutes(double value) {
+    if (value < 60) return '${value.round()}min';
+    final hours = value / 60;
+    final text = hours == hours.roundToDouble()
+        ? hours.round().toString()
+        : hours.toStringAsFixed(1);
+    return '${text}h';
+  }
+}
 
-            final caloriesSpot = touchedSpots
-                .where((s) => s.barIndex == 1)
-                .firstOrNull;
-            if (caloriesSpot != null) {
-              items.add(
-                LineTooltipItem(
-                  '$dateStr 消耗 ${d.calories}kcal',
-                  TextStyle(
-                    color: colors.warning,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              );
-            }
+class _FitnessEntryCard extends StatelessWidget {
+  const _FitnessEntryCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
 
-            final weightSpot = touchedSpots
-                .where((s) => s.barIndex == 2)
-                .firstOrNull;
-            if (weightSpot != null && d.weight != null) {
-              items.add(
-                LineTooltipItem(
-                  '$dateStr 体重 ${d.weight!.toStringAsFixed(1)}kg',
-                  TextStyle(
-                    color: colors.textTertiary,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              );
-            }
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
 
-            return items;
-          },
-        ),
-      ),
-      lineBarsData: [
-        LineChartBarData(
-          spots: minutesSpots,
-          isCurved: true,
-          preventCurveOverShooting: true,
-          color: colors.fitness,
-          barWidth: 2,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, barData, index) =>
-                FlDotCirclePainter(
-                  radius: _touchedIndex == spot.x.toInt() ? 5 : 3,
-                  color: colors.fitness,
-                  strokeWidth: 1.5,
-                  strokeColor: colors.paper,
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.xl),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
+            border: Border.all(color: colors.border),
+            boxShadow: AppShadows.sm,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(AppRadius.smd),
                 ),
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            color: colors.fitness.withValues(alpha: 0.06),
-          ),
-        ),
-        LineChartBarData(
-          spots: caloriesSpots,
-          isCurved: true,
-          preventCurveOverShooting: true,
-          color: colors.warning,
-          barWidth: 2,
-          isStrokeCapRound: true,
-          dotData: FlDotData(
-            show: true,
-            getDotPainter: (spot, percent, barData, index) =>
-                FlDotCirclePainter(
-                  radius: _touchedIndex == spot.x.toInt() ? 5 : 3,
-                  color: colors.warning,
-                  strokeWidth: 1.5,
-                  strokeColor: colors.paper,
-                ),
-          ),
-          belowBarData: BarAreaData(
-            show: true,
-            color: colors.warning.withValues(alpha: 0.06),
-          ),
-        ),
-        if (weightSpots.isNotEmpty)
-          LineChartBarData(
-            spots: weightSpots,
-            isCurved: true,
-            preventCurveOverShooting: true,
-            color: colors.textTertiary,
-            barWidth: 2,
-            isStrokeCapRound: true,
-            dotData: FlDotData(
-              show: true,
-              getDotPainter: (spot, percent, barData, index) =>
-                  FlDotCirclePainter(
-                    radius: _touchedIndex == spot.x.toInt() ? 5 : 3,
-                    color: colors.textTertiary,
-                    strokeWidth: 1.5,
-                    strokeColor: colors.paper,
-                  ),
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              color: colors.textTertiary.withValues(alpha: 0.06),
-            ),
-          ),
-      ],
-      titlesData: FlTitlesData(
-        leftTitles: AxisTitles(
-          axisNameWidget: Text(
-            scale.useHours ? '小时' : '分钟',
-            style: TextStyle(fontSize: 11, color: colors.fitness),
-          ),
-          axisNameSize: 20,
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 38,
-            interval: scale.interval,
-            getTitlesWidget: (value, meta) {
-              return Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Text(
-                  scale.formatAxisLabel(value),
-                  style: TextStyle(fontSize: 11, color: colors.fitness),
-                  textAlign: TextAlign.right,
-                ),
-              );
-            },
-          ),
-        ),
-        rightTitles: AxisTitles(
-          axisNameWidget: Text(
-            'kcal',
-            style: TextStyle(fontSize: 11, color: colors.warning),
-          ),
-          axisNameSize: 20,
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 38,
-            interval: scale.interval,
-            getTitlesWidget: (value, meta) {
-              final kcal = (value / scale.maxY * caloriesTop).round();
-              return Text(
-                '$kcal',
-                style: TextStyle(fontSize: 11, color: colors.warning),
-                textAlign: TextAlign.left,
-              );
-            },
-          ),
-        ),
-        topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-        bottomTitles: AxisTitles(
-          sideTitles: SideTitles(
-            showTitles: true,
-            reservedSize: 30,
-            interval: 1,
-            getTitlesWidget: (value, meta) {
-              // X 值是距首日的天数差，转换回日期
-              final date = firstDate.add(Duration(days: value.toInt()));
-              // 只在有数据的日期附近显示标签
-              final hasData = data.any(
-                (d) =>
-                    d.date.year == date.year &&
-                    d.date.month == date.month &&
-                    d.date.day == date.day,
-              );
-              if (!hasData && data.length > 7) {
-                return const SizedBox.shrink();
-              }
-              return Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${date.month}/${date.day}',
-                  style: TextStyle(fontSize: 11, color: colors.textTertiary),
-                ),
-              );
-            },
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                title,
+                style: AppTextStyles.cardTitle.copyWith(color: colors.textPrimary),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: AppTextStyles.caption.copyWith(color: colors.textSecondary),
+              ),
+            ],
           ),
         ),
       ),
-      gridData: FlGridData(
-        show: true,
-        drawVerticalLine: false,
-        horizontalInterval: scale.interval,
-        getDrawingHorizontalLine: (value) => FlLine(
-          color: colors.border.withValues(alpha: 0.5),
-          strokeWidth: 0.5,
-        ),
-      ),
-      borderData: FlBorderData(show: false),
     );
   }
 }

@@ -4,12 +4,20 @@ import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/ai_config_repository.dart';
-import 'package:growth_os/core/repositories/pet_diary_repository.dart';
+import 'package:growth_os/features/ai/repositories/ai_config_repository.dart';
+import 'package:growth_os/features/fitness/repositories/fitness_repository.dart';
+import 'package:growth_os/features/health/repositories/diet_repository.dart';
+import 'package:growth_os/features/health/repositories/sleep_repository.dart';
+import 'package:growth_os/features/health/repositories/weather_repository.dart';
+import 'package:growth_os/features/pet/repositories/exp_repository.dart';
+import 'package:growth_os/features/pet/repositories/pet_diary_repository.dart';
 import 'package:growth_os/core/repositories/setting_repository.dart';
 import 'package:growth_os/core/services/ai_service.dart';
 import 'package:growth_os/core/services/encryption_service.dart';
+import 'package:growth_os/features/pet/services/pet_diary_data_collector.dart';
 import 'package:growth_os/features/pet/services/pet_diary_service.dart';
+import 'package:growth_os/features/plan/repositories/task_repository.dart';
+import 'package:growth_os/features/study/repositories/study_repository.dart';
 
 void main() {
   late Directory tempDir;
@@ -53,7 +61,15 @@ void main() {
     settingRepo = SettingRepository(db);
     aiConfigRepo = AiConfigRepository(db);
     service = PetDiaryService(
-      db: db,
+      dataCollector: PetDiaryDataCollector(
+        studyRepo: StudyRepository(db),
+        fitnessRepo: FitnessRepository(db),
+        dietRepo: DietRepository(db),
+        sleepRepo: SleepRepository(db),
+        taskRepo: DailyTaskRepository(db),
+        expRepo: ExpRepository(db),
+        weatherRepo: WeatherRepository(db),
+      ),
       diaryRepository: PetDiaryRepository(db),
       aiConfigRepository: aiConfigRepo,
       settingRepository: settingRepo,

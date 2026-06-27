@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../shared/providers/pet_ai_result_provider.dart';
-import '../../../shared/providers/pet_orchestrator_provider.dart';
-import '../../../shared/providers/pet_projection_provider.dart';
-import '../../../shared/providers/pet_scene_provider.dart';
+import '../providers/pet_ai_result_provider.dart';
+import '../providers/pet_orchestrator_provider.dart';
+import '../providers/pet_projection_provider.dart';
+import '../providers/pet_scene_provider.dart';
 import '../../../core/domain/pet/pet_ai_result.dart';
 import '../../../core/domain/pet/pet_scene_model.dart';
 import '../../../core/constants/pet_assets.dart';

@@ -1,44 +1,407 @@
 # Changelog
 
-## 2026-06-20 收尾修复（第三批）
+## 2026-06-27 番茄钟液态玻璃层级与主题色升级
+- 按视觉层级区分材质：计时圆盘和主暂停/继续按钮升级为液态玻璃，高光、边缘厚度和折射感更明显；顶部按钮、取消/跳过和底部信息胶囊继续保持安静毛玻璃。
+- 圆环进度条改为跟随当前背景主题色生成同色系渐变，不再固定青绿/成功色；深夜和墨黑主题使用黑灰暗色系圆环与高光。
+- 背景颜色主题新增墨黑、极光、珊瑚、鼠尾草、雪雾，并将深夜主题主色调整为黑灰。
+- 背景材质新增液态、晶面、丝雾三种效果，和纯色、雾面、柔光、夜幕一起可在皮肤面板切换。
 
-### 功能 Bug 修复
-- **知识删除刷新补全**: 删除卡片/资料后现在正确刷新复习队列和搜索结果（`knowledge_v3_provider.dart`），卡片详情删除按钮加 try-catch 错误处理。
-- **睡眠提醒恢复**: 页面打开时自动校验系统通知状态并重新同步（`sleep_reminder_timer_page.dart` initState），首次安装不再默认开启睡眠提醒。
-- **饮水提醒达标停止**: 饮水达到目标后取消当天剩余提醒（新增 `cancelWaterRemindersForToday` 方法），不再持续提醒。
-- **饮食页饮水卡片颜色**: 水追踪卡片从 `softBlue`（近白/近黑）改为 `primary`（靛蓝），12 处颜色引用全部更新。
-- **番茄音乐修复**: 铃声 asset 不存在时不再崩溃（try-catch），无音乐时显示"请先导入本地音乐"提示。
+## 2026-06-27 番茄钟皮肤材质与横屏面板修复
+- 修复番茄钟背景材质层被主图盖住的问题，纯色、雾面、柔光、夜幕现在会真实叠加到背景图上。
+- 背景模糊档位改为独立于材质模式生效，纯色模式下也可以使用模糊强度。
+- 优化点击屏幕显隐控制：隐藏态点击任意位置唤醒，显示态只在边缘/空白背景区域收起，锁定态点击屏幕只唤出锁按钮。
+- 横屏皮肤面板改为整体滚动布局，背景适配控制和皮肤网格在横屏低高度下都能随页面滚动。
+- 皮肤预览卡和材质选项加入主题强调色差异，避免所有皮肤视觉过于相似。
 
-### 备份恢复补全
-- **V3 知识表纳入备份**: 6 张 V3 知识表（spaces/materials/cards/review_logs/qa_sessions/qa_messages）通过 raw SQL 导出导入，按外键顺序处理。
-- **AI 聊天记录纳入备份**: `AiChatMessages` 表加入 `_tableSpecs`（optional）。
+## 2026-06-27 番茄钟玻璃材质与全屏主题打磨
+- 修复背景图在 `AnimatedSwitcher` 中没有被强制撑满的问题，切换中的主图和模糊图层现在都使用全屏布局，确保 `BoxFit.cover` 真正覆盖整个番茄钟页面。
+- 番茄钟自定义主题背景改为全屏 `cover` 铺满，不再因横竖图比例差异露出侧边栏或上下底色块。
+- 计时圆盘加入真实背景模糊玻璃层、细白描边和更轻的进度环，降低纯白遮罩与厚重刻度带来的压迫感。
+- 顶部关闭/主题/锁定按钮、底部取消/继续按钮以及下一阶段/专注声音胶囊统一为半透明玻璃材质，尺寸和光感跟随当前背景色调。
 
-### 死代码清理
-- 删除 6 个未注册的 V3 Drift 表定义（`tables_extra.dart` 约 122 行）
-- 删除 9 个 pet re-export 空文件（`features/pet/models/` 目录）
-- 删除无调用者的 `saveWaterIntake()` 函数
+## 2026-06-27 番茄钟背景适配与暗淡控制
 
-## 2026-06-20 审计安全修复
+- 将番茄钟会话背景改为“适配色底层 + 模糊延展图 + 主图 + 可选暗淡遮罩”的沉浸式背景组件，避免横竖屏比例不匹配时露出刺眼白边。
+- 在番茄钟皮肤面板新增背景适配控制，支持自动、雾蓝、暖米、深夜、墨绿五种侧边色，并支持一键开启/关闭模糊延展和轻暗淡。
+- 背景适配色、模糊、暗淡设置写入现有本地 `app_setting`，下次进入番茄钟保持用户选择，不改数据库结构和计时/声音逻辑。
+- 番茄钟控制显隐改为隐藏态不显示关闭/皮肤/锁定按钮；锁定后点击屏幕只唤出锁按钮，解锁后才恢复其他操作。
+- 背景色调扩展到 10 种，并将模糊、暗淡改为关闭/柔和/中等/强烈四档；圆盘、步骤点、下一阶段、声音胶囊和继续/取消按钮跟随当前色调染色。
+- 轻量打磨计时圆盘材质，降低圆盘填充透明度、收细进度环并减少刻度密度，让风景背景和计时信息更协调。
+- 新增背景材质模式：纯色、雾面、柔光、夜幕；默认雾面通过模糊背景图、色调雾层和暗角/柔光叠层生成更贴合图片风格的侧边延展。
 
-### P0 修复
-- **TF-IDF 搜索索引修复**: 修复 bigram 空字符串 bug（`knowledge_tfidf_index.dart:226`）和 tokenize 返回 Set 导致 TF 恒为 1 的问题（`knowledge_tfidf_index.dart:159`）。中文搜索现在能正确生成 bigram 并计算词频。
-- **断链路由修复**: 修复 Dashboard 知识库摘要卡点击白屏问题（`dashboard_knowledge_summary.dart:30`），路由从 `/study/knowledge-sources` 改为 `/plan/study/knowledge/sources`。
-- **加密服务安全修复**: v2 解密失败时不再返回密文当明文（`encryption_service.dart:159`），改为空串。
+## 2026-06-26 番茄钟风景主题与首页风景欣赏
 
-### P1 修复
-- **经验值删除回滚**: 新增 `deleteExpLogsForSource` 方法，删除学习/健身/日记/饮食/睡眠/专注记录时同步清理 `GrowthExpLogs`，等级不再虚高。涉及 6 个 repository。
-- **等级公式注释修正**: 注释从 `/100` 改为 `/5`，与代码和测试一致（`exp_service.dart:136`）。
-- **sleep_goal key 统一**: 设置页 key 从 `daily_sleep_goal` 改为 `sleep_goal_hours`（`settings_page.dart:535`）。
-- **音乐列表循环修复**: `loopAll` 模式播完最后一首现在正确循环到第一首（`music_player_provider.dart:649`）。
-- **番茄钟状态恢复**: `restoreFromPersistence()` 现在在 Provider 创建时自动调用（`focus_provider.dart:261`），App 被杀后可恢复进度。
-- **空 catch 块日志化**: 4 处 `catch (_) {}` 改为 `catch (e) { debugPrint(...); }`（focus_provider、knowledge_card_provider）。
+- 将 `picture/tomato_clock/番茄钟主题` 中的素材按真实横竖尺寸配对并转换为 66 套 WebP 风景主题，新增共享 `SceneryThemeCatalog` 供番茄钟和首页复用。
+- 番茄钟专注页背景改为当前风景主题横/竖自适应，新增右上角皮肤切换按钮和主题选择面板，并记住上次选择。
+- 修复番茄钟锁定按钮被全屏透明手势层遮挡导致点击无效的问题。
+- 首页新增“风景欣赏”沉浸式轮播卡片，并添加全屏风景欣赏页面，横屏播放横图、竖屏播放竖图，支持自动轮播、暂停、上一张和下一张。
+- 收敛首页风景入口为普通信息卡并移动到“今日一句”下方；风景页玻璃控件默认隐藏，点击屏幕后短暂唤醒；番茄钟默认恢复原书桌背景，只有用户主动选择皮肤后才切换。
+- 将主题名称从素材提示词改为按画面内容命名的标题，例如“云岭花谷”“暮色海岸”“月夜海岸”。
+- 二次打磨首页风景卡为小型可滑动轮播，加入随机切换、轻动态粒子和进度提示；全屏风景页支持点击空白隐藏控件、随机轮播模式和底部流动光带。
+- 将全屏风景页的唤醒/隐藏手势改为独立透明点击层，避免 `PageView` 手势竞争导致点击画面无法稳定唤出玻璃控件。
+- 修复风景轮播透明点击层阻挡左右滑动的问题，将首页与全屏页自动轮播改为单次调度，用户滑动或按钮切换时暂停计时，避免自动切换抢动画导致闪烁。
+- 全屏风景页遮罩层改为只绘制不接收触摸，保留点击唤醒能力的同时恢复 `PageView` 原生左右滑动。
+- 修复全屏风景页进入随机轮播后无法切回顺序轮播的问题，随机按钮现在可在随机/顺序模式之间切换。
 
-### P2 修复
-- **饮水数据安全**: JSON 解析失败时不再清空全部历史数据，改为跳过本次写入（`water_plan_provider.dart:248`）。
-- **V3 表索引**: 为 6 张 V3 知识表添加 5 个复合索引，提升查询性能（`app_database.dart`）。
-- **ensureTables 优化**: `_ensureTables()` 现在只执行一次，不再每次方法调用都跑 DDL（`knowledge_v3_repository.dart`）。
-- **音乐 stop 修复**: `MusicPlayerService.stop()` 现在调用 `_player.stop()` 而非 `_player.pause()`（`music_player_service.dart:37`）。
+## 2026-06-26 音乐悬浮胶囊与播放器材质打磨
 
+- 移除音乐悬浮胶囊和展开小遥控的大面积渐变背景，改为轻白磨砂卡片、细边框和低阴影材质。
+- 收敛完整播放器弹窗背景，去掉背景叠图和右上角灰色装饰块，降低残留装饰透明度，让黑胶唱片成为主视觉。
+- 优化播放器按钮和音乐库入口的纯色层级，保留播放/暂停、切歌、收藏、播放列表、音量、定时和音乐库等原有功能。
+
+## 2026-06-26 首页成长主卡彩蛋全屏化
+
+- 将成长主卡右上角装饰图标 5 连点彩蛋从卡片内部弹幕改为根 Overlay 全屏效果，覆盖整个首页而不是局限在主卡 UI 内。
+- 重做彩蛋视觉为全屏轻雾渐变、漂浮祝福短句、星光粒子和中心提示卡，保留原有 5 次点击触发和装饰图标轮换逻辑。
+- 彩蛋层使用 `IgnorePointer`，播放期间不阻挡首页交互，并在动画结束后自动移除 Overlay。
+
+## 2026-06-26 首页与学习页知识入口比例微调
+
+- 收紧首页知识库卡片高度、插画尺寸、底部托色和统计 chip 尺寸，让它与下方今日饮品、今日一句卡片比例更协调。
+- 统一首页知识库、今日饮品、今日一句和学习页知识空间卡片的 Material 裁剪，修复底部左右圆角处水波纹/托色/插画露边的问题。
+- 学习页知识空间卡片固定为轻量入口高度，副标题改为单行省略，插画内收，避免下角圆角溢出并保持布局稳定。
+- 二次拆分首页与学习页入口比例：学习页知识空间改为更高的模块入口卡，首页知识库保留短摘要卡；统计/操作 chip 改为横向滑动行，避免小屏换行导致 `overflow by 4.6px`。
+
+## 2026-06-26 首页天气卡片体验修复
+
+- 天气宠物卡片提示文案改为温度优先，30° 左右的阴天/夜晚不再显示“保暖”类提示；接口穿衣指数若在偏热天气返回保暖、添衣、防寒等建议，会回退到本地温度文案。
+- 天气弹窗从首页右上角入口以淡入、轻微位移和缩放方式展开，宽屏下弹窗贴近右上角呈现，减少点击后的突兀感。
+- 为夜间天气卡片增加独立文字调色板和轻量暗色信息背板，提升温度、天气、时间位置和提示气泡的可读性。
+- 将轻量飘动物接入公共 `ModulePageSurface`，学习、健身、饮食、睡眠、日记等模块页面统一拥有柔和背景动效，并尊重系统减少动画设置。
+
+## 2026-06-24 Music Capsule Final Edge Remote
+
+- Refined the dashboard music capsule into a final edge-docked remote: default state is a narrow side handle, reducing visual obstruction while keeping a reliable touch target.
+- Redesigned the revealed mini remote with a side grip, cover, playback status, progress, play/pause, and next controls, keeping the full player sheet as the detailed view.
+- Adjusted floating layout sizing for 360/390/430px phone widths and preserved drag-to-edge snapping with auto-dock behavior.
+- Updated dashboard widget coverage to assert the docked handle remains compact and the revealed remote still opens the player.
+
+## 2026-06-24 Chart UI Unification and Axis Fixes
+
+- Added shared `GrowthChartRangeSelector` and axis formatter support for bar and multi-line charts.
+- Fixed study trend chart Y-axis to show real duration labels and reduced top value badge size.
+- Unified fitness, diet, and sleep main chart cards around the shared chart shell and range selector.
+- Changed sleep trend to a normalized two-line chart for duration and quality, keeping real units in labels/tooltips.
+- Polished journal heatmap density/alignment and replaced emoji title marker with a stable system icon.
+- Added targeted chart widget tests for range selector, axis formatting, multi-line labels, and heatmap month labels.
+
+## 2026-06-24 Music Edge Remote and Playback Stability
+
+- Replaced the dashboard music image capsule with an edge-docked handle and drag-out mini remote.
+- Kept the full player sheet as the detailed view while making play/pause, next, progress, and import available from the mini remote.
+- Added async playback error reporting so music failures clear loading/playing state and show a retry message.
+- Made focus white-noise startup await background initialization and normalize unsupported sound types to a safe fallback.
+- Fixed focus session sound switching so selecting music actually starts the current music track.
+- Updated dashboard music widget tests for the new edge remote interaction.
+
+## 2026-06-23 Architecture Upgrade Phase D: Page Import Path Fixes
+
+- Fixed dashboard_page: `dashboard_providers.dart` → `providers/dashboard_provider.dart`
+- Fixed fitness_page: `dashboard_providers.dart`/`fitness_providers.dart` → correct paths
+- Fixed diet_page: `../../health/providers/` → `providers/`
+- Fixed sleep_page: `../../dashboard/providers/` → `../dashboard/providers/`
+- Fixed journal_page: `dashboard_providers.dart`/`journal_providers.dart` → correct paths
+- Fixed pet_diary_page: `../../../shared/providers/pet_diary_provider.dart` → `../providers/pet_diary_provider.dart`
+- profile_page: replaced direct `databaseProvider.into(db.bodyMetrics)` with `fitnessRepositoryProvider.insertBodyMetric()`
+- Removed unused `app_database.dart` import from backup_page
+- task_history_page: added back `app_database.dart` import for DailyTask type
+
+## 2026-06-23 Architecture Upgrade Phase E+F: Validation & Documentation
+
+- Phase E: Verified core/shared have no business logic
+  - core→features: 0 violations (fully fixed)
+  - shared→features: 3 violations remaining (knowledge_card_assets)
+- Phase F: Created docs/architecture/overview.md with architecture rules
+- Documented remaining items for future work
+
+## 2026-06-23 Architecture Upgrade Phase C: Provider 重组 (complete)
+
+- Fixed all provider import paths after migration
+- Restored corrupted knowledge_card_provider, knowledge_card_ai_provider, knowledge_source_provider
+- Fixed pet_providers imports (6 files)
+- Fixed weather_provider, journal_provider, task_provider imports
+- All 12 feature provider directories pass dart analyze
+
+## 2026-06-23 Architecture Upgrade Phase C: Provider 重组 (partial)
+
+- Moved 16 business providers from shared/providers/ to corresponding features
+- study_provider → features/study/providers/
+- fitness_provider → features/fitness/providers/
+- journal_provider → features/journal/providers/
+- diet/sleep/weather_provider → features/health/providers/
+- dashboard/calendar_provider → features/dashboard/providers/
+- task_provider → features/plan/providers/
+- pet_* providers → features/pet/providers/
+- knowledge_source/v3_provider → features/knowledge/providers/
+- Created re-exports in shared/providers/ for backward compatibility
+
+## 2026-06-23 Architecture Upgrade Phase B: Repository 归位
+
+- Moved 19 business repositories from core/repositories/ to corresponding features
+- study_repository → features/study/repositories/
+- fitness_repository → features/fitness/repositories/
+- journal_repository → features/journal/repositories/
+- diet/sleep/weather_repository → features/health/repositories/
+- focus_repository → features/focus/repositories/
+- pet/pet_diary/exp_repository → features/pet/repositories/
+- knowledge_card/source/v3_repository → features/knowledge/repositories/
+- music_repository → features/music/repositories/
+- task_repository → features/plan/repositories/
+- ai_chat/config/api_config_repository → features/ai/repositories/
+- Only setting_repository remains in core (global)
+- Created re-exports in core/repositories/ for backward compatibility
+
+## 2026-06-23 Architecture Upgrade Phase A2: shared → features dependency fix (complete)
+
+- Moved settings_facade to features/settings/providers/
+- Moved knowledge_card_provider to features/knowledge/providers/
+- Moved knowledge_card_ai_provider to features/knowledge/providers/
+- Moved focus_provider to features/focus/providers/
+- Moved growth_calendar_sheet to features/dashboard/widgets/
+- Updated all re-exports for backward compatibility
+- Fixed test imports for knowledge_context_service
+
+## 2026-06-23 Architecture Upgrade Phase A2: shared → features dependency fix (partial)
+
+- Moved knowledge_context_service to features/knowledge/services/
+- Created knowledge_context_providers.dart in features/knowledge/providers/
+- Created ai_analysis_card_providers.dart in features/ai/providers/
+- Created focus_study_mode_providers.dart in features/focus/providers/
+- Updated service_providers.dart and settings_provider.dart with re-exports
+
+## 2026-06-23 Architecture Upgrade Phase A1: core → features dependency fix
+
+- Moved knowledge_source_chunker, knowledge_tfidf_index, knowledge_synonyms to core/text_processing/
+- Moved default_music_seed to features/music/constants/
+- Fixed 4 core → features dependency violations
+
+## 2026-06-23 Architecture Upgrade Phase 0: Baseline
+
+- Created refactor/architecture-upgrade branch
+- Recorded baseline: 2 dart analyze errors, 28 flutter test failures
+- Documented 14 dependency violations (core→features: 4, shared→features: 10)
+- Documented 34 pages with direct database access
+- Created docs/architecture/phase0-baseline.md
+
+## 2026-06-23 Journal transaction stabilization
+
+- Moved journal create/update asset and exp-log writes behind `JournalRepository` transactions and removed direct database counting from journal stats providers.
+
+## 2026-06-23 Health record transaction stabilization
+
+- Moved fitness, diet, and sleep record save flows into repository-level transactions that write records, related rows, and exp logs together instead of opening database transactions from UI pages.
+
+## 2026-06-23 Feature database boundary stabilization
+
+- Moved study-record detail lookup behind `StudyRepository` and shared study providers, then added an architecture guard preventing feature pages/widgets from reading `appDatabaseProvider` directly.
+
+## 2026-06-23 Backup boundary stabilization
+
+- Moved backup record listing, overview calculation, and deletion behind `BackupService` and shared providers so settings backup/restore pages no longer access the database provider directly.
+
+## 2026-06-23 Settings read boundary stabilization
+
+- Moved settings profile, AI connection, and last-backup status reads into shared providers so settings subpages no longer import provider state from `SettingsPage`.
+
+## 2026-06-23 Settings write facade stabilization
+
+- Centralized dashboard card ids, daily goals, weekly fitness goal, calorie goal, sleep goal, and focus study mode writes through `SettingsFacade`.
+- Removed save-time init-provider invalidation from the facade so user saves do not race with startup hydration and overwrite fresh provider state.
+- Updated dashboard, study, fitness, diet, sleep, and focus mode UI entry points to await facade writes before closing sheets where needed.
+- Added targeted facade tests for single setting setters, dashboard card ids, and daily goal updates.
+- Removed the obsolete dashboard card save helper and routed pet diary auto-toggle writes through the shared pet diary provider path.
+- Promoted the music settings write queue into a shared `SettingsWriteQueue` and routed water/sleep plan configuration writes through it to reduce SQLite write contention.
+- Centralized knowledge-space preference persistence helpers and routed health reminder schedule-status writes through the shared settings write queue.
+- Routed pet diary setting writes and pet life-session persistence through injectable writers backed by the shared settings write queue in app providers.
+- Added an architecture regression test that blocks feature pages/widgets from writing settings directly, preserving the facade/provider/service boundary.
+
+## 2026-06-22 设置页目标与主题写入收敛
+
+- `SettingsFacade` 扩展主题模式和成长目标保存能力，统一负责 Provider 状态、KV 写入和初始化 Provider invalidate。
+- 设置页主题切换、每日/每周/长期目标保存改走 Facade，减少页面层直接写库和多 Provider 状态漂移。
+- 目标保存重建日常目标时使用 Unicode escape 常量，避免脚本/终端编码导致“学习/健身/写日记”等中文目标名被写坏。
+- 补充 Facade 测试，覆盖主题保存、目标保存、头像和 AI 开关联动。
+
+## 2026-06-22 音乐启动与设置写入稳定性
+
+- 新增 `MusicSettingsWriteQueue`，将音量、悬浮窗位置、播放集合、当前曲目和播放进度等设置写入合并、去重并串行 flush，减少播放/拖动/切歌时的 SQLite 写锁竞争。
+- 音乐播放器接入写入队列：UI 状态仍立即更新，数据库写入延后合并；暂停、seek、dispose 等关键节点会 flush，兼顾流畅性和持久化安全。
+- App 启动协调器增加默认白噪音歌单预初始化，让音乐播放器打开时少做一次重写 seed，降低“音乐初始化失败”和白噪音切换卡顿风险。
+- 补充音乐设置写入队列测试和启动协调器白噪音 seed 断言。
+
+## 2026-06-22 Knowledge V3 Schema 单一入口
+
+- 新增 `KnowledgeV3SchemaService`，集中维护 Knowledge V3 表结构和卡片补列逻辑，避免数据库迁移与 Repository 各维护一份 DDL。
+- `AppDatabase` 迁移入口和 `KnowledgeV3Repository` 测试/运行时兜底入口改为复用同一 schema service，降低 `source_chunk_id` 等列重复添加和测试库/真机库不一致风险。
+- Repository 默认空间创建改为参数化 SQL 与 Unicode escape 常量，避免终端编码导致默认空间文案写坏。
+- 补充 schema service 测试，覆盖全新 schema 创建、旧表缺列补齐、默认知识空间仍可创建。
+
+## 2026-06-22 设置写入 Facade 第一批
+
+- 新增 `SettingsFacade`，把设置 KV 写入、Riverpod 状态同步和相关 Provider invalidate 收敛到统一入口。
+- 个人资料头像保存/删除改走 Facade，确保设置页头像、全局头像 Provider 和问甜甜用户头像读取链路保持一致。
+- AI 自动分析和日记上传开关改走 Facade；关闭 AI 自动分析时统一关闭日记上传，减少设置页直接写库导致的状态漂移。
+- `GrowthConfirmDialog` 主/副按钮回调改为支持同步或异步确认，降低隐私确认弹窗异步写库和路由关闭时序风险。
+
+## 2026-06-22 启动初始化协调第一步
+
+- 新增 `AppBootstrapCoordinator`，把 Knowledge V3 表准备、数据库索引准备、只读健康检查串成单一启动入口，降低启动期并发写锁和顺序不确定风险。
+- `appDatabaseProvider` 不再在下一帧自行创建索引，避免低层 Provider 隐式抢写；App 根节点改为 watch `appBootstrapProvider` 触发基础设施启动。
+- 补充启动协调器测试，验证全新内存数据库可以完成 bootstrap，且多次调用复用同一个 Future 结果。
+
+## 2026-06-22 数据库稳定性体检第一步
+
+- 新增只读 `DatabaseHealthService`，用于检查 SQLite integrity、Knowledge V3 表/列、关键索引、孤儿引用、白噪音歌单拆分、头像/日记附件/音乐文件路径缺失等问题。
+- 在 `service_providers.dart` 暴露 `databaseHealthServiceProvider`，后续可接入启动诊断、设置页维护工具或 Debug 面板。
+- 补充最小服务测试，覆盖健康库无错误、重复知识空间告警、头像路径缺失告警，作为后续数据库治理的安全基线。
+
+## 2026-06-22 热力图修复：月份错位、图例重复
+
+### 修复问题
+- **月份错位**：将 `_MonthLabels` 从 `Stack` + `Positioned` 固定布局改为 `Row` 布局，与网格放在同一个 `SingleChildScrollView` 内，确保月份标签跟随网格同步滚动
+- **图例重复**：日记页面调用 `HeatmapCalendar` 时传 `showLegend: false`，避免内置图例和页面图例重复显示
+- **今日高亮**：今日单元格边框改为主题色 `colors.primary`（原为 `colors.card`，不可见）
+
+### 改进细节
+- 单元格大小从 `14px` 增至 `16px`，更易点击
+- 跨年边界处显示年份（如 "2024年12月" → "1月"）
+- 月份标签使用 `Spacer` 占位对齐，保持与网格列对应
+
+## 2026-06-22 图表增强：目标参考线、触摸指示线、防溢出
+
+### 新增组件
+- `ChartGoalLine` 目标参考线工具（`core/utils/chart_goal_line.dart`）
+  - 支持虚线目标线 `[6, 4]`，颜色使用 `textTertiary`
+  - 支持区间色带（Garmin 风格最佳训练负荷）
+- `DualYAxisTransformer` 双Y轴坐标映射器（`core/utils/dual_axis_transformer.dart`）
+  - 线性代数映射算法，精确双Y轴数值转换
+  - 用于健身趋势（时长/卡路里）和饮食图表（卡路里/饮水）
+- `ChartTooltipTheme` 统一Tooltip样式（`shared/widgets/common/chart_tooltip_theme.dart`）
+  - 统一背景色、圆角、内边距、文字样式
+
+### 增强的共享组件
+- `DurationBarChart` 添加可选 `goalValue` 和 `goalLabel` 参数
+- `DurationLineChart` 添加目标参考线、触摸垂直指示线、双层锚点光斑、Tooltip 防溢出
+
+### 增强的页面图表
+- 学习趋势图：Tooltip 添加 `fitInsideVertically: true` 防止溢出
+- 健身趋势图：添加触摸垂直指示线（Apple Health 风格双层锚点）
+- 饮食图表：添加触摸垂直指示线
+- 睡眠组合图：添加睡眠目标小时虚线参考线，Tooltip 添加 `fitInside`
+
+### 设计规范
+- 目标参考线：虚线 `[6, 4]`，颜色 `textTertiary.withValues(alpha: 0.5)`
+- 触摸指示线：虚线 `[4, 4]`，颜色 `border.withValues(alpha: 0.4)`
+- 锚点光斑：外层白色 + 内层主题色（Apple Watch 风格）
+- 所有颜色和间距保持现有设计系统不变
+
+## 2026-06-22 SQLite lock and dialog pop quick fix
+
+- Added SQLite `busy_timeout`, WAL mode, and `synchronous=NORMAL` on database open to reduce startup write-lock failures.
+- Serialized music bootstrap so retry/startup paths do not run multiple default playlist seed transactions at the same time.
+- Fixed `GrowthConfirmDialog` secondary action so cancel closes the dialog itself first, then runs the optional callback.
+- Removed the settings privacy dialog's page-context `Navigator.pop`, preventing cancel from popping the last GoRouter page.
+
+## 2026-06-22 日记热力图与主页日历交互修复
+
+- 修复日记写作热力图按当前月倒推导致选中年份月份显示不准的问题，改为按选中年份 1 月 1 日到 12 月 31 日展示。
+- 修复日记列表记录底部标签、字数、经验值横向挤压导致的溢出，改用可换行布局并限制标签长度。
+- 优化主页成长日历为 PageView 月份滑动，左右箭头也走平滑翻页动画。
+- 在日历选中日期详情中新增“为这天新建任务”，并让任务弹窗支持传入初始日期。
+
+## 2026-06-22 乱码修复（丢失字符手动修复）
+
+- 手动修复 app_database.dart 中 14 处 `?` 乱码（推断原始中文：表、支持、列等）
+- 手动修复 study_page_widgets.dart 中 3 处乱码（柱状图数据模型、柱顶数值气泡、科目名）
+- 所有修复基于上下文推断，dart analyze 验证通过
+
+## 2026-06-22 乱码修复（Dart 源文件）
+
+- 修复 8 个 Dart 源文件中的 UTF-8→GBK→UTF-8 双重编码乱码
+- 修复 CHANGELOG.md 中 53 行乱码条目
+- 修复方法：将乱码文本编码为 GBK 字节，再解码为 UTF-8 还原中文
+- 修复的文件：app_database.dart、journal_page_widgets.dart、music_player_provider.dart、music_import_destination_sheet.dart、study_page.dart、study_page_widgets.dart、tiantian_chat_sheet.dart、study_page_test.dart
+
+## 2026-06-22 GrowthConfirmDialog 代码质量修复
+
+- 修复文档注释格式错误，代码块改用三个反引号包裹
+- 修复次要图片位置计算问题，移除对屏幕宽度的依赖，改用固定 `right: 10` 定位
+- 移除冗余的 `onSecondary` fallback，因 `hasSecondary` 已保证 `onSecondary` 非空
+
+## 2026-06-22 设置页面弹窗风格统一改造
+
+### 新增组件
+- 创建 `GrowthConfirmDialog` 通用确认弹窗组件，支持图片、标题、副标题、描述、隐私提示卡片和双按钮
+- 支持三种模式：`normal`（蓝色主按钮）、`danger`（红色主按钮）、`info`（单按钮）
+- 图片区域带柔和背景光晕，支持主图片+次要图片叠加
+- 隐私提示卡片使用黄色警告样式，与 `PetAIDataPreviewSheet` 风格一致
+
+### 图片资源
+- 在 `assets/images/dialogs/` 目录下新增弹窗专用图片：
+  - `ai_privacy.webp` - AI 自动分析弹窗
+  - `journal_writing.webp` - 日记上传分析弹窗
+  - `common_happy.webp` - 甜甜自动写日记弹窗
+  - `app_icon.webp` - 关于页面弹窗
+
+### 设置页面改造
+- `_showPrivacyDialog` 方法改用 `GrowthConfirmDialog`，替代原有 `AlertDialog`
+- `_showAboutDialog` 方法改用 `GrowthConfirmDialog`，替代原有 `AlertDialog`
+- AI 自动分析、日记上传分析、甜甜自动写日记三个弹窗统一使用新组件
+- 弹窗标题去掉 emoji 前缀，改为纯文字标题
+
+### 设计规范
+- 弹窗圆角 28px，与项目内 `_FocusIllustrationDialog` 一致
+- 按钮圆角 18px，高度 48px，符合触摸目标最小尺寸要求
+- 图片大小 100px，带 124px 的柔和背景光晕
+- 隐私提示卡片使用 `warning` 色系，带 0.08 透明度背景和 0.18 透明度边框
+
+## 2026-06-22 问甜甜头像、气泡溢出与卡片密度修复
+- 个人资料页读取、更新、删除头像时同步刷新 `userAvatarPathProvider`，问甜甜用户头像可立即跟随设置页头像，空路径回退默认图标。
+- 问甜甜消息列表改为用户右对齐、甜甜左对齐的独立气泡布局，历史消息、流式消息和思考态共用同一套宽度约束。
+- 长文本、URL 和连续字符展示时插入零宽断点，避免聊天气泡横向撑破导致 RenderFlex overflow。
+- 卡片生成补卡阈值提升到目标数量 80%，补卡上限提高，并修复自动生成/待复核标签显示为 `????` 的问题。
+- 验证定向 `dart analyze` 覆盖问甜甜、个人资料、设置 Provider、知识卡 AI 服务和知识库 Sheet。
+## 2026-06-22 知识空间问号、生成数量与手动加卡修复
+- 清理知识空间相关页面残留的 `??/????` 可见文案，问甜甜关闭按钮、复习答案/解析、知识库底部操作按钮改为稳定文案。
+- 知识卡生成保存策略从“严格不合格直接丢弃”改为“两档保存”：高质量且可追溯的自动通过，题答可用但来源校验不足的保存为 `needs_review`，避免简单 100 问资料只剩极少卡片。
+- 生成目标数量对问答型资料更敏感，按问号/选择题数量提高目标卡片数。
+- 知识库卡片 Tab 增加“手动添加”入口，可直接录入问题、答案和可选解析。
+- 甜甜头像统一优先使用 `assets/pet/ai/ai_daily_summary.webp`，失败时回退到知识卡头像资源。
+## 2026-06-22 知识空间 UI 参考图修整
+- 参考聊天、主页、复习卡片截图，重排问甜甜头部、资料模式条、空对话引导、建议问题、主页统计/资料/卡片列表和复习卡片主体层级。
+- 修复知识空间主页和问甜甜页面部分中文被写成 `????` 的问题，关键文案改用 Unicode 转义，避免本地终端编码链路再次污染 UI。
+- 保留现有功能入口和状态逻辑，不改知识库、问答、复习调度和生成流程。
+## 2026-06-22 知识卡后台生成进度与知识空间 UI 调整
+- 知识卡生成接入后台任务控制器和真实阶段进度，生成 Sheet 显示结构分析、卡片计划、卡片生成、保存、兼容生成等状态，并支持先返回空间继续等待。
+- 修复 Knowledge V3 补列迁移遇到 `duplicate column name: source_chunk_id` 时导致页面加载失败的问题，同时补齐 `memory_hint`、`related_concepts_json` 等旧库兼容字段。
+- 三阶段生成失败时自动切换兼容生成，不再把“AI 返回的资料结构分析格式不正确”作为最终用户错误优先抛出。
+- 问甜甜聊天页接入设置头像作为用户头像，补齐用户消息右侧头像，并用 `ai_daily_summary.png` 转换覆盖甜甜 WebP 头像资源。
+- 调整知识空间主页任务卡、欢迎卡、搜索框、快捷入口，以及复习抽卡页进度、问题、答案解析和评分区域的视觉层级。
+## 2026-06-22 知识卡三阶生成与问答拆?
+- Knowledge V3 卡片表新?`source_chunk_id`、`source_locator_json`、`concept`、`knowledge_point`、`exam_scene`、`common_mistake`、`grounded`、`status` 等兼容字段，并过 schemaVersion 30 ?Repository 幂等补列保护旧库升级?- 资料生成卡改?`outline -> cardPlan -> cards` 三阶段链跼先分析资料结构，再制定卡片划，后按计划生成习卡；若三阶?JSON 失败，会回到旧窗口直生和查漏补卡路径?- 卡片草解析扩展来源片、念知识点、试场景、常见区依捊态和草状，卡片类型兼?`process/trap/choice` 并映射到新类型体系?- 闭轍从单张压缩卡升级?1-5 张智能拆分卡：有资料来源标?`draft + grounded`，无资料闭标?`needs_review + AI草`，旧入口保留 fallback 单卡保存?- 闔甜聊天气泡新增拆成知识卡”操作，叛接把任意甜甜回答轈复习卡，并刷新知识空间数?- 补充并更新知?V3 AI service/repository targeted tests，验证三阶生成元数捁fallback 查漏补卡和问答保存兼容路径?
+## 2026-06-22 知识空间菜单统一 + 闔甜空间级对话重构
+
+### 知识空间 UI
+- 知识空间、资料知识卡三点菜单从原?`PopupMenuButton` 迁移到系统格底部操作面板，统一图标、危险操作色与边界操作显示规则?- 资料菜单保留查看、续编编辑上移下移删除；知识卡菜单保留查看编辑上移下移删除；空间菜单保留重命名归档?
+### 淇濆瓨闂敊淇
+- 将资料续编资料编辑知识卡编辑弹窗业 `TextEditingController` 移入狫 Stateful Sheet，避免关闊画期间闷释放 controller 导致矚“渲染失败?- 保存后统通过 `invalidateKnowledgeV3` 刷新知识空间数据，并保留下一帧刷新策略?-  Knowledge V3 测试建表字缺失，补?`memory_hint` ?`related_concepts_json`?
+### 闔?- 闔甜入口改为直接打 `TiantianChatSheet`，不再强制先选择资料；无资料空间也可以进入话?- 搜索框提交疑闏会进入同丩间级聊天 Sheet，并把问题作为初始提闏送?- 聊天右上角资料择器作为可选知识库上下文，资料选择与会话身份解耦，出后再进入沿用同一空间新会话?- 闔甜聊?Sheet 重做头像、模式状态条、回答气泡和输入区觉，接入 `tiantian_avatar.webp`?- AI 闭 prompt 拆分?`grounded/general/hybrid` 三模式，有资料时严格基于资料并标注片来源，无资料时明硙通习回答且不伪造资料来源?- 甜甜闭消息在现?`sources_json` 丅容保?`answerMode`、`grounded`、`usedMaterialIds`，为后续闭轍和来源追踿?metadata?
+## 2026-06-20 鏀跺熬淇锛堢涓夋壒锛?
+### 鍔熻兘 Bug 淇
+- **界钟白噟**: 专注页启动声音时使用当前页面传入的声音类型，避免旧持久化状盖；白噪音初始化和播放失败现在会打印 debug 堆栈?- **界钟声音切捿?*: 专注页点击白噟」分段时会自动择并播放默认雨声，不再停留在无」致看似开吽没有声音?- **白噪音播放链跊?*: 专注白噪音改为优先缓存到朜文件撔，并将循玒放改为非阻吊，避?`AudioPlayer.play()` 在循玟频中卡住状更新?- **默白噪音歌单保?*: 默 5 首内罣音改入专注白噟」歌单，兼旧习歌单自动更名；默歌单和默认歌曲不又除，也不能从默歌单移除?- **知识删除刷新补全**: 删除卡片/资料后现在硈新习队列和搜索结果（`knowledge_v3_provider.dart`），卡片详情删除按钮?try-catch 错处理?- **睡眠提醒恢**: 页面打开时自动校验系统知状并重新同（`sleep_reminder_timer_page.dart` initState），首安不再默吝眠提醒?- **饰提醒达标停**: 饰达到盠后取消当天剩余提醒（新 `cancelWaterRemindersForToday` 方法），不再持续提醒?- **页饮水卡片?*: 水追踍片从 `softBlue`（近?近黑）改?`primary`（靛蓝）?2 处色引用全部更新?- **界音乐**: 铃声 asset 不存在时不再崩溃（try-catch），无音乐时显示"请先导入朜音乐"提示?
+### 澶囦唤鎭㈠琛ュ叏
+- **V3 知识表纳入?*: 6 ?V3 知识衼spaces/materials/cards/review_logs/qa_sessions/qa_messages）过 raw SQL 导出导入，按外键顺序处理?- **AI 聊天记录纳入备份**: `AiChatMessages` 表加?`_tableSpecs`（optional）?
+### 姝讳唬鐮佹竻鐞?- 鍒犻櫎 6 涓湭娉ㄥ唽鐨?V3 Drift 琛ㄥ畾涔夛紙`tables_extra.dart` 绾?122 琛岋級
+- 鍒犻櫎 9 涓?pet re-export 绌烘枃浠讹紙`features/pet/models/` 鐩綍锛?- 鍒犻櫎鏃犺皟鐢ㄨ€呯殑 `saveWaterIntake()` 鍑芥暟
+
+## 2026-06-20 瀹¤瀹夊叏淇
+
+### P0 淇
+- **TF-IDF 搜索索引**:  bigram 空字符串 bug（`knowledge_tfidf_index.dart:226`）和 tokenize 返回 Set 导致 TF 恒为 1 的问题（`knowledge_tfidf_index.dart:159`）中文搜索现在能正确生成 bigram 并算词频?- **斓跔**:  Dashboard 知识库摘要卡点击白屏（`dashboard_knowledge_summary.dart:30`），跔?`/study/knowledge-sources` 改为 `/plan/study/knowledge/sources`?- **加密服务安全**: v2 解密失败时不再返回密文当明文（`encryption_service.dart:159`），改为空串?
+### P1 淇
+- **经验值删除回?*: 新 `deleteExpLogsForSource` 方法，删除?健身/日//睡眠/专注记录时同步清?`GrowthExpLogs`，等级不再虚高涉?6 ?repository?- **等级兼注释**: 注释?`/100` 改为 `/5`，与代码和测试一致（`exp_service.dart:136`）?- **sleep_goal key 统一**: 设置?key ?`daily_sleep_goal` 改为 `sleep_goal_hours`（`settings_page.dart:535`）?- **音乐列表徎**: `loopAll` 模式撮后一首现在硾玈笸首（`music_player_provider.dart:649`）?- **界钟状态恢?*: `restoreFromPersistence()` 现在?Provider 创建时自动调甼`focus_provider.dart:261`），App 袝后可恢进度?- **?catch 块日志化**: 4 ?`catch (_) {}` 改为 `catch (e) { debugPrint(...); }`（focus_provider、knowledge_card_provider）?
+### P2 淇
+- **饰数据安全**: JSON 解析失败时不再清空全部历史数捼改为跳过写入（`water_plan_provider.dart:248`）?- **V3 表索?*: ?6 ?V3 知识表添?5 合索引，提升查性能（`app_database.dart`）?- **ensureTables 优化**: `_ensureTables()` 现在叉行一次，不再每方法调用都跑 DDL（`knowledge_v3_repository.dart`）?- **音乐 stop **: `MusicPlayerService.stop()` 现在调用 `_player.stop()` 而非 `_player.pause()`（`music_player_service.dart:37`）?
 ## 2026-06-19
 
 ### Refactor
@@ -59,14 +422,14 @@
   - Added targeted widget/unit coverage for the new workspace, AI parser, Q&A search, review scheduling, and Study page regression.
 - **Knowledge Space V3 IA and quality pass**: Moved the real knowledge-card entry to the space selector first, then into a single-space workspace, matching the new space-driven product model.
   - Study page now reads V3 workspace overview data, so its `知识空间` entry reflects imported materials, generated cards, due cards, and weak cards instead of the old target-template stats.
-  - Workspace top bar now has clear `导入资料` and `开始抽卡` actions, while the bottom glass dock keeps navigation to `空间 / 问甜甜 / 知识库` instead of repeating review actions.
+  - Workspace top bar now has clear `导入资料` and `始抽 actions, while the bottom glass dock keeps navigation to `空间 / 闔?/ 知识库` instead of repeating review actions.
   - Card generation now plans target card volume from material length and density, asks AI to cover core knowledge more completely, requires source excerpts, and filters vague or prompt-like cards before saving.
   - Knowledge library card management now supports view, edit, reorder, and delete with confirmation; material deletion also confirms before archiving.
   - V3 repository now maintains card order, ranked search results, safer table/schema guards, and an `order_index` compatibility migration for existing V3 databases.
 - **Knowledge Space V3 usability hardening**: Reduced duplicate primary actions and tightened several real-use loops in the new workspace.
   - Workspace top-bar review action is now visually secondary so the state-driven task card remains the main call to action.
   - Web imports now persist the original URL for source traceability, and Tiantian answer-to-card saves now invalidate workspace stats immediately.
-  - Import success now returns with `回到空间` instead of the old `稍后处理` wording, keeping the flow user-facing and simple.
+  - Import success now returns with `鍥炲埌绌洪棿` instead of the old `绋嶅悗澶勭悊` wording, keeping the flow user-facing and simple.
   - Flashcard review cards now use a sturdier scrollable paper-card layout for long questions, answers, and explanations without pushing the rating buttons away.
   - Added regression coverage for web source URL persistence and simplified import wording.
 
@@ -74,7 +437,7 @@
 
 - **Global calendar detail sheet added**: Added a reusable calendar service/provider/sheet with local lunar dates, common Gregorian and lunar festivals, and per-day growth statistics.
   - The dashboard date chip now opens the detailed calendar sheet with month switching, festival/lunar labels, activity dots, and selected-day study/fitness/focus/journal/EXP/task totals.
-  - Left the "晚上好，认真复盘" greeting without an easter egg per the current scope.
+  - Left the "鏅氫笂濂斤紝璁ょ湡澶嶇洏" greeting without an easter egg per the current scope.
 - **Calendar sheet compact layout fixed**: Made the calendar detail sheet adapt on shorter screens so festival labels and the bottom stats area no longer overflow.
   - The month grid compresses slightly on compact heights, and the selected-day panel can scroll when festival chips or stats need more vertical space.
   - Added a compact-screen widget test to guard against RenderFlex overflow regressions.
@@ -101,7 +464,7 @@
 - Added dense-material backfill generation: when AI returns too few high-quality cards for a content-heavy source, Tiantian automatically runs one guarded supplemental pass for missed review points.
 - Polished shared knowledge-space sheets with a desktop max width and keyboard-aware bottom padding, plus compact-screen coverage for the import composer.
 - Made recently used knowledge spaces persist through local `updated_at` touch behavior, so selected/imported/new spaces rise to the top next time.
-- Simplified the import composer further: paste content first, auto-name by default, and move optional title editing into `更多设置`.
+- Simplified the import composer further: paste content first, auto-name by default, and move optional title editing into `鏇村璁剧疆`.
 - Updated the workspace ask box copy to make search and Tiantian Q&A feel like one clear entry.
 - Hardened Tiantian card generation so truncated or malformed AI JSON is retried with a smaller repair prompt, while already saved high-quality cards are kept instead of losing the whole generation run.
 - Improved long-material context selection for Tiantian Q&A, summaries, and weak-card explanations so prompts pull relevant later sections instead of only sending the beginning of a document.
@@ -171,14 +534,12 @@
 - `lib/core/database/app_database.dart` - Add composite indexes
 - 11 feature files - Remove dead provider invalidation calls
 
-## 2026-06-20 知识空间主流程稳定性收口
+## 2026-06-20 知识空间主流程稳定收?
+- 统一导入 Sheet 在测试尺寸下“更多罝底部主按钁挡的，缩矻认粘贴输入区高度，保证标题可选项、文?网页/图片入口和开始入都叧达?- 调整知识空间主页信息顺序，将“最近资料前移到今日主任务后，入后用户能更応到资料并直接打开详情，不必先进知识库抽屉?- 知识空间工作?widget 测试常驻“知识库”底部入口的过斨，补齐最近资料直达情?Sheet 创建空间和移动叔性的回归验证?- 验证知识空间相关 targeted `flutter analyze` ?`flutter test` 通过，盖工作台、AI 生成服务、V3 repository 和习页入口?
 
-- 修复统一导入 Sheet 在测试尺寸下“更多设置”被底部主按钮遮挡的问题，缩短默认粘贴输入区高度，保证标题可选项、文件/网页/图片入口和“开始导入”都可触达。
-- 调整知识空间主页信息顺序，将“最近资料”前移到今日主任务后，导入后用户能更快看到资料并直接打开详情，不必先进知识库抽屉。
-- 修正知识空间工作台 widget 测试中对常驻“知识库”底部入口的过宽断言，补齐最近资料直达详情、导入 Sheet 创建空间和移动端可用性的回归验证。
-- 验证知识空间相关 targeted `flutter analyze` 与 `flutter test` 通过，覆盖工作台、AI 生成服务、V3 repository 和学习页入口。
+## 2026-06-20 学习记录保存删除回归
 
-
+- 将习录保?+ 写经验日志收口到 `StudyRepository.saveStudyRecordWithExp` 单一事务，避免页面刷?重建?UI 层拼事务产生不一致?- 删除学习记录前同时解除专注录和知识卡来源引甼已生成知识卡后删除习录外键拦截的问题?- 为习录保存失败?列表/详情页删除失败补充本地错诗志，方便真机复现后直接定位?- 补充仓库回归测试，盖事务保存和带知识卡来源引用的删除场?
 ## 2026-06-20 ???????????
 - ???????????? Dock??????????/????????????? / ??? / ??????????????
 - ??????????????????????????????????????????????????????
@@ -206,116 +567,198 @@
 - ???????????????????????????????????????????????
 - ?? widget ???????????????????????AI ?????V3 repository?????? targeted `flutter test` 42 ?????? `flutter analyze` ????
 
-## 2026-06-20 知识空间导入失败态收口
-
-- 清洗资料导入的失败文案，文件、网页、图片 OCR 失败时不再把 `FormatException`、网络异常或底层堆栈直接显示给用户，统一提示复制文字粘贴、换文件格式或换清晰图片。
-- 统一知识空间导入 Sheet 的失败 toast 兜底逻辑，避免后续第三方解析库返回内部异常时污染用户界面。
-- 补充 `KnowledgeDocumentImporter` 错误文案测试，覆盖文件解析、网页抓取和图片 OCR 三类内部异常。
-- 验证知识空间导入测试、工作台/AI/repository/学习页入口回归测试和 targeted `flutter analyze` 通过。
-
-## 2026-06-20 知识空间主界面去重
-
-- 调整空间主页快捷功能区：当空间已有资料但还没有知识卡时，只保留主任务卡里的 `生成知识卡`，快捷区不再重复出现同一入口。
-- 已有知识卡后，快捷区的生成入口改为 `补充知识卡`，语义从“主流程下一步”变成“已有卡片后的补充整理”。
-- 补充工作台 widget 测试，覆盖无卡时不重复生成入口、已有卡后显示补充入口。
-- 验证知识空间 targeted `flutter test` 57 项和 targeted `flutter analyze` 通过。
-
+## 2026-06-20 知识空间导入失败态收?
+- 清洗资料导入的失败文案，文件、网页图?OCR 失败时不再把 `FormatException`、网络异常或底层堆栈直接显示给用户，统一提示复制文字粘贴、换文件格式或换清晰图片?- 统一知识空间导入 Sheet 的失?toast 兜底逻辑，避免后三方解析库返回内部异常时污染用户界面?- 补充 `KnowledgeDocumentImporter` 错文测试，盖文件解析网页抓取和图片 OCR 三类内部异常?- 验证知识空间导入测试、工作台/AI/repository/学习页入口回归测试和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识空间主界面去?
+- 调整空间主页忍功能区：当空间已有资料但还没有知识卡时，叿留主任务卡里?`生成知识，快捷区不再重出现同一入口?- 已有知识卡后，快捷区的生成入口改?`补充知识，义从“主流程下一步变成已有卡片后的补充整理?- 补充工作?widget 测试，盖无卡时不重复生成入口已有卡后显示补充入口?- 验证知识空间 targeted `flutter test` 57 项和 targeted `flutter analyze` 通过?
 ## 2026-06-20 知识空间顶部栏轻量化
 
-- 将空间主页顶部栏从动作栏收敛为导航/管理栏，只保留返回、空间切换、知识库和管理空间。
-- 移除顶部栏里的 `导入资料` 与 `开始抽卡`，让页面主任务卡成为唯一主动作来源，减少同页重复按钮和认知分叉。
-- 补充工作台 widget 测试，验证顶部栏不再重复主动作，同时保留知识库和空间管理入口。
-- 验证知识空间 targeted `flutter test` 58 项和 targeted `flutter analyze` 通过。
+- 将空间主页顶部栏从动作栏收敛为?管理栏，叿留返回空间切捁知识库和理空间?- 移除顶部栏里?`导入资料` ?`始抽，页面主任务卡成为唸主动作来源，减少同页重按钮和知分叉?- 补充工作?widget 测试，验证顶部栏不再重主动作，同时保留知识库和空间管理入口?- 验证知识空间 targeted `flutter test` 58 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识空间狫跔验证
 
-## 2026-06-20 知识空间独立路由验证
+- 补充真实 `GrowthOSApp` 跔测试，验证普通划页仍显示主底部导航，进?`/plan/study/knowledge` 后知识空间浮?root navigator 上，不再袺部舌压?- 在测试中隔健康提醒吊和宠物编排器，避免全定时?通知初化干扰知识空间路由断?- 验证知识空间 targeted `flutter test` 59 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识空间创建闎
 
-- 补充真实 `GrowthOSApp` 路由测试，验证普通计划页仍显示主底部导航，而进入 `/plan/study/knowledge` 后知识空间浮在 root navigator 上，不再被底部导航挤压。
-- 在测试中隔离健康提醒启动和宠物编排器，避免全局定时器/通知初始化干扰知识空间路由断言。
-- 验证知识空间 targeted `flutter test` 59 项和 targeted `flutter analyze` 通过。
-
-## 2026-06-20 知识空间创建闭环修复
-
-- 修复空间选择页 `新建空间` 的行为：点击 `创建并进入` 后现在会直接进入新建空间主页，而不是停留在空间列表。
-- 保持导入 Sheet 内的新建空间行为不变：创建后继续留在导入流程，并自动选中新空间。
-- 补充工作台 widget 测试，覆盖从空间选择页创建 `法考` 后直接进入空间主页。
-- 验证知识空间 targeted `flutter test` 60 项和 targeted `flutter analyze` 通过。
-
+- 空间选择?`新建空间` 的为：点击 `创建并进 后现在会直接进入新建空间主页，不昁留在空间列表?- 保持导入 Sheet 内的新建空间行为不变：创建后继续留在导入流程，并臊选中新空间?- 补充工作?widget 测试，盖从空间选择页创?`法` 后直接进入空间主页?- 验证知识空间 targeted `flutter test` 60 项和 targeted `flutter analyze` 通过?
 ## 2026-06-20 知识空间体验收口加固
 
-- 修复闪卡复习页从深链或空栈进入时返回不稳定的问题，回到空间时会同步当前知识空间，避免跳回默认空间。
-- 优化 AI 失败态：未配置 AI 时在甜甜问答、总结、生成知识卡等 Sheet 中显示可行动的“去配置 AI”入口，不再只给重试。
-- 优化复习空状态窄屏布局，导入资料和生成知识卡按钮在小屏自动竖排，减少挤压和溢出风险。
-- 补充知识空间搜索、复习返回、AI 未配置入口等 widget 回归测试；验证 targeted `flutter test` 63 项和 targeted `flutter analyze` 通过。
-
-## 2026-06-20 知识空间导入流再降复杂
-
-- 移除导入 Sheet 里的“更多设置 / 资料标题（可选）”，粘贴文本导入时改为根据正文第一行自动命名资料，用户不再需要处理标题等中间字段。
-- 导入主按钮在正文为空时保持不可用，输入内容后才亮起，减少点按钮后再报错的挫败感。
-- 补充自动命名与导入按钮状态 widget 测试；验证知识空间 targeted `flutter test` 64 项和 targeted `flutter analyze` 通过。
-
-## 2026-06-20 知识卡生成质量门槛加固
-
-- 收紧 AI 生成卡片质量过滤：拒绝目录/标题式问题、缺少回忆意图的问题，以及过短到不能独立复习的答案，减少“生成了但不好复习”的废卡。
-- 优化“甜甜回答转知识卡”：长回答会压缩为适合卡片复习的答案，完整回答继续保留在问答记录中，避免卡片正文过长。
-- 补充 AI 服务回归测试，覆盖标题式废卡、短答案废卡、长回答转卡压缩；验证知识空间 targeted `flutter test` 66 项和 targeted `flutter analyze` 通过。
-
+- 闍复习页从深链或空栈进入时返回不稳定的，回到空间时会同步当前知识空间，避免跳回默空间?- 优化 AI 失败态：朅?AI 时在甜甜闭、结、生成知识卡?Sheet 丘示可行动的去配置 AI”入口，不再叻重试?- 优化复习空状态窄屏布，入资料和生成知识卡按钜小屏臊竖排，减少挤压和溢出风险?- 补充知识空间搜索、习返回AI 朅罅口等 widget 回归测试；验?targeted `flutter test` 63 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识空间导入流再降?
+- 移除导入 Sheet 里的“更多?/ 资料标（可选）”，粘贴文本导入时改为根文行自动命名资料，用户不再要理标题等丗字?- 导入主按钜正文为空时保持不叔，输入内容后才亮起，减少点按钐再报错的挴感?- 补充臊命名与入按钊?widget 测试；验证知识空?targeted `flutter test` 64 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识卡生成质量门槛加?
+- 收紧 AI 生成卡片质量过滤：拒绝目?标式问题缺少回忆意图的，以及过矈不能狫复习的答案，减少“生成了但不好习的废卡?- 优化“甜甜回答转知识卡：长回答会压缩为合卡片复习的答案，完整回答继续保留在问答录中，避免卡片文过长?- 补充 AI 服务回归测试，盖标题式废卡、短答废卡、长回答轍压缩；验证知识空?targeted `flutter test` 66 项和 targeted `flutter analyze` 通过?
 ## 2026-06-20 知识空间详情视图统一
 
-- 将资料详情和知识卡详情从系统默认 `AlertDialog` 改为知识空间统一的底部 Sheet，使用纸卡承载正文，保持浅蓝白工具风一致。
-- 知识卡详情补充状态、来源、答案、解析和来源摘录展示，编辑/删除/关闭操作在窄屏下自适应排布，避免按钮挤压。
-- 补充资料详情、知识卡详情和紧凑屏详情 Sheet 回归测试；验证知识空间 targeted `flutter test` 68 项和 targeted `flutter analyze` 通过。
+- 将资料情和知识卡情从系统默 `AlertDialog` 改为知识空间统一的底?Sheet，使用纸卡承载文，保持浅蓝白工具致?- 知识卡情补充状态来源答案解析和来源摘录展示，编?删除/关闭操作在窄屏下臂应排布，避免按钌压?- 补充资料详情、知识卡详情和紧凑屏详情 Sheet 回归测试；验证知识空?targeted `flutter test` 68 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识卡生成到复习闎验证
 
-## 2026-06-20 知识卡生成到复习闭环验证
+- 加强 AI 生成成功跾的服务层回归：AI 返回有效知识卡后会写?V3 仓库，并能 `getReviewQueue(..., all)` 直接取出用于抽卡复习?- 保持页面层盖生成确认无 AI 配置失败态和“去配置 AI”入口；避免?widget 测试丼入加密配罈始化导致测试不稳定?- 验证知识空间 targeted `flutter test` 68 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识空间导入叝性加?
+- Markdown 文件改为直接按纯文本读取并保留原始结构，避免交给通用文档解析库致标题列表和代码块意改写?- 补充图片 OCR 导入成功、无 OCR 配置、OCR 内部异常三类测试，确保图片入成功可进主流程，失败时不暴?`FormatException` 等内部错?- 验证知识空间 targeted `flutter test` 71 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识空间主路径文案统
 
-- 加强 AI 生成成功路径的服务层回归：AI 返回有效知识卡后会写入 V3 仓库，并能被 `getReviewQueue(..., all)` 直接取出用于抽卡复习。
-- 保持页面层覆盖生成确认、无 AI 配置失败态和“去配置 AI”入口；避免在 widget 测试中引入加密配置初始化导致测试不稳定。
-- 验证知识空间 targeted `flutter test` 68 项和 targeted `flutter analyze` 通过。
-
-## 2026-06-20 知识空间导入可靠性加固
-
-- Markdown 文件改为直接按纯文本读取并保留原始结构，避免交给通用文档解析库导致标题、列表和代码块被意外改写。
-- 补充图片 OCR 导入成功、无 OCR 配置、OCR 内部异常三类测试，确保图片导入成功可进主流程，失败时不暴露 `FormatException` 等内部错误。
-- 验证知识空间 targeted `flutter test` 71 项和 targeted `flutter analyze` 通过。
-
-## 2026-06-20 知识空间主路径文案统一
-
-- 将学习页知识空间入口在“有资料待生成”状态下的主操作从“生成卡片”统一为“生成知识卡”，减少同一动作的不同叫法。
-- 将空间主页快捷操作里的“补充知识卡”统一为“生成知识卡”，保留内部补充生成能力但不向用户暴露额外概念。
-- 复查新知识空间主页面不暴露 `AI 导入 / 全部复习 / 目标模板 / token / 切片 / 沉淀 / 草稿` 等旧主流程术语；验证 targeted `flutter test` 71 项和 targeted `flutter analyze` 通过。
-
+- 将习页知识空间入口在有资料待生成状态下的主操作从生成卡片统为生成知识卡”，减少同一动作的不同叫法?- 将空间主页快捷操作里的补充知识卡”统为生成知识卡”，保留内部补充生成能力但不向用户暴露外念?- 复查新知识空间主页面不暴?`AI 导入 / 全部复习 / 盠模板 / token / 切片 / 沉淀 / 草` 等旧主流程术诼验证 targeted `flutter test` 71 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 学习记录保存稳定性修?
+- 添加学习记录时，时长输入吩格会校验通过但保存抛 `FormatException` 的问题?- 为添加习录页初化默?60 分钟时长，并让简单模式保存的?结束时间与输入时长一致?- 保存失败时在 debug 控制台打印完整异常堆栈；保存成功后刷新习页近期录趋势图和盈布相?Provider?- 学习记录删除袸注录锘止的，删除前会解?`focus_sessions.related_study_id` 引用?- 数据库打时补齐习录经验日志专注录的核心?列，降低?debug 数据库迁移不完整导致保存/删除失败的险?- 补充学习记录保存事务和关联专注录删除回归测试?
 ## 2026-06-20 知识空间管理弹层统一
 
-- 将知识空间内的网页导入、资料续编、资料编辑、知识卡编辑和删除确认从系统 `AlertDialog` 统一为知识空间底部 Sheet，保持浅蓝白纸面工具风一致。
-- 网页导入 Sheet 补充移动端按钮自适应，和粘贴/文件/图片导入入口保持同一导入语言。
-- 补充网页导入使用统一 Sheet 的 widget 回归测试；验证知识空间 targeted `flutter test` 72 项和 targeted `flutter analyze` 通过。
+- 将知识空间内的网页入资料续编资料编辑知识卡编辑和删除确认从系统 `AlertDialog` 统一为知识空间底?Sheet，保持浅蓝白纸面工具风一致?- 网页导入 Sheet 补充移动竌钇适应，和粘贴/文件/图片导入入口保持同一导入诨?- 补充网页导入使用统一 Sheet ?widget 回归测试；验证知识空?targeted `flutter test` 72 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识卡删除安全加?
+- 知识卡情页点击 `删除` 会直接归档的，现在会先弹出知识空间统 Sheet ，避免删成不信任感?- 补充详情页删除确认回归测试，验证取消删除后知识卡仍保留，并且层不使用系统 `AlertDialog`?- 验证知识空间 targeted `flutter test` 73 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 知识卡生成盖率增强
 
-## 2026-06-20 知识卡删除安全加固
+## 2026-06-25 饮食与睡眠记录页视觉重构
 
-- 修复知识卡详情页点击 `删除` 会直接归档的问题，现在会先弹出知识空间统一 Sheet 确认，避免误删造成不信任感。
-- 补充详情页删除确认回归测试，验证取消删除后知识卡仍保留，并且确认层不使用系统 `AlertDialog`。
-- 验证知识空间 targeted `flutter test` 73 项和 targeted `flutter analyze` 通过。
+- 将饮食记录页改为与学习/健身记录一致的轻量记录页结构：插画头部、麦黄色主题、轻卡片、内容底部保存组。
+- 饮食健康评分改用素材里的黄色鸡腿/灰色鸡腿作为亮起与未亮起状态，替代原星星评分。
+- 睡眠记录移除第二套独立表单页面，`/sleep/add` 现在只承载并打开底部弹窗记录表单，统一保留底部弹窗这一套入口。
+- 重做睡眠记录底部弹窗为夜紫主题、插画头部、轻卡片时间选择、柔和质量 chip 和自定义保存按钮。
+- 使用饮食记录与睡眠记录素材生成透明 WebP，并接入 `assets/images/diet_record/` 与 `assets/images/sleep_record/`。
+- 验证 `flutter analyze lib/features/health/pages/add_diet_record_page.dart lib/features/health/pages/add_sleep_record_sheet.dart lib/features/health/pages/add_sleep_record_page.dart` 通过，未运行测试。
 
-## 2026-06-20 知识卡生成覆盖率增强
+## 2026-06-25 健身记录页面视觉重构
 
-- 提高 AI 生成卡片的密集资料识别权重：列表型考点、题目和带问号的解析会更积极地转化为复习卡，不再对长资料保守少生成。
-- 将单份资料的目标卡片上限从 80 提升到 120，单个资料窗口建议数量从最多 24 提升到 30，适配题库、讲义和高频考点清单。
-- 将查漏补卡阈值从约 45% 提升到约 65%，并放宽大资料补卡最低覆盖封顶，减少“资料很多但卡片太少”的情况。
-- 补充超密集资料生成计划测试，验证上百条明确考点会得到更高目标数量并触发更积极的查漏补卡；验证知识空间 targeted `flutter test` 74 项和 targeted `flutter analyze` 通过。
+- 将训练记录页改为与学习记录页一致的轻量记录页结构：自定义插画头部、薄荷绿主题、轻卡片、动画切换和内嵌保存区。
+- 保留训练记录的运动类型、简单/专业模式、动作明细、强度疲劳评分、训练感受、EXP 计算、Provider 刷新和宠物事件链路。
+- 重构身体数据记录页为基础数据、围度数据、备注和底部保存组四段式布局，统一体重/体脂/围度输入样式和绿色健康主题。
+- 使用健身记录页素材与素材库补充图生成透明 WebP，并接入 `assets/images/fitness_record/`。
+- 验证 `flutter analyze lib/features/fitness/pages/add_fitness_record_page.dart lib/features/fitness/pages/add_body_metric_page.dart` 通过，未运行测试。
 
-## 2026-06-20 全项目静态检查收口
+## 2026-06-25 学习记录页面海蓝视觉调整
 
-- 复查旧知识卡页面、旧三 Tab 和旧管理页文件名在 `lib/` 与 `test/` 中已无残留引用，避免删除旧主体验后留下编译断点。
-- 清理睡眠记录页 3 个冗余 provider import，让全项目 `flutter analyze` 从 3 条 info 恢复到 `No issues found`。
-- 重新验证知识空间 targeted `flutter test` 74 项通过，并完成全项目 `flutter analyze` 通过。
+- 简化学习记录页头部插画区，移除右上角四叶草、猫爪和盆栽等叠放装饰，避免图标与标题文字重合。
+- 将保存记录按钮移入页面滚动内容底部，取消固定底栏的独立层级，让底部鼓励语、宠物插画和保存动作融为一组。
+- 将页面主视觉从原紫蓝强调色调整为海蓝色，统一背景渐变、分段选中态、输入框边框、图标圆底和保存按钮。
+- 验证 `flutter analyze lib/features/study/pages/add_study_record_page.dart` 通过，未按要求运行测试。
 
-## 2026-06-20 旧知识卡路由回归锁定
+## 2026-06-25 学习记录页面阴影与动效微调
 
-- 补充真实 `GrowthOSApp` 路由回归测试，覆盖 `/plan/study/knowledge/add`、`import`、`sources`、`archive`、`export`、`templates`、`goal`、`edit/:id`、`onboarding` 等旧路径全部进入新知识空间工作台。
-- 验证 `/plan/study/flash-review` 进入空间选择页，`/plan/study/knowledge/review` 进入新闪卡复习页，且这些 root 路由都不会被主底部导航挤压。
-- 测试中同步断言旧主流程文案 `AI 导入 / 全部复习 / 目标模板` 不出现；验证知识空间 targeted `flutter test` 75 项和全项目 `flutter analyze` 通过。
+- 参考 Material 3 elevation 和 Apple HIG motion 原则，将学习记录页卡片从重投影改为浅色容器、细边框和轻投影表达层级。
+- 优化简单/专业模式切换动画、卡片入场 stagger 和评分反馈，减少弹跳感，让动效更短、更顺、更贴近记录类工具。
+- 调整输入框、模式切换、底部保存区和返回按钮的透明度与边框强度，降低整页视觉重量。
+- 验证 `flutter analyze lib/features/study/pages/add_study_record_page.dart` 通过，未按要求运行测试。
 
-## 2026-06-20 知识空间多尺寸视觉烟测
+## 2026-06-25 学习记录页面视觉重构
 
-- 补充桌面宽屏工作台 smoke test，验证空间主页、最近资料、最近知识卡和知识库抽屉在 1280x900 尺寸下稳定渲染，不触发布局异常。
-- 补充小屏长内容复习卡 smoke test，验证长问题、长答案和长解析在 360x640 尺寸下可滚动展示，评分按钮仍可用。
-- 重新验证知识空间 targeted `flutter test` 77 项和全项目 `flutter analyze` 通过，为后续真实设备视觉 QA 提供更强回归保障。
+- 使用学习记录页素材生成透明 WebP 资源并接入 `assets/images/study_record/`，替换运行时大 PNG 依赖。
+- 重构添加学习记录页为插画头部、动画模式切换、卡片式简单/专业表单和固定保存区，保留保存记录、经验写入、Provider 刷新与宠物事件链路。
+- 简单模式补齐科目与专注度记录，专业模式改为学习内容、时间信息、学习状态、复盘总结四组紧凑卡片，并加入入场、切换、评分反馈动画。
+- 验证 `flutter analyze lib/features/study/pages/add_study_record_page.dart` 通过，未按要求运行测试。
+
+- 提高 AI 生成卡片的密集资料识初重：列表型点、盒带问号的解析会更秞地转化为复习卡，不再对长资料保守少生成?- 将单份资料的盠卡片上限?80 提升?120，单丵料窗口建讕量从?24 提升?30，配题库、义和高考点清单?- 将查漏补卡阈值从?45% 提升到约 65%，并放大资料补卡最低盖封顶，减少“资料很多但卡片夰”的情况?- 补充超密集资料生成划测试，验证上百条明硃点会得到更高目标数量并触发更积极的查漏补卡；验证知识空?targeted `flutter test` 74 项和 targeted `flutter analyze` 通过?
+## 2026-06-20 鍏ㄩ」鐩潤鎬佹鏌ユ敹鍙?
+- 复查旧知识卡页面、旧?Tab 和旧管理页文件名?`lib/` ?`test/` 丷无残留引甼避免删除旧主体验后留下编译断点?- 清理睡眠记录?3 丆?provider import，全项?`flutter analyze` ?3 ?info 恢?`No issues found`?- 重新验证知识空间 targeted `flutter test` 74 项过，并完成全项?`flutter analyze` 通过?
+## 2026-06-20 鏃х煡璇嗗崱璺敱鍥炲綊閿佸畾
+
+- 补充真实 `GrowthOSApp` 跔回归测试，?`/plan/study/knowledge/add`、`import`、`sources`、`archive`、`export`、`templates`、`goal`、`edit/:id`、`onboarding` 等旧跾全部进入新知识空间工作台?- 验证 `/plan/study/flash-review` 进入空间选择页，`/plan/study/knowledge/review` 进入新闪卡习页，且这些 root 跔都不会主底部舌压?- 测试丐步断旧主流程文 `AI 导入 / 全部复习 / 盠模板` 不出现；验证知识空间 targeted `flutter test` 75 项和全项?`flutter analyze` 通过?
+## 2026-06-20 知识空间多尺寸觉烟?
+- 补充桌面宽屏工作?smoke test，验证空间主页最近资料最近知识卡和知识库抽屉?1280x900 尺下稳定渲染，不触发布异常?- 补充小屏长内容习卡 smoke test，验证长、长答和长解析?360x640 尺下可滚动展示，评分按钻叔?- 重新验证知识空间 targeted `flutter test` 77 项和全项?`flutter analyze` 通过，为后续真实设视 QA 提供更强回归保障?## 2026-06-20 饓推荐卡片笺批接?
+- 灏?`picture/鎯冲枬鐐逛粈涔?绗簩鎵筦 鐨?264 寮犻ギ鍝佸崱鐗囨壒閲忚浆鎹负 WebP锛屽苟浠?`鍝佺墝__楗搧.webp` 鍛藉悕鎺ュ叆 `assets/images/drinks/`锛岄伩鍏嶄笉鍚屽搧鐗屽悓鍚嶉ギ鍝佷簰鐩歌鐩栥€?- 閲嶅缓鈥滀粖澶╂兂鍠濈偣浠€涔堚€濋ギ鍝佺洰褰曪紝鎸夊仴搴峰尯銆佸挅鍟°€佹柊鑼堕ギ銆佸嵆楗尪銆佹皵娉°€佹灉姹併€佷钩楗€佸姛鑳藉垎绫诲睍绀猴紱鍋ュ悍鍖哄寘鍚櫧寮€姘淬€佺熆娉夋按銆佹棤绯栧彲涔愩€佽嫃鎵撴按绛夋洿瀹夊叏鐨勪綆璐熸媴閫夋嫨銆?- 鏇存柊楗搧鎺ㄨ崘椤甸潰鍒嗙被鑹插僵鏄犲皠鍜屽搴旀祴璇曪紝楠岃瘉 264 鏉＄洰褰曘€佽祫婧愯矾寰勫拰鍋ュ悍鍖哄垎绫诲彲鐢ㄣ€?## 2026-06-20 鐣寗閽熺櫧鍣煶鎾斁閾捐矾淇
+
+- 绉婚櫎鐣寗閽熺櫧鍣煶璺緞閲岀殑 `JustAudioBackground.init` 鍒濆鍖栵紝閬垮厤涓庡凡鏈夐煶棰戞湇鍔￠噸澶嶅垵濮嬪寲瑙﹀彂 `_cacheManager == null` 鏂█锛屽鑷撮洦澹般€佹捣娴€佹．鏋楃瓑澹伴煶閮芥棤娉曟挱鏀俱€?- 淇濈暀鏈湴璧勬簮缂撳瓨鎾斁涓?asset fallback锛岀櫧鍣煶缁х画浣跨敤鐙珛 `just_audio` 鎾斁鍣ㄥ惊鐜挱鏀撅紝涓嶅啀渚濊禆鍚庡彴閫氱煡闊抽鍒濆鍖栥€?- 楠岃瘉 `focus_audio_service`銆乣focus_audio_provider`銆佷笓娉ㄥ０闊抽潰鏉垮拰涓撴敞浼氳瘽椤?targeted `flutter analyze` 閫氳繃銆?## 2026-06-20 鍚姩杩涘叆鍔ㄧ敾涓?App 鍥炬爣鏇存柊
+
+- 新 Growth OS 吊进入动画：浅蓝白纸面背景、成长环、软基图标浮现玻璃提示条和细进度条，挂载?`MaterialApp.router.builder`，不改变业务跔?- 动画攌系统减少动效设置，并使用 `IgnorePointer` 避免吊蒙层阻底层页面交互或测试点击?- 使用 `picture/APP图标.png` 生成应用内品牌图、Android launcher mipmap、iOS AppIcon ?Windows `app_icon.ico`?- 验证 `flutter analyze lib/app/app.dart lib/app/launch_intro_overlay.dart` ?`flutter test test/widget_test.dart` 通过?- 加固吊性：减少动效模式下改为短品牌定帧而不昛接跳过；动画时长延长并加中心光晕，同时补充 Android/iOS 原生吊静图标，避免冷启动白屏后直接进入首页?
+
+
+## 2026-06-24 番茄钟白噪音模式修复
+
+- 开始专注时改为读取点击瞬间的最新专注设置，避免白噪音选择刚更新就被旧 `setup` 快照覆盖成安静模式。
+- 专注声音面板点击“白噪音”时恢复上次噪音或默认白噪声，不再把模式切换误当成 `null`/无声。
+- 专注会话页统一规范化声音类型，并收敛横屏、竖屏、紧凑横屏的声音切换逻辑，避免不同布局状态不一致。
+- 补充番茄钟声音回归测试，验证白噪声进入会话后保持播放状态，且白噪音模式切换不会回到安静模式。
+
+## 2026-06-24 首页音乐胶囊体验优化
+
+- 收窄首页音乐折叠胶囊和展开遥控器尺寸，左右贴边时统一半藏入屏幕边缘，减少悬浮控件对首页内容的遮挡。
+- 展开遥控器增加全屏空白点击收起能力，点击非控件区域会立即回到边缘胶囊。
+- 移除音乐波形里重复叠加的静态波纹图层，只保留自绘动态波形，避免播放视觉出现一动一静两套波纹。
+- 补充 Dashboard 音乐悬浮窗回归测试，锁定贴边尺寸、左侧半藏和空白点击收起行为。
+
+## 2026-06-24 番茄钟白噪音播放链路修复
+
+- 白噪音播放服务不再初始化 `JustAudioBackground`，避免与本地音乐后台服务冲突导致雨声、海浪、森林、咖啡馆、白噪声全部播放失败并退回安静模式。
+- 白噪音资源改为独立 `just_audio` asset/file source 播放，保留 asset 加载失败时写入临时文件再播放的兜底链路。
+- 补充 `focusAudioStateProvider` 回归测试，验证 5 种内置白噪音切换后都保持播放状态且不会把声音类型清空。
+
+## 2026-06-24 音乐胶囊与专注声音选中态修复
+
+- 首页音乐折叠胶囊移除静态 `graphic_eq` 波形图标，只保留动态波形，避免出现一动一静两条音乐波浪。
+- 继续压瘦音乐折叠胶囊和展开遥控器尺寸，缩小封面、按钮、字体和贴边露出宽度，减少首页遮挡。
+- 番茄钟专注声音面板优先使用会话当前选择值刷新卡片图标，避免播放器异步切换期间旧声音状态覆盖新选中态，导致需要点两次才变图标。
+- 补充 Dashboard 音乐胶囊与专注声音面板回归测试，锁定瘦胶囊、无静态波形和单击即选中的行为。
+
+## 2026-06-24 健康与学习图表坐标修复
+
+- 共享柱状图/折线图标题回调只接受真实整数点位，避免 fl_chart 浮点标题值导致横坐标重复；同时扩大坐标轴保留空间、关闭折线图内部裁切并缩小顶部数值徽标和图例。
+- 学习图表改为自然周、自然月、自然年统计：周图固定周一到周日，年图固定 1 月到 12 月，不再从当前日前 7 天或 12 个月滚动起始。
+- 健身年图改为本年 12 个月聚合，睡眠年图固定本年 1-12 月占位，饮食图去掉外层裁切并让本月第 4 周覆盖到月末。
+- 学习页“今日学习”卡片开启紧凑模式，图表顶部数值小框继续压瘦；X 轴标签从取模显示改为等距抽样，并按单行/双行动态减少底部占用空间。
+- 补充共享图表月份标签唯一性测试和学习图表日历区间测试；验证 targeted `flutter analyze`、targeted `flutter test` 与 `dart scripts/check_architecture.dart` 通过。
+
+## 2026-06-24 番茄钟沉浸式横竖屏重排
+
+- 番茄钟会话页改为 Stack 锚点布局，时钟层在竖屏、横屏、紧凑横屏中保持视觉中心，不再被声音面板或下一阶段卡片挤偏。
+- 步骤提示替换为弱化圆点，下一阶段改成轻量胶囊；取消、暂停/继续、跳过休息等控制重新贴近时钟下方，主按钮保持最高视觉权重。
+- 专注声音默认收起为底部/右下胶囊，点击后竖屏显示底部 sheet、横屏显示右侧 drawer，点击空白遮罩可收起且不推动时钟布局。
+- 压缩专注声音面板的 tab、白噪音卡片、本地音乐控件和音量区，保留白噪音、本地音乐、切歌、播放暂停、导入与音量功能。
+- 补充横竖屏、紧凑横屏、声音胶囊展开/收起和白噪音保持播放的回归测试；验证 targeted `flutter analyze`、targeted `flutter test`、架构脚本与 `git diff --check`。
+
+## 2026-06-24 番茄钟视觉层级二次提升
+
+- 根据真机横竖屏截图继续重排会话页：竖屏拉开下一阶段、主控制和声音胶囊距离，横屏把下一阶段与声音合并为右侧辅助组，避免三个浮层分散抢视线。
+- 横屏和紧凑横屏放大时钟并新增尺寸/居中回归断言，确保时钟始终是主视觉，不再因为右侧辅助信息被压小或推偏。
+- 小猫插画从时钟文字层移出，改成时钟右上角轻量贴纸；同时收紧轮次、时间和百分比排版，避免遮挡“第 1 / 4 轮”。
+- 下一阶段和专注声音胶囊进一步降透明度、减高度和阴影；安静模式改为“专注声音 / 安静”语义，不再显示无意义音量。
+- 进入专注会话时启用沉浸式系统 UI，退出时恢复，减少横屏状态栏对背景和时钟的干扰。
+
+## 2026-06-24 番茄钟新版结构调整
+
+- 竖屏将标题与时钟整体上移并进一步放大时钟，控制按钮组改为紧跟番茄钟下方，不再贴近底部信息胶囊。
+- 竖屏下一阶段和专注声音改为底部二连辅助浮层，保留展开声音面板、白噪音、本地音乐和音量控制入口。
+- 小宠物从时钟环内移到右上外侧陪伴位，避免压住环形进度和计时内容。
+- 横屏改成左侧大时钟、右侧操作区：取消/继续、下一阶段、专注声音都收进右侧列，减少中间散点式布局。
+- 更新横屏/紧凑横屏测试断言，锁定左侧大钟布局和更大的时钟尺寸。
+
+## 2026-06-24 番茄钟比例与萌宠位置优化
+
+- 横竖屏萌宠统一移动到番茄钟进度下方，作为时钟下方陪伴元素，不再贴环或压住计时内容。
+- 横屏番茄钟继续放大，普通横屏上限提升到更大的左侧主钟比例，紧凑横屏也同步放大。
+- 主按钮、取消按钮、下一阶段胶囊和专注声音胶囊统一放大一档，避免时钟很大而休息/音乐信息过小。
+- 更新横竖屏回归测试，验证萌宠在两个布局都显示且横屏大钟尺寸保持。
+## 2026-06-26 番茄钟设置页溢出与记录入口修复
+
+- 修复番茄钟设置页“今日累计专注时长”卡片内部历史按钮错位导致的竖向溢出，将卡片高度、数字字号和提示文案收紧。
+- 恢复并实现“专注记录”入口：顶部记录按钮可打开底部弹窗查看最近专注记录，横屏标题区同步支持。
+- 降低“开始专注”按钮饱和度，改为浅底、细边框和柔和焦点色，保留入口视觉权重但不再刺眼。
+- 验证 `flutter analyze lib/features/focus/focus_page.dart lib/features/focus/widgets/focus_setup_helpers.dart lib/features/focus/widgets/focus_setup_widgets.dart` 通过。
+
+## 2026-06-26 知识库与知识空间入口视觉升级
+
+- 从 `picture/知识卡片1.png`、`picture/知识卡片2.png` 选用两张更干净的蓝白学习插画，使用 rembg 透明化、裁边并转换为 WebP，接入 `assets/images/knowledge_cards/`。
+- 重构首页知识库摘要卡为插画式渐变入口，保留知识库跳转、待复习跳转、卡片/待复习/资料/待沉淀数据展示。
+- 重构学习页知识空间入口为沉浸式插画卡，保留原有概览状态、行动文案、卡片数/待复习数和点击进入复习链路。
+- 根据页面比例反馈二次收敛：两个入口从大面积蓝色渐变改为白底内容区，只在底部保留蓝色托底；学习页知识空间入口同步缩小插画和右侧预留，降低卡片高度。
+- 验证 `flutter analyze lib/features/dashboard/widgets/dashboard_knowledge_summary.dart lib/features/study/study_page.dart` 通过。
+
+## 2026-06-25 首页成长主卡比例优化
+
+- 删除首页“你的成长，由你掌控”卡片底部整块“成长进行中”进度卡，不再展示等级、EXP 进度和学习/日记小指标。
+- 收紧成长主卡最小高度，让剩余标题、今日摘要、甜甜头像和气泡形成更轻的单层主视觉。
+- 调整甜甜头像区域比例：减轻头像底座、放大角色本体、降低阴影重量，让甜甜在卡片中更协调。
+- 本轮按要求未运行测试。
+
+## 2026-06-25 四类记录页细节打磨
+
+- 收紧健身、身体数据、饮食和睡眠记录页头部插画占位，降低小屏标题被挤压和装饰乱叠的风险。
+- 同步微调学习记录页头部插画与表单输入圆角，让学习、健身、饮食、睡眠四类记录入口的视觉语言更一致。
+- 统一健身动作弹窗输入框与添加按钮为薄荷绿轻量样式，避免局部旧控件破坏新记录页风格。
+- 加固睡眠底部弹窗的小屏表现：睡眠时长文案可省略，滑杆与备注框使用夜紫主题边框。
+- 补齐饮食、身体数据底部插画 `fit` 约束，避免素材在不同设备上裁切或拉伸异常。
+- 验证 targeted `flutter analyze` 与 `git diff --check` 通过；本轮按要求未运行测试。
+## 2026-06-27 番茄钟滤镜与玻璃透明度打磨
+
+- 将番茄钟皮肤面板里的效果滤镜改为横向滑动卡片，避免横竖屏下材质选项挤在一行。
+- 新增棱镜、珍珠、暗调三种背景滤镜，并让滤镜覆盖层、侧边适配色和进度主色继续跟随当前主题色。
+- 默认背景清晰度改为无模糊、无暗淡，保留用户已保存的自定义强度设置。
+- 新增番茄钟玻璃透明度设置并持久化，圆盘、顶部按钮、主操作按钮、下一阶段和专注声音胶囊统一响应透明度。
+- 验证 `flutter analyze lib/features/focus/pages/focus_session_page.dart lib/features/focus/widgets/focus_session_widgets.dart lib/features/focus/widgets/timer_display.dart` 通过。

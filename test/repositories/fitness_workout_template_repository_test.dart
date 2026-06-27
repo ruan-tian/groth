@@ -2,7 +2,7 @@ import 'package:drift/drift.dart' hide isNotNull;
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:growth_os/core/database/app_database.dart';
-import 'package:growth_os/core/repositories/fitness_repository.dart';
+import 'package:growth_os/features/fitness/repositories/fitness_repository.dart';
 
 void main() {
   late AppDatabase db;

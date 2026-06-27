@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/design/design.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/utils/date_utils.dart';
-import '../../../../shared/providers/task_provider.dart';
+import '../../../plan/providers/task_provider.dart';
 import '../../../../shared/widgets/common/growth_time_picker.dart';
 
 /// 任务模板对话框

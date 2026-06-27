@@ -112,14 +112,59 @@ void main() {
     expect(status.usesExactAlarm, isFalse);
     expect(status.isDelayedBySystemAlarmLimit, isTrue);
   });
+
+  test('water scheduling persists status keys', () async {
+    final settings = <String, String>{};
+    final scheduler = _scheduler(
+      _FakeNotificationGateway(addPendingOnSchedule: true),
+      settings: settings,
+    );
+
+    await scheduler.scheduleWaterRemindersWithStatus(
+      startHour: 8,
+      endHour: 9,
+      intervalMinutes: 60,
+      requestPermissions: false,
+    );
+
+    expect(
+      settings[HealthReminderScheduler.waterScheduleStatusKey],
+      'scheduled',
+    );
+    expect(settings[HealthReminderScheduler.waterPendingCountKey], '1');
+    expect(settings[HealthReminderScheduler.waterUsesExactAlarmKey], 'true');
+  });
+
+  test('sleep scheduling persists status keys', () async {
+    final settings = <String, String>{};
+    final scheduler = _scheduler(
+      _FakeNotificationGateway(
+        addPendingOnSchedule: true,
+        canScheduleExact: false,
+      ),
+      settings: settings,
+    );
+
+    await scheduler.scheduleSleepReminderWithStatus(requestPermissions: false);
+
+    expect(
+      settings[HealthReminderScheduler.sleepScheduleStatusKey],
+      'scheduled',
+    );
+    expect(settings[HealthReminderScheduler.sleepPendingCountKey], '1');
+    expect(settings[HealthReminderScheduler.sleepUsesExactAlarmKey], 'false');
+  });
 }
 
-HealthReminderScheduler _scheduler(_FakeNotificationGateway gateway) {
-  final settings = <String, String>{};
+HealthReminderScheduler _scheduler(
+  _FakeNotificationGateway gateway, {
+  Map<String, String>? settings,
+}) {
+  final store = settings ?? <String, String>{};
   return HealthReminderScheduler(
     notificationService: gateway,
-    readSetting: (key) async => settings[key],
-    writeSetting: (key, value) async => settings[key] = value,
+    readSetting: (key) async => store[key],
+    writeSetting: (key, value) async => store[key] = value,
   );
 }
 

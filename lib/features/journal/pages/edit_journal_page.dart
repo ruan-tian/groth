@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
@@ -7,9 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../shared/providers/dashboard_provider.dart';
-import '../../../shared/providers/journal_provider.dart';
+import '../models/journal_data.dart';
+import '../../dashboard/providers/dashboard_provider.dart';
+import '../../journal/providers/journal_provider.dart';
 import '../providers/journal_stats_provider.dart';
 import '../utils/journal_assets.dart' as journal_images;
 import '../utils/journal_constants.dart';
@@ -148,21 +148,15 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       );
 
       final journalRepo = ref.read(journalRepositoryProvider);
-      await journalRepo.updateJournal(companion);
-
-      if (_originalExpGained != null && _originalExpGained != exp) {
-        final expRepo = ref.read(expRepositoryProvider);
-        await expRepo.deleteExpLogsForSource('journal', widget.journalId);
-        await expRepo.insertExpLog(
-          GrowthExpLogsCompanion.insert(
-            sourceType: 'journal',
-            sourceId: widget.journalId,
-            expValue: exp,
-            reason: '日记编辑: ${_titleController.text.trim()} ($wordCount字)',
-            createdAt: nowMs,
-          ),
-        );
-      }
+      await journalRepo.updateJournalWithExp(
+        journalId: widget.journalId,
+        journal: companion,
+        exp: exp,
+        replaceExpLog: _originalExpGained != null && _originalExpGained != exp,
+        reason:
+            'journal edit: ${_titleController.text.trim()} ($wordCount words)',
+        createdAt: nowMs,
+      );
 
       ref.invalidate(recentJournalsProvider);
       ref.invalidate(journalsByFolderProvider);
@@ -221,7 +215,9 @@ class _EditJournalPageState extends ConsumerState<EditJournalPage> {
       if (decoded is List) {
         return decoded.map((item) => item.toString()).toList();
       }
-    } catch (e) { debugPrint('parseTags failed: $e'); }
+    } catch (e) {
+      debugPrint('parseTags failed: $e');
+    }
     return raw
         .split(',')
         .map((tag) => tag.trim())
@@ -504,25 +500,30 @@ class _PaperEditor extends StatelessWidget {
           const Divider(color: JournalColors.pinkBorder, height: 28),
           Stack(
             children: [
-              CustomPaint(
-                painter: _PaperLinesPainter(),
-                child: TextField(
-                  controller: contentController,
-                  textInputAction: TextInputAction.newline,
-                  minLines: 12,
-                  maxLines: null,
-                  keyboardType: TextInputType.multiline,
-                  style: const TextStyle(
-                    color: JournalColors.textDark,
-                    fontSize: 18,
-                    height: 2.05,
-                  ),
-                  decoration: const InputDecoration(
-                    hintText: '继续记录今天的小美好...',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.fromLTRB(2, 4, 2, 112),
-                  ),
-                ),
+              Builder(
+                builder: (context) {
+                  final scale = MediaQuery.textScalerOf(context).scale(18) / 18;
+                  return CustomPaint(
+                    painter: _PaperLinesPainter(spacing: 42 * scale),
+                    child: TextField(
+                      controller: contentController,
+                      textInputAction: TextInputAction.newline,
+                      minLines: 12,
+                      maxLines: null,
+                      keyboardType: TextInputType.multiline,
+                      style: const TextStyle(
+                        color: JournalColors.textDark,
+                        fontSize: 18,
+                        height: 42 / 18,
+                      ),
+                      decoration: const InputDecoration(
+                        hintText: '继续记录今天的小美好...',
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.fromLTRB(2, 24, 2, 112),
+                      ),
+                    ),
+                  );
+                },
               ),
               Positioned(
                 right: -8,
@@ -734,16 +735,22 @@ class _SquareButton extends StatelessWidget {
 }
 
 class _PaperLinesPainter extends CustomPainter {
+  _PaperLinesPainter({required this.spacing});
+
+  final double spacing;
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = JournalColors.pinkBorder.withValues(alpha: 0.64)
       ..strokeWidth = 1;
-    for (var y = 42.0; y < size.height - 34; y += 42) {
+    for (var y = spacing; y < size.height - 34; y += spacing) {
       canvas.drawLine(Offset(0, y), Offset(size.width, y), paint);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(_PaperLinesPainter oldDelegate) {
+    return oldDelegate.spacing != spacing;
+  }
 }

@@ -8,21 +8,23 @@ import 'package:go_router/go_router.dart';
 import '../../app/design/design.dart';
 import '../../core/database/app_database.dart';
 import '../../../core/constants/pet_assets.dart';
-import '../../shared/providers/dashboard_provider.dart';
-import '../../shared/providers/journal_provider.dart';
+import '../../../core/constants/record_icon_assets.dart';
+import '../dashboard/providers/dashboard_provider.dart';
+import 'providers/journal_provider.dart';
 import '../../shared/widgets/sort_button.dart';
 import '../../shared/widgets/swipe_delete_tile.dart';
 import '../../shared/widgets/common/growth_card.dart';
+import '../../shared/widgets/common/module_page_surface.dart';
 import '../../core/domain/pet/pet_scene_model.dart';
-import '../../shared/providers/pet_scene_provider.dart';
+import '../pet/providers/pet_scene_provider.dart';
 import '../plan/utils/plan_module_assets.dart';
 import '../plan/widgets/plan_module_visuals.dart';
 import 'models/inspiration_catalog.dart';
 import 'providers/journal_stats_provider.dart';
 import 'utils/journal_constants.dart';
 import '../../shared/widgets/common/error_retry_widget.dart';
+import '../../shared/widgets/common/growth_charts.dart';
 import 'widgets/journal_colors.dart';
-import '../statistics/widgets/heatmap_calendar.dart';
 
 part 'widgets/journal_page_widgets.dart';
 
@@ -76,22 +78,22 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     final colors = context.growthColors;
 
     return Scaffold(
-      backgroundColor: JournalColors.bgOf(context),
+      backgroundColor: colors.paper,
       appBar: widget.isEmbedded
           ? null
           : AppBar(
-              title: const Text('成长日记', style: AppTextStyles.sectionTitle),
-              centerTitle: true,
-              backgroundColor: Colors.transparent,
+              title: Text('成长日记', style: AppTextStyles.pageTitle),
+              centerTitle: false,
+              backgroundColor: colors.paper,
               surfaceTintColor: Colors.transparent,
               elevation: 0,
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 20),
-                color: JournalColors.textDark,
+                color: colors.textPrimary,
                 onPressed: () => Navigator.pop(context),
               ),
               actions: [
-                SortButton(
+                SortButton<SortOption>.legacy(
                   currentSort: sort,
                   onSortChanged: (s) =>
                       ref.read(journalSortProvider.notifier).state = s,
@@ -99,59 +101,56 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                 const SizedBox(width: 8),
               ],
             ),
-      body: RefreshIndicator(
-        color: JournalColors.pinkMain,
-        onRefresh: () async {
-          ref.invalidate(recentJournalsProvider);
-          ref.invalidate(allJournalTagsProvider);
-          ref.invalidate(todayJournalCountProvider);
-          ref.invalidate(journalStreakProvider);
-          ref.invalidate(totalJournalCountProvider);
-          ref.invalidate(monthlyJournalCountProvider);
-          ref.invalidate(journalFoldersProvider);
-          ref.invalidate(journalsByFolderProvider);
-          ref.invalidate(journalHeatmapProvider);
-          if (_selectedTag != null) {
-            ref.invalidate(journalsByTagProvider(_selectedTag!));
-          }
-        },
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(
-            parent: BouncingScrollPhysics(),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 100),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── 1. 甜甜陪伴卡 ──
-              PlanModuleVisualHeader(
-                module: PlanModuleType.journal,
-                color: JournalColors.pinkMain,
-              ),
-              const SizedBox(height: 12),
-              _buildTodayRecordCard(context, todayCount),
-              const SizedBox(height: 16),
-              _buildInspirationEntryCard(context),
-              const SizedBox(height: 20),
+      body: ModulePageSurface(
+        color: colors.journal,
+        child: RefreshIndicator(
+          color: colors.journal,
+          onRefresh: () async {
+            ref.invalidate(recentJournalsProvider);
+            ref.invalidate(allJournalTagsProvider);
+            ref.invalidate(todayJournalCountProvider);
+            ref.invalidate(journalStreakProvider);
+            ref.invalidate(totalJournalCountProvider);
+            ref.invalidate(monthlyJournalCountProvider);
+            ref.invalidate(journalFoldersProvider);
+            ref.invalidate(journalsByFolderProvider);
+            ref.invalidate(journalHeatmapProvider);
+            if (_selectedTag != null) {
+              ref.invalidate(journalsByTagProvider(_selectedTag!));
+            }
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(
+              parent: BouncingScrollPhysics(),
+            ),
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // [1] 宠物陪伴
+                PlanModuleVisualHeader(
+                  module: PlanModuleType.journal,
+                  color: colors.journal,
+                ),
+                const SizedBox(height: 12),
+                // [2] 今日状态 HeroCard
+                _buildTodayRecordCard(context, todayCount),
+                const SizedBox(height: 16),
+                // [3] 灵感书签 FeatureCard
+                _buildInspirationEntryCard(context),
+                const SizedBox(height: 20),
 
-              const SizedBox.shrink(),
-              const SizedBox.shrink(),
+                // [4] 统计卡片
+                _StatsRow(
+                  monthlyCount: monthlyCount,
+                  totalCount: totalCount,
+                  streak: streak,
+                ),
+                const SizedBox(height: 20),
 
-              // ── 3. 标签筛选 ──
-              const SizedBox.shrink(),
-              const SizedBox(height: 0),
-
-              // ── 4. 统计卡片 ──
-              _StatsRow(
-                monthlyCount: monthlyCount,
-                totalCount: totalCount,
-                streak: streak,
-              ),
-              const SizedBox(height: 20),
-
-              // ── 5. 写作热力图 ──
-              const _JournalHeatmapSection(),
-              const SizedBox(height: 20),
+                // [5] 写作热力图
+                const _JournalHeatmapSection(),
+                const SizedBox(height: 20),
 
               // ── 6. 最近日记列表 ──
               _buildRecentJournalFilters(folders, selectedFolder, allTags),
@@ -164,13 +163,13 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                       final journal = list[index];
                       return TweenAnimationBuilder<double>(
                         tween: Tween(begin: 0.0, end: 1.0),
-                        duration: Duration(milliseconds: 400 + index * 60),
+                        duration: Duration(milliseconds: 280 + index * 40),
                         curve: Curves.easeOutCubic,
                         builder: (context, value, child) {
                           return Opacity(
                             opacity: value,
                             child: Transform.translate(
-                              offset: Offset(0, 12 * (1 - value)),
+                              offset: Offset(0, 8 * (1 - value)),
                               child: child,
                             ),
                           );
@@ -194,11 +193,11 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                     }),
                   );
                 },
-                loading: () => const Padding(
-                  padding: EdgeInsets.all(40),
+                loading: () => Padding(
+                  padding: const EdgeInsets.all(40),
                   child: Center(
                     child: CircularProgressIndicator(
-                      color: JournalColors.pinkMain,
+                      color: colors.journal,
                       strokeWidth: 2.5,
                     ),
                   ),
@@ -208,8 +207,8 @@ class _JournalPageState extends ConsumerState<JournalPage> {
                   child: Center(
                     child: Text(
                       '加载失败: $e',
-                      style: const TextStyle(
-                        color: JournalColors.textMuted,
+                      style: TextStyle(
+                        color: colors.textTertiary,
                         fontSize: 13,
                       ),
                     ),
@@ -218,6 +217,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               ),
             ],
           ),
+        ),
         ),
       ),
       floatingActionButton: Semantics(
@@ -248,6 +248,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildInspirationEntryCard(BuildContext context) {
+    final colors = context.growthColors;
     return FutureBuilder<InspirationCatalog>(
       future: InspirationCatalog.load(),
       builder: (context, snapshot) {
@@ -262,120 +263,59 @@ class _JournalPageState extends ConsumerState<JournalPage> {
         return GrowthCard(
           onTap: () => context.push('/plan/journal/inspiration'),
           semanticLabel: '灵感书签',
-          padding: EdgeInsets.zero,
-          borderRadius: 24,
-          backgroundColor: context.growthColors.card,
-          borderColor: JournalColors.pinkBorder,
-          shadow: [
-            BoxShadow(
-              color: JournalColors.pinkMain.withValues(alpha: 0.09),
-              blurRadius: 18,
-              offset: const Offset(0, 8),
-            ),
-          ],
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(24),
-            child: Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    JournalColors.pinkBgOf(context),
-                    context.growthColors.card,
-                  ],
-                ),
-              ),
-              child: Row(
+          padding: const EdgeInsets.all(AppSpacing.lg),
+          borderRadius: AppRadius.xxl,
+          backgroundColor: colors.card,
+          borderColor: colors.journal.withValues(alpha: 0.16),
+          shadow: AppShadows.sm,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 15, 10, 15),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 30,
-                                height: 30,
-                                decoration: BoxDecoration(
-                                  color: JournalColors.pinkMain.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: const Icon(
-                                  Icons.auto_stories_rounded,
-                                  color: JournalColors.pinkMain,
-                                  size: 18,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '灵感书签',
-                                style: AppTextStyles.cardTitle.copyWith(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w900,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            entry?.text ?? '每天一句，给自己一点清醒和温柔',
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppTextStyles.body.copyWith(
-                              color: context.growthColors.textPrimary,
-                              fontWeight: FontWeight.w800,
-                              height: 1.35,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            theme == null ? '进入灵感页' : '${theme.name} · 今日一句',
-                            style: AppTextStyles.caption.copyWith(
-                              color: JournalColors.pinkMain,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                        ],
-                      ),
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: colors.journal.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.auto_stories_rounded,
+                      color: colors.journal,
+                      size: 18,
                     ),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12),
-                    child: SizedBox(
-                      width: 116,
-                      child: AspectRatio(
-                        aspectRatio: 16 / 9,
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
-                          child: theme == null
-                              ? const ColoredBox(color: JournalColors.pinkBg)
-                              : Image.asset(
-                                  theme.posterPath,
-                                  fit: BoxFit.cover,
-                                  cacheWidth: 260,
-                                  filterQuality: FilterQuality.medium,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return const ColoredBox(
-                                      color: JournalColors.pinkBg,
-                                      child: Icon(
-                                        Icons.auto_stories_outlined,
-                                        color: JournalColors.pinkMain,
-                                      ),
-                                    );
-                                  },
-                                ),
-                        ),
-                      ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '灵感书签',
+                    style: AppTextStyles.cardTitle.copyWith(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 10),
+              Text(
+                entry?.text ?? '每天一句，给自己一点清醒和温柔',
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
+                style: AppTextStyles.body.copyWith(
+                  color: colors.textPrimary,
+                  fontWeight: FontWeight.w500,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                theme == null ? '进入灵感页' : '${theme.name} · 今日一句',
+                style: AppTextStyles.caption.copyWith(
+                  color: colors.journal,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
         );
       },
@@ -390,11 +330,12 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     BuildContext context,
     AsyncValue<int> todayCount,
   ) {
+    final colors = context.growthColors;
     final count = todayCount.whenOrNull(data: (c) => c) ?? 0;
 
     return PlanModuleActionImageCard(
       module: PlanModuleType.journal,
-      color: JournalColors.pinkMain,
+      color: colors.journal,
       onTap: () => context.push('/plan/journal/write'),
       title: '今日记录',
       caption: count > 0 ? '已记录 $count 篇，继续把今天留在纸上' : '开始记录今天的成长',
@@ -647,15 +588,16 @@ class _JournalPageState extends ConsumerState<JournalPage> {
     JournalFolderSelection selectedFolder,
     AsyncValue<List<String>> allTags,
   ) {
+    final colors = context.growthColors;
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
       decoration: BoxDecoration(
         color: context.growthColors.card.withValues(alpha: 0.88),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: JournalColors.pinkBorder),
+        border: Border.all(color: colors.journal.withValues(alpha: 0.16)),
         boxShadow: [
           BoxShadow(
-            color: JournalColors.pinkMain.withValues(alpha: 0.08),
+            color: colors.journal.withValues(alpha: 0.08),
             blurRadius: 22,
             offset: const Offset(0, 10),
           ),
@@ -667,7 +609,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
           Row(
             children: [
               Expanded(child: _buildSectionTitle('最近日记 ✨')),
-              SortButton(
+              SortButton<SortOption>.legacy(
                 currentSort: ref.watch(journalSortProvider),
                 onSortChanged: (s) =>
                     ref.read(journalSortProvider.notifier).state = s,
@@ -675,10 +617,10 @@ class _JournalPageState extends ConsumerState<JournalPage> {
             ],
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             '按文件夹和标签筛选你的记录',
             style: TextStyle(
-              color: JournalColors.textSecondary,
+              color: colors.textSecondary,
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -697,6 +639,7 @@ class _JournalPageState extends ConsumerState<JournalPage> {
   // ---------------------------------------------------------------------------
 
   Widget _buildEmptyState() {
+    final colors = context.growthColors;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 40),
       child: Center(
@@ -709,11 +652,11 @@ class _JournalPageState extends ConsumerState<JournalPage> {
               fit: BoxFit.contain,
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               '还没有日记，写下今天的第一句话吧',
               style: TextStyle(
                 fontSize: 14,
-                color: JournalColors.textSecondary,
+                color: colors.textSecondary,
               ),
             ),
           ],

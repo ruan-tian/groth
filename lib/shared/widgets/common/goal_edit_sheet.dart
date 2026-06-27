@@ -19,7 +19,7 @@ class GoalEditSheet extends StatefulWidget {
     this.max = 999,
     this.step = 1,
     this.suggestion,
-    required this.color,
+    this.color,
     required this.onSave,
   });
 
@@ -30,7 +30,7 @@ class GoalEditSheet extends StatefulWidget {
   final int max;
   final int step;
   final String? suggestion;
-  final Color color;
+  final Color? color;
   final ValueChanged<int> onSave;
 
   static Future<void> show({
@@ -42,7 +42,7 @@ class GoalEditSheet extends StatefulWidget {
     int max = 999,
     int step = 1,
     String? suggestion,
-    required Color color,
+    Color? color,
     required ValueChanged<int> onSave,
   }) {
     return showModalBottomSheet(
@@ -78,6 +78,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
+    final accent = widget.color ?? colors.primary;
 
     return Container(
       decoration: BoxDecoration(
@@ -119,7 +120,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
                     ? () => setState(() => _tempValue -= widget.step)
                     : null,
                 icon: const Icon(Icons.remove_circle_outline, size: 32),
-                color: widget.color,
+                color: accent,
               ),
               const SizedBox(width: 24),
               Column(
@@ -129,7 +130,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
                     style: TextStyle(
                       fontSize: 48,
                       fontWeight: FontWeight.w700,
-                      color: widget.color,
+                      color: accent,
                     ),
                   ),
                   Text(
@@ -144,7 +145,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
                     ? () => setState(() => _tempValue += widget.step)
                     : null,
                 icon: const Icon(Icons.add_circle_outline, size: 32),
-                color: widget.color,
+                color: accent,
               ),
             ],
           ),
@@ -171,7 +172,7 @@ class _GoalEditSheetState extends State<GoalEditSheet> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: widget.color,
+                backgroundColor: accent,
                 foregroundColor: colors.textOnAccent,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(

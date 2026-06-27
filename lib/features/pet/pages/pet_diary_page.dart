@@ -5,8 +5,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
-import '../../../core/database/app_database.dart';
-import '../../../shared/providers/pet_diary_provider.dart';
+import '../models/pet_data.dart';
+import '../providers/pet_diary_provider.dart';
 import '../../../shared/providers/service_providers.dart';
 import '../../../core/domain/pet/pet_diary_draft.dart';
 import '../widgets/pet_diary_data_preview_sheet.dart';

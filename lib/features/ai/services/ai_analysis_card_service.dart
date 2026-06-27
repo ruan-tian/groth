@@ -1,4 +1,4 @@
-import '../../study/services/knowledge_card_ai_service.dart';
+import '../../knowledge/services/knowledge_card_ai_service.dart';
 
 class AiAnalysisCardService {
   const AiAnalysisCardService();

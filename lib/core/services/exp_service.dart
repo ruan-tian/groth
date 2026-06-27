@@ -1,4 +1,4 @@
-import 'dart:math';
+﻿import 'dart:math';
 
 /// 经验值计算服务。
 ///
@@ -6,7 +6,7 @@ import 'dart:math';
 /// GrowthExpLogs 总经验派生，宠物不再拥有独立经验曲线。
 class ExpService {
   /// 每级经验系数（用于等级计算公式）
-  static const int expPerLevelUnit = 5;
+  static const int expPerLevelUnit = 100;
 
   /// 每分钟基础经验
   static const int minutesPerBaseExp = 10;
@@ -74,9 +74,9 @@ class ExpService {
   // 日记经验值
   // ---------------------------------------------------------------------------
 
-  /// 计算单篇日记获得的经验值。
+  /// 计算单篇日记获得的经验值（不含每日上限裁剪）。
   ///
-  /// 每日上限 20 EXP。
+  /// 每日上限 20 EXP 由调用方在保存时执行。
   /// - [wordCount] 字数
   int calculateJournalExp({required int wordCount}) {
     const base = 5;
@@ -139,15 +139,15 @@ class ExpService {
   }
 
   /// 获取当前等级起点所需的总经验值。
-  int getExpForLevelStart(int currentLevel) {
+  static int getExpForLevelStart(int currentLevel) {
     if (currentLevel <= 1) return 0;
     return (currentLevel - 1) * (currentLevel - 1) * expPerLevelUnit;
   }
 
   /// 获取升到下一级所需的总经验值。
   ///
-  /// 公式：`(currentLevel * currentLevel) * 100`
-  int getExpForNextLevel(int currentLevel) {
+  /// 公式：`(currentLevel * currentLevel) * expPerLevelUnit`
+  static int getExpForNextLevel(int currentLevel) {
     return currentLevel * currentLevel * expPerLevelUnit;
   }
 

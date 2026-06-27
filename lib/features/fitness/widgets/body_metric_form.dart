@@ -5,8 +5,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/design/design.dart';
 import '../../../core/database/app_database.dart';
-import '../../../shared/providers/database_provider.dart';
-import '../../../shared/providers/fitness_provider.dart';
+import '../../fitness/providers/fitness_provider.dart';
+import '../../../shared/providers/repository_providers.dart'
+    show fitnessRepositoryProvider;
 
 /// 身体数据记录表单
 ///
@@ -83,8 +84,7 @@ class _BodyMetricFormState extends ConsumerState<BodyMetricForm> {
         createdAt: Value(now.millisecondsSinceEpoch),
       );
 
-      final db = ref.read(databaseProvider);
-      await db.into(db.bodyMetrics).insert(companion);
+      await ref.read(fitnessRepositoryProvider).insertBodyMetric(companion);
 
       // 刷新数据
       ref.invalidate(allBodyMetricsProvider);
