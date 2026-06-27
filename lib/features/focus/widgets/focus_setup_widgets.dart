@@ -82,7 +82,7 @@ class _LandscapeFocusSetup extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
-        const _FocusRail(),
+        const _FocusRail(selectedIndex: 0),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.fromLTRB(28, 22, 18, 28),

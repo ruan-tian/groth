@@ -71,7 +71,7 @@ class AppDatabase extends _$AppDatabase {
   MigrationStrategy get migration {
     return MigrationStrategy(
       beforeOpen: (details) async {
-        await customStatement('PRAGMA busy_timeout = 5000');
+        await customStatement('PRAGMA busy_timeout = 15000');
         await customStatement('PRAGMA journal_mode = WAL');
         await customStatement('PRAGMA synchronous = NORMAL');
         await customStatement('PRAGMA foreign_keys = ON');
@@ -254,8 +254,14 @@ class AppDatabase extends _$AppDatabase {
       'CREATE INDEX IF NOT EXISTS idx_ai_chat_messages_session ON ai_chat_messages(session_id, created_at)',
     ];
 
-    for (final statement in statements) {
-      await customStatement(statement);
+    // 分批执行，每批 10 条，批间释放事件循环避免长时间持锁
+    const batchSize = 10;
+    for (var i = 0; i < statements.length; i += batchSize) {
+      final batch = statements.sublist(i, (i + batchSize).clamp(0, statements.length));
+      for (final statement in batch) {
+        await customStatement(statement);
+      }
+      await Future<void>.delayed(Duration.zero);
     }
   }
 

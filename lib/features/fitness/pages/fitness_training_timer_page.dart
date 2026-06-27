@@ -14,6 +14,7 @@ import '../../plan/services/reminder_notification_service.dart';
 import '../models/workout_session_state.dart';
 import '../providers/workout_session_provider.dart';
 import '../utils/fitness_timer_assets.dart';
+import '../../../shared/constants/notification_ids.dart';
 
 part '../widgets/fitness_training_timer_widgets.dart';
 part '../widgets/fitness_training_timer_sheets.dart';
@@ -315,7 +316,7 @@ class _FitnessTrainingTimerPageState
     await ref
         .read(reminderNotificationServiceProvider)
         .showImmediate(
-          id: 5206,
+          id: NotificationIds.fitnessTraining,
           title: '训练完成',
           body: '${session.templateName} 已完成，辛苦啦！记录一下今天的感受吧',
           payload: 'fitness_complete',

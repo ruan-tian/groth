@@ -12,17 +12,20 @@ class FocusSoundPanel extends ConsumerWidget {
     required this.initialSoundType,
     this.compact = false,
     this.dark = false,
+    this.accentColor,
     this.onSoundChanged,
   });
 
   final String initialSoundType;
   final bool compact;
   final bool dark;
+  final Color? accentColor;
   final ValueChanged<String?>? onSoundChanged;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = context.growthColors;
+    final accent = accentColor ?? colors.focus;
     final audioState = ref.watch(focusAudioStateProvider);
     final selectedSound = initialSoundType.isEmpty ? 'none' : initialSoundType;
     final current = selectedSound == 'none'
@@ -36,14 +39,16 @@ class FocusSoundPanel extends ConsumerWidget {
     return Container(
       padding: EdgeInsets.all(compact ? 12 : 20),
       decoration: BoxDecoration(
-        color: (dark ? colors.card : colors.paper).withValues(
-          alpha: dark ? 0.88 : 0.82,
-        ),
+        color: Color.lerp(
+          dark ? colors.card : colors.paper,
+          accent,
+          dark ? 0.05 : 0.04,
+        )!.withValues(alpha: dark ? 0.90 : 0.84),
         borderRadius: BorderRadius.circular(compact ? 20 : 24),
-        border: Border.all(color: colors.border.withValues(alpha: 0.76)),
+        border: Border.all(color: accent.withValues(alpha: 0.18)),
         boxShadow: [
           BoxShadow(
-            color: colors.shadow.withValues(alpha: dark ? 0.55 : 0.32),
+            color: accent.withValues(alpha: dark ? 0.18 : 0.12),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -56,7 +61,7 @@ class FocusSoundPanel extends ConsumerWidget {
             children: [
               Icon(
                 Icons.music_note_rounded,
-                color: colors.textPrimary,
+                color: accent,
                 size: compact ? 17 : 20,
               ),
               SizedBox(width: compact ? 6 : 8),
@@ -87,18 +92,53 @@ class FocusSoundPanel extends ConsumerWidget {
           _AudioModeSwitch(
             musicMode: musicMode,
             compact: compact,
+            accent: accent,
             onNoise: () => onSoundChanged?.call(noiseFallback),
             onMusic: () => onSoundChanged?.call('music'),
           ),
           SizedBox(height: compact ? 10 : 14),
-          if (musicMode)
-            _FocusMusicPanel(compact: compact, onSoundChanged: onSoundChanged)
-          else
-            _NoisePanel(
-              current: current,
-              compact: compact,
-              onSoundChanged: onSoundChanged,
-            ),
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 320),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            layoutBuilder: (currentChild, previousChildren) {
+              return Stack(
+                alignment: Alignment.topCenter,
+                children: [...previousChildren, ?currentChild],
+              );
+            },
+            transitionBuilder: (child, animation) {
+              final curved = CurvedAnimation(
+                parent: animation,
+                curve: Curves.easeOutCubic,
+                reverseCurve: Curves.easeInCubic,
+              );
+              return FadeTransition(
+                opacity: curved,
+                child: SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(0.04, 0),
+                    end: Offset.zero,
+                  ).animate(curved),
+                  child: child,
+                ),
+              );
+            },
+            child: musicMode
+                ? _FocusMusicPanel(
+                    key: const ValueKey('music'),
+                    compact: compact,
+                    accent: accent,
+                    onSoundChanged: onSoundChanged,
+                  )
+                : _NoisePanel(
+                    key: const ValueKey('noise'),
+                    current: current,
+                    compact: compact,
+                    accent: accent,
+                    onSoundChanged: onSoundChanged,
+                  ),
+          ),
         ],
       ),
     );
@@ -109,12 +149,14 @@ class _AudioModeSwitch extends StatelessWidget {
   const _AudioModeSwitch({
     required this.musicMode,
     required this.compact,
+    required this.accent,
     required this.onNoise,
     required this.onMusic,
   });
 
   final bool musicMode;
   final bool compact;
+  final Color accent;
   final VoidCallback onNoise;
   final VoidCallback onMusic;
 
@@ -132,14 +174,14 @@ class _AudioModeSwitch extends StatelessWidget {
           _ModeButton(
             label: '白噪音',
             selected: !musicMode,
-            activeColor: colors.focus,
+            activeColor: accent,
             compact: compact,
             onTap: onNoise,
           ),
           _ModeButton(
             label: '本地音乐',
             selected: musicMode,
-            activeColor: colors.focus,
+            activeColor: accent,
             compact: compact,
             onTap: onMusic,
           ),
@@ -197,13 +239,16 @@ class _ModeButton extends StatelessWidget {
 
 class _NoisePanel extends ConsumerWidget {
   const _NoisePanel({
+    super.key,
     required this.current,
     required this.compact,
+    required this.accent,
     required this.onSoundChanged,
   });
 
   final String current;
   final bool compact;
+  final Color accent;
   final ValueChanged<String?>? onSoundChanged;
 
   @override
@@ -224,6 +269,7 @@ class _NoisePanel extends ConsumerWidget {
                   asset: sound.asset,
                   selected: selected,
                   compact: compact,
+                  accent: accent,
                   onTap: () {
                     onSoundChanged?.call(
                       sound.value == 'none' ? null : sound.value,
@@ -256,7 +302,7 @@ class _NoisePanel extends ConsumerWidget {
                 min: 0,
                 max: 1,
                 divisions: 20,
-                activeColor: colors.focus,
+                activeColor: accent,
                 inactiveColor: colors.border.withValues(alpha: 0.55),
                 onChanged: (value) {
                   ref.read(focusAudioStateProvider.notifier).setVolume(value);
@@ -279,9 +325,15 @@ class _NoisePanel extends ConsumerWidget {
 }
 
 class _FocusMusicPanel extends ConsumerWidget {
-  const _FocusMusicPanel({required this.compact, required this.onSoundChanged});
+  const _FocusMusicPanel({
+    super.key,
+    required this.compact,
+    required this.accent,
+    required this.onSoundChanged,
+  });
 
   final bool compact;
+  final Color accent;
   final ValueChanged<String?>? onSoundChanged;
 
   @override
@@ -342,6 +394,7 @@ class _FocusMusicPanel extends ConsumerWidget {
                 icon: state.isPlaying
                     ? Icons.pause_rounded
                     : Icons.play_arrow_rounded,
+                accent: accent,
                 onTap: () {
                   onSoundChanged?.call('music');
                   ref.read(focusAudioStateProvider.notifier).stopNoise();
@@ -356,20 +409,25 @@ class _FocusMusicPanel extends ConsumerWidget {
           children: [
             _FocusMusicButton(
               icon: Icons.skip_previous_rounded,
+              accent: accent,
               onTap: state.hasTracks ? facade.playPrevious : null,
             ),
             SizedBox(width: compact ? 6 : 8),
             _FocusMusicButton(
               icon: Icons.skip_next_rounded,
+              accent: accent,
               onTap: state.hasTracks ? facade.playNext : null,
             ),
             SizedBox(width: compact ? 6 : 8),
-            Expanded(child: _FocusCollectionButton(state: state)),
+            Expanded(
+              child: _FocusCollectionButton(state: state, accent: accent),
+            ),
             SizedBox(width: compact ? 6 : 8),
             _FocusMusicButton(
               icon: state.isImporting
                   ? Icons.hourglass_empty_rounded
                   : Icons.add_rounded,
+              accent: accent,
               onTap: state.isImporting
                   ? null
                   : () => facade.controller.importTracks(),
@@ -390,7 +448,7 @@ class _FocusMusicPanel extends ConsumerWidget {
                 min: 0,
                 max: 1,
                 divisions: 20,
-                activeColor: colors.focus,
+                activeColor: accent,
                 inactiveColor: colors.border.withValues(alpha: 0.55),
                 onChanged: facade.setVolume,
               ),
@@ -411,9 +469,10 @@ class _FocusMusicPanel extends ConsumerWidget {
 }
 
 class _FocusCollectionButton extends ConsumerWidget {
-  const _FocusCollectionButton({required this.state});
+  const _FocusCollectionButton({required this.state, required this.accent});
 
   final MusicPlayerState state;
+  final Color accent;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -426,7 +485,7 @@ class _FocusCollectionButton extends ConsumerWidget {
         decoration: BoxDecoration(
           color: colors.surface.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: colors.border.withValues(alpha: 0.7)),
+          border: Border.all(color: accent.withValues(alpha: 0.22)),
         ),
         child: Text(
           '${state.selectedCollection.label} · ${state.selectedTracks.length}',
@@ -442,9 +501,14 @@ class _FocusCollectionButton extends ConsumerWidget {
 }
 
 class _FocusMusicButton extends StatelessWidget {
-  const _FocusMusicButton({required this.icon, required this.onTap});
+  const _FocusMusicButton({
+    required this.icon,
+    required this.accent,
+    required this.onTap,
+  });
 
   final IconData icon;
+  final Color accent;
   final VoidCallback? onTap;
 
   @override
@@ -459,12 +523,9 @@ class _FocusMusicButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: colors.surface.withValues(alpha: 0.72),
           borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: colors.border.withValues(alpha: 0.7)),
+          border: Border.all(color: accent.withValues(alpha: 0.22)),
         ),
-        child: Icon(
-          icon,
-          color: onTap == null ? colors.textHint : colors.focus,
-        ),
+        child: Icon(icon, color: onTap == null ? colors.textHint : accent),
       ),
     );
   }
@@ -477,6 +538,7 @@ class _SessionSoundTile extends StatelessWidget {
     required this.asset,
     required this.selected,
     required this.compact,
+    required this.accent,
     required this.onTap,
   });
 
@@ -485,12 +547,13 @@ class _SessionSoundTile extends StatelessWidget {
   final String asset;
   final bool selected;
   final bool compact;
+  final Color accent;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final selectedColor = colors.focus;
+    final selectedColor = accent;
 
     return Semantics(
       button: true,

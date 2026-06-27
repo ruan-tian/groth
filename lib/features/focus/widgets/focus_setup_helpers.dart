@@ -27,7 +27,7 @@ class _TopBar extends StatelessWidget {
             '番茄钟',
             style: TextStyle(
               color: colors.textPrimary,
-              fontSize: compact ? 28 : 22,
+              fontSize: compact ? 20 : 28,
               fontWeight: FontWeight.w900,
             ),
           ),
@@ -135,16 +135,19 @@ class _FocusHistoryButton extends StatelessWidget {
 // ---------------------------------------------------------------------------
 
 class _FocusRail extends StatelessWidget {
-  const _FocusRail();
+  const _FocusRail({required this.selectedIndex, this.onSelect});
+
+  final int selectedIndex;
+  final ValueChanged<int>? onSelect;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
     final items = [
-      (FocusAssets.iconPomodoro, '番茄钟', true),
-      (FocusAssets.catReading, '专注', false),
-      (FocusAssets.soundWhiteNoise, '白噪音', false),
-      (FocusAssets.catIdle, '设置', false),
+      (FocusAssets.iconPomodoro, '番茄钟'),
+      (FocusAssets.catReading, '专注'),
+      (FocusAssets.soundWhiteNoise, '白噪音'),
+      (FocusAssets.catIdle, '设置'),
     ];
 
     return Container(
@@ -158,8 +161,13 @@ class _FocusRail extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 20),
-          for (final item in items) ...[
-            _RailItem(asset: item.$1, label: item.$2, selected: item.$3),
+          for (int i = 0; i < items.length; i++) ...[
+            _RailItem(
+              asset: items[i].$1,
+              label: items[i].$2,
+              selected: i == selectedIndex,
+              onTap: onSelect != null ? () => onSelect!(i) : null,
+            ),
             const SizedBox(height: 14),
           ],
           const Spacer(),
@@ -176,38 +184,43 @@ class _RailItem extends StatelessWidget {
     required this.asset,
     required this.label,
     required this.selected,
+    this.onTap,
   });
 
   final String asset;
   final String label;
   final bool selected;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    return Container(
-      width: 74,
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: BoxDecoration(
-        color: selected
-            ? colors.focus.withValues(alpha: 0.12)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-        border: selected ? Border.all(color: colors.focus) : null,
-      ),
-      child: Column(
-        children: [
-          Image.asset(asset, width: 38, height: 38),
-          const SizedBox(height: 5),
-          Text(
-            label,
-            style: TextStyle(
-              color: selected ? colors.focus : colors.textSecondary,
-              fontSize: 12,
-              fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 74,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected
+              ? colors.focus.withValues(alpha: 0.12)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(18),
+          border: selected ? Border.all(color: colors.focus) : null,
+        ),
+        child: Column(
+          children: [
+            Image.asset(asset, width: 38, height: 38),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected ? colors.focus : colors.textSecondary,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

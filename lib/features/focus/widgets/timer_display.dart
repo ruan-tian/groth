@@ -52,9 +52,9 @@ class _TimerDisplayState extends State<TimerDisplay>
     super.initState();
     _breatheController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 4),
+      duration: const Duration(seconds: 6),
     );
-    _breatheAnimation = Tween<double>(begin: 1, end: 1.035).animate(
+    _breatheAnimation = Tween<double>(begin: 1, end: 1.012).animate(
       CurvedAnimation(parent: _breatheController, curve: Curves.easeInOut),
     );
     _breatheController.repeat(reverse: true);
@@ -368,13 +368,13 @@ class _TimerDisplayState extends State<TimerDisplay>
 double _timerGlassAlpha(int level) {
   switch (level.clamp(0, 3)) {
     case 0:
-      return 0.14;
+      return 0.08;
     case 1:
-      return 0.20;
+      return 0.18;
     case 2:
-      return 0.28;
+      return 0.32;
     default:
-      return 0.38;
+      return 0.52;
   }
 }
 

@@ -18,6 +18,7 @@ import '../../dashboard/providers/dashboard_provider.dart'
 import '../../../shared/providers/focus_audio_provider.dart';
 import '../providers/focus_provider.dart';
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/constants/notification_ids.dart';
 import '../../study/providers/study_provider.dart';
 import '../../../core/domain/pet/pet_event.dart';
 import '../../../core/services/pet_event_bus.dart';
@@ -366,6 +367,7 @@ class FocusSessionPage extends ConsumerStatefulWidget {
 class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     with WidgetsBindingObserver {
   bool _saved = false;
+  bool _cancelRequested = false;
   final Set<String> _savedRoundKeys = {};
   bool _phaseCompletionHandled = false;
   bool _completionDialogShown = false;
@@ -671,7 +673,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   }
 
   Future<void> _showThemeSheet() async {
-    final selected = await showModalBottomSheet<int>(
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -689,15 +691,21 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
         onBackgroundBlurLevelChanged: _setBackgroundBlurLevel,
         onBackgroundDimLevelChanged: _setBackgroundDimLevel,
         onGlassOpacityLevelChanged: _setGlassOpacityLevel,
+        onThemeSelected: _setSelectedTheme,
       ),
     );
-    if (!mounted || selected == null) return;
-    final nextIndex = selected < 0 ? null : selected;
-    setState(() => _selectedThemeIndex = nextIndex);
+  }
+
+  void _setSelectedTheme(int? themeIndex) {
+    if (!mounted || themeIndex == _selectedThemeIndex) return;
+    setState(() => _selectedThemeIndex = themeIndex);
     unawaited(
       ref
           .read(settingRepositoryProvider)
-          .setSetting(_focusSceneryThemeKey, nextIndex?.toString() ?? ''),
+          .setSetting(
+            _focusSceneryThemeKey,
+            themeIndex?.toString() ?? '',
+          ),
     );
   }
 
@@ -731,7 +739,7 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
       ref
           .read(reminderNotificationServiceProvider)
           .showImmediate(
-            id: 5205,
+            id: NotificationIds.focusSession,
             title: '专注时间结束',
             body: cycleState.isLastRound
                 ? '所有轮次完成！休息一下吧～'
@@ -779,8 +787,12 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
   }
 
   Future<void> _saveFocusRound({required bool completed}) async {
-    if (_saved) return;
+    if (_saved) {
+      if (!completed) _cancelRequested = true;
+      return;
+    }
     _saved = true;
+    _cancelRequested = false;
 
     try {
       final cycleState = ref.read(focusCycleProvider);
@@ -893,7 +905,14 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
     } catch (e) {
       debugPrint('保存专注记录失败: $e');
     } finally {
+      final wasCancelRequested = _cancelRequested;
       _saved = false;
+      _cancelRequested = false;
+
+      // 如果保存完成但用户请求了取消，追加一条取消记录
+      if (completed && wasCancelRequested) {
+        await _saveFocusRound(completed: false);
+      }
     }
   }
 
@@ -1035,7 +1054,8 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                   ),
                 ),
                 if (isCompactLandscape)
-                  _CompactLandscapeSession(
+                  _SessionLayout(
+                    layoutType: _SessionLayoutType.compactLandscape,
                     cycleState: cycleState,
                     isCycleDone: isCycleDone,
                     soundPanelOpen: _soundPanelOpen,
@@ -1058,7 +1078,8 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onToggleLock: _toggleLock,
                   )
                 else if (isLandscape)
-                  _LandscapeSession(
+                  _SessionLayout(
+                    layoutType: _SessionLayoutType.landscape,
                     cycleState: cycleState,
                     isCycleDone: isCycleDone,
                     soundPanelOpen: _soundPanelOpen,
@@ -1081,7 +1102,8 @@ class _FocusSessionPageState extends ConsumerState<FocusSessionPage>
                     onToggleLock: _toggleLock,
                   )
                 else
-                  _PortraitSession(
+                  _SessionLayout(
+                    layoutType: _SessionLayoutType.portrait,
                     cycleState: cycleState,
                     isCycleDone: isCycleDone,
                     soundPanelOpen: _soundPanelOpen,

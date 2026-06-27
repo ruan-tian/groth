@@ -469,8 +469,15 @@ class _FocusBackdropMaterialOverlay extends StatelessWidget {
   }
 }
 
-class _PortraitSession extends StatelessWidget {
-  const _PortraitSession({
+// ── 会话布局类型 ──
+
+enum _SessionLayoutType { portrait, landscape, compactLandscape }
+
+// ── 统一会话布局（合并原 Portrait/Landscape/CompactLandscape） ──
+
+class _SessionLayout extends StatelessWidget {
+  const _SessionLayout({
+    required this.layoutType,
     required this.cycleState,
     required this.isCycleDone,
     required this.soundPanelOpen,
@@ -493,6 +500,7 @@ class _PortraitSession extends StatelessWidget {
     required this.onToggleControls,
   });
 
+  final _SessionLayoutType layoutType;
   final FocusCycleState cycleState;
   final bool isCycleDone;
   final bool soundPanelOpen;
@@ -514,28 +522,33 @@ class _PortraitSession extends StatelessWidget {
   final VoidCallback onSoundPanelClose;
   final VoidCallback onToggleControls;
 
+  bool get isPortrait => layoutType == _SessionLayoutType.portrait;
+  bool get compact => layoutType == _SessionLayoutType.compactLandscape;
+
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
     final safeHeight = size.height - padding.vertical;
-    final timerSize = math.min(
-      size.width * 0.88,
-      math.min(safeHeight * 0.52, 420.0),
-    );
-    final stageHeight = 8 + timerSize;
-    final stageTop = (padding.top + safeHeight * 0.38 - stageHeight / 2).clamp(
-      padding.top + 48.0,
-      size.height - stageHeight - 200.0,
-    );
     final accent = backgroundTone.accent;
     final showTopChrome = controlsVisible;
     final showUnlockedChrome = controlsVisible && !locked;
 
+    // ── 计时器尺寸（竖屏/横屏不同） ──
+    final timerSize = isPortrait
+        ? math.min(size.width * 0.88, math.min(safeHeight * 0.52, 420.0))
+        : math.min(math.min(safeHeight * 0.82, size.width * 0.48), 640.0);
+    final stageHeight = 8 + timerSize;
+    final stageTop = isPortrait
+        ? (padding.top + safeHeight * 0.38 - stageHeight / 2).clamp(
+            padding.top + 48.0,
+            size.height - stageHeight - 200.0,
+          )
+        : padding.top + safeHeight * 0.50 - timerSize / 2 - 8;
+
     return Stack(
       children: [
-        // 1. Full-screen gesture layer. It stays below top controls so lock and
-        // theme buttons remain tappable.
+        // 1. 全屏手势层
         _FocusSessionTapLayer(
           size: size,
           controlsVisible: controlsVisible,
@@ -543,18 +556,23 @@ class _PortraitSession extends StatelessWidget {
           onToggleControls: onToggleControls,
         ),
 
+        // 2. 桌面背景
         if (!usingCustomTheme)
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: Image.asset(FocusAssets.deskPortrait, fit: BoxFit.fitWidth),
+            child: Image.asset(
+              isPortrait ? FocusAssets.deskPortrait : FocusAssets.deskLandscape,
+              fit: BoxFit.fitWidth,
+            ),
           ),
 
+        // 3. 顶部操作栏
         _TopSessionChrome(
-          top: padding.top + 8,
-          left: 20,
-          right: 20,
+          top: padding.top + (isPortrait ? 8 : 12),
+          left: isPortrait ? 20 : 30,
+          right: isPortrait ? 20 : 30,
           centeredBack: false,
           showActions: showUnlockedChrome,
           showLock: showTopChrome,
@@ -567,436 +585,170 @@ class _PortraitSession extends StatelessWidget {
           onToggleLock: onToggleLock,
         ),
 
-        // 3. 计时器主体
-        Positioned(
-          top: stageTop,
-          left: 0,
-          right: 0,
-          child: _CenteredTimerStage(
-            cycleState: cycleState,
-            timerSize: timerSize,
-            showCat: true,
-            showTitle: controlsVisible,
-            accent: accent,
-            glassOpacityLevel: glassOpacityLevel,
-          ),
-        ),
-
-        // 5. 控制按钮（点击显示/隐藏，带动画）
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
-          left: 0,
-          right: 0,
-          top: showUnlockedChrome
-              ? stageTop + stageHeight + 20
-              : size.height + 100,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            opacity: showUnlockedChrome ? 1.0 : 0.0,
-            child: _SessionControls(
+        // 4. 计时器主体
+        if (isPortrait)
+          Positioned(
+            top: stageTop,
+            left: 0,
+            right: 0,
+            child: _CenteredTimerStage(
               cycleState: cycleState,
-              isCycleDone: isCycleDone,
-              onCancel: onCancel,
-              onPause: onPause,
-              onResume: onResume,
-              onSkipBreak: onSkipBreak,
-              onReturn: onReturn,
-              compact: false,
-              subdued: false,
+              timerSize: timerSize,
+              showCat: true,
+              showTitle: controlsVisible,
+              accent: accent,
+              glassOpacityLevel: glassOpacityLevel,
+            ),
+          )
+        else
+          Positioned(
+            top: stageTop,
+            left: size.width * 0.05,
+            width: size.width * 0.55,
+            child: _CenteredTimerStage(
+              cycleState: cycleState,
+              timerSize: timerSize,
+              showCat: true,
+              showTitle: controlsVisible,
+              compact: compact,
+              accent: accent,
+              glassOpacityLevel: glassOpacityLevel,
+            ),
+          ),
+
+        // 5. 控制按钮
+        if (isPortrait)
+          // 竖屏：计时器下方
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            left: 0,
+            right: 0,
+            top: showUnlockedChrome
+                ? stageTop + stageHeight + 20
+                : size.height + 100,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              opacity: showUnlockedChrome ? 1.0 : 0.0,
+              child: _SessionControls(
+                cycleState: cycleState,
+                isCycleDone: isCycleDone,
+                onCancel: onCancel,
+                onPause: onPause,
+                onResume: onResume,
+                onSkipBreak: onSkipBreak,
+                onReturn: onReturn,
+                compact: false,
+                subdued: false,
+                accent: accent,
+                glassOpacityLevel: glassOpacityLevel,
+              ),
+            ),
+          )
+        else
+          // 横屏：右侧面板
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            right: showUnlockedChrome ? 38 : -400,
+            top: padding.top + safeHeight * 0.31,
+            width: math.min(360.0, size.width * 0.28),
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              opacity: showUnlockedChrome ? 1.0 : 0.0,
+              child: IgnorePointer(
+                ignoring: !showUnlockedChrome,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SessionControls(
+                      cycleState: cycleState,
+                      isCycleDone: isCycleDone,
+                      onCancel: onCancel,
+                      onPause: onPause,
+                      onResume: onResume,
+                      onSkipBreak: onSkipBreak,
+                      onReturn: onReturn,
+                      compact: compact,
+                      subdued: true,
+                      accent: accent,
+                      glassOpacityLevel: glassOpacityLevel,
+                    ),
+                    const SizedBox(height: 24),
+                    _NextPhasePill(
+                      cycleState: cycleState,
+                      compact: compact,
+                      accent: accent,
+                      glassOpacityLevel: glassOpacityLevel,
+                    ),
+                    const SizedBox(height: 12),
+                    _FocusSoundDock(
+                      initialSoundType: cycleState.soundType ?? 'none',
+                      onTap: onSoundPanelToggle,
+                      compact: compact,
+                      accent: accent,
+                      glassOpacityLevel: glassOpacityLevel,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // 6. 底部栏（仅竖屏）
+        if (isPortrait)
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 350),
+            curve: Curves.easeOutCubic,
+            left: 42,
+            right: 42,
+            bottom: showUnlockedChrome ? padding.bottom + 18 : -120,
+            child: AnimatedOpacity(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeOutCubic,
+              opacity: showUnlockedChrome ? 1.0 : 0.0,
+              child: IgnorePointer(
+                ignoring: !showUnlockedChrome,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _NextPhasePill(
+                      cycleState: cycleState,
+                      compact: true,
+                      accent: accent,
+                      glassOpacityLevel: glassOpacityLevel,
+                    ),
+                    const SizedBox(height: 10),
+                    _FocusSoundDock(
+                      initialSoundType: cycleState.soundType ?? 'none',
+                      onTap: onSoundPanelToggle,
+                      accent: accent,
+                      glassOpacityLevel: glassOpacityLevel,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+
+        // 7. 声音面板：只让面板轻滑入，不推动整页布局。
+        Positioned.fill(
+          child: IgnorePointer(
+            ignoring: !soundPanelOpen,
+            child: _FocusSoundOverlay(
+              visible: soundPanelOpen,
+              landscape: !isPortrait,
+              initialSoundType: cycleState.soundType ?? 'none',
+              onClose: onSoundPanelClose,
+              onSoundChanged: onSoundChanged,
+              compact: compact,
               accent: accent,
               glassOpacityLevel: glassOpacityLevel,
             ),
           ),
         ),
-
-        // 6. 底部栏（点击显示/隐藏，带动画）
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
-          left: 42,
-          right: 42,
-          bottom: showUnlockedChrome ? padding.bottom + 18 : -120,
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            opacity: showUnlockedChrome ? 1.0 : 0.0,
-            child: IgnorePointer(
-              ignoring: !showUnlockedChrome,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _NextPhasePill(
-                    cycleState: cycleState,
-                    compact: true,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                  const SizedBox(height: 10),
-                  _FocusSoundDock(
-                    initialSoundType: cycleState.soundType ?? 'none',
-                    onTap: onSoundPanelToggle,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // 7. 声音面板
-        if (soundPanelOpen)
-          _FocusSoundOverlay(
-            landscape: false,
-            initialSoundType: cycleState.soundType ?? 'none',
-            onClose: onSoundPanelClose,
-            onSoundChanged: onSoundChanged,
-          ),
-      ],
-    );
-  }
-}
-
-class _LandscapeSession extends StatelessWidget {
-  const _LandscapeSession({
-    required this.cycleState,
-    required this.isCycleDone,
-    required this.soundPanelOpen,
-    required this.controlsVisible,
-    required this.locked,
-    required this.selectedTheme,
-    required this.usingCustomTheme,
-    required this.backgroundTone,
-    required this.glassOpacityLevel,
-    required this.onToggleLock,
-    required this.onOpenThemeSheet,
-    required this.onCancel,
-    required this.onPause,
-    required this.onResume,
-    required this.onSkipBreak,
-    required this.onReturn,
-    required this.onSoundChanged,
-    required this.onSoundPanelToggle,
-    required this.onSoundPanelClose,
-    required this.onToggleControls,
-  });
-
-  final FocusCycleState cycleState;
-  final bool isCycleDone;
-  final bool soundPanelOpen;
-  final bool controlsVisible;
-  final bool locked;
-  final SceneryTheme? selectedTheme;
-  final bool usingCustomTheme;
-  final _FocusBackdropTone backgroundTone;
-  final int glassOpacityLevel;
-  final VoidCallback onToggleLock;
-  final VoidCallback onOpenThemeSheet;
-  final VoidCallback onCancel;
-  final VoidCallback onPause;
-  final VoidCallback onResume;
-  final VoidCallback onSkipBreak;
-  final VoidCallback onReturn;
-  final ValueChanged<String?> onSoundChanged;
-  final VoidCallback onSoundPanelToggle;
-  final VoidCallback onSoundPanelClose;
-  final VoidCallback onToggleControls;
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
-    final safeHeight = size.height - padding.vertical;
-    final timerSize = math.min(
-      math.min(safeHeight * 0.82, size.width * 0.48),
-      640.0,
-    );
-    final stageTop = padding.top + safeHeight * 0.50 - timerSize / 2 - 8;
-    final accent = backgroundTone.accent;
-    final showTopChrome = controlsVisible;
-    final showUnlockedChrome = controlsVisible && !locked;
-
-    return Stack(
-      children: [
-        // 1. Full-screen gesture layer. It stays below top controls so lock and
-        // theme buttons remain tappable.
-        _FocusSessionTapLayer(
-          size: size,
-          controlsVisible: controlsVisible,
-          locked: locked,
-          onToggleControls: onToggleControls,
-        ),
-
-        if (!usingCustomTheme)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Image.asset(FocusAssets.deskLandscape, fit: BoxFit.fitWidth),
-          ),
-
-        _TopSessionChrome(
-          top: padding.top + 12,
-          left: 30,
-          right: 30,
-          centeredBack: false,
-          showActions: showUnlockedChrome,
-          showLock: showTopChrome,
-          locked: locked,
-          accent: accent,
-          glassOpacityLevel: glassOpacityLevel,
-          selectedTheme: selectedTheme,
-          onCancel: onCancel,
-          onOpenThemeSheet: onOpenThemeSheet,
-          onToggleLock: onToggleLock,
-        ),
-
-        // 3. 计时器主体（居中偏左）
-        Positioned(
-          top: stageTop,
-          left: size.width * 0.05,
-          width: size.width * 0.55,
-          child: _CenteredTimerStage(
-            cycleState: cycleState,
-            timerSize: timerSize,
-            showCat: true,
-            showTitle: controlsVisible,
-            accent: accent,
-            glassOpacityLevel: glassOpacityLevel,
-          ),
-        ),
-
-        // 5. 右侧面板（点击显示/隐藏，带动画）
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
-          right: showUnlockedChrome ? 38 : -400,
-          top: padding.top + safeHeight * 0.31,
-          width: math.min(360.0, size.width * 0.28),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            opacity: showUnlockedChrome ? 1.0 : 0.0,
-            child: IgnorePointer(
-              ignoring: !showUnlockedChrome,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _SessionControls(
-                    cycleState: cycleState,
-                    isCycleDone: isCycleDone,
-                    onCancel: onCancel,
-                    onPause: onPause,
-                    onResume: onResume,
-                    onSkipBreak: onSkipBreak,
-                    onReturn: onReturn,
-                    subdued: true,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                  const SizedBox(height: 24),
-                  _NextPhasePill(
-                    cycleState: cycleState,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                  const SizedBox(height: 12),
-                  _FocusSoundDock(
-                    initialSoundType: cycleState.soundType ?? 'none',
-                    onTap: onSoundPanelToggle,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // 6. 声音面板
-        if (soundPanelOpen)
-          _FocusSoundOverlay(
-            landscape: true,
-            initialSoundType: cycleState.soundType ?? 'none',
-            onClose: onSoundPanelClose,
-            onSoundChanged: onSoundChanged,
-          ),
-      ],
-    );
-  }
-}
-
-class _CompactLandscapeSession extends StatelessWidget {
-  const _CompactLandscapeSession({
-    required this.cycleState,
-    required this.isCycleDone,
-    required this.soundPanelOpen,
-    required this.controlsVisible,
-    required this.locked,
-    required this.selectedTheme,
-    required this.usingCustomTheme,
-    required this.backgroundTone,
-    required this.glassOpacityLevel,
-    required this.onToggleLock,
-    required this.onOpenThemeSheet,
-    required this.onCancel,
-    required this.onPause,
-    required this.onResume,
-    required this.onSkipBreak,
-    required this.onReturn,
-    required this.onSoundChanged,
-    required this.onSoundPanelToggle,
-    required this.onSoundPanelClose,
-    required this.onToggleControls,
-  });
-
-  final FocusCycleState cycleState;
-  final bool isCycleDone;
-  final bool soundPanelOpen;
-  final bool controlsVisible;
-  final bool locked;
-  final SceneryTheme? selectedTheme;
-  final bool usingCustomTheme;
-  final _FocusBackdropTone backgroundTone;
-  final int glassOpacityLevel;
-  final VoidCallback onToggleLock;
-  final VoidCallback onOpenThemeSheet;
-  final VoidCallback onCancel;
-  final VoidCallback onPause;
-  final VoidCallback onResume;
-  final VoidCallback onSkipBreak;
-  final VoidCallback onReturn;
-  final ValueChanged<String?> onSoundChanged;
-  final VoidCallback onSoundPanelToggle;
-  final VoidCallback onSoundPanelClose;
-  final VoidCallback onToggleControls;
-
-  @override
-  Widget build(BuildContext context) {
-    final size = MediaQuery.sizeOf(context);
-    final padding = MediaQuery.paddingOf(context);
-    final safeHeight = size.height - padding.vertical;
-    final timerSize = math.min(
-      math.min(safeHeight * 0.82, size.width * 0.48),
-      640.0,
-    );
-    final stageTop = padding.top + safeHeight * 0.50 - timerSize / 2 - 8;
-    final accent = backgroundTone.accent;
-    final showTopChrome = controlsVisible;
-    final showUnlockedChrome = controlsVisible && !locked;
-
-    return Stack(
-      children: [
-        // 1. Full-screen gesture layer. It stays below top controls so lock and
-        // theme buttons remain tappable.
-        _FocusSessionTapLayer(
-          size: size,
-          controlsVisible: controlsVisible,
-          locked: locked,
-          onToggleControls: onToggleControls,
-        ),
-
-        if (!usingCustomTheme)
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            child: Image.asset(FocusAssets.deskLandscape, fit: BoxFit.fitWidth),
-          ),
-
-        _TopSessionChrome(
-          top: padding.top + 12,
-          left: 30,
-          right: 30,
-          centeredBack: false,
-          showActions: showUnlockedChrome,
-          showLock: showTopChrome,
-          locked: locked,
-          accent: accent,
-          glassOpacityLevel: glassOpacityLevel,
-          selectedTheme: selectedTheme,
-          onCancel: onCancel,
-          onOpenThemeSheet: onOpenThemeSheet,
-          onToggleLock: onToggleLock,
-        ),
-
-        // 3. 计时器主体（居中偏左）
-        Positioned(
-          top: stageTop,
-          left: size.width * 0.05,
-          width: size.width * 0.55,
-          child: _CenteredTimerStage(
-            cycleState: cycleState,
-            timerSize: timerSize,
-            showCat: true,
-            showTitle: controlsVisible,
-            compact: true,
-            accent: accent,
-            glassOpacityLevel: glassOpacityLevel,
-          ),
-        ),
-
-        // 5. 右侧面板（点击显示/隐藏，带动画）
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 350),
-          curve: Curves.easeOutCubic,
-          right: showUnlockedChrome ? 38 : -400,
-          top: padding.top + safeHeight * 0.31,
-          width: math.min(360.0, size.width * 0.28),
-          child: AnimatedOpacity(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            opacity: showUnlockedChrome ? 1.0 : 0.0,
-            child: IgnorePointer(
-              ignoring: !showUnlockedChrome,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _SessionControls(
-                    cycleState: cycleState,
-                    isCycleDone: isCycleDone,
-                    onCancel: onCancel,
-                    onPause: onPause,
-                    onResume: onResume,
-                    onSkipBreak: onSkipBreak,
-                    onReturn: onReturn,
-                    compact: true,
-                    subdued: true,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                  const SizedBox(height: 24),
-                  _NextPhasePill(
-                    cycleState: cycleState,
-                    compact: true,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                  const SizedBox(height: 12),
-                  _FocusSoundDock(
-                    initialSoundType: cycleState.soundType ?? 'none',
-                    onTap: onSoundPanelToggle,
-                    compact: true,
-                    accent: accent,
-                    glassOpacityLevel: glassOpacityLevel,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        // 6. 声音面板
-        if (soundPanelOpen)
-          _FocusSoundOverlay(
-            landscape: true,
-            initialSoundType: cycleState.soundType ?? 'none',
-            onClose: onSoundPanelClose,
-            onSoundChanged: onSoundChanged,
-            compact: true,
-          ),
       ],
     );
   }
@@ -1032,15 +784,7 @@ class _FocusSessionTapLayer extends StatelessWidget {
 
   bool _shouldToggle(Offset position) {
     if (locked) return !controlsVisible;
-    if (!controlsVisible) return true;
-
-    final edgeX = size.width * 0.16;
-    final edgeY = size.height * 0.16;
-    final nearHorizontalEdge =
-        position.dx <= edgeX || position.dx >= size.width - edgeX;
-    final nearVerticalEdge =
-        position.dy <= edgeY || position.dy >= size.height - edgeY;
-    return nearHorizontalEdge || nearVerticalEdge;
+    return true;
   }
 }
 
@@ -1178,7 +922,7 @@ class _SmallBackButton extends StatelessWidget {
       minimum: 0.12,
       maximum: 0.28,
     );
-    return GestureDetector(
+    return _PressableScale(
       onTap: onTap,
       child: ClipOval(
         child: BackdropFilter(
@@ -1232,7 +976,7 @@ class _LockButton extends StatelessWidget {
       minimum: 0.12,
       maximum: 0.30,
     );
-    return GestureDetector(
+    return _PressableScale(
       onTap: onToggle,
       child: ClipOval(
         child: BackdropFilter(
@@ -1273,6 +1017,46 @@ class _LockButton extends StatelessWidget {
   }
 }
 
+// ── 按压缩放包装器（统一按钮点击反馈） ──
+
+class _PressableScale extends StatefulWidget {
+  const _PressableScale({required this.onTap, required this.child});
+
+  final VoidCallback? onTap;
+  final Widget child;
+
+  @override
+  State<_PressableScale> createState() => _PressableScaleState();
+}
+
+class _PressableScaleState extends State<_PressableScale> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: widget.onTap != null
+          ? (_) => setState(() => _pressed = true)
+          : null,
+      onTapUp: widget.onTap != null
+          ? (_) {
+              setState(() => _pressed = false);
+              widget.onTap!();
+            }
+          : null,
+      onTapCancel: widget.onTap != null
+          ? () => setState(() => _pressed = false)
+          : null,
+      child: AnimatedScale(
+        scale: _pressed ? 0.965 : 1.0,
+        duration: const Duration(milliseconds: 150),
+        curve: Curves.easeOutQuart,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
 class _ThemeButton extends StatelessWidget {
   const _ThemeButton({
     required this.theme,
@@ -1296,7 +1080,7 @@ class _ThemeButton extends StatelessWidget {
     );
     return Tooltip(
       message: '切换皮肤 · $name',
-      child: GestureDetector(
+      child: _PressableScale(
         onTap: onTap,
         child: ClipOval(
           child: BackdropFilter(
@@ -1346,6 +1130,7 @@ class _FocusThemeSheet extends StatelessWidget {
     required this.onBackgroundBlurLevelChanged,
     required this.onBackgroundDimLevelChanged,
     required this.onGlassOpacityLevelChanged,
+    this.onThemeSelected,
   });
 
   final int? selectedIndex;
@@ -1360,6 +1145,7 @@ class _FocusThemeSheet extends StatelessWidget {
   final ValueChanged<int> onBackgroundBlurLevelChanged;
   final ValueChanged<int> onBackgroundDimLevelChanged;
   final ValueChanged<int> onGlassOpacityLevelChanged;
+  final ValueChanged<int?>? onThemeSelected;
 
   @override
   Widget build(BuildContext context) {
@@ -1384,6 +1170,13 @@ class _FocusThemeSheet extends StatelessWidget {
         final tileAspectRatio = orientation == Orientation.landscape
             ? 1.24
             : 0.72;
+        final accent = currentTone.accent;
+        final selectedThemeName =
+            selectedIndex == null ||
+                selectedIndex! < 0 ||
+                selectedIndex! >= themes.length
+            ? '默认书桌'
+            : themes[selectedIndex!].name;
 
         return Container(
           height: sheetHeight,
@@ -1391,12 +1184,16 @@ class _FocusThemeSheet extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
-            color: colors.card.withValues(alpha: 0.96),
+            color: Color.lerp(
+              colors.card,
+              accent,
+              0.08,
+            )!.withValues(alpha: 0.96),
             borderRadius: BorderRadius.circular(28),
-            border: Border.all(color: colors.border.withValues(alpha: 0.72)),
+            border: Border.all(color: accent.withValues(alpha: 0.18)),
             boxShadow: [
               BoxShadow(
-                color: colors.shadow.withValues(alpha: 0.20),
+                color: accent.withValues(alpha: 0.12),
                 blurRadius: 24,
                 offset: const Offset(0, 12),
               ),
@@ -1417,11 +1214,7 @@ class _FocusThemeSheet extends StatelessWidget {
                 const SizedBox(height: 14),
                 Row(
                   children: [
-                    Icon(
-                      Icons.wallpaper_rounded,
-                      color: colors.focus,
-                      size: 20,
-                    ),
+                    Icon(Icons.wallpaper_rounded, color: accent, size: 20),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1433,12 +1226,54 @@ class _FocusThemeSheet extends StatelessWidget {
                         ),
                       ),
                     ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: accent.withValues(alpha: 0.18),
+                        ),
+                      ),
+                      child: Text(
+                        selectedThemeName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: accent,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
                     Text(
                       '默认 + ${themes.length} 套',
                       style: TextStyle(
                         color: colors.textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              accent.withValues(alpha: 0.26),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],
@@ -1487,7 +1322,10 @@ class _FocusThemeSheet extends StatelessWidget {
                       return _FocusDefaultThemeTile(
                         selected: selectedIndex == null,
                         orientation: orientation,
-                        onTap: () => Navigator.of(context).pop(-1),
+                        onTap: () {
+                          onThemeSelected?.call(null);
+                          Navigator.of(context).pop();
+                        },
                       );
                     }
                     final themeIndex = index - 1;
@@ -1497,7 +1335,10 @@ class _FocusThemeSheet extends StatelessWidget {
                       theme: theme,
                       selected: selected,
                       orientation: orientation,
-                      onTap: () => Navigator.of(context).pop(themeIndex),
+                      onTap: () {
+                        onThemeSelected?.call(themeIndex);
+                        Navigator.of(context).pop();
+                      },
                     );
                   },
                 ),
@@ -2380,17 +2221,23 @@ String _focusSoundDockSubtitle(String current, double volume, bool isMusic) {
 
 class _FocusSoundOverlay extends StatelessWidget {
   const _FocusSoundOverlay({
+    required this.visible,
     required this.landscape,
     required this.initialSoundType,
     required this.onClose,
     required this.onSoundChanged,
+    required this.accent,
+    required this.glassOpacityLevel,
     this.compact = false,
   });
 
+  final bool visible;
   final bool landscape;
   final String initialSoundType;
   final VoidCallback onClose;
   final ValueChanged<String?> onSoundChanged;
+  final Color accent;
+  final int glassOpacityLevel;
   final bool compact;
 
   @override
@@ -2398,23 +2245,41 @@ class _FocusSoundOverlay extends StatelessWidget {
     final size = MediaQuery.sizeOf(context);
     final padding = MediaQuery.paddingOf(context);
     final maxHeight = size.height * (landscape ? 0.70 : 0.42);
+    final glassAlpha = _focusGlassOpacity(
+      glassOpacityLevel,
+      minimum: 0.10,
+      maximum: 0.22,
+    );
     final panel = SingleChildScrollView(
       child: FocusSoundPanel(
         initialSoundType: initialSoundType,
         compact: true,
         dark: true,
+        accentColor: accent,
         onSoundChanged: onSoundChanged,
       ),
     );
+    final panelOffset = visible
+        ? Offset.zero
+        : (landscape ? const Offset(0.06, 0) : const Offset(0, 0.08));
 
     return Stack(
       children: [
         Positioned.fill(
-          child: GestureDetector(
-            key: const ValueKey('focus_sound_overlay_barrier'),
-            behavior: HitTestBehavior.opaque,
-            onTap: onClose,
-            child: Container(color: Colors.transparent),
+          child: AnimatedOpacity(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            opacity: visible ? 1 : 0,
+            child: GestureDetector(
+              key: const ValueKey('focus_sound_overlay_barrier'),
+              behavior: HitTestBehavior.opaque,
+              onTap: onClose,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: glassAlpha),
+                ),
+              ),
+            ),
           ),
         ),
         if (landscape)
@@ -2425,9 +2290,19 @@ class _FocusSoundOverlay extends StatelessWidget {
             width: compact
                 ? math.min(340, size.width * 0.42).toDouble()
                 : math.min(380, size.width * 0.28).toDouble(),
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxHeight),
-              child: GestureDetector(onTap: () {}, child: panel),
+            child: AnimatedSlide(
+              offset: panelOffset,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              child: AnimatedOpacity(
+                opacity: visible ? 1 : 0,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: maxHeight),
+                  child: GestureDetector(onTap: () {}, child: panel),
+                ),
+              ),
             ),
           )
         else
@@ -2436,9 +2311,19 @@ class _FocusSoundOverlay extends StatelessWidget {
             left: 14,
             right: 14,
             bottom: padding.bottom + 10,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(maxHeight: maxHeight),
-              child: GestureDetector(onTap: () {}, child: panel),
+            child: AnimatedSlide(
+              offset: panelOffset,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeOutCubic,
+              child: AnimatedOpacity(
+                opacity: visible ? 1 : 0,
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxHeight: maxHeight),
+                  child: GestureDetector(onTap: () {}, child: panel),
+                ),
+              ),
             ),
           ),
       ],
@@ -2601,7 +2486,7 @@ class _RoundIconButton extends StatelessWidget {
       minimum: subtle ? 0.12 : 0.14,
       maximum: subtle ? 0.24 : 0.32,
     );
-    return GestureDetector(
+    return _PressableScale(
       onTap: onTap,
       child: ClipOval(
         child: BackdropFilter(
@@ -2670,7 +2555,7 @@ class _GlowButton extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        GestureDetector(
+        _PressableScale(
           onTap: onTap,
           child: ClipOval(
             child: BackdropFilter(

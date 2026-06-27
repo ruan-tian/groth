@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/database/app_database.dart';
 import '../../plan/services/reminder_notification_service.dart';
 import '../../../shared/providers/repository_providers.dart';
+import '../../../shared/constants/notification_ids.dart';
 
 // =============================================================================
 // 专注记录数据 Provider
@@ -265,7 +266,7 @@ class FocusCycleNotifier extends StateNotifier<FocusCycleState> {
   }
   Timer? _tickTimer;
   static const _persistKey = 'focus_cycle_state';
-  static const _notificationId = 5205;
+  static const _notificationId = NotificationIds.focusSession;
   final ReminderNotificationService _notificationService;
 
   /// 开始新的专注循环
