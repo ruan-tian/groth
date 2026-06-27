@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'design/design.dart';
 import '../features/dashboard/dashboard_page.dart';
+import '../features/dashboard/pages/scenery_gallery_page.dart';
 import '../features/dashboard/pages/task_history_page.dart';
 import '../features/music/pages/music_playlist_page.dart';
 import '../features/music/pages/music_favorites_page.dart';
@@ -190,6 +191,15 @@ final goRouter = GoRouter(
                     context,
                     state,
                     const MusicFavoritesPage(),
+                  ),
+                ),
+                GoRoute(
+                  path: 'scenery',
+                  parentNavigatorKey: _rootNavigatorKey,
+                  pageBuilder: (context, state) => buildSlideTransition(
+                    context,
+                    state,
+                    const SceneryGalleryPage(),
                   ),
                 ),
               ],

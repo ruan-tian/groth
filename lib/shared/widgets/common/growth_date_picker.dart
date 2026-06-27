@@ -118,7 +118,17 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
       case DatePreset.firstOfMonth:
         date = DateTime(now.year, now.month, 1);
     }
-    if (!_isInRange(date)) return;
+    if (!_isInRange(date)) {
+      HapticFeedback.lightImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('该日期不在可选范围内'),
+          duration: Duration(seconds: 2),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
     HapticFeedback.lightImpact();
     setState(() {
       _selectedDate = date;
@@ -198,7 +208,7 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: context.growthColors.fitness.withValues(alpha: 0.1),
+                    color: context.growthColors.textPrimary.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -206,7 +216,7 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: context.growthColors.fitness,
+                      color: context.growthColors.textPrimary,
                     ),
                   ),
                 ),
@@ -261,7 +271,7 @@ class _GrowthDatePickerSheetState extends State<_GrowthDatePickerSheet> {
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 15,
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
                           color: context.growthColors.textPrimary,
                         ),
                       ),
@@ -417,8 +427,8 @@ class _CalendarGrid extends StatelessWidget {
         physics: const NeverScrollableScrollPhysics(),
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 7,
-          mainAxisSpacing: 4,
-          crossAxisSpacing: 4,
+          mainAxisSpacing: 6,
+          crossAxisSpacing: 6,
         ),
         itemCount: startWeekday + totalDays,
         itemBuilder: (context, index) {
@@ -434,12 +444,13 @@ class _CalendarGrid extends StatelessWidget {
           return GestureDetector(
             onTap: inRange ? () => onDateSelected(date) : null,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
                 color: selected
-                    ? context.growthColors.fitness
+                    ? context.growthColors.textPrimary
                     : today
-                    ? context.growthColors.fitness.withValues(alpha: 0.08)
+                    ? context.growthColors.textPrimary.withValues(alpha: 0.06)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(10),
               ),
@@ -447,16 +458,16 @@ class _CalendarGrid extends StatelessWidget {
                 child: Text(
                   '$day',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 15,
                     fontWeight: selected || today
                         ? FontWeight.w700
-                        : FontWeight.w500,
+                        : FontWeight.w600,
                     color: !inRange
                         ? context.growthColors.textHint
                         : selected
-                        ? context.growthColors.textOnAccent
+                        ? context.growthColors.card
                         : today
-                        ? context.growthColors.fitness
+                        ? context.growthColors.textPrimary
                         : context.growthColors.textPrimary,
                   ),
                 ),
@@ -485,10 +496,10 @@ class _NavArrow extends StatelessWidget {
         width: 32,
         height: 32,
         decoration: BoxDecoration(
-          color: context.growthColors.softOrange,
+          color: context.growthColors.card,
           borderRadius: BorderRadius.circular(10),
         ),
-        child: Icon(icon, size: 20, color: context.growthColors.fitness),
+        child: Icon(icon, size: 20, color: context.growthColors.textPrimary),
       ),
     );
   }
@@ -509,10 +520,10 @@ class _PresetButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
-          color: context.growthColors.softOrange,
+          color: context.growthColors.card,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: context.growthColors.fitness.withValues(alpha: 0.15),
+            color: context.growthColors.border,
           ),
         ),
         child: Text(
@@ -520,7 +531,7 @@ class _PresetButton extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w600,
-            color: context.growthColors.fitness,
+            color: context.growthColors.textPrimary,
           ),
         ),
       ),
@@ -548,7 +559,7 @@ class _BottomButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: filled ? context.growthColors.fitness : Colors.transparent,
+          color: filled ? context.growthColors.textPrimary : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
           border: filled
               ? null
@@ -561,7 +572,7 @@ class _BottomButton extends StatelessWidget {
               fontSize: 15,
               fontWeight: FontWeight.w700,
               color: filled
-                  ? context.growthColors.textOnAccent
+                  ? context.growthColors.card
                   : context.growthColors.textSecondary,
             ),
           ),

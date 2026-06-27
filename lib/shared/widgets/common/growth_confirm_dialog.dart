@@ -179,57 +179,24 @@ class GrowthConfirmDialog extends StatelessWidget {
   Widget _buildImage(BuildContext context, AppThemeColors colors) {
     return SizedBox(
       height: imageSize + (secondaryImage != null ? 20 : 0),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // 主图片 - 带柔和背景光晕
-          Container(
-            width: imageSize + 24,
-            height: imageSize + 24,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: _resolveAccentColor(colors).withValues(alpha: 0.06),
-            ),
+      child: Image.asset(
+        image,
+        width: imageSize,
+        height: imageSize,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) => Container(
+          width: imageSize,
+          height: imageSize,
+          decoration: BoxDecoration(
+            color: colors.surfaceVariant,
+            borderRadius: BorderRadius.circular(AppRadius.xl),
           ),
-          Image.asset(
-            image,
-            width: imageSize,
-            height: imageSize,
-            fit: BoxFit.contain,
-            errorBuilder: (context, error, stackTrace) => Container(
-              width: imageSize,
-              height: imageSize,
-              decoration: BoxDecoration(
-                color: colors.surfaceVariant,
-                borderRadius: BorderRadius.circular(AppRadius.xl),
-              ),
-              child: Icon(
-                Icons.image_outlined,
-                size: imageSize * 0.4,
-                color: colors.textHint,
-              ),
-            ),
+          child: Icon(
+            Icons.image_outlined,
+            size: imageSize * 0.4,
+            color: colors.textHint,
           ),
-          // 次要图片 - 使用 LayoutBuilder 获取实际宽度
-          if (secondaryImage != null)
-            Positioned(
-              right: 10,
-              bottom: 0,
-              child: Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: colors.card, width: 2),
-                  boxShadow: AppShadows.sm,
-                ),
-                child: Image.asset(
-                  secondaryImage!,
-                  width: imageSize * 0.45,
-                  height: imageSize * 0.45,
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
-        ],
+        ),
       ),
     );
   }

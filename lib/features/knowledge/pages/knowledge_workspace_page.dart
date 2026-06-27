@@ -49,6 +49,7 @@ class KnowledgeSpaceSelectPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final spaces = ref.watch(knowledgeSpacesV3Provider);
+    final overview = ref.watch(knowledgeWorkspaceOverviewV3Provider);
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: _GradientSurface(
@@ -57,38 +58,67 @@ class KnowledgeSpaceSelectPage extends ConsumerWidget {
             data: (items) => ListView(
               padding: const EdgeInsets.fromLTRB(18, 18, 18, 28),
               children: [
+                // [1] 顶部栏
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _BackTitle(title: '知识空间'),
-                          SizedBox(height: 6),
-                          Text('选择一个空间，开始你的学习之旅', style: _T.subtitle),
+                          const _BackTitle(title: '知识空间'),
+                          const SizedBox(height: 6),
+                          Text(
+                            '选择一个空间，甜甜陪你整理资料和复习卡片',
+                            style: _T.subtitle,
+                          ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 10),
-                    FilledButton.icon(
-                      onPressed: () => _createAndEnterSpace(context, ref),
-                      style: _primaryButtonStyle(height: 46),
-                      icon: const Icon(Icons.add_rounded, size: 18),
-                      label: const Text('新建空间'),
-                    ),
+                    if (items.isNotEmpty) ...[
+                      const SizedBox(width: 10),
+                      FilledButton.icon(
+                        onPressed: () => _createAndEnterSpace(context, ref),
+                        style: _primaryButtonStyle(height: 46),
+                        icon: const Icon(Icons.add_rounded, size: 18),
+                        label: const Text('新建空间'),
+                      ),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: 20),
+
+                // [2] 今日概览卡
+                _TodayOverviewCard(overview: overview),
+                const SizedBox(height: 20),
+
+                // [3] "我的空间" 标题
+                if (items.isNotEmpty) ...[
+                  const _SectionHeader(title: '我的空间'),
+                  const SizedBox(height: 12),
+                ],
+
+                // [4] 空间卡片列表
                 for (final space in items) ...[
                   _SpaceSelectCard(space: space),
                   const SizedBox(height: 12),
                 ],
-                _DashedCreateCard(
-                  onTap: () => _createAndEnterSpace(context, ref),
-                ),
+
+                // [5] 新建空间虚线卡（空间少于3个时显示）
+                if (items.length < 3)
+                  _DashedCreateCard(
+                    onTap: () => _createAndEnterSpace(context, ref),
+                  ),
+
                 const SizedBox(height: 16),
-                const _TipCard(),
+
+                // [6] 甜甜提示区
+                if (items.isEmpty)
+                  _EmptySpaceCard(
+                    onCreate: () => _createAndEnterSpace(context, ref),
+                  )
+                else
+                  const _TipPill(),
               ],
             ),
             loading: () => const Center(child: CircularProgressIndicator()),

@@ -1020,86 +1020,99 @@ class _SpaceSelectCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final stats = ref.watch(knowledgeSpaceStatsV3Provider(space.id));
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    final cardCount = stats.valueOrNull?.cardCount ?? 0;
+    final dueCount = stats.valueOrNull?.dueCount ?? 0;
+    final masteryPercent = stats.valueOrNull?.masteryPercent ?? 0;
+
     return _PaperCard(
+      padding: const EdgeInsets.all(16),
       onTap: () {
         ref.read(selectedKnowledgeSpaceIdProvider.notifier).state = space.id;
         ref.read(knowledgeV3RepositoryProvider).rememberSpace(space.id);
         context.go('/plan/study/knowledge/space');
       },
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SpaceIcon(type: space.type),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
+          // 顶部行：图标 + 名称 + 类型 + 菜单
+          Row(
+            children: [
+              _SpaceIcon(type: space.type),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: Text(
-                        space.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: _T.cardTitle,
-                      ),
+                    Text(
+                      space.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _T.cardTitle,
                     ),
-                    IconButton(
-                      tooltip: '空间操作',
-                      icon: const Icon(Icons.more_horiz_rounded),
-                      onPressed: () async {
-                        final action = await _showActionMenu(
-                          context,
-                          title: space.name,
-                          actions: const [
-                            _MenuAction(
-                              value: 'rename',
-                              label: '重命名',
-                              icon: Icons.edit_rounded,
-                            ),
-                            _MenuAction(
-                              value: 'archive',
-                              label: '归档',
-                              icon: Icons.archive_outlined,
-                              isDestructive: true,
-                            ),
-                          ],
-                        );
-                        if (!context.mounted || action == null) return;
-                        if (action == 'rename') {
-                          await _showSpaceEditor(context, ref, space: space);
-                        } else if (action == 'archive') {
-                          await ref
-                              .read(knowledgeV3RepositoryProvider)
-                              .archiveSpace(space.id);
-                          invalidateKnowledgeV3(ref, spaceId: space.id);
-                        }
-                      },
+                    const SizedBox(height: 2),
+                    Text(
+                      _spaceTypeLabel(space.type),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _T.meta,
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  space.note?.trim().isNotEmpty == true
-                      ? space.note!
-                      : _spaceTypeLabel(space.type),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: _T.body,
-                ),
-                const SizedBox(height: 12),
-                stats.when(
-                  data: (item) => Text(
-                    '${item.cardCount} 张卡片   ${item.dueCount} 待复习',
-                    style: _T.meta,
-                  ),
-                  loading: () => const Text('加载中...', style: _T.meta),
-                  error: (_, _) => const Text('暂无统计', style: _T.meta),
-                ),
-              ],
-            ),
+              ),
+              PopupMenuButton<String>(
+                tooltip: '空间操作',
+                icon: Icon(Icons.more_horiz_rounded, color: colors.textTertiary),
+                onSelected: (action) async {
+                  if (!context.mounted) return;
+                  if (action == 'rename') {
+                    await _showSpaceEditor(context, ref, space: space);
+                  } else if (action == 'archive') {
+                    await ref
+                        .read(knowledgeV3RepositoryProvider)
+                        .archiveSpace(space.id);
+                    invalidateKnowledgeV3(ref, spaceId: space.id);
+                  }
+                },
+                itemBuilder: (_) => const [
+                  PopupMenuItem(value: 'rename', child: Text('重命名')),
+                  PopupMenuItem(value: 'archive', child: Text('归档')),
+                ],
+              ),
+            ],
           ),
-          const Icon(Icons.chevron_right_rounded),
+
+          const SizedBox(height: 14),
+
+          // 三列统计
+          Row(
+            children: [
+              _MiniStat(label: '卡片', value: '$cardCount', color: colors.study),
+              const SizedBox(width: 12),
+              _MiniStat(label: '待复习', value: '$dueCount', color: colors.warning),
+              const SizedBox(width: 12),
+              _MiniStat(label: '掌握度', value: '$masteryPercent%', color: colors.success),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // 功能标签
+          Wrap(
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              _FeaturePill(label: '资料库', icon: Icons.description_outlined, color: colors.study),
+              _FeaturePill(label: 'AI问答', icon: Icons.auto_awesome_rounded, color: colors.primary),
+              _FeaturePill(label: '抽卡复习', icon: Icons.style_rounded, color: colors.accent),
+            ],
+          ),
+
+          // 掌握进度条
+          if (cardCount > 0) ...[
+            const SizedBox(height: 12),
+            _MasteryProgressBar(percent: masteryPercent),
+          ],
         ],
       ),
     );
@@ -1129,13 +1142,13 @@ class _SpaceIcon extends StatelessWidget {
       _ => colors.study,
     };
     return Container(
-      width: 52,
-      height: 52,
+      width: 48,
+      height: 48,
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(AppRadius.lg),
       ),
-      child: Icon(icon, color: color),
+      child: Icon(icon, color: color, size: 22),
     );
   }
 }
@@ -1156,14 +1169,17 @@ class _DashedCreateCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: colors.card.withValues(alpha: 0.58),
+            color: colors.card,
             borderRadius: BorderRadius.circular(AppRadius.xl),
-            border: Border.all(color: colors.study.withValues(alpha: 0.35)),
+            border: Border.all(
+              color: colors.border,
+              width: 1.5,
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.add_rounded, color: colors.study),
+              Icon(Icons.add_rounded, color: colors.study, size: 20),
               const SizedBox(width: 8),
               Text('新建空间', style: _T.actionBlue),
             ],
@@ -1181,6 +1197,305 @@ class _TipCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return const _PaperCard(
       child: Text('小贴士：空间用于管理你的资料和知识卡，不同主题建议创建独立空间。', style: _T.body),
+    );
+  }
+}
+
+// =============================================================================
+// 新增组件：今日概览卡、迷你统计、功能标签、进度条、空状态、胶囊提示
+// =============================================================================
+
+/// 今日概览卡 — 显示全局聚合数据
+class _TodayOverviewCard extends StatelessWidget {
+  const _TodayOverviewCard({required this.overview});
+
+  final AsyncValue<KnowledgeWorkspaceOverviewV3> overview;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return overview.when(
+      data: (item) => _PaperCard(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: _OverviewChip(
+                icon: Icons.schedule_rounded,
+                label: '今日待复习',
+                value: '${item.dueCount}张',
+                color: colors.warning,
+              ),
+            ),
+            Container(width: 1, height: 32, color: colors.border),
+            Expanded(
+              child: _OverviewChip(
+                icon: Icons.folder_rounded,
+                label: '空间',
+                value: '${item.spaceCount}个',
+                color: colors.study,
+              ),
+            ),
+            Container(width: 1, height: 32, color: colors.border),
+            Expanded(
+              child: _OverviewChip(
+                icon: Icons.style_rounded,
+                label: '知识卡',
+                value: '${item.cardCount}张',
+                color: colors.accent,
+              ),
+            ),
+          ],
+        ),
+      ),
+      loading: () => const _PaperCard(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(child: _OverviewChip(icon: Icons.schedule, label: '今日待复习', value: '--', color: AppColors.warning)),
+            Expanded(child: _OverviewChip(icon: Icons.folder, label: '空间', value: '--', color: AppColors.study)),
+            Expanded(child: _OverviewChip(icon: Icons.style, label: '知识卡', value: '--', color: AppColors.accent)),
+          ],
+        ),
+      ),
+      error: (_, _) => const SizedBox.shrink(),
+    );
+  }
+}
+
+class _OverviewChip extends StatelessWidget {
+  const _OverviewChip({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 18, color: color),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Theme.of(context).extension<AppThemeColors>()!.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(label, style: _T.meta),
+      ],
+    );
+  }
+}
+
+/// 区域标题
+class _SectionHeader extends StatelessWidget {
+  const _SectionHeader({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 2),
+      child: Text(title, style: _T.sectionTitle),
+    );
+  }
+}
+
+/// 迷你统计标签（用于空间卡片内）
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  final String label;
+  final String value;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.06),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.10)),
+        ),
+        child: Column(
+          children: [
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w700,
+                color: colors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(label, style: _T.meta),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 功能标签胶囊（用于空间卡片内）
+class _FeaturePill extends StatelessWidget {
+  const _FeaturePill({
+    required this.label,
+    required this.icon,
+    required this.color,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(AppRadius.full),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 掌握进度条（用于空间卡片内）
+class _MasteryProgressBar extends StatelessWidget {
+  const _MasteryProgressBar({required this.percent});
+
+  final int percent;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.full),
+          child: LinearProgressIndicator(
+            value: percent / 100.0,
+            minHeight: 6,
+            backgroundColor: colors.border,
+            valueColor: AlwaysStoppedAnimation<Color>(colors.success),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 空状态卡片（0 个空间时显示）
+class _EmptySpaceCard extends StatelessWidget {
+  const _EmptySpaceCard({required this.onCreate});
+
+  final VoidCallback onCreate;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return _PaperCard(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Image.asset(
+            'assets/images/knowledge_cards/v3/tiantian_reading.webp',
+            width: 80,
+            height: 80,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => Icon(
+              Icons.auto_stories_rounded,
+              size: 48,
+              color: colors.textTertiary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '还没有知识空间',
+            style: _T.cardTitle,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '创建一个空间，甜甜帮你整理资料和复习卡片',
+            style: _T.body,
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          FilledButton.icon(
+            onPressed: onCreate,
+            style: _primaryButtonStyle(height: 46),
+            icon: const Icon(Icons.add_rounded, size: 18),
+            label: const Text('创建第一个空间'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 胶囊提示（有空间时显示，替代大面积 _TipCard）
+class _TipPill extends StatelessWidget {
+  const _TipPill();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: colors.softBlue,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colors.border),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.lightbulb_rounded, size: 16, color: colors.study),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '一个主题建一个空间，复习会更清晰。',
+              style: _T.body.copyWith(fontSize: 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

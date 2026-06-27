@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../app/design/design.dart';
-import '../providers/pet_provider.dart';
 import '../../../core/constants/pet_assets.dart';
 import '../providers/pet_diary_provider.dart';
 import '../widgets/pet_floating_asset.dart';
@@ -17,26 +16,11 @@ class PetSettingsPage extends ConsumerStatefulWidget {
 }
 
 class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
-  final _nameController = TextEditingController();
-  bool _nameTouched = false;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final colors = context.growthColors;
-    final nameAsync = ref.watch(petNameProvider);
     ref.watch(petDiaryAutoEnabledInitProvider);
     final autoDiary = ref.watch(petDiaryAutoEnabledProvider);
-
-    final loadedName = nameAsync.valueOrNull;
-    if (!_nameTouched && loadedName != null && _nameController.text.isEmpty) {
-      _nameController.text = loadedName;
-    }
 
     return Scaffold(
       backgroundColor: colors.background,
@@ -53,7 +37,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
         children: [
-          _HeroCard(name: loadedName ?? '甜甜'),
+          const _HeroCard(),
           const SizedBox(height: 16),
           _PaperCard(
             child: Column(
@@ -62,38 +46,25 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
                 const _Header(
                   asset: PetCenterAssets.decoPencil,
                   title: '宠物名称',
-                  subtitle: '只影响小窝里的称呼，不影响成长经验',
+                  subtitle: '甜甜是你的专属成长伙伴，固定名称不可修改',
                 ),
                 const SizedBox(height: 14),
-                TextField(
-                  controller: _nameController,
-                  textInputAction: TextInputAction.done,
-                  maxLength: 12,
-                  onChanged: (_) => _nameTouched = true,
-                  decoration: InputDecoration(
-                    counterText: '',
-                    hintText: '给甜甜取个名字',
-                    filled: true,
-                    fillColor: colors.surfaceVariant.withValues(alpha: 0.62),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: BorderSide.none,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
+                Container(
                   width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: _saveName,
-                    icon: const Icon(Icons.check_rounded, size: 18),
-                    label: const Text('保存名称'),
-                    style: FilledButton.styleFrom(
-                      backgroundColor: colors.accent,
-                      foregroundColor: colors.textOnAccent,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: colors.surfaceVariant.withValues(alpha: 0.62),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    '甜甜',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textSecondary,
                     ),
                   ),
                 ),
@@ -138,7 +109,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
                 _SettingRow(
                   asset: PetCenterAssets.decoStar,
                   title: '减少动态效果',
-                  subtitle: '小窝会跟随系统“减少动画”设置，关闭循环粒子和漂浮动画。',
+                  subtitle: '自动跟随系统"减少动画"设置，无需手动调整。',
                 ),
               ],
             ),
@@ -148,18 +119,6 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
     );
   }
 
-  Future<void> _saveName() async {
-    final name = normalizePetName(_nameController.text);
-    HapticFeedback.selectionClick();
-    await ref.read(petRepositoryProvider).updateName(name);
-    ref.invalidate(petProfileProvider);
-    ref.invalidate(petNameProvider);
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('宠物名称已保存')));
-  }
-
   Future<void> _setAutoDiary(bool value) async {
     HapticFeedback.selectionClick();
     await savePetDiaryAutoEnabled(ref, value);
@@ -167,9 +126,7 @@ class _PetSettingsPageState extends ConsumerState<PetSettingsPage> {
 }
 
 class _HeroCard extends StatelessWidget {
-  const _HeroCard({required this.name});
-
-  final String name;
+  const _HeroCard();
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +145,7 @@ class _HeroCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '$name 的偏好',
+                  '甜甜的偏好',
                   style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,
@@ -197,7 +154,7 @@ class _HeroCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 7),
                 Text(
-                  '这里专管小窝体验，通用主题、备份和账号资料仍然在“我的”设置里。',
+                  '这里专管小窝体验，通用主题、备份和账号资料仍然在"我的"设置里。',
                   style: TextStyle(
                     fontSize: 12,
                     height: 1.45,

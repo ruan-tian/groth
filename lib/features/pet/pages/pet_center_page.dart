@@ -114,11 +114,11 @@ class PetCenterPage extends ConsumerWidget {
                     levelProgress: levelProgress,
                     loading: dashboardAsync.isLoading,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _TodaySummaryCard(dashboard: dashboard),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   const PetJournalSection(),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   const _PetActionGrid(),
                 ],
               ),
@@ -287,16 +287,15 @@ class _TodaySummaryCard extends StatelessWidget {
           const _SectionHeader(
             asset: PetCenterAssets.decoBook,
             title: '今日成长摘要',
-            subtitle: '甜甜只记录你真实完成的成长痕迹',
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 8),
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 2.45,
+            mainAxisSpacing: 6,
+            crossAxisSpacing: 6,
+            childAspectRatio: 2.6,
             children: [
               _MetricTile(
                 icon: Icons.menu_book_rounded,
@@ -392,7 +391,7 @@ class _PaperCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Padding(padding: const EdgeInsets.all(18), child: child),
+      child: Padding(padding: const EdgeInsets.all(14), child: child),
     );
   }
 }
@@ -401,12 +400,12 @@ class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
     required this.asset,
     required this.title,
-    required this.subtitle,
+    this.subtitle,
   });
 
   final String asset;
   final String title;
-  final String subtitle;
+  final String? subtitle;
 
   @override
   Widget build(BuildContext context) {
@@ -427,15 +426,17 @@ class _SectionHeader extends StatelessWidget {
                   color: colors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 3),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  fontSize: 12,
-                  height: 1.35,
-                  color: colors.textSecondary,
+              if (subtitle != null) ...[
+                const SizedBox(height: 3),
+                Text(
+                  subtitle!,
+                  style: TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: colors.textSecondary,
+                  ),
                 ),
-              ),
+              ],
             ],
           ),
         ),

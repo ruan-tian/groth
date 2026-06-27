@@ -252,7 +252,7 @@ class _DietAnalysisTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...records.take(5).map((r) => _buildDietRecordTile(r, colors)),
+          ...records.take(5).map((r) => _buildDietRecordTile(context, r, colors)),
           if (records.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -271,62 +271,223 @@ class _DietAnalysisTab extends ConsumerWidget {
   }
 
   /// 单条饮食记录
-  Widget _buildDietRecordTile(DietRecord r, AppThemeColors colors) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF7ED),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                RecordIconAssets.dietByMealType(r.mealType),
-                width: 18,
-                height: 18,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => Icon(
-                  _getMealIcon(r.mealType),
-                  color: const Color(0xFFB66A00),
-                  size: 18,
+  Widget _buildDietRecordTile(BuildContext context, DietRecord r, AppThemeColors colors) {
+    return InkWell(
+      onTap: () => _showDietDetail(context, r, colors),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF7ED),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  RecordIconAssets.dietByMealType(r.mealType),
+                  width: 18,
+                  height: 18,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => Icon(
+                    _getMealIcon(r.mealType),
+                    color: const Color(0xFFB66A00),
+                    size: 18,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  r.foodText,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r.foodText,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${r.mealDate} · ${_getMealTypeName(r.mealType)} · 健康评分${r.healthScore}/5',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textSecondary,
+                  const SizedBox(height: 2),
+                  Text(
+                    '${r.mealDate} · ${_getMealTypeName(r.mealType)} · 健康评分${r.healthScore}/5',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
-        ],
+            Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
+          ],
+        ),
       ),
     );
+  }
+
+  void _showDietDetail(
+    BuildContext context,
+    DietRecord record,
+    AppThemeColors colors,
+  ) {
+    final detailItems = [
+      DetailItem(
+        label: '餐次',
+        value: _getMealTypeName(record.mealType),
+        icon: Icons.restaurant_rounded,
+      ),
+      DetailItem(
+        label: '份量',
+        value: _getPortionLabel(record.portionLevel),
+        icon: Icons.straighten_rounded,
+      ),
+      DetailItem(
+        label: '热量',
+        value: _getCalorieLabel(record.calorieLevel),
+        icon: Icons.local_fire_department_rounded,
+      ),
+      DetailItem(
+        label: '蛋白质',
+        value: _getProteinLabel(record.proteinLevel),
+        icon: Icons.egg_outlined,
+      ),
+    ];
+
+    final extraCards = <Widget>[];
+    if (record.foodText.isNotEmpty) {
+      extraCards.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '食物描述',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                record.foodText,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (record.note != null && record.note!.isNotEmpty) {
+      extraCards.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '备注',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                record.note!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    RecordDetailSheet.show(
+      context: context,
+      title: record.mealDate,
+      primaryMetricLabel: '健康评分',
+      primaryMetricValue: '${record.healthScore}/5',
+      primaryMetricIcon: Icons.star_rounded,
+      detailItems: detailItems,
+      accentColor: colors.diet,
+      extraCards: extraCards.isEmpty
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: extraCards
+                  .expand((w) => [w, const SizedBox(height: 12)])
+                  .toList()
+                ..removeLast(),
+            ),
+    );
+  }
+
+  String _getPortionLabel(String level) {
+    switch (level) {
+      case 'small':
+        return '少量';
+      case 'normal':
+        return '正常';
+      case 'large':
+        return '大量';
+      default:
+        return level;
+    }
+  }
+
+  String _getCalorieLabel(String level) {
+    switch (level) {
+      case 'low':
+        return '低热量';
+      case 'normal':
+        return '正常';
+      case 'high':
+        return '高热量';
+      default:
+        return level;
+    }
+  }
+
+  String _getProteinLabel(String level) {
+    switch (level) {
+      case 'low':
+        return '低蛋白';
+      case 'medium':
+        return '中等';
+      case 'high':
+        return '高蛋白';
+      default:
+        return level;
+    }
   }
 
   String _getMealTypeName(String type) {
@@ -623,7 +784,7 @@ class _SleepAnalysisTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...records.take(5).map((r) => _buildSleepRecordTile(r, colors)),
+          ...records.take(5).map((r) => _buildSleepRecordTile(context, r, colors)),
           if (records.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -642,63 +803,188 @@ class _SleepAnalysisTab extends ConsumerWidget {
   }
 
   /// 单条睡眠记录
-  Widget _buildSleepRecordTile(SleepRecord r, AppThemeColors colors) {
+  Widget _buildSleepRecordTile(BuildContext context, SleepRecord r, AppThemeColors colors) {
     final hours = r.durationMinutes ~/ 60;
     final minutes = r.durationMinutes % 60;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFF4F1FF),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                RecordIconAssets.sleep,
-                width: 18,
-                height: 18,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.nightlight,
-                  color: Color(0xFF5B4BC4),
-                  size: 18,
+    return InkWell(
+      onTap: () => _showSleepDetail(context, r, colors),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF4F1FF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  RecordIconAssets.sleep,
+                  width: 18,
+                  height: 18,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.nightlight,
+                    color: Color(0xFF5B4BC4),
+                    size: 18,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${r.sleepDate} 睡眠',
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${r.sleepDate} 睡眠',
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  '${r.sleepTime}-${r.wakeTime} · ${hours}h${minutes}m · 质量${r.qualityLevel}/5',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: colors.textSecondary,
+                  const SizedBox(height: 2),
+                  Text(
+                    '${r.sleepTime}-${r.wakeTime} · ${hours}h${minutes}m · 质量${r.qualityLevel}/5',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textSecondary,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
-        ],
+            Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
+          ],
+        ),
       ),
+    );
+  }
+
+  void _showSleepDetail(
+    BuildContext context,
+    SleepRecord record,
+    AppThemeColors colors,
+  ) {
+    final hours = record.durationMinutes ~/ 60;
+    final minutes = record.durationMinutes % 60;
+
+    final detailItems = [
+      DetailItem(
+        label: '入睡时间',
+        value: record.sleepTime,
+        icon: Icons.nightlight_round,
+      ),
+      DetailItem(
+        label: '起床时间',
+        value: record.wakeTime,
+        icon: Icons.wb_sunny_rounded,
+      ),
+      DetailItem(
+        label: '入睡用时',
+        value: '${record.fallAsleepMinutes}分钟',
+        icon: Icons.timer_outlined,
+      ),
+      DetailItem(
+        label: '夜间醒来',
+        value: '${record.wakeCount}次',
+        icon: Icons.notifications_none_rounded,
+      ),
+    ];
+
+    final extraCards = <Widget>[];
+    if (record.dreamNote != null && record.dreamNote!.isNotEmpty) {
+      extraCards.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.softPurple,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '梦境',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                record.dreamNote!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (record.note != null && record.note!.isNotEmpty) {
+      extraCards.add(
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.surfaceVariant,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '备注',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: colors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                record.note!,
+                style: TextStyle(
+                  fontSize: 14,
+                  color: colors.textPrimary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    RecordDetailSheet.show(
+      context: context,
+      title: record.sleepDate,
+      primaryMetricLabel: '睡眠时长',
+      primaryMetricValue: '${hours}h ${minutes}m',
+      primaryMetricIcon: Icons.nightlight_round,
+      detailItems: detailItems,
+      accentColor: colors.sleep,
+      extraCards: extraCards.isEmpty
+          ? null
+          : Column(
+              mainAxisSize: MainAxisSize.min,
+              children: extraCards
+                  .expand((w) => [w, const SizedBox(height: 12)])
+                  .toList()
+                ..removeLast(),
+            ),
     );
   }
 }
@@ -773,32 +1059,26 @@ class _GrowthReportTab extends ConsumerWidget {
             ),
           ),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _buildAnalysisButton(
-                  context: context,
-                  icon: Icons.date_range,
-                  onPressed: (analysisState.isLoading || analysisState.isStreaming)
-                      ? null
-                      : () => _generateReport(context, ref, isWeekly: true),
-                  colors: colors,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildAnalysisButton(
-                  context: context,
-                  icon: Icons.calendar_month,
-                  onPressed: (analysisState.isLoading || analysisState.isStreaming)
-                      ? null
-                      : () => _generateReport(context, ref, isWeekly: false),
-                  colors: colors,
-                ),
-              ),
-            ],
+          _buildAnalysisButton(
+            context: context,
+            icon: Icons.auto_graph_rounded,
+            onPressed: (analysisState.isLoading || analysisState.isStreaming)
+                ? null
+                : () => _showReportTypeSheet(context, ref),
+            colors: colors,
           ),
         ],
+      ),
+    );
+  }
+
+  void _showReportTypeSheet(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ReportTypeSheet(
+        onWeekly: () => _generateReport(context, ref, isWeekly: true),
+        onMonthly: () => _generateReport(context, ref, isWeekly: false),
       ),
     );
   }
@@ -1240,6 +1520,138 @@ class _LoadingCard extends StatelessWidget {
               style: TextStyle(fontSize: 14, color: colors.textSecondary),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// 报告类型选择 Sheet
+// =============================================================================
+
+class _ReportTypeSheet extends StatelessWidget {
+  const _ReportTypeSheet({
+    required this.onWeekly,
+    required this.onMonthly,
+  });
+
+  final VoidCallback onWeekly;
+  final VoidCallback onMonthly;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return Container(
+      decoration: BoxDecoration(
+        color: colors.paper,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // 拖拽条
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: colors.border,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            '选择报告类型',
+            style: AppTextStyles.sectionTitle,
+          ),
+          const SizedBox(height: 20),
+          // 周报
+          _ReportOption(
+            icon: Icons.date_range,
+            label: '生成周报',
+            description: '分析最近一周的成长数据',
+            color: colors.study,
+            onTap: () {
+              Navigator.pop(context);
+              onWeekly();
+            },
+          ),
+          const SizedBox(height: 12),
+          // 月报
+          _ReportOption(
+            icon: Icons.calendar_month,
+            label: '生成月报',
+            description: '分析最近一个月的成长数据',
+            color: colors.primary,
+            onTap: () {
+              Navigator.pop(context);
+              onMonthly();
+            },
+          ),
+          SizedBox(height: MediaQuery.of(context).viewInsets.bottom + 24),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReportOption extends StatelessWidget {
+  const _ReportOption({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final String description;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).extension<AppThemeColors>()!;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colors.card,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: colors.border),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label, style: AppTextStyles.cardTitle),
+                    const SizedBox(height: 2),
+                    Text(description, style: AppTextStyles.body),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right_rounded, color: colors.textTertiary, size: 20),
+            ],
+          ),
         ),
       ),
     );

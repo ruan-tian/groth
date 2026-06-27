@@ -248,7 +248,7 @@ class _StudyAnalysisTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...records.take(5).map((r) => _buildStudyRecordTile(r, colors)),
+          ...records.take(5).map((r) => _buildStudyRecordTile(context, r, colors)),
           if (records.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -267,64 +267,149 @@ class _StudyAnalysisTab extends ConsumerWidget {
   }
 
   /// 单条学习记录
-  Widget _buildStudyRecordTile(StudyRecord r, AppThemeColors colors) {
+  Widget _buildStudyRecordTile(BuildContext context, StudyRecord r, AppThemeColors colors) {
     final date = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
     final subtitle = '${date.month}/${date.day} · ${r.durationMinutes}分钟'
         '${r.subject != null ? ' · ${r.subject}' : ''}';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEEF3FF),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                RecordIconAssets.study,
-                width: 18,
-                height: 18,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.book,
-                  color: Color(0xFF4D6BE8),
-                  size: 18,
+    return InkWell(
+      onTap: () => _showStudyDetail(context, r, colors),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFEEF3FF),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  RecordIconAssets.study,
+                  width: 18,
+                  height: 18,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.book,
+                    color: Color(0xFF4D6BE8),
+                    size: 18,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r.title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showStudyDetail(
+    BuildContext context,
+    StudyRecord record,
+    AppThemeColors colors,
+  ) {
+    final startDt = DateTime.fromMillisecondsSinceEpoch(record.startTime);
+    final endDt = DateTime.fromMillisecondsSinceEpoch(record.endTime);
+    final dateStr =
+        '${startDt.year}年${startDt.month}月${startDt.day}日';
+
+    final detailItems = [
+      DetailItem(
+        label: '科目',
+        value: record.subject ?? '--',
+        icon: Icons.book_outlined,
+      ),
+      DetailItem(
+        label: '难度',
+        value: record.difficultyLevel != null
+            ? '${record.difficultyLevel}/5'
+            : '--',
+        icon: Icons.speed_rounded,
+      ),
+      DetailItem(
+        label: '开始',
+        value:
+            '${startDt.hour.toString().padLeft(2, '0')}:${startDt.minute.toString().padLeft(2, '0')}',
+        icon: Icons.play_circle_outline,
+      ),
+      DetailItem(
+        label: '结束',
+        value:
+            '${endDt.hour.toString().padLeft(2, '0')}:${endDt.minute.toString().padLeft(2, '0')}',
+        icon: Icons.stop_circle_outlined,
+      ),
+    ];
+
+    final noteCard = (record.note != null && record.note!.isNotEmpty)
+        ? Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.surfaceVariant,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  r.title,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
+                  '备注',
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  record.note!,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colors.textPrimary,
+                    height: 1.5,
                   ),
                 ),
               ],
             ),
-          ),
-          Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
-        ],
-      ),
+          )
+        : null;
+
+    RecordDetailSheet.show(
+      context: context,
+      title: dateStr,
+      primaryMetricLabel: '学习时长',
+      primaryMetricValue: '${record.durationMinutes} 分钟',
+      detailItems: detailItems,
+      accentColor: colors.study,
+      extraCards: noteCard,
     );
   }
 }
@@ -584,7 +669,7 @@ class _FitnessAnalysisTab extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          ...records.take(5).map((r) => _buildFitnessRecordTile(r, colors)),
+          ...records.take(5).map((r) => _buildFitnessRecordTile(context, r, colors)),
           if (records.length > 5)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -603,64 +688,147 @@ class _FitnessAnalysisTab extends ConsumerWidget {
   }
 
   /// 单条健身记录
-  Widget _buildFitnessRecordTile(FitnessRecord r, AppThemeColors colors) {
+  Widget _buildFitnessRecordTile(BuildContext context, FitnessRecord r, AppThemeColors colors) {
     final date = DateTime.fromMillisecondsSinceEpoch(r.createdAt);
     final subtitle = '${date.month}/${date.day} · ${r.durationMinutes}分钟'
         '${r.intensityLevel != null ? ' · 强度${r.intensityLevel}/5' : ''}';
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF1E7),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.asset(
-                RecordIconAssets.fitness,
-                width: 18,
-                height: 18,
-                fit: BoxFit.contain,
-                errorBuilder: (_, _, _) => const Icon(
-                  Icons.run_circle,
-                  color: Color(0xFFC95F1E),
-                  size: 18,
+    return InkWell(
+      onTap: () => _showFitnessDetail(context, r, colors),
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        child: Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF1E7),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  RecordIconAssets.fitness,
+                  width: 18,
+                  height: 18,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, _, _) => const Icon(
+                    Icons.run_circle,
+                    color: Color(0xFFC95F1E),
+                    size: 18,
+                  ),
                 ),
               ),
             ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    r.title ?? r.bodyPart,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: colors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showFitnessDetail(
+    BuildContext context,
+    FitnessRecord record,
+    AppThemeColors colors,
+  ) {
+    final startDt = DateTime.fromMillisecondsSinceEpoch(record.startTime);
+    final endDt = DateTime.fromMillisecondsSinceEpoch(record.endTime);
+    final dateStr =
+        '${startDt.year}年${startDt.month}月${startDt.day}日';
+
+    final detailItems = [
+      DetailItem(
+        label: '训练部位',
+        value: record.bodyPart,
+        icon: Icons.fitness_center,
+      ),
+      DetailItem(
+        label: '模式',
+        value: record.mode == 'professional' ? '专业' : '简单',
+        icon: Icons.sports_gymnastics,
+      ),
+      DetailItem(
+        label: '开始',
+        value:
+            '${startDt.hour.toString().padLeft(2, '0')}:${startDt.minute.toString().padLeft(2, '0')}',
+        icon: Icons.play_circle_outline,
+      ),
+      DetailItem(
+        label: '结束',
+        value:
+            '${endDt.hour.toString().padLeft(2, '0')}:${endDt.minute.toString().padLeft(2, '0')}',
+        icon: Icons.stop_circle_outlined,
+      ),
+    ];
+
+    final noteCard = (record.note != null && record.note!.isNotEmpty)
+        ? Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: colors.surfaceVariant,
+              borderRadius: BorderRadius.circular(12),
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  r.title ?? r.bodyPart,
-                  style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: colors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
+                  '备注',
                   style: TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w600,
                     color: colors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  record.note!,
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: colors.textPrimary,
+                    height: 1.5,
                   ),
                 ),
               ],
             ),
-          ),
-          Icon(Icons.chevron_right, size: 18, color: colors.textTertiary),
-        ],
-      ),
+          )
+        : null;
+
+    RecordDetailSheet.show(
+      context: context,
+      title: dateStr,
+      primaryMetricLabel: '训练时长',
+      primaryMetricValue: '${record.durationMinutes} 分钟',
+      detailItems: detailItems,
+      accentColor: colors.fitness,
+      extraCards: noteCard,
     );
   }
 

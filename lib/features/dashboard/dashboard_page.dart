@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:math' as math;
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
@@ -5,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../app/design/design.dart';
+import '../../shared/constants/scenery_theme_catalog.dart';
 import '../health/models/drink_recommendation.dart';
 import 'providers/dashboard_provider.dart';
 import '../../shared/widgets/common/growth_calendar_sheet.dart';
@@ -71,6 +74,8 @@ class DashboardPage extends ConsumerWidget {
                               const _DashboardDrinkInspirationCard(),
                               const SizedBox(height: 12),
                               const _DashboardInspirationBookmarkCard(),
+                              const SizedBox(height: 12),
+                              const _DashboardSceneryCard(),
                               const SizedBox(height: 80),
                             ],
                           ),
@@ -392,6 +397,347 @@ class _DashboardDrinkInspirationCard extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _DashboardSceneryCard extends StatefulWidget {
+  const _DashboardSceneryCard();
+
+  @override
+  State<_DashboardSceneryCard> createState() => _DashboardSceneryCardState();
+}
+
+class _DashboardSceneryCardState extends State<_DashboardSceneryCard> {
+  static const Duration _autoInterval = Duration(seconds: 5);
+  static const Duration _pageTransition = Duration(milliseconds: 460);
+
+  late final PageController _controller;
+  Timer? _timer;
+  int _index = DateTime.now().day % SceneryThemeCatalog.themes.length;
+  bool _userInteracting = false;
+  bool _animatingPage = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = PageController(initialPage: _index);
+    _scheduleAutoPlay();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _scheduleAutoPlay() {
+    _timer?.cancel();
+    _timer = Timer(_autoInterval, () {
+      if (!mounted || !_controller.hasClients) return;
+      if (_userInteracting || _animatingPage) {
+        _scheduleAutoPlay();
+        return;
+      }
+      _goTo((_index + 1) % SceneryThemeCatalog.themes.length);
+    });
+  }
+
+  Future<void> _goTo(int index) async {
+    if (!_controller.hasClients) return;
+    final total = SceneryThemeCatalog.themes.length;
+    final normalized = index % total;
+    _timer?.cancel();
+    _animatingPage = true;
+    try {
+      if (normalized == _index) return;
+      await _controller.animateToPage(
+        normalized,
+        duration: _pageTransition,
+        curve: Curves.easeInOutCubic,
+      );
+    } finally {
+      _animatingPage = false;
+      if (mounted) _scheduleAutoPlay();
+    }
+  }
+
+  void _randomTheme() {
+    final total = SceneryThemeCatalog.themes.length;
+    if (total < 2) return;
+    final random = math.Random();
+    var next = random.nextInt(total);
+    if (next == _index) next = (next + 1) % total;
+    _goTo(next);
+  }
+
+  bool _handlePreviewScroll(ScrollNotification notification) {
+    if (notification.depth != 0) return false;
+    if (notification is ScrollStartNotification) {
+      _userInteracting = true;
+      _timer?.cancel();
+    } else if (notification is ScrollEndNotification) {
+      _userInteracting = false;
+      _scheduleAutoPlay();
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.growthColors;
+    final size = MediaQuery.sizeOf(context);
+    final theme = SceneryThemeCatalog.themeAt(_index);
+
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(20),
+        onTap: () => context.push('/dashboard/scenery'),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          clipBehavior: Clip.antiAlias,
+          decoration: BoxDecoration(
+            color: colors.card.withValues(alpha: 0.92),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: colors.focus.withValues(alpha: 0.16)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.focus.withValues(alpha: 0.08),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: SizedBox(
+                  width: 88,
+                  height: 68,
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      NotificationListener<ScrollNotification>(
+                        onNotification: _handlePreviewScroll,
+                        child: PageView.builder(
+                          controller: _controller,
+                          itemCount: SceneryThemeCatalog.themes.length,
+                          allowImplicitScrolling: true,
+                          physics: const PageScrollPhysics(),
+                          onPageChanged: (value) =>
+                              setState(() => _index = value),
+                          itemBuilder: (context, index) {
+                            final item = SceneryThemeCatalog.themes[index];
+                            return Image.asset(
+                              item.assetForSize(Size(size.width, 160)),
+                              fit: BoxFit.cover,
+                              alignment: Alignment.center,
+                              gaplessPlayback: true,
+                              filterQuality: FilterQuality.medium,
+                            );
+                          },
+                        ),
+                      ),
+                      const _SceneryMiniParticles(),
+                      Positioned(
+                        left: 8,
+                        right: 8,
+                        bottom: 7,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(999),
+                          child: LinearProgressIndicator(
+                            minHeight: 3,
+                            value:
+                                (_index + 1) /
+                                SceneryThemeCatalog.themes.length,
+                            backgroundColor: Colors.white.withValues(
+                              alpha: 0.22,
+                            ),
+                            valueColor: AlwaysStoppedAnimation(
+                              colors.focus.withValues(alpha: 0.88),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '风景欣赏',
+                      style: AppTextStyles.caption.copyWith(
+                        color: colors.focus,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      theme.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.cardTitle.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      '安静看一会儿风景',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 36,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _SceneryCardIconButton(
+                      icon: Icons.shuffle_rounded,
+                      tooltip: '随机切换',
+                      color: colors.focus,
+                      onTap: _randomTheme,
+                    ),
+                    const SizedBox(height: 7),
+                    _SceneryCardIconButton(
+                      icon: Icons.chevron_right_rounded,
+                      tooltip: '进入风景欣赏',
+                      color: colors.focus,
+                      onTap: () => context.push('/dashboard/scenery'),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '${_index + 1}/${SceneryThemeCatalog.themes.length}',
+                      style: TextStyle(
+                        color: colors.textTertiary,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SceneryCardIconButton extends StatelessWidget {
+  const _SceneryCardIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.color,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkResponse(
+        onTap: onTap,
+        radius: 20,
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 18),
+        ),
+      ),
+    );
+  }
+}
+
+class _SceneryMiniParticles extends StatefulWidget {
+  const _SceneryMiniParticles();
+
+  @override
+  State<_SceneryMiniParticles> createState() => _SceneryMiniParticlesState();
+}
+
+class _SceneryMiniParticlesState extends State<_SceneryMiniParticles>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 7),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, _) {
+          return CustomPaint(
+            painter: _SceneryMiniParticlePainter(_controller.value),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SceneryMiniParticlePainter extends CustomPainter {
+  const _SceneryMiniParticlePainter(this.progress);
+
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..style = PaintingStyle.fill;
+    final specs = const [
+      (0.18, 0.34, 1.0),
+      (0.48, 0.18, 0.68),
+      (0.76, 0.42, 0.86),
+    ];
+    for (final spec in specs) {
+      final phase = (progress + spec.$3) % 1.0;
+      final x = (spec.$1 + math.sin(phase * math.pi * 2) * 0.05) * size.width;
+      final y = (spec.$2 + math.cos(phase * math.pi * 2) * 0.10) * size.height;
+      paint.color = Colors.white.withValues(alpha: 0.34 + spec.$3 * 0.16);
+      canvas.drawCircle(Offset(x, y), 2.2 + spec.$3, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _SceneryMiniParticlePainter oldDelegate) {
+    return oldDelegate.progress != progress;
   }
 }
 

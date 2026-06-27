@@ -5,6 +5,7 @@ import '../../../app/design/design.dart';
 import '../../../core/constants/record_icon_assets.dart';
 import '../../../core/database/app_database.dart' show AiConfig;
 import '../../../core/services/ai_service.dart';
+import '../../../shared/widgets/common/record_detail_sheet.dart';
 // ignore: unused_import — used by ai_analysis_tabs.dart part file
 import '../../knowledge/repositories/knowledge_source_repository.dart';
 // ignore: unused_import — used by ai_analysis_tabs.dart part file

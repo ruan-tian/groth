@@ -127,6 +127,7 @@ flutter:
     - assets/images/focus/lights/
     - assets/images/focus/particles/
     - assets/images/focus/status/
+    - assets/images/focus/themes/
     - assets/images/study_record/
     - assets/images/fitness_record/
     - assets/images/diet_record/

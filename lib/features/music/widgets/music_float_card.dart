@@ -122,15 +122,7 @@ class _DockedMusicHandle extends StatelessWidget {
                 filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        colors.card.withValues(alpha: 0.94),
-                        colors.primaryLight.withValues(alpha: 0.18),
-                        colors.surface.withValues(alpha: 0.82),
-                      ],
-                    ),
+                    color: colors.card.withValues(alpha: 0.94),
                   ),
                   child: Stack(
                     children: [
@@ -252,15 +244,7 @@ class _RevealedMusicRemote extends ConsumerWidget {
                   filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
                   child: DecoratedBox(
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          colors.card.withValues(alpha: 0.96),
-                          colors.surface.withValues(alpha: 0.84),
-                          colors.primaryLight.withValues(alpha: 0.16),
-                        ],
-                      ),
+                      color: colors.card.withValues(alpha: 0.94),
                     ),
                     child: Row(
                       textDirection: side == _MusicDockSide.left
@@ -421,9 +405,7 @@ class _MiniCover extends StatelessWidget {
         child: track == null
             ? DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [colors.primaryLight, colors.card],
-                  ),
+                  color: colors.surfaceVariant.withValues(alpha: 0.86),
                 ),
                 child: Icon(Icons.music_note_rounded, color: colors.primary),
               )
@@ -464,7 +446,12 @@ class _MiniCircleButton extends StatelessWidget {
           height: filled ? 28 : 26,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: filled ? colors.primary : colors.surfaceVariant,
+            color: filled
+                ? colors.primary
+                : colors.surfaceVariant.withValues(alpha: 0.82),
+            border: filled
+                ? null
+                : Border.all(color: colors.border.withValues(alpha: 0.72)),
           ),
           child: Icon(
             icon,
@@ -683,38 +670,22 @@ class _MusicPlayerSheet extends ConsumerWidget {
         padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
         clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [colors.card, colors.softPurple],
-          ),
+          color: colors.card.withValues(alpha: 0.96),
           borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: colors.border, width: 1.1),
+          border: Border.all(
+            color: colors.border.withValues(alpha: 0.78),
+            width: 1.0,
+          ),
           boxShadow: [
             BoxShadow(
-              color: colors.shadow.withValues(alpha: 0.28),
-              blurRadius: 28,
-              offset: const Offset(0, 12),
+              color: colors.shadow.withValues(alpha: 0.20),
+              blurRadius: 24,
+              offset: const Offset(0, 10),
             ),
           ],
         ),
         child: Stack(
           children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.30,
-                child: Image.asset(MusicAssets.playerBgSoft, fit: BoxFit.cover),
-              ),
-            ),
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.22,
-                child: Image.asset(
-                  MusicAssets.playerBgStars,
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
             SafeArea(
               top: false,
               child: Column(
@@ -723,7 +694,7 @@ class _MusicPlayerSheet extends ConsumerWidget {
                     width: 38,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: colors.border,
+                      color: colors.border.withValues(alpha: 0.70),
                       borderRadius: BorderRadius.circular(999),
                     ),
                   ),
@@ -778,18 +749,10 @@ class _ExpandedMusicCard extends ConsumerWidget {
         children: [
           // ── Decorations ──
           Positioned(
-            right: -20,
-            top: -20,
-            child: Opacity(
-              opacity: 0.25,
-              child: Image.asset(MusicAssets.playerDecoSparkle, width: 80),
-            ),
-          ),
-          Positioned(
             left: -15,
             top: 60,
             child: Opacity(
-              opacity: 0.15,
+              opacity: 0.10,
               child: Image.asset(MusicAssets.playerDecoWave, width: 96),
             ),
           ),
@@ -797,7 +760,7 @@ class _ExpandedMusicCard extends ConsumerWidget {
             right: 10,
             bottom: 40,
             child: Opacity(
-              opacity: 0.2,
+              opacity: 0.12,
               child: Image.asset(MusicAssets.playerDecoNote, width: 46),
             ),
           ),
@@ -1205,9 +1168,9 @@ class _MusicLibraryEntryCard extends StatelessWidget {
         height: 76,
         padding: const EdgeInsets.symmetric(horizontal: 14),
         decoration: BoxDecoration(
-          color: colors.card.withValues(alpha: 0.82),
+          color: colors.card.withValues(alpha: 0.90),
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: colors.border),
+          border: Border.all(color: colors.border.withValues(alpha: 0.76)),
           boxShadow: [
             BoxShadow(
               color: colors.shadow.withValues(alpha: 0.12),
@@ -1223,11 +1186,12 @@ class _MusicLibraryEntryCard extends StatelessWidget {
               height: 46,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [colors.primaryLight, colors.primary],
+                color: colors.primary.withValues(alpha: 0.12),
+                border: Border.all(
+                  color: colors.primary.withValues(alpha: 0.18),
                 ),
               ),
-              child: Icon(Icons.music_note_rounded, color: colors.textOnAccent),
+              child: Icon(Icons.music_note_rounded, color: colors.primary),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1763,17 +1727,20 @@ class _RoundIconButton extends StatelessWidget {
           width: filled ? 44 : 38,
           height: filled ? 44 : 38,
           decoration: BoxDecoration(
-            color: filled ? colors.primary : colors.card,
+            color: filled
+                ? colors.primary
+                : colors.card.withValues(alpha: 0.92),
             borderRadius: BorderRadius.circular(999),
-            boxShadow: filled
-                ? [
-                    BoxShadow(
-                      color: colors.shadow.withValues(alpha: 0.22),
-                      blurRadius: 14,
-                      offset: const Offset(0, 7),
-                    ),
-                  ]
-                : null,
+            border: filled
+                ? null
+                : Border.all(color: colors.border.withValues(alpha: 0.70)),
+            boxShadow: [
+              BoxShadow(
+                color: colors.shadow.withValues(alpha: filled ? 0.18 : 0.08),
+                blurRadius: filled ? 13 : 10,
+                offset: Offset(0, filled ? 6 : 4),
+              ),
+            ],
           ),
           child: Icon(
             icon,

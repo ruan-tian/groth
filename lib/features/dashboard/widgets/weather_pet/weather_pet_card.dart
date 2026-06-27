@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../../app/design/design.dart';
 import '../../../health/providers/weather_provider.dart';
@@ -771,26 +772,32 @@ class _WeatherEmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AspectRatio(
-      aspectRatio: WeatherStyleConfig.aspectRatio,
-      child: Container(
-        decoration: WeatherStyleConfig.emptyDecoration,
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.cloud_outlined, size: 42, color: Color(0xFF8C7AE6)),
-              SizedBox(height: 12),
-              Text(
-                '暂无天气数据',
-                style: TextStyle(fontSize: 16, color: Color(0xFF6C6F8F)),
-              ),
-              SizedBox(height: 4),
-              Text(
-                '点击配置天气 API',
-                style: TextStyle(fontSize: 12, color: Color(0xFFA7ABC2)),
-              ),
-            ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).pop();
+        context.push('/settings/weather');
+      },
+      child: AspectRatio(
+        aspectRatio: WeatherStyleConfig.aspectRatio,
+        child: Container(
+          decoration: WeatherStyleConfig.emptyDecoration,
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.cloud_outlined, size: 42, color: Color(0xFF8C7AE6)),
+                SizedBox(height: 12),
+                Text(
+                  '暂无天气数据',
+                  style: TextStyle(fontSize: 16, color: Color(0xFF6C6F8F)),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  '点击配置天气 API',
+                  style: TextStyle(fontSize: 12, color: Color(0xFFA7ABC2)),
+                ),
+              ],
+            ),
           ),
         ),
       ),
